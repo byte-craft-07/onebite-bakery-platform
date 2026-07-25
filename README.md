@@ -1,8 +1,6 @@
-# Bakery Platform
+# OneBite Bakery Platform
 
-# 🍰 Bakery Platform
-
-A modern, premium, mobile-first bakery ordering platform built with React, TypeScript, Node.js, Express and MongoDB.
+Production-ready bakery platform built with React, Node.js, Express, MongoDB, and TypeScript. Designed for seamless online ordering, custom cake requests, OTP authentication, hybrid cart, order tracking, and a premium mobile-first customer experience.
 
 ## Vision
 
@@ -52,6 +50,6 @@ Development follows sprint-based execution.
 
 ## Status
 
-Planning ✅
+Planning complete.
 
-Development ⏳
+Backend foundation in progress.
