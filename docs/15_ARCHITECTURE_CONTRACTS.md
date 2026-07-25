@@ -142,6 +142,20 @@ Logs must redact:
 * JWT values
 * Secrets
 
+OTP foundation rules:
+
+* OTP length is 6 digits.
+* OTP expiry is 5 minutes.
+* Maximum verification attempts is 5.
+* Maximum resend count is 3.
+* Cooldown is 60 seconds.
+* OTP values are stored only as server-secret HMAC hashes.
+* OTP comparison must use constant-time comparison.
+* Successful verification invalidates the challenge.
+* OTP delivery must use the `OtpProvider` abstraction.
+* Development delivery providers must not log raw OTP values.
+* OTP foundation must not issue JWTs, refresh tokens, cookies, or sessions.
+
 ---
 
 # Module Contract
@@ -217,3 +231,27 @@ Every index must have a clear reason documented near the schema.
 Future feature repositories should extend the shared base repository instead of duplicating common query methods.
 
 Business logic must not be placed inside repositories.
+
+---
+
+# Authentication Foundation Contract
+
+Current OTP endpoints:
+
+* `POST /auth/send-otp`
+* `POST /auth/verify-otp`
+
+Dependency flow:
+
+```text
+Controller
+  -> Service
+  -> Repository + Provider
+  -> Database / Delivery implementation
+```
+
+Routes only register endpoint middleware and controller handlers.
+
+Controllers must not access Mongoose.
+
+Repositories must not contain OTP business rules.

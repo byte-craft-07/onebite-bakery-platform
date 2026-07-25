@@ -140,6 +140,10 @@ Password Strategy
 
 OTP Authentication
 
+OTP Hashing
+
+Node.js crypto HMAC with constant-time comparison
+
 Logging
 
 Pino

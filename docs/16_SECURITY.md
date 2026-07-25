@@ -95,6 +95,14 @@ Store only hashed OTP.
 
 OTP becomes invalid immediately after successful verification.
 
+OTP hashing must use a server-side secret.
+
+Production must configure:
+
+OTP_HASH_SECRET
+
+Development delivery providers must never log raw OTP values.
+
 ---
 
 # SESSION SECURITY
