@@ -1,9 +1,24 @@
-# OneBite Bakery Platform
+# 🍰 OneBite Bakery Platform
 
-Production-ready bakery platform built with React, Node.js, Express, MongoDB, and TypeScript. Designed for seamless online ordering, custom cake requests, OTP authentication, hybrid cart, order tracking, and a premium mobile-first customer experience.
+> **OneBite Bakery**
+>
+> **हर जश्न का पहला निवाला।**
 
-**OneBite Bakery**  
-हर जश्न का पहला निवाला।
+A production-ready full-stack bakery platform built with React, Node.js, Express, MongoDB, and TypeScript.
+
+Designed for seamless online ordering, custom cake requests, OTP authentication, hybrid cart, order tracking, and a premium mobile-first customer experience.
+
+## Features
+
+- 🎂 Online Cake Ordering
+- 🎨 Custom Cake Builder
+- 🚚 Home Delivery & Store Pickup
+- 📱 OTP Authentication
+- ❤️ Favorites
+- ⭐ Reviews & Ratings
+- 📦 Order Tracking
+- 👨‍💼 Owner Dashboard
+- 📱 Mobile-First Experience
 
 ## Vision
 
@@ -27,24 +42,6 @@ Backend
 - MongoDB
 - Mongoose
 
-## Features
-
-- OTP Login
-- Online Ordering
-- Hybrid Cart
-- Cake Customization
-- Home Delivery
-- Store Pickup
-- COD
-- UPI
-- My Orders
-- Order Tracking
-- Order Again
-- Favorites
-- Reviews
-- Invoice PDF
-- Admin Dashboard
-
 ## Documentation
 
 All documentation is available inside `/docs`.
@@ -56,3 +53,4 @@ Development follows sprint-based execution.
 Planning complete.
 
 Backend foundation in progress.
+
