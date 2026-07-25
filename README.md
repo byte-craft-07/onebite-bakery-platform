@@ -2,9 +2,12 @@
 
 Production-ready bakery platform built with React, Node.js, Express, MongoDB, and TypeScript. Designed for seamless online ordering, custom cake requests, OTP authentication, hybrid cart, order tracking, and a premium mobile-first customer experience.
 
+**OneBite Bakery**  
+हर जश्न का पहला निवाला।
+
 ## Vision
 
-Provide the easiest bakery ordering experience while giving the owner complete control over products, orders and customers.
+Provide the easiest OneBite Bakery ordering experience while giving the OneBite Bakery owner complete control over products, orders and customers.
 
 ## Tech Stack
 

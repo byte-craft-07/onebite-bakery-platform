@@ -4,7 +4,15 @@
 
 Project
 
-Bakery Platform
+OneBite Bakery Platform
+
+Brand
+
+OneBite Bakery
+
+Tagline
+
+हर जश्न का पहला निवाला।
 
 Version
 
@@ -12,7 +20,7 @@ Version
 
 Purpose
 
-Make the Bakery Platform easy to discover through search engines, social media, maps, and AI-powered search.
+Make the OneBite Bakery Platform easy to discover through search engines, social media, maps, and AI-powered search.
 
 SEO should be built into the platform from day one.
 

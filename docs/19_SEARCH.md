@@ -4,7 +4,15 @@
 
 Project
 
-Bakery Platform
+OneBite Bakery Platform
+
+Brand
+
+OneBite Bakery
+
+Tagline
+
+हर जश्न का पहला निवाला।
 
 Version
 

@@ -3,7 +3,7 @@
 # CODEX PROMPT RULES
 
 This document defines how AI (Codex) should be instructed
-during the development of the Bakery Platform.
+during the development of the OneBite Bakery Platform.
 
 The objective is to generate production-quality code,
 avoid regressions, and keep development predictable.

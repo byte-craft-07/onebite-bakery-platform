@@ -4,7 +4,15 @@
 
 Project
 
-Bakery Platform
+OneBite Bakery Platform
+
+Brand
+
+OneBite Bakery
+
+Tagline
+
+हर जश्न का पहला निवाला।
 
 Version
 
@@ -13,7 +21,7 @@ Version
 Purpose
 
 This document defines the production deployment process
-for the Bakery Platform.
+for the OneBite Bakery Platform.
 
 Deployment must be repeatable, secure, and predictable.
 
@@ -83,15 +91,15 @@ Cloudinary
 
 Production
 
-example.com
+onebitebakery.com
 
 Admin
 
-admin.example.com
+admin.onebitebakery.com
 
 API
 
-api.example.com
+api.onebitebakery.com
 
 ---
 

@@ -74,7 +74,7 @@ Before every production release, verify:
 
 ## Business
 
-□ Bakery details updated
+□ OneBite Bakery details updated
 
 □ UPI ID verified
 

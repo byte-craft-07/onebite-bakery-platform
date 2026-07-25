@@ -25,7 +25,7 @@ const startServer = async (): Promise<void> => {
         environment: env.nodeEnv,
         port: env.port,
       },
-      "Bakery Platform backend started",
+      "OneBite Bakery Platform backend started",
     );
   });
 

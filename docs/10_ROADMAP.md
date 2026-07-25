@@ -4,7 +4,7 @@
 
 Project
 
-Bakery Platform
+OneBite Bakery Platform
 
 Goal
 

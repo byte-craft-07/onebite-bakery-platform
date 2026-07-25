@@ -4,7 +4,15 @@
 
 Project
 
-Bakery Platform
+OneBite Bakery Platform
+
+Brand
+
+OneBite Bakery
+
+Tagline
+
+हर जश्न का पहला निवाला।
 
 Version
 
@@ -12,7 +20,7 @@ Version
 
 Purpose
 
-This document defines the security standards for the Bakery Platform.
+This document defines the security standards for the OneBite Bakery Platform.
 
 Every feature must follow these rules before deployment.
 

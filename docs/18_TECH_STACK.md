@@ -4,7 +4,15 @@
 
 Project
 
-Bakery Platform
+OneBite Bakery Platform
+
+Brand
+
+OneBite Bakery
+
+Tagline
+
+हर जश्न का पहला निवाला।
 
 Version
 
@@ -12,7 +20,7 @@ Version
 
 Purpose
 
-This document defines the official technology stack for the Bakery Platform.
+This document defines the official technology stack for the OneBite Bakery Platform.
 
 Every developer and AI agent must follow this stack unless a documented architectural decision approves a change.
 

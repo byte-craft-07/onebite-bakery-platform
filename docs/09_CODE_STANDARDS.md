@@ -2,7 +2,7 @@
 
 # CODE STANDARDS
 
-This document defines the coding standards for the Bakery Platform.
+This document defines the coding standards for the OneBite Bakery Platform.
 
 Every developer and AI agent must follow these rules.
 

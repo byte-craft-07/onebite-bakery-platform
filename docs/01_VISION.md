@@ -1,14 +1,22 @@
 # Vision
 
-# 🍰 Bakery Platform
+# OneBite Bakery Platform
+
+Brand
+
+OneBite Bakery
+
+Tagline
+
+हर जश्न का पहला निवाला।
 
 ## Vision
 
-Build a premium, mobile-first bakery ordering platform that provides customers with the easiest possible ordering experience while giving the bakery owner complete control over products, orders, and business operations.
+Build a premium, mobile-first bakery ordering platform that provides customers with the easiest possible ordering experience while giving the OneBite Bakery owner complete control over products, orders, and business operations.
 
 This is not just a bakery website.
 
-It is a complete Bakery Management Platform.
+It is a complete OneBite Bakery Management Platform.
 
 ---
 
@@ -30,15 +38,15 @@ A customer should be able to place an order within one minute using only one han
 
 # Product Principles
 
-• Mobile First
-• Backend First
-• Fast Loading
-• Premium UI
-• Clean Architecture
-• Secure
-• Scalable
-• Future Ready
-• Easy to Maintain
+* Mobile First
+* Backend First
+* Fast Loading
+* Premium UI
+* Clean Architecture
+* Secure
+* Scalable
+* Future Ready
+* Easy to Maintain
 
 ---
 
@@ -46,7 +54,7 @@ A customer should be able to place an order within one minute using only one han
 
 Customer
 
-Bakery Owner
+OneBite Bakery Owner
 
 Future Staff
 
@@ -183,4 +191,5 @@ Luxury Experience.
 
 Simple Ordering.
 
-Happy Customers.
+हर जश्न का पहला निवाला।
+

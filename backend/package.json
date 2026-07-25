@@ -2,7 +2,7 @@
   "name": "bakery-platform-backend",
   "version": "0.1.0",
   "private": true,
-  "description": "Backend foundation for the Bakery Platform.",
+  "description": "Backend foundation for the OneBite Bakery Platform.",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",

@@ -3,7 +3,7 @@
 # PROJECT DECISIONS
 
 This document records every major architectural and business decision
-taken during the development of the Bakery Platform.
+taken during the development of the OneBite Bakery Platform.
 
 Every decision must include the reason behind it.
 
