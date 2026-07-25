@@ -1,0 +1,8 @@
+export const DATABASE_DEFAULTS = {
+  PAGE: 1,
+  LIMIT: 20,
+  MAX_LIMIT: 100,
+  MAX_STRING_LENGTH: 500,
+  MAX_LONG_TEXT_LENGTH: 5000,
+} as const;
+

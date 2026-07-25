@@ -1,0 +1,14 @@
+export const INDEX_NAMES = {
+  USER_PHONE_UNIQUE: "users_phone_unique",
+  USER_ROLE_STATUS: "users_role_status",
+  ADDRESS_USER: "addresses_user",
+  ADDRESS_LOCATION: "addresses_location_2dsphere",
+  ADDRESS_USER_DEFAULT: "addresses_user_default",
+  OTP_PHONE_PURPOSE: "otps_phone_purpose",
+  OTP_EXPIRES_AT_TTL: "otps_expires_at_ttl",
+  REFRESH_TOKEN_HASH_UNIQUE: "refresh_tokens_token_hash_unique",
+  REFRESH_TOKEN_USER: "refresh_tokens_user",
+  REFRESH_TOKEN_EXPIRES_AT_TTL: "refresh_tokens_expires_at_ttl",
+  SETTINGS_SINGLETON: "settings_singleton_unique",
+} as const;
+
