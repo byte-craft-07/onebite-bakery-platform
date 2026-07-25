@@ -150,14 +150,20 @@ Future feature modules should follow this structure:
 
 ```text
 modules/<feature>/
-  <feature>.routes.ts
-  <feature>.controller.ts
-  <feature>.service.ts
-  <feature>.repository.ts
-  <feature>.validation.ts
-  <feature>.model.ts
-  <feature>.types.ts
+  routes/
+  controller/
+  service/
+  repository/
+  validators/
+  dto/
+  types/
+  constants/
+  model/
+  index.ts
 ```
+
+Create only files that contain real architecture contracts or implementation.
+Do not add empty controller/service/repository files before the feature is implemented.
 
 Controllers should only:
 
@@ -169,6 +175,22 @@ Controllers should only:
 Services must not depend on Express request/response objects.
 
 Repositories must contain database queries only.
+
+Current module routes are centrally registered under `/api/v1`:
+
+* `/auth`
+* `/users`
+* `/addresses`
+* `/products`
+* `/categories`
+* `/cart`
+* `/orders`
+* `/reviews`
+* `/favorites`
+* `/settings`
+* `/upload`
+* `/search`
+* `/health`
 
 ---
 

@@ -1,4 +1,15 @@
 export const ROUTES = {
+  ADDRESS: "/addresses",
+  AUTH: "/auth",
+  CART: "/cart",
+  CATEGORY: "/categories",
+  FAVORITE: "/favorites",
   HEALTH: "/health",
+  ORDER: "/orders",
+  PRODUCT: "/products",
+  REVIEW: "/reviews",
+  SEARCH: "/search",
+  SETTINGS: "/settings",
+  UPLOAD: "/upload",
+  USER: "/users",
 } as const;
-

@@ -1,9 +1,9 @@
 import { model, Schema, type Types } from "mongoose";
 
-import { COLLECTION_NAMES } from "../../db/constants/collection-names.js";
-import { INDEX_NAMES } from "../../db/constants/index-names.js";
-import { baseSchemaOptions } from "../../db/schema-options.js";
-import type { TimestampedDocument } from "../../db/types/base-document.types.js";
+import { COLLECTION_NAMES } from "../../../db/constants/collection-names.js";
+import { INDEX_NAMES } from "../../../db/constants/index-names.js";
+import { baseSchemaOptions } from "../../../db/schema-options.js";
+import type { TimestampedDocument } from "../../../db/types/base-document.types.js";
 
 export const USER_ROLES = ["customer", "admin"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
@@ -92,4 +92,3 @@ export const UserModel = model<User>(
   userSchema,
   COLLECTION_NAMES.USERS,
 );
-

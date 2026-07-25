@@ -1,9 +1,9 @@
 import { model, Schema, type Types } from "mongoose";
 
-import { COLLECTION_NAMES } from "../../db/constants/collection-names.js";
-import { INDEX_NAMES } from "../../db/constants/index-names.js";
-import { baseSchemaOptions } from "../../db/schema-options.js";
-import type { TimestampedDocument } from "../../db/types/base-document.types.js";
+import { COLLECTION_NAMES } from "../../../db/constants/collection-names.js";
+import { INDEX_NAMES } from "../../../db/constants/index-names.js";
+import { baseSchemaOptions } from "../../../db/schema-options.js";
+import type { TimestampedDocument } from "../../../db/types/base-document.types.js";
 
 export const OTP_PURPOSES = ["login", "admin_login"] as const;
 export type OtpPurpose = (typeof OTP_PURPOSES)[number];
@@ -94,4 +94,3 @@ otpSchema.index(
 );
 
 export const OtpModel = model<Otp>("Otp", otpSchema, COLLECTION_NAMES.OTPS);
-

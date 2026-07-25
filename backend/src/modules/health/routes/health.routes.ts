@@ -1,9 +1,9 @@
 import { Router } from "express";
 import mongoose from "mongoose";
 
-import { SUCCESS_MESSAGES } from "../constants/messages.js";
-import { sendSuccess } from "../responses/api-response.js";
-import { asyncHandler } from "../utils/async-handler.js";
+import { SUCCESS_MESSAGES } from "../../../shared/constants/messages.js";
+import { sendSuccess } from "../../../shared/responses/api-response.js";
+import { asyncHandler } from "../../../shared/utils/async-handler.js";
 
 export const healthRouter = Router();
 

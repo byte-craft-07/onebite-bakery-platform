@@ -1,13 +1,13 @@
 import { model, Schema, type Types } from "mongoose";
 
-import { COLLECTION_NAMES } from "../../db/constants/collection-names.js";
-import { INDEX_NAMES } from "../../db/constants/index-names.js";
-import { geoJsonPointSchemaFields } from "../../db/schema-fields.js";
-import { baseSchemaOptions } from "../../db/schema-options.js";
+import { COLLECTION_NAMES } from "../../../db/constants/collection-names.js";
+import { INDEX_NAMES } from "../../../db/constants/index-names.js";
+import { geoJsonPointSchemaFields } from "../../../db/schema-fields.js";
+import { baseSchemaOptions } from "../../../db/schema-options.js";
 import type {
   GeoJsonPoint,
   TimestampedDocument,
-} from "../../db/types/base-document.types.js";
+} from "../../../db/types/base-document.types.js";
 
 export interface Address extends TimestampedDocument {
   _id: Types.ObjectId;
@@ -107,4 +107,3 @@ export const AddressModel = model<Address>(
   addressSchema,
   COLLECTION_NAMES.ADDRESSES,
 );
-

@@ -488,3 +488,24 @@ business behavior.
 Creating these models before feature modules ensures future services
 reuse consistent schema patterns, indexes, timestamps, validation,
 and repository conventions.
+
+---
+
+# Decision 28
+
+Feature Module Architecture
+
+Status
+
+Approved
+
+Reason
+
+Every backend feature uses a module-first structure with route registration
+at the module boundary and centralized mounting under `/api/v1`.
+
+Controllers, services, repositories, validators, DTOs, types, constants,
+models, and routes must stay inside the owning module when they are needed.
+
+Empty placeholders should be avoided until a layer has a real contract or
+implementation.
