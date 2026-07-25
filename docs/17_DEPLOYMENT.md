@@ -317,6 +317,10 @@ Search works
 
 OTP Login works
 
+Refresh token rotation works
+
+Logout clears authentication cookies
+
 Add to Cart works
 
 Checkout works

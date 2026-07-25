@@ -121,6 +121,18 @@ Logout removes Refresh Token.
 
 Expired tokens cannot be reused.
 
+Access and refresh tokens must be stored in HttpOnly cookies.
+
+Cookie settings:
+
+HttpOnly
+
+Secure in production
+
+SameSite Lax
+
+Refresh tokens must be hashed before database storage.
+
 ---
 
 # AUTHORIZATION

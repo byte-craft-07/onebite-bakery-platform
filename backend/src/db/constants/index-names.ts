@@ -8,7 +8,7 @@ export const INDEX_NAMES = {
   OTP_EXPIRES_AT_TTL: "otps_expires_at_ttl",
   REFRESH_TOKEN_HASH_UNIQUE: "refresh_tokens_token_hash_unique",
   REFRESH_TOKEN_USER: "refresh_tokens_user",
+  REFRESH_TOKEN_USER_DEVICE: "refresh_tokens_user_device",
   REFRESH_TOKEN_EXPIRES_AT_TTL: "refresh_tokens_expires_at_ttl",
   SETTINGS_SINGLETON: "settings_singleton_unique",
 } as const;
-

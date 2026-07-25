@@ -23,6 +23,10 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
   LOG_LEVEL: z.string().default("info"),
   OTP_HASH_SECRET: z.string().min(32).optional(),
+  JWT_SECRET: z.string().min(32).optional(),
+  JWT_REFRESH_SECRET: z.string().min(32).optional(),
+  ACCESS_TOKEN_EXPIRES: z.string().default("15m"),
+  REFRESH_TOKEN_EXPIRES: z.string().default("30d"),
   REQUIRE_DATABASE_CONNECTION: z
     .enum(["true", "false"])
     .default("false")
@@ -62,6 +66,14 @@ if (isProduction && !parsedEnv.data.OTP_HASH_SECRET) {
   throw new Error("OTP_HASH_SECRET must be configured in production.");
 }
 
+if (isProduction && !parsedEnv.data.JWT_SECRET) {
+  throw new Error("JWT_SECRET must be configured in production.");
+}
+
+if (isProduction && !parsedEnv.data.JWT_REFRESH_SECRET) {
+  throw new Error("JWT_REFRESH_SECRET must be configured in production.");
+}
+
 export const env = {
   nodeEnv: parsedEnv.data.NODE_ENV,
   port: parsedEnv.data.PORT,
@@ -75,5 +87,13 @@ export const env = {
   otpHashSecret:
     parsedEnv.data.OTP_HASH_SECRET ??
     "development-only-otp-hash-secret-change-before-production",
+  jwtSecret:
+    parsedEnv.data.JWT_SECRET ??
+    "development-only-jwt-secret-change-before-production",
+  jwtRefreshSecret:
+    parsedEnv.data.JWT_REFRESH_SECRET ??
+    "development-only-refresh-secret-change-before-production",
+  accessTokenExpires: parsedEnv.data.ACCESS_TOKEN_EXPIRES,
+  refreshTokenExpires: parsedEnv.data.REFRESH_TOKEN_EXPIRES,
   requireDatabaseConnection: parsedEnv.data.REQUIRE_DATABASE_CONNECTION,
 } as const;

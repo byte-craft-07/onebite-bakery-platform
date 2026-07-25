@@ -9,11 +9,13 @@ export interface RefreshToken extends TimestampedDocument {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
   tokenHash: string;
+  deviceId: string;
   expiresAt: Date;
   revokedAt?: Date;
   replacedByTokenId?: Types.ObjectId;
   ipAddress?: string;
   userAgent?: string;
+  lastUsedAt: Date;
 }
 
 const refreshTokenSchema = new Schema<RefreshToken>(
@@ -27,6 +29,11 @@ const refreshTokenSchema = new Schema<RefreshToken>(
       type: String,
       required: true,
       select: false,
+    },
+    deviceId: {
+      type: String,
+      required: true,
+      trim: true,
     },
     expiresAt: {
       type: Date,
@@ -52,6 +59,10 @@ const refreshTokenSchema = new Schema<RefreshToken>(
       maxlength: 500,
       default: undefined,
     },
+    lastUsedAt: {
+      type: Date,
+      required: true,
+    },
   },
   baseSchemaOptions,
 );
@@ -66,6 +77,12 @@ refreshTokenSchema.index(
 refreshTokenSchema.index(
   { userId: 1, expiresAt: 1 },
   { name: INDEX_NAMES.REFRESH_TOKEN_USER },
+);
+
+// Finds the active session for a specific user device.
+refreshTokenSchema.index(
+  { userId: 1, deviceId: 1 },
+  { name: INDEX_NAMES.REFRESH_TOKEN_USER_DEVICE },
 );
 
 // Automatically removes expired refresh token records.

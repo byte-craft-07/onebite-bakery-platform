@@ -240,6 +240,10 @@ Current OTP endpoints:
 
 * `POST /auth/send-otp`
 * `POST /auth/verify-otp`
+* `POST /auth/refresh`
+* `POST /auth/logout`
+* `POST /auth/logout-all`
+* `GET /auth/me`
 
 Dependency flow:
 
@@ -255,3 +259,12 @@ Routes only register endpoint middleware and controller handlers.
 Controllers must not access Mongoose.
 
 Repositories must not contain OTP business rules.
+
+Authentication session rules:
+
+* Access and refresh tokens must be sent through HttpOnly cookies.
+* Refresh tokens must be hashed before database storage.
+* Refresh token rotation must revoke the previous session token.
+* Multiple devices are represented as separate refresh-token sessions.
+* Logout revokes the current refresh session.
+* Logout all revokes all active refresh sessions for the authenticated user.

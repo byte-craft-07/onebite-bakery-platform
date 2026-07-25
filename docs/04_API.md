@@ -32,7 +32,11 @@ POST    /auth/send-otp
 
 POST    /auth/verify-otp
 
+POST    /auth/refresh
+
 POST    /auth/logout
+
+POST    /auth/logout-all
 
 GET     /auth/me
 

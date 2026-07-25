@@ -1,4 +1,5 @@
 import compression from "compression";
+import cookieParser from "cookie-parser";
 import express, { type Application } from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
@@ -30,6 +31,7 @@ export const createApp = (): Application => {
   app.use(helmet());
   app.use(cors(corsOptions));
   app.use(rateLimit(globalRateLimitOptions));
+  app.use(cookieParser());
   app.use(express.json({ limit: env.jsonBodyLimit }));
   app.use(express.urlencoded({ extended: true, limit: env.jsonBodyLimit }));
   app.use(mongoSanitize);
