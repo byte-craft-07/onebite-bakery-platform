@@ -14,5 +14,13 @@ export const INDEX_NAMES = {
   CATEGORY_PARENT: "categories_parent",
   CATEGORY_DISPLAY_ORDER: "categories_display_order",
   CATEGORY_ACTIVE: "categories_active",
+  OCCASION_SLUG_UNIQUE: "occasions_slug_unique",
+  OCCASION_DISPLAY_ORDER: "occasions_display_order",
+  OCCASION_ACTIVE: "occasions_active",
+  PRODUCT_SLUG_UNIQUE: "products_slug_unique",
+  PRODUCT_CATEGORY: "products_category",
+  PRODUCT_TYPE: "products_type",
+  PRODUCT_OCCASIONS: "products_occasions",
+  PRODUCT_ACTIVE: "products_active",
   SETTINGS_SINGLETON: "settings_singleton_unique",
 } as const;

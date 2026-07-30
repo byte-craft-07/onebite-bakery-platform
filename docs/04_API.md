@@ -84,6 +84,22 @@ PATCH   /categories/reorder
 
 --------------------------------------------------
 
+# OCCASIONS
+
+GET     /occasions
+
+GET     /occasions/:slug
+
+GET     /occasions/:slug/products
+
+POST    /occasions
+
+PUT     /occasions/:id
+
+DELETE  /occasions/:id
+
+--------------------------------------------------
+
 # CART
 
 GET

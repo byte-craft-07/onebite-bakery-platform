@@ -27,6 +27,12 @@ interface SocialLinks {
   whatsapp?: string;
 }
 
+interface DeliverySettings {
+  minimumHomeDeliveryAmount: number;
+  homeDeliveryEnabled: boolean;
+  pickupEnabled: boolean;
+}
+
 export interface Settings extends TimestampedDocument {
   _id: Types.ObjectId;
   singletonKey: "default";
@@ -38,6 +44,7 @@ export interface Settings extends TimestampedDocument {
   storeTiming: StoreTiming;
   deliveryRadius: number;
   deliveryCharge: number;
+  delivery: DeliverySettings;
   upiQr?: string;
   upiId?: string;
   socialLinks: SocialLinks;
@@ -75,6 +82,28 @@ const socialLinksSchema = new Schema<SocialLinks>(
     instagram: { type: String, trim: true, default: undefined },
     facebook: { type: String, trim: true, default: undefined },
     whatsapp: { type: String, trim: true, default: undefined },
+  },
+  { _id: false },
+);
+
+const deliverySettingsSchema = new Schema<DeliverySettings>(
+  {
+    minimumHomeDeliveryAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 300,
+    },
+    homeDeliveryEnabled: {
+      type: Boolean,
+      required: true,
+      default: true,
+    },
+    pickupEnabled: {
+      type: Boolean,
+      required: true,
+      default: true,
+    },
   },
   { _id: false },
 );
@@ -138,6 +167,11 @@ const settingsSchema = new Schema<Settings>(
       required: true,
       min: 0,
       default: 0,
+    },
+    delivery: {
+      type: deliverySettingsSchema,
+      default: {},
+      required: true,
     },
     upiQr: {
       type: String,

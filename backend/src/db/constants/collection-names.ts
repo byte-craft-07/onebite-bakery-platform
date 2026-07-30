@@ -4,6 +4,8 @@ export const COLLECTION_NAMES = {
   OTPS: "otps",
   REFRESH_TOKENS: "refreshTokens",
   CATEGORIES: "categories",
+  OCCASIONS: "occasions",
+  PRODUCTS: "products",
   SETTINGS: "settings",
 } as const;
 

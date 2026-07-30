@@ -206,7 +206,38 @@ Implementation Notes:
 
 ---
 
-# 5. products
+# 5. occasions
+
+| Field        | Type     |
+| ------------ | -------- |
+| name         | String   |
+| slug         | String   |
+| description  | String   |
+| bannerImage  | String   |
+| icon         | String   |
+| displayOrder | Number   |
+| isActive     | Boolean  |
+| seoTitle     | String   |
+| seoDescription | String |
+| seoKeywords  | String[] |
+| createdAt    | Date     |
+| updatedAt    | Date     |
+
+Indexes:
+
+* slug (unique)
+* displayOrder
+* isActive
+
+Implementation Notes:
+
+* Occasions are independent from categories.
+* A product may belong to multiple occasions.
+* Occasion management will be owner-manageable in a future module.
+
+---
+
+# 6. products
 
 | Field            | Type     |
 | ---------------- | -------- |
@@ -217,20 +248,44 @@ Implementation Notes:
 | shortDescription | String   |
 | description      | String   |
 | isCustomizable   | Boolean  |
+| productType      | String   |
+| occasionIds      | ObjectId[] |
+| comboItems       | Object[] |
+| deliveryEligible | Boolean  |
 | tags             | String[] |
 | status           | String   |
+
+Product Type Values:
+
+* NORMAL
+* COMBO
+* CUSTOM_CAKE
+
+Combo Item Fields:
+
+* productId
+* quantity
 
 Indexes:
 
 * slug (unique)
 * categoryId
 * branchId
+* productType
+* occasionIds
 * status
 * name (text)
 
+Implementation Notes:
+
+* Decoration items use the same Product architecture as bakery items.
+* Combo products are first-class products and reference child products through `comboItems`.
+* Combo inventory is deducted from child products during future checkout logic.
+* Product-level `deliveryEligible` prepares checkout delivery decisions.
+
 ---
 
-# 6. productVariants
+# 7. productVariants
 
 Purpose: Weight/flavor/egg variants
 
@@ -254,7 +309,7 @@ Indexes:
 
 ---
 
-# 7. productImages
+# 8. productImages
 
 | Field        | Type     |
 | ------------ | -------- |
@@ -441,6 +496,9 @@ Single document collection
 | storeTiming    | Object |
 | deliveryRadius | Number |
 | deliveryCharge | Number |
+| delivery.minimumHomeDeliveryAmount | Number |
+| delivery.homeDeliveryEnabled | Boolean |
+| delivery.pickupEnabled | Boolean |
 | upiQr          | String |
 | upiId          | String |
 | socialLinks    | Object |
@@ -453,6 +511,7 @@ Implementation Notes:
 
 * `singletonKey` unique index enforces one settings document.
 * Settings includes service toggles for delivery, pickup, COD, and UPI.
+* Delivery settings include the configurable minimum home delivery amount.
 * Business values should come from settings instead of hardcoded code.
 
 ---

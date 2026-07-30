@@ -288,3 +288,31 @@ Category hierarchy rules:
 * Parent relationships cannot be circular.
 * Categories with active child categories cannot be soft-deleted.
 * Soft-deleted categories must not appear in public responses.
+
+---
+
+# Celebration Commerce Contract
+
+OneBite Bakery is a Celebration Commerce Platform.
+
+Product architecture must support:
+
+* `NORMAL`
+* `COMBO`
+* `CUSTOM_CAKE`
+
+Occasions are independent from categories.
+
+Products may belong to multiple occasions.
+
+Combo products are first-class products and reference child products through `comboItems`.
+
+Decoration products use the same Product architecture as bakery products.
+
+Delivery eligibility must use configurable settings:
+
+* `delivery.minimumHomeDeliveryAmount`
+* `delivery.homeDeliveryEnabled`
+* `delivery.pickupEnabled`
+
+Product, occasion, combo, checkout, cart, inventory, and search business logic must be implemented only in their approved future milestones.

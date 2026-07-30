@@ -509,3 +509,83 @@ models, and routes must stay inside the owning module when they are needed.
 
 Empty placeholders should be avoided until a layer has a real contract or
 implementation.
+
+---
+
+# Decision 29
+
+Celebration Commerce Platform
+
+Status
+
+Approved
+
+Reason
+
+The platform is designed as a Celebration Commerce Platform rather than only a Bakery.
+
+This allows OneBite Bakery to sell cakes, bakery items, decorations, combos, and future celebration products from one architecture.
+
+---
+
+# Decision 30
+
+Products Are Separated From Occasions
+
+Status
+
+Approved
+
+Reason
+
+Occasions are independent merchandising groupings.
+
+A product may belong to multiple occasions without duplicating product records.
+
+---
+
+# Decision 31
+
+Combo Products Are First-Class Products
+
+Status
+
+Approved
+
+Reason
+
+Combo products use the Product architecture instead of a separate module.
+
+This keeps pricing, listing, SEO, and checkout behavior consistent while allowing inventory to deduct from child products in future order logic.
+
+---
+
+# Decision 32
+
+Configurable Home Delivery Threshold
+
+Status
+
+Approved
+
+Reason
+
+Home delivery is controlled using a configurable minimum order amount.
+
+The value must come from owner-managed settings and must never be hardcoded.
+
+---
+
+# Decision 33
+
+Decoration Products Use Product Architecture
+
+Status
+
+Approved
+
+Reason
+
+Decoration products use the same Product architecture as bakery items.
+
+This avoids unnecessary module duplication and supports future cross-selling.
