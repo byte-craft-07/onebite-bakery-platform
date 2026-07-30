@@ -268,3 +268,23 @@ Authentication session rules:
 * Multiple devices are represented as separate refresh-token sessions.
 * Logout revokes the current refresh session.
 * Logout all revokes all active refresh sessions for the authenticated user.
+
+---
+
+# Category Module Contract
+
+Public category listing:
+
+* `GET /categories`
+* returns active, non-deleted categories only
+* returns a nested tree sorted by `displayOrder`
+
+Owner category APIs require authentication and owner/admin role authorization.
+
+Category hierarchy rules:
+
+* Duplicate active category names are rejected.
+* Slugs are canonical and unique.
+* Parent relationships cannot be circular.
+* Categories with active child categories cannot be soft-deleted.
+* Soft-deleted categories must not appear in public responses.

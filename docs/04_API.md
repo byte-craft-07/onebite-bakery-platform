@@ -66,13 +66,21 @@ GET     /products/seasonal
 
 # CATEGORIES
 
-GET
+GET     /categories
 
-POST
+GET     /categories/admin
 
-PATCH
+GET     /categories/:id
 
-DELETE
+POST    /categories
+
+PATCH   /categories/:id
+
+DELETE  /categories/:id
+
+PATCH   /categories/:id/restore
+
+PATCH   /categories/reorder
 
 --------------------------------------------------
 

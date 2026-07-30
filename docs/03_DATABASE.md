@@ -180,12 +180,29 @@ Indexes:
 | image        | String |
 | description  | String |
 | displayOrder | Number |
-| status       | String |
+| isActive     | Boolean |
+| parentCategory | ObjectId |
+| seoTitle | String |
+| seoDescription | String |
+| seoKeywords | String[] |
+| searchableText | String |
+| createdBy | ObjectId |
+| updatedBy | ObjectId |
+| isDeleted | Boolean |
 
 Indexes:
 
 * slug (unique)
+* parentCategory
 * displayOrder
+* isActive + isDeleted
+
+Implementation Notes:
+
+* Categories support nested hierarchy for navigation and future product grouping.
+* Public category APIs only expose active, non-deleted categories.
+* SEO metadata is stored on the category document for canonical category pages.
+* `searchableText` prepares category data for the future Search module.
 
 ---
 

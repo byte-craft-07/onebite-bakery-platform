@@ -10,5 +10,9 @@ export const INDEX_NAMES = {
   REFRESH_TOKEN_USER: "refresh_tokens_user",
   REFRESH_TOKEN_USER_DEVICE: "refresh_tokens_user_device",
   REFRESH_TOKEN_EXPIRES_AT_TTL: "refresh_tokens_expires_at_ttl",
+  CATEGORY_SLUG_UNIQUE: "categories_slug_unique",
+  CATEGORY_PARENT: "categories_parent",
+  CATEGORY_DISPLAY_ORDER: "categories_display_order",
+  CATEGORY_ACTIVE: "categories_active",
   SETTINGS_SINGLETON: "settings_singleton_unique",
 } as const;
