@@ -242,18 +242,31 @@ Implementation Notes:
 | Field            | Type     |
 | ---------------- | -------- |
 | categoryId       | ObjectId |
-| branchId         | ObjectId |
 | name             | String   |
 | slug             | String   |
 | shortDescription | String   |
 | description      | String   |
-| isCustomizable   | Boolean  |
 | productType      | String   |
 | occasionIds      | ObjectId[] |
 | comboItems       | Object[] |
+| price            | Number   |
+| compareAtPrice   | Number   |
+| imageUrls        | String[] |
+| thumbnailUrl     | String   |
 | deliveryEligible | Boolean  |
-| tags             | String[] |
-| status           | String   |
+| pickupEligible   | Boolean  |
+| isActive         | Boolean  |
+| isFeatured       | Boolean  |
+| isTrending       | Boolean  |
+| isRecommended    | Boolean  |
+| isSeasonal       | Boolean  |
+| displayOrder     | Number   |
+| seoTitle         | String   |
+| seoDescription   | String   |
+| seoKeywords      | String[] |
+| createdBy        | ObjectId |
+| updatedBy        | ObjectId |
+| isDeleted        | Boolean  |
 
 Product Type Values:
 
@@ -270,10 +283,9 @@ Indexes:
 
 * slug (unique)
 * categoryId
-* branchId
 * productType
 * occasionIds
-* status
+* isActive + isDeleted
 * name (text)
 
 Implementation Notes:
@@ -282,6 +294,8 @@ Implementation Notes:
 * Combo products are first-class products and reference child products through `comboItems`.
 * Combo inventory is deducted from child products during future checkout logic.
 * Product-level `deliveryEligible` prepares checkout delivery decisions.
+* Public product APIs expose only active, non-deleted products.
+* Upload integration is not part of the product foundation; product media stores URL strings only.
 
 ---
 

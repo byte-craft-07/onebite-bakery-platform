@@ -316,3 +316,36 @@ Delivery eligibility must use configurable settings:
 * `delivery.pickupEnabled`
 
 Product, occasion, combo, checkout, cart, inventory, and search business logic must be implemented only in their approved future milestones.
+
+---
+
+# Product Foundation Contract
+
+Public product APIs:
+
+* `GET /products`
+* `GET /products/:slug`
+
+Public product APIs must return active, non-deleted products only.
+
+Owner product APIs require authentication and owner/admin role authorization.
+
+Product foundation includes:
+
+* product CRUD
+* canonical unique slugs
+* category reference validation
+* occasion reference validation
+* soft delete and restore
+* URL-only media fields
+* SEO metadata
+
+Product foundation must not implement:
+
+* inventory
+* stock deduction
+* upload integration
+* search indexing
+* cart/order/checkout behavior
+* review/favorite behavior
+* combo inventory logic

@@ -25,9 +25,21 @@ export interface Product extends TimestampedDocument, SoftDeletableDocument {
   productType: ProductType;
   occasionIds: Types.ObjectId[];
   comboItems: ComboItem[];
+  price: number;
+  compareAtPrice?: number;
+  imageUrls: string[];
+  thumbnailUrl: string;
   deliveryEligible: boolean;
+  pickupEligible: boolean;
   isActive: boolean;
+  isFeatured: boolean;
+  isTrending: boolean;
+  isRecommended: boolean;
+  isSeasonal: boolean;
   displayOrder: number;
+  seoTitle: string;
+  seoDescription: string;
+  seoKeywords: string[];
   createdBy?: Types.ObjectId;
   updatedBy?: Types.ObjectId;
 }
@@ -98,7 +110,39 @@ const productSchema = new Schema<Product>(
       type: [comboItemSchema],
       default: [],
     },
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    compareAtPrice: {
+      type: Number,
+      min: 0,
+      default: undefined,
+    },
+    imageUrls: {
+      type: [String],
+      required: true,
+      default: [],
+      validate: {
+        validator(value: string[]): boolean {
+          return value.length <= 20;
+        },
+        message: "Product image URLs cannot exceed 20 items.",
+      },
+    },
+    thumbnailUrl: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 500,
+    },
     deliveryEligible: {
+      type: Boolean,
+      required: true,
+      default: true,
+    },
+    pickupEligible: {
       type: Boolean,
       required: true,
       default: true,
@@ -107,6 +151,26 @@ const productSchema = new Schema<Product>(
       type: Boolean,
       required: true,
       default: true,
+    },
+    isFeatured: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    isTrending: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    isRecommended: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    isSeasonal: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
     displayOrder: {
       type: Number,
@@ -123,6 +187,31 @@ const productSchema = new Schema<Product>(
       type: Schema.Types.ObjectId,
       ref: "User",
       default: undefined,
+    },
+    seoTitle: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 70,
+    },
+    seoDescription: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 5,
+      maxlength: 160,
+    },
+    seoKeywords: {
+      type: [String],
+      required: true,
+      default: [],
+      validate: {
+        validator(value: string[]): boolean {
+          return value.length <= 20;
+        },
+        message: "SEO keywords cannot exceed 20 items.",
+      },
     },
     ...softDeleteSchemaFields,
   },

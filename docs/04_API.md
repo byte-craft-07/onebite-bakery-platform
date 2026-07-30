@@ -48,11 +48,17 @@ GET     /products
 
 GET     /products/:slug
 
+GET     /products/admin
+
+GET     /products/admin/:id
+
 POST    /products
 
 PATCH   /products/:id
 
 DELETE  /products/:id
+
+PATCH   /products/:id/restore
 
 GET     /products/search
 
