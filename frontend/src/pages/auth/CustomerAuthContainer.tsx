@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Lock, Phone, ShieldCheck } from "lucide-react";
+import { ShieldCheck, UserCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/FormControls";
@@ -59,7 +59,11 @@ export const CustomerAuthContainer: React.FC = () => {
     try {
       const res = await authService.verifyOtp({ phone, code: data.code, purpose: "login" });
       login(res.data.user);
-      navigate("/customer/profile", { replace: true });
+      if (res.data.user.role === "admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } else {
+        navigate("/customer/profile", { replace: true });
+      }
     } catch (err: any) {
       setApiError(err?.response?.data?.error?.message || "Invalid or expired OTP code.");
     } finally {
@@ -67,8 +71,33 @@ export const CustomerAuthContainer: React.FC = () => {
     }
   };
 
+  const handleQuickDevAdmin = () => {
+    phoneForm.setValue("phone", "9999999999");
+    otpForm.setValue("code", "123456");
+    setPhone("9999999999");
+    setStep("otp");
+  };
+
   return (
     <div className="space-y-6">
+      {/* Dev Mode Admin Shortcut Banner */}
+      <div className="p-3 bg-[#FFF3E6] border border-[#E67E22]/30 rounded-xl text-center space-y-1.5">
+        <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#E67E22]">
+          <UserCheck className="h-4 w-4" />
+          <span>Development Mode Quick Admin Access</span>
+        </div>
+        <p className="text-[11px] text-[#6E5D4F]">
+          Mobile: <code className="font-bold text-[#2C1E16]">9999999999</code> &bull; OTP: <code className="font-bold text-[#2C1E16]">123456</code>
+        </p>
+        <button
+          type="button"
+          onClick={handleQuickDevAdmin}
+          className="text-[11px] font-bold text-[#E67E22] underline hover:text-[#D35400]"
+        >
+          Auto-fill Admin Credentials
+        </button>
+      </div>
+
       {step === "phone" ? (
         <form onSubmit={phoneForm.handleSubmit(handleSendOtp)} className="space-y-4">
           <div className="text-center space-y-1">

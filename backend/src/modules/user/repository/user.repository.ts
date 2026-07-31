@@ -27,6 +27,20 @@ export class UserRepository extends BaseRepository<User> {
     });
   }
 
+  public async createAdminFromPhone(
+    phone: string,
+  ): Promise<HydratedDocument<User>> {
+    return this.create({
+      name: "Development Admin",
+      phone,
+      email: "admin@onebite.local",
+      role: "admin",
+      isVerified: true,
+      status: "active",
+      lastLogin: new Date(),
+    });
+  }
+
   public async markVerifiedLogin(
     userId: User["_id"],
   ): Promise<HydratedDocument<User> | null> {

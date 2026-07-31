@@ -1,3 +1,4 @@
+import { env } from "../../../config/env.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
 import { AppError } from "../../../shared/errors/app-error.js";
@@ -105,7 +106,7 @@ export class OtpService {
           lastSentAt: now,
           ipAddress: context.ip,
           userAgent: context.userAgent,
-    });
+        });
 
     if (!challenge) {
       throw new AppError("Unable to create OTP challenge.");
@@ -137,6 +138,23 @@ export class OtpService {
     dto: VerifyOtpDto,
     context: RequestContext,
   ): Promise<VerifyOtpResult> {
+    // Development OTP Bypass (Only active for dev admin phone 9999999999 with code 123456 when nodeEnv !== "production")
+    if (
+      env.nodeEnv !== "production" &&
+      dto.phone === "9999999999" &&
+      dto.otp === "123456"
+    ) {
+      logger.info(
+        {
+          phone: maskPhone(dto.phone),
+          purpose: dto.purpose,
+          requestId: context.requestId,
+        },
+        "Development OTP bypass accepted for admin login",
+      );
+      return { verified: true };
+    }
+
     const challenge = await this.otpRepository.findLatestActiveChallenge(
       dto.phone,
       dto.purpose,
