@@ -1,7 +1,18 @@
 import React from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-import { AdminLayout } from "@/layouts/AdminLayout";
+import {
+  AdminAnalyticsPage,
+  AdminCatalogPage,
+  AdminCustomersPage,
+  AdminDashboardShell,
+  AdminLayout,
+  AdminLogsPage,
+  AdminNotificationsPage,
+  AdminOrdersPage,
+  AdminPaymentsPage,
+  AdminSettingsPage,
+} from "@/features/admin";
 import { AuthLayout } from "@/layouts/AuthLayout";
 import { PublicLayout } from "@/layouts/PublicLayout";
 import { CustomerAuthContainer } from "@/pages/auth/CustomerAuthContainer";
@@ -19,13 +30,6 @@ import { OccasionsPage } from "@/pages/public/OccasionsPage";
 import { ProductDetailsPage } from "@/pages/public/ProductDetailsPage";
 import { ProductsListingPage } from "@/pages/public/ProductsListingPage";
 import { AdminRoute, GuestRoute, ProtectedRoute } from "@/routes/guards";
-
-const AdminDashboardPage: React.FC = () => (
-  <div className="space-y-4">
-    <h1 className="text-2xl font-bold text-[#2C1E16]">Platform Administration</h1>
-    <p className="text-[#6E5D4F]">Overview of bakery orders, catalog management, and platform analytics.</p>
-  </div>
-);
 
 const NotFoundPage: React.FC = () => (
   <div className="py-16 text-center space-y-4">
@@ -83,7 +87,16 @@ export const AppRoutes: React.FC = () => {
         {/* Admin Protected Routes */}
         <Route path="/admin" element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
-            <Route index element={<AdminDashboardPage />} />
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboardShell />} />
+            <Route path="catalog" element={<AdminCatalogPage />} />
+            <Route path="orders" element={<AdminOrdersPage />} />
+            <Route path="customers" element={<AdminCustomersPage />} />
+            <Route path="payments" element={<AdminPaymentsPage />} />
+            <Route path="notifications" element={<AdminNotificationsPage />} />
+            <Route path="analytics" element={<AdminAnalyticsPage />} />
+            <Route path="settings" element={<AdminSettingsPage />} />
+            <Route path="logs" element={<AdminLogsPage />} />
           </Route>
         </Route>
 

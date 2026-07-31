@@ -8,7 +8,7 @@ OneBite Bakery Platform
 
 ## Current Milestone
 
-Milestone 25C — Orders & Payments
+Milestone 26A — Admin Foundation
 
 Status:
 Completed
@@ -17,7 +17,7 @@ Completed
 
 ## Last Completed Milestone
 
-Milestone 25C — Orders & Payments
+Milestone 26A — Admin Foundation
 
 ---
 
@@ -105,11 +105,15 @@ main
 
 ✅ Orders & Payments Experience (Razorpay, History & Timeline Tracking)
 
+✅ Admin Foundation (Layouts, Shell, Sidebar, Topbar & Shared UI)
+
 ---
 
 ## Pending Modules
 
-⬜ Admin Dashboard Web Application
+⬜ Admin Catalog & Inventory Management Web Interface
+
+⬜ Admin Order Operations & Dispatch Web Interface
 
 ⬜ Deployment
 
