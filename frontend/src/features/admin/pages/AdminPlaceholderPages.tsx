@@ -1,12 +1,7 @@
 import React from "react";
 import { AdminEmptyState, AdminPageHeader } from "../components/AdminComponents";
 
-export const AdminCatalogPage: React.FC = () => (
-  <div className="space-y-6">
-    <AdminPageHeader title="Catalog & Product Management" description="Manage bakery products, categories, pricing, and stock." />
-    <AdminEmptyState title="Catalog Management" description="Product & Category management will be implemented in Milestone 26B." />
-  </div>
-);
+export { AdminCatalogPage } from "../catalog/AdminCatalogPage";
 
 export const AdminOrdersPage: React.FC = () => (
   <div className="space-y-6">

@@ -8,7 +8,7 @@ OneBite Bakery Platform
 
 ## Current Milestone
 
-Milestone 26A — Admin Foundation
+Milestone 26B — Admin Catalog Management
 
 Status:
 Completed
@@ -17,7 +17,7 @@ Completed
 
 ## Last Completed Milestone
 
-Milestone 26A — Admin Foundation
+Milestone 26B — Admin Catalog Management
 
 ---
 
@@ -107,11 +107,11 @@ main
 
 ✅ Admin Foundation (Layouts, Shell, Sidebar, Topbar & Shared UI)
 
+✅ Admin Catalog & Inventory Management Web Interface
+
 ---
 
 ## Pending Modules
-
-⬜ Admin Catalog & Inventory Management Web Interface
 
 ⬜ Admin Order Operations & Dispatch Web Interface
 
