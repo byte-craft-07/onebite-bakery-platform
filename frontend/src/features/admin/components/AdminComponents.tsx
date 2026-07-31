@@ -4,8 +4,9 @@ import { AlertCircle, CheckCircle2, ChevronRight, Loader2, Search } from "lucide
 import { Button } from "@/components/ui/Button";
 
 // AdminCard
-export const AdminCard: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = "" }) => (
+export const AdminCard: React.FC<{ title?: string; children: React.ReactNode; className?: string }> = ({ title, children, className = "" }) => (
   <div className={`rounded-2xl border border-[#E8E2D9] bg-white p-6 shadow-xs ${className}`}>
+    {title ? <h3 className="text-base font-bold text-[#2C1E16] mb-3">{title}</h3> : null}
     {children}
   </div>
 );
