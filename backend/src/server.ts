@@ -1,5 +1,6 @@
 import { env } from "./config/env.js";
 import { connectDatabase, disconnectDatabase } from "./db/connection.js";
+import { seedDevelopmentData } from "./db/seed.js";
 import { createApp } from "./app.js";
 import { APP_ERROR_CODES } from "./shared/constants/app-error-code.js";
 import { logger } from "./shared/utils/logger.js";
@@ -7,6 +8,7 @@ import { logger } from "./shared/utils/logger.js";
 const startServer = async (): Promise<void> => {
   try {
     await connectDatabase();
+    await seedDevelopmentData();
   } catch (error) {
     logger.error(
       { error, code: APP_ERROR_CODES.DATABASE_CONNECTION_FAILED },
