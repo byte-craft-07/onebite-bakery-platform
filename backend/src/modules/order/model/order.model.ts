@@ -17,17 +17,21 @@ import {
 
 export interface OrderItemSnapshot {
   productId: Types.ObjectId;
+  productNameSnapshot: string;
   productName: string;
   slug: string;
   categoryName?: string;
   occasionName?: string;
   productType: ProductType;
   image?: string;
+  unitPriceSnapshot: number;
   unitPrice: number;
   quantity: number;
   subtotal: number;
-  selectedVariant?: Record<string, unknown>;
+  customization?: CustomCakeConfig;
   customCakeConfig?: CustomCakeConfig;
+  comboItemsSnapshot?: string[];
+  selectedVariant?: Record<string, unknown>;
   notes?: string;
 }
 
@@ -55,10 +59,15 @@ export interface OrderPricingSnapshot {
 export interface Order extends TimestampedDocument {
   _id: Types.ObjectId;
   orderNumber: string;
+  userId?: Types.ObjectId;
   customerId: Types.ObjectId;
+  addressId?: Types.ObjectId;
   items: OrderItemSnapshot[];
   addressSnapshot?: OrderAddressSnapshot;
   pricingSnapshot: OrderPricingSnapshot;
+  subtotal: number;
+  deliveryCharge: number;
+  totalAmount: number;
   deliveryMethod: DeliveryMethod;
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
@@ -95,6 +104,7 @@ const customCakeConfigSchema = new Schema<CustomCakeConfig>(
 const orderItemSnapshotSchema = new Schema<OrderItemSnapshot>(
   {
     productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+    productNameSnapshot: { type: String, required: true, trim: true },
     productName: { type: String, required: true, trim: true },
     slug: { type: String, required: true, trim: true },
     categoryName: { type: String, trim: true, default: undefined },
@@ -105,11 +115,14 @@ const orderItemSnapshotSchema = new Schema<OrderItemSnapshot>(
       enum: ["NORMAL", "COMBO", "CUSTOM_CAKE", "DECORATION"],
     },
     image: { type: String, trim: true, default: undefined },
+    unitPriceSnapshot: { type: Number, required: true, min: 0 },
     unitPrice: { type: Number, required: true, min: 0 },
     quantity: { type: Number, required: true, min: 1 },
     subtotal: { type: Number, required: true, min: 0 },
-    selectedVariant: { type: Schema.Types.Mixed, default: undefined },
+    customization: { type: customCakeConfigSchema, default: undefined },
     customCakeConfig: { type: customCakeConfigSchema, default: undefined },
+    comboItemsSnapshot: { type: [String], default: undefined },
+    selectedVariant: { type: Schema.Types.Mixed, default: undefined },
     notes: { type: String, trim: true, maxlength: 300, default: undefined },
   },
   { _id: false },
@@ -151,10 +164,20 @@ const orderSchema = new Schema<Order>(
       trim: true,
       maxlength: 50,
     },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: undefined,
+    },
     customerId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    addressId: {
+      type: Schema.Types.ObjectId,
+      ref: "Address",
+      default: undefined,
     },
     items: {
       type: [orderItemSnapshotSchema],
@@ -167,6 +190,22 @@ const orderSchema = new Schema<Order>(
     pricingSnapshot: {
       type: orderPricingSnapshotSchema,
       required: true,
+    },
+    subtotal: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    deliveryCharge: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+    totalAmount: {
+      type: Number,
+      required: true,
+      min: 0,
     },
     deliveryMethod: {
       type: String,

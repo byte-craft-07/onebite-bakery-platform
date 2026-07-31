@@ -98,12 +98,15 @@ const createMockOrderDocument = (overrides: Partial<Order> = {}): HydratedDocume
     _id: new Types.ObjectId(),
     orderNumber: "OB-20260731-TEST01",
     customerId: new Types.ObjectId(customerId),
+    userId: new Types.ObjectId(customerId),
     items: [
       {
         productId,
+        productNameSnapshot: "Chocolate Truffle Cake",
         productName: "Chocolate Truffle Cake",
         slug: "chocolate-truffle-cake",
         productType: "NORMAL",
+        unitPriceSnapshot: 500,
         unitPrice: 500,
         quantity: 2,
         subtotal: 1000,
@@ -118,6 +121,9 @@ const createMockOrderDocument = (overrides: Partial<Order> = {}): HydratedDocume
       homeDeliveryAvailable: true,
       pickupAvailable: true,
     },
+    subtotal: 1000,
+    deliveryCharge: 50,
+    totalAmount: 1050,
     deliveryMethod: "HOME_DELIVERY",
     orderStatus: "PENDING",
     paymentStatus: "PENDING",
@@ -140,6 +146,11 @@ const createService = (
       .mockImplementation((data: Partial<Order>) =>
         Promise.resolve(createMockOrderDocument(data)),
       ),
+    createOrder: vi
+      .fn()
+      .mockImplementation((data: Partial<Order>) =>
+        Promise.resolve(createMockOrderDocument(data)),
+      ),
     findById: vi.fn().mockResolvedValue(createMockOrderDocument()),
     findByOrderNumber: vi.fn().mockResolvedValue(createMockOrderDocument()),
     findCustomerOrders: vi.fn().mockResolvedValue({
@@ -149,6 +160,16 @@ const createService = (
       limit: 20,
       totalPages: 1,
     }),
+    updateStatus: vi
+      .fn()
+      .mockImplementation((_id, status, reason) =>
+        Promise.resolve(
+          createMockOrderDocument({
+            orderStatus: status,
+            ...(reason ? { cancellationReason: reason } : {}),
+          }),
+        ),
+      ),
     findAllOrders: vi.fn().mockResolvedValue({
       items: [createMockOrderDocument()],
       total: 1,
@@ -200,7 +221,7 @@ describe("OrderService", () => {
         userId: new Types.ObjectId(customerId),
         fullName: "Jane Doe",
         phone: "9876543210",
-        street: "123 Baker Street",
+        address: "123 Baker Street",
         city: "Mumbai",
         state: "Maharashtra",
         pincode: "400001",
@@ -246,9 +267,10 @@ describe("OrderService", () => {
 
     expect(order.deliveryMethod).toBe("HOME_DELIVERY");
     expect(order.orderStatus).toBe("PENDING");
+    expect(order.paymentStatus).toBe("PENDING");
     expect(order.items).toHaveLength(1);
     expect(order.addressSnapshot?.city).toBe("Mumbai");
-    expect(orderRepository.create).toHaveBeenCalledOnce();
+    expect(orderRepository.createOrder).toHaveBeenCalledOnce();
     expect(cartService.clearCart).toHaveBeenCalledWith(customerId);
   });
 
@@ -265,11 +287,11 @@ describe("OrderService", () => {
 
     expect(order.deliveryMethod).toBe("STORE_PICKUP");
     expect(order.addressSnapshot).toBeUndefined();
-    expect(orderRepository.create).toHaveBeenCalledOnce();
+    expect(orderRepository.createOrder).toHaveBeenCalledOnce();
   });
 
-  it("rejects order creation when cart is empty", async () => {
-    const { service } = createService(
+  it("preserves cart when order creation fails due to empty cart", async () => {
+    const { service, cartService } = createService(
       {},
       {
         getOrCreateCartDocument: vi.fn().mockResolvedValue({
@@ -286,6 +308,8 @@ describe("OrderService", () => {
         context,
       ),
     ).rejects.toBeInstanceOf(AppError);
+
+    expect(cartService.clearCart).not.toHaveBeenCalled();
   });
 
   it("rejects home delivery when cart homeDeliveryAvailable is false", async () => {
@@ -314,6 +338,7 @@ describe("OrderService", () => {
       findById: vi.fn().mockResolvedValue(
         createMockOrderDocument({
           customerId: new Types.ObjectId(otherCustomerId),
+          userId: new Types.ObjectId(otherCustomerId),
         }),
       ),
     });
@@ -325,7 +350,7 @@ describe("OrderService", () => {
 
   it("allows customer order cancellation when status is PENDING", async () => {
     const mockOrder = createMockOrderDocument({ orderStatus: "PENDING" });
-    const { service } = createService({
+    const { service, orderRepository } = createService({
       findById: vi.fn().mockResolvedValue(mockOrder),
     });
 
@@ -337,7 +362,7 @@ describe("OrderService", () => {
     );
 
     expect(cancelledOrder.orderStatus).toBe("CANCELLED");
-    expect(mockOrder.save).toHaveBeenCalledOnce();
+    expect(orderRepository.updateStatus).toHaveBeenCalledOnce();
   });
 
   it("rejects customer order cancellation when status is PREPARING", async () => {
@@ -391,9 +416,11 @@ describe("OrderService", () => {
       items: [
         {
           productId,
+          productNameSnapshot: "Chocolate Truffle Cake",
           productName: "Chocolate Truffle Cake",
           slug: "chocolate-truffle-cake",
           productType: "NORMAL",
+          unitPriceSnapshot: 500,
           unitPrice: 500,
           quantity: 1,
           subtotal: 500,

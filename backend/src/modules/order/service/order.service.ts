@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { HydratedDocument, Types } from "mongoose";
+import type { HydratedDocument } from "mongoose";
 
 import { toObjectId } from "../../../db/utils/object-id.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
@@ -11,10 +11,8 @@ import { CartRepository, CartService } from "../../cart/index.js";
 import { CategoryModel } from "../../category/index.js";
 import { OccasionModel } from "../../occasion/index.js";
 import { ProductModel } from "../../product/index.js";
-import { SettingsModel } from "../../settings/index.js";
 import {
   VALID_STATUS_TRANSITIONS,
-  type OrderStatus,
 } from "../constants/index.js";
 import type {
   CancelOrderDto,
@@ -24,7 +22,6 @@ import type {
   UpdateReadyTimeDto,
 } from "../dto/index.js";
 import {
-  OrderModel,
   type Order,
   type OrderAddressSnapshot,
   type OrderItemSnapshot,
@@ -50,7 +47,7 @@ export class OrderService {
   ): Promise<OrderResponse> {
     const customerObjId = toObjectId(customerId);
 
-    // 1. Fetch & Validate Cart
+    // 1. Read & Validate Cart
     const cart = await this.cartService.getOrCreateCartDocument(customerId);
     await this.cartService.recalculateCart(cart);
 
@@ -125,7 +122,7 @@ export class OrderService {
       }
     }
 
-    // 3. Create Immutable Order Items Snapshot
+    // 3. Create Immutable Order Item Snapshots
     const orderItemSnapshots: OrderItemSnapshot[] = [];
 
     for (const cartItem of cart.items) {
@@ -169,8 +166,11 @@ export class OrderService {
         if (occ) occasionName = occ.name;
       }
 
+      const customization = cartItem.customization ?? cartItem.customCakeConfig;
+
       orderItemSnapshots.push({
         productId: product._id,
+        productNameSnapshot: product.name,
         productName: product.name,
         slug: product.slug,
         ...(categoryName ? { categoryName } : {}),
@@ -181,51 +181,55 @@ export class OrderService {
           : product.imageUrls[0]
           ? { image: product.imageUrls[0] }
           : {}),
+        unitPriceSnapshot: product.price,
         unitPrice: product.price,
         quantity: cartItem.quantity,
         subtotal: product.price * cartItem.quantity,
+        ...(customization ? { customization, customCakeConfig: customization } : {}),
         ...(cartItem.selectedVariant
           ? { selectedVariant: cartItem.selectedVariant }
-          : {}),
-        ...(cartItem.customCakeConfig
-          ? { customCakeConfig: cartItem.customCakeConfig }
           : {}),
         ...(cartItem.notes ? { notes: cartItem.notes } : {}),
       });
     }
 
     // 4. Pricing Snapshot
+    const deliveryCharge =
+      dto.deliveryMethod === "HOME_DELIVERY"
+        ? cart.estimatedDeliveryCharge
+        : 0;
+
+    const subtotal = cart.subtotal;
+    const grandTotal =
+      subtotal - cart.estimatedDiscount + cart.estimatedTax + deliveryCharge;
+
     const pricingSnapshot: OrderPricingSnapshot = {
-      subtotal: cart.subtotal,
+      subtotal,
       tax: cart.estimatedTax,
-      deliveryCharge:
-        dto.deliveryMethod === "HOME_DELIVERY"
-          ? cart.estimatedDeliveryCharge
-          : 0,
+      deliveryCharge,
       discount: cart.estimatedDiscount,
-      grandTotal:
-        cart.subtotal -
-        cart.estimatedDiscount +
-        cart.estimatedTax +
-        (dto.deliveryMethod === "HOME_DELIVERY"
-          ? cart.estimatedDeliveryCharge
-          : 0),
+      grandTotal,
       homeDeliveryAvailable: cart.homeDeliveryAvailable,
       pickupAvailable: cart.pickupAvailable,
     };
 
-    // 5. Generate Order Number
+    // 5. Generate Human-Readable Unique Order Number (OB-YYYYMMDD-XXXXXX)
     const datePrefix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const randomSuffix = crypto.randomBytes(3).toString("hex").toUpperCase();
     const orderNumber = `OB-${datePrefix}-${randomSuffix}`;
 
     // 6. Persist Order Document
-    const order = await this.orderRepository.create({
+    const order = await this.orderRepository.createOrder({
       orderNumber,
+      userId: customerObjId,
       customerId: customerObjId,
+      ...(addressSnapshot?.addressId ? { addressId: addressSnapshot.addressId } : {}),
       items: orderItemSnapshots,
       ...(addressSnapshot ? { addressSnapshot } : {}),
       pricingSnapshot,
+      subtotal,
+      deliveryCharge,
+      totalAmount: grandTotal,
       deliveryMethod: dto.deliveryMethod,
       orderStatus: "PENDING",
       paymentStatus: "PENDING",
@@ -234,10 +238,17 @@ export class OrderService {
       ...(dto.scheduledTimeSlot ? { scheduledTimeSlot: dto.scheduledTimeSlot } : {}),
     });
 
-    // 7. Clear Customer Cart post order creation
+    // 7. Clear Customer Cart only after successful order creation
     await this.cartService.clearCart(customerId);
 
     return this.toResponse(order);
+  }
+
+  public async getOrder(
+    customerId: string,
+    orderId: string,
+  ): Promise<OrderResponse> {
+    return this.getCustomerOrderById(customerId, orderId);
   }
 
   public async getCustomerOrders(
@@ -271,6 +282,14 @@ export class OrderService {
     };
   }
 
+  public async listCustomerOrders(
+    customerId: string,
+    page = 1,
+    limit = 20,
+  ) {
+    return this.getCustomerOrders(customerId, page, limit);
+  }
+
   public async getCustomerOrderById(
     customerId: string,
     orderId: string,
@@ -282,7 +301,10 @@ export class OrderService {
       throw this.createNotFoundError();
     }
 
-    if (order.customerId.toString() !== customerId) {
+    if (
+      order.customerId.toString() !== customerId &&
+      order.userId?.toString() !== customerId
+    ) {
       throw new AppError(
         "You are not authorized to view this order.",
         HTTP_STATUS.FORBIDDEN,
@@ -295,11 +317,20 @@ export class OrderService {
     return this.toResponse(order);
   }
 
-  public async cancelCustomerOrder(
+  public async cancelOrder(
     customerId: string,
     orderId: string,
     dto: CancelOrderDto,
     context: RequestContext,
+  ): Promise<OrderResponse> {
+    return this.cancelCustomerOrder(customerId, orderId, dto, context);
+  }
+
+  public async cancelCustomerOrder(
+    customerId: string,
+    orderId: string,
+    dto: CancelOrderDto,
+    _context: RequestContext,
   ): Promise<OrderResponse> {
     const orderObjId = toObjectId(orderId);
     const order = await this.orderRepository.findById(orderObjId);
@@ -308,7 +339,10 @@ export class OrderService {
       throw this.createNotFoundError();
     }
 
-    if (order.customerId.toString() !== customerId) {
+    if (
+      order.customerId.toString() !== customerId &&
+      order.userId?.toString() !== customerId
+    ) {
       throw new AppError(
         "You are not authorized to cancel this order.",
         HTTP_STATUS.FORBIDDEN,
@@ -328,14 +362,18 @@ export class OrderService {
       );
     }
 
-    order.orderStatus = "CANCELLED";
-    order.cancellationReason = dto.cancellationReason ?? "Cancelled by customer";
-    order.cancelledBy = toObjectId(customerId);
-    order.cancelledAt = new Date();
+    const updated = await this.orderRepository.updateStatus(
+      orderObjId,
+      "CANCELLED",
+      dto.cancellationReason ?? "Cancelled by customer",
+      toObjectId(customerId),
+    );
 
-    await order.save();
+    if (!updated) {
+      throw this.createNotFoundError();
+    }
 
-    return this.toResponse(order);
+    return this.toResponse(updated);
   }
 
   public async reorder(
@@ -349,7 +387,10 @@ export class OrderService {
       throw this.createNotFoundError();
     }
 
-    if (order.customerId.toString() !== customerId) {
+    if (
+      order.customerId.toString() !== customerId &&
+      order.userId?.toString() !== customerId
+    ) {
       throw new AppError(
         "You are not authorized to reorder items from this order.",
         HTTP_STATUS.FORBIDDEN,
@@ -389,8 +430,8 @@ export class OrderService {
           ...(item.selectedVariant
             ? { selectedVariant: item.selectedVariant }
             : {}),
-          ...(item.customCakeConfig
-            ? { customCakeConfig: item.customCakeConfig }
+          ...(item.customization ?? item.customCakeConfig
+            ? { customization: item.customization ?? item.customCakeConfig }
             : {}),
           ...(item.notes ? { notes: item.notes } : {}),
         });
@@ -471,18 +512,19 @@ export class OrderService {
       }
     }
 
-    order.orderStatus = nextStatus;
+    const cancelledBy = context.userId ? toObjectId(context.userId) : undefined;
+    const updated = await this.orderRepository.updateStatus(
+      orderObjId,
+      nextStatus,
+      dto.cancellationReason,
+      cancelledBy,
+    );
 
-    if (nextStatus === "CANCELLED") {
-      order.cancellationReason =
-        dto.cancellationReason ?? "Cancelled by store owner";
-      order.cancelledBy = context.userId ? toObjectId(context.userId) : undefined;
-      order.cancelledAt = new Date();
+    if (!updated) {
+      throw this.createNotFoundError();
     }
 
-    await order.save();
-
-    return this.toResponse(order);
+    return this.toResponse(updated);
   }
 
   public async adminUpdateReadyTime(

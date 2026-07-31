@@ -3,9 +3,11 @@ export const ORDER_STATUSES = [
   "CONFIRMED",
   "PREPARING",
   "READY",
+  "READY_FOR_PICKUP",
   "OUT_FOR_DELIVERY",
   "DELIVERED",
   "CANCELLED",
+  "REFUNDED",
 ] as const;
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
@@ -27,9 +29,11 @@ export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
 export const VALID_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   PENDING: ["CONFIRMED", "CANCELLED"],
   CONFIRMED: ["PREPARING", "CANCELLED"],
-  PREPARING: ["READY", "CANCELLED"],
+  PREPARING: ["READY", "READY_FOR_PICKUP", "CANCELLED"],
   READY: ["OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"],
+  READY_FOR_PICKUP: ["DELIVERED", "CANCELLED"],
   OUT_FOR_DELIVERY: ["DELIVERED", "CANCELLED"],
-  DELIVERED: [],
-  CANCELLED: [],
+  DELIVERED: ["REFUNDED"],
+  CANCELLED: ["REFUNDED"],
+  REFUNDED: [],
 };

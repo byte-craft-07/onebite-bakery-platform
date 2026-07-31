@@ -8,7 +8,7 @@ OneBite Bakery Platform
 
 ## Current Milestone
 
-Milestone 13 — Checkout Foundation
+Milestone 14 — Order Creation & Order Lifecycle Foundation
 
 Status:
 Completed
@@ -17,7 +17,7 @@ Completed
 
 ## Last Completed Milestone
 
-Milestone 13 — Checkout Foundation
+Milestone 14 — Order Creation & Order Lifecycle Foundation
 
 ---
 
@@ -76,6 +76,8 @@ main
 ✅ Cart Module Foundation
 
 ✅ Checkout Foundation
+
+✅ Order Creation & Order Lifecycle Foundation
 
 ---
 
