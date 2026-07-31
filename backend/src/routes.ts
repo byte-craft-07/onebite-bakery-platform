@@ -7,12 +7,13 @@ import {
   categoryRouter,
   checkoutRouter,
   favoriteRouter,
-  healthRouter,
   mediaRouter,
   notificationRouter,
   occasionRouter,
   orderRouter,
   paymentRouter,
+  platformHealthRouter,
+  platformRouter,
   productRouter,
   reviewRouter,
   searchRouter,
@@ -36,9 +37,10 @@ apiRoutes.use(ROUTES.CART, cartRouter);
 apiRoutes.use(ROUTES.CHECKOUT, checkoutRouter);
 apiRoutes.use(ROUTES.ORDER, orderRouter);
 apiRoutes.use(ROUTES.PAYMENT, paymentRouter);
+apiRoutes.use(ROUTES.PLATFORM, platformRouter);
 apiRoutes.use(ROUTES.REVIEW, reviewRouter);
 apiRoutes.use(ROUTES.FAVORITE, favoriteRouter);
 apiRoutes.use(ROUTES.SETTINGS, settingsRouter);
 apiRoutes.use(ROUTES.UPLOAD, uploadRouter);
 apiRoutes.use(ROUTES.SEARCH, searchRouter);
-apiRoutes.use(ROUTES.HEALTH, healthRouter);
+apiRoutes.use(ROUTES.HEALTH, platformHealthRouter);

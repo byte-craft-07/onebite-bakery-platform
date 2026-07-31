@@ -1,0 +1,27 @@
+export const AUDIT_ACTIONS = [
+  "ADMIN_LOGIN",
+  "ADMIN_LOGOUT",
+  "PRODUCT_CREATE",
+  "PRODUCT_UPDATE",
+  "PRODUCT_DELETE",
+  "CATEGORY_CREATE",
+  "CATEGORY_UPDATE",
+  "SETTINGS_UPDATE",
+  "ORDER_STATUS_UPDATE",
+  "PAYMENT_STATUS_UPDATE",
+  "USER_MANAGEMENT",
+] as const;
+
+export type AuditAction = (typeof AUDIT_ACTIONS)[number];
+
+export const ACTIVITY_ACTIONS = [
+  "LOGIN",
+  "ORDER_CREATED",
+  "PAYMENT_ATTEMPT",
+  "ADDRESS_UPDATE",
+  "PROFILE_UPDATE",
+  "SEARCH",
+  "CART_UPDATE",
+] as const;
+
+export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];

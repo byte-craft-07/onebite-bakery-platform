@@ -10,6 +10,7 @@ export { notificationRouter } from "./notification/index.js";
 export { occasionRouter } from "./occasion/index.js";
 export { orderRouter } from "./order/index.js";
 export { paymentRouter } from "./payment/index.js";
+export { platformHealthRouter, platformRouter } from "./platform/index.js";
 export { productRouter } from "./product/index.js";
 export { reviewRouter } from "./review/index.js";
 export { searchRouter } from "./search/index.js";

@@ -11,6 +11,7 @@ export const ROUTES = {
   OCCASION: "/occasions",
   ORDER: "/orders",
   PAYMENT: "/payments",
+  PLATFORM: "/platform",
   PRODUCT: "/products",
   REVIEW: "/reviews",
   SEARCH: "/search",
