@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useParams, useLocation } from "react-router-dom";
 import { Search } from "lucide-react";
 
 import { ProductCard } from "@/components/cards/ProductCard";
@@ -12,10 +13,18 @@ import {
 } from "@/services/catalog.service";
 
 export const ProductsListingPage: React.FC = () => {
+  const { slug } = useParams<{ slug?: string }>();
+  const location = useLocation();
+
+  const isCategoryPath = location.pathname.startsWith("/categories");
+  const isOccasionPath = location.pathname.startsWith("/occasions");
+
   const [filters, setFilters] = useState<SearchProductsQueryParams>({
     page: 1,
     limit: 12,
     sort: "relevance",
+    category: isCategoryPath ? slug : undefined,
+    occasion: isOccasionPath ? slug : undefined,
   });
 
   const [products, setProducts] = useState<ProductItem[]>([]);
@@ -26,6 +35,15 @@ export const ProductsListingPage: React.FC = () => {
   useEffect(() => {
     catalogService.getCategories().then(setCategories).catch(() => setCategories([]));
   }, []);
+
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      category: isCategoryPath ? slug : undefined,
+      occasion: isOccasionPath ? slug : undefined,
+      page: 1,
+    }));
+  }, [slug, isCategoryPath, isOccasionPath]);
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -48,11 +66,17 @@ export const ProductsListingPage: React.FC = () => {
     setFilters({ page: 1, limit: 12, sort: "relevance" });
   };
 
+  const titleText = isCategoryPath && slug
+    ? `Category: ${slug.replace(/-/g, " ").toUpperCase()}`
+    : isOccasionPath && slug
+    ? `Occasion: ${slug.replace(/-/g, " ").toUpperCase()}`
+    : "Our Bakery Catalog";
+
   return (
     <div className="space-y-10 pb-16">
       {/* Header Banner */}
       <div className="rounded-3xl bg-[#FFF3E6] border border-[#E8E2D9] p-10 text-center space-y-3">
-        <h1 className="text-4xl font-extrabold text-[#2C1E16]">Our Bakery Catalog</h1>
+        <h1 className="text-4xl font-extrabold text-[#2C1E16] capitalize">{titleText}</h1>
         <p className="text-sm text-[#6E5D4F] max-w-xl mx-auto">
           Explore our complete selection of freshly baked cakes, pastries, sourdough breads, and hampers.
         </p>
@@ -110,7 +134,7 @@ export const ProductsListingPage: React.FC = () => {
                         className={`h-9 w-9 rounded-lg text-xs font-bold transition-colors ${
                           pagination.page === pageNum
                             ? "bg-[#E67E22] text-white"
-                            : "border border-[#E8E2D9] bg-white text-[#2C1E16] hover:bg-[#F9F6F0]"
+                            : "border border-[#E8E2D9] bg-[#FFFBF5] text-[#2C1E16] hover:bg-[#F9F6F0]"
                         }`}
                       >
                         {pageNum}
@@ -123,7 +147,7 @@ export const ProductsListingPage: React.FC = () => {
           ) : (
             <EmptyState
               title="No Products Found"
-              description="We couldn't find any products matching your search or filters."
+              description="We couldn't find any products matching your search or selected category/occasion."
               action={
                 <button
                   onClick={handleResetFilters}
