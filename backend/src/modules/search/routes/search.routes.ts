@@ -18,3 +18,9 @@ searchRouter.get(
   validateRequest({ query: searchQuerySchema }),
   asyncHandler(searchController.search),
 );
+
+searchRouter.get(
+  "/products",
+  validateRequest({ query: searchQuerySchema }),
+  asyncHandler(searchController.searchProducts),
+);

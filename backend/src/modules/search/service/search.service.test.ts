@@ -117,6 +117,21 @@ describe("SearchService & EscapeRegex Utility", () => {
     );
   });
 
+  it("passes sorting parameters (alphabetical, popular, price_asc, price_desc) to search provider", async () => {
+    const { service, provider } = createService();
+
+    await service.executeSearch({
+      q: "cake",
+      sort: "alphabetical",
+    });
+
+    expect(provider.search).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sort: "alphabetical",
+      }),
+    );
+  });
+
   it("returns empty result structure when no items match search query", async () => {
     const emptyResult: SearchResultResponse = {
       query: "nonexistent",

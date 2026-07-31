@@ -10,7 +10,9 @@ export type SearchSortOption =
   | "price-desc"
   | "featured"
   | "trending"
-  | "recommended";
+  | "recommended"
+  | "popular"
+  | "alphabetical";
 
 export interface SearchQueryDto {
   q?: string;

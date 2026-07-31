@@ -2,7 +2,8 @@ import type { FilterQuery, Types } from "mongoose";
 
 import { CategoryModel } from "../../category/index.js";
 import { OccasionModel } from "../../occasion/index.js";
-import { ProductModel, type Product } from "../../product/index.js";
+import { type Product } from "../../product/index.js";
+import { SearchRepository } from "../repository/index.js";
 import type {
   MatchedCategoryItem,
   MatchedOccasionItem,
@@ -18,6 +19,12 @@ export function escapeRegex(text: string): string {
 
 export class MongoSearchProvider implements SearchProvider {
   public readonly providerName = "MONGO";
+
+  private readonly searchRepository: SearchRepository;
+
+  public constructor(searchRepository?: SearchRepository) {
+    this.searchRepository = searchRepository ?? new SearchRepository();
+  }
 
   public async search(query: SearchQueryDto): Promise<SearchResultResponse> {
     const rawSearchText = (query.query ?? query.q ?? "").trim();
@@ -93,6 +100,8 @@ export class MongoSearchProvider implements SearchProvider {
         { name: searchRegex },
         { description: searchRegex },
         { shortDescription: searchRegex },
+        { sku: searchRegex },
+        { tags: searchRegex },
         { seoKeywords: searchRegex },
         { seoTitle: searchRegex },
       ];
@@ -202,14 +211,8 @@ export class MongoSearchProvider implements SearchProvider {
     const sortOption = this.resolveSortOption(query.sort);
 
     const [products, total] = await Promise.all([
-      ProductModel.find(filter)
-        .select("-costPrice -deletedAt -deletedBy -__v")
-        .sort(sortOption)
-        .skip(skip)
-        .limit(limit)
-        .lean()
-        .exec(),
-      ProductModel.countDocuments(filter).exec(),
+      this.searchRepository.searchProducts(filter, sortOption, skip, limit),
+      this.searchRepository.countProducts(filter),
     ]);
 
     const totalPages = Math.ceil(total / limit) || 1;
@@ -285,10 +288,13 @@ export class MongoSearchProvider implements SearchProvider {
       case "price_desc":
       case "price-desc":
         return { price: -1, _id: 1 };
+      case "alphabetical":
+        return { name: 1 };
+      case "popular":
+      case "trending":
+        return { isTrending: -1, isFeatured: -1, displayOrder: 1 };
       case "featured":
         return { isFeatured: -1, displayOrder: 1, createdAt: -1 };
-      case "trending":
-        return { isTrending: -1, displayOrder: 1, createdAt: -1 };
       case "recommended":
         return { isRecommended: -1, displayOrder: 1, createdAt: -1 };
       case "relevance":

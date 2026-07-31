@@ -32,6 +32,8 @@ export const searchQuerySchema = z
         "featured",
         "trending",
         "recommended",
+        "popular",
+        "alphabetical",
       ])
       .default("relevance"),
     category: z.string().trim().min(1).optional(),

@@ -8,7 +8,7 @@ OneBite Bakery Platform
 
 ## Current Milestone
 
-Milestone 16 — Media Upload System Foundation
+Milestone 17 — Search & Discovery Foundation
 
 Status:
 Completed
@@ -17,7 +17,7 @@ Completed
 
 ## Last Completed Milestone
 
-Milestone 16 — Media Upload System Foundation
+Milestone 17 — Search & Discovery Foundation
 
 ---
 
@@ -82,6 +82,8 @@ main
 ✅ Payment Integration Foundation
 
 ✅ Media Upload System Foundation
+
+✅ Search & Discovery Foundation
 
 ---
 

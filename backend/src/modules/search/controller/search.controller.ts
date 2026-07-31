@@ -24,4 +24,11 @@ export class SearchController {
       data: result,
     });
   };
+
+  public searchProducts = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    return this.search(request, response);
+  };
 }
