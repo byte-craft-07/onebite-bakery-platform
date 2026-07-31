@@ -8,7 +8,7 @@ OneBite Bakery Platform
 
 ## Current Milestone
 
-Milestone 12 — Cart Module Foundation
+Milestone 13 — Checkout Foundation
 
 Status:
 Completed
@@ -17,7 +17,7 @@ Completed
 
 ## Last Completed Milestone
 
-Milestone 12 — Cart Module Foundation
+Milestone 13 — Checkout Foundation
 
 ---
 
@@ -74,6 +74,8 @@ main
 ✅ Order Management System
 
 ✅ Cart Module Foundation
+
+✅ Checkout Foundation
 
 ---
 

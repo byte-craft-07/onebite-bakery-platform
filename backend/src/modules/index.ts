@@ -2,6 +2,7 @@ export { addressRouter } from "./address/index.js";
 export { authRouter } from "./auth/index.js";
 export { cartRouter } from "./cart/index.js";
 export { categoryRouter } from "./category/index.js";
+export { checkoutRouter } from "./checkout/index.js";
 export { favoriteRouter } from "./favorite/index.js";
 export { healthRouter } from "./health/index.js";
 export { occasionRouter } from "./occasion/index.js";

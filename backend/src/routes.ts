@@ -5,6 +5,7 @@ import {
   authRouter,
   cartRouter,
   categoryRouter,
+  checkoutRouter,
   favoriteRouter,
   healthRouter,
   occasionRouter,
@@ -28,6 +29,7 @@ apiRoutes.use(ROUTES.CATEGORY, categoryRouter);
 apiRoutes.use(ROUTES.OCCASION, occasionRouter);
 apiRoutes.use(ROUTES.MEDIA, uploadRouter);
 apiRoutes.use(ROUTES.CART, cartRouter);
+apiRoutes.use(ROUTES.CHECKOUT, checkoutRouter);
 apiRoutes.use(ROUTES.ORDER, orderRouter);
 apiRoutes.use(ROUTES.REVIEW, reviewRouter);
 apiRoutes.use(ROUTES.FAVORITE, favoriteRouter);
