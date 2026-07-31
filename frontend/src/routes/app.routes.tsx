@@ -9,6 +9,9 @@ import { SessionExpiredPage, UnauthorizedPage } from "@/pages/auth/StatusPages";
 import { CartPage } from "@/pages/customer/CartPage";
 import { CheckoutPage } from "@/pages/customer/CheckoutPage";
 import { CustomerProfilePage } from "@/pages/customer/CustomerProfilePage";
+import { FavoritesPage } from "@/pages/customer/FavoritesPage";
+import { OrderDetailsPage, OrdersHistoryPage } from "@/pages/customer/OrdersPages";
+import { OrderFailurePage, OrderSuccessPage, PaymentPage } from "@/pages/customer/PaymentPages";
 import { CategoriesPage } from "@/pages/public/CategoriesPage";
 import { HomePage } from "@/pages/public/HomePage";
 import { AboutPage, ContactPage } from "@/pages/public/InformationPages";
@@ -45,16 +48,25 @@ export const AppRoutes: React.FC = () => {
           <Route path="about" element={<AboutPage />} />
           <Route path="contact" element={<ContactPage />} />
 
-          {/* Cart & Checkout Routes */}
+          {/* Cart Route */}
           <Route path="cart" element={<CartPage />} />
 
-          {/* Protected Customer Routes */}
+          {/* Protected Customer Account & Order Routes */}
           <Route path="customer" element={<ProtectedRoute />}>
             <Route path="profile" element={<CustomerProfilePage />} />
+            <Route path="orders" element={<OrdersHistoryPage />} />
+            <Route path="orders/:id" element={<OrderDetailsPage />} />
+            <Route path="favorites" element={<FavoritesPage />} />
           </Route>
+
           <Route path="checkout" element={<ProtectedRoute />}>
             <Route index element={<CheckoutPage />} />
           </Route>
+          <Route path="payment/:orderId" element={<ProtectedRoute />}>
+            <Route index element={<PaymentPage />} />
+          </Route>
+          <Route path="order/success/:orderId" element={<OrderSuccessPage />} />
+          <Route path="order/failure/:orderId" element={<OrderFailurePage />} />
         </Route>
 
         {/* Guest Auth Routes */}

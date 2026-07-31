@@ -8,7 +8,7 @@ OneBite Bakery Platform
 
 ## Current Milestone
 
-Milestone 25B — Shopping Experience
+Milestone 25C — Orders & Payments
 
 Status:
 Completed
@@ -17,7 +17,7 @@ Completed
 
 ## Last Completed Milestone
 
-Milestone 25B — Shopping Experience
+Milestone 25C — Orders & Payments
 
 ---
 
@@ -102,6 +102,8 @@ main
 ✅ Product Discovery Experience (Frontend & Search Integration)
 
 ✅ Shopping Experience (Cart, Checkout & Order Creation)
+
+✅ Orders & Payments Experience (Razorpay, History & Timeline Tracking)
 
 ---
 
