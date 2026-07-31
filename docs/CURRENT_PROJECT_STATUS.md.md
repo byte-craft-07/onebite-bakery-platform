@@ -8,7 +8,7 @@ OneBite Bakery Platform
 
 ## Current Milestone
 
-Milestone 15 — Payment Integration Foundation
+Milestone 16 — Media Upload System Foundation
 
 Status:
 Completed
@@ -17,7 +17,7 @@ Completed
 
 ## Last Completed Milestone
 
-Milestone 15 — Payment Integration Foundation
+Milestone 16 — Media Upload System Foundation
 
 ---
 
@@ -80,6 +80,8 @@ main
 ✅ Order Creation & Order Lifecycle Foundation
 
 ✅ Payment Integration Foundation
+
+✅ Media Upload System Foundation
 
 ---
 

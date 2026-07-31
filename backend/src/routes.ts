@@ -8,6 +8,7 @@ import {
   checkoutRouter,
   favoriteRouter,
   healthRouter,
+  mediaRouter,
   occasionRouter,
   orderRouter,
   paymentRouter,
@@ -28,7 +29,7 @@ apiRoutes.use(ROUTES.ADDRESS, addressRouter);
 apiRoutes.use(ROUTES.PRODUCT, productRouter);
 apiRoutes.use(ROUTES.CATEGORY, categoryRouter);
 apiRoutes.use(ROUTES.OCCASION, occasionRouter);
-apiRoutes.use(ROUTES.MEDIA, uploadRouter);
+apiRoutes.use(ROUTES.MEDIA, mediaRouter);
 apiRoutes.use(ROUTES.CART, cartRouter);
 apiRoutes.use(ROUTES.CHECKOUT, checkoutRouter);
 apiRoutes.use(ROUTES.ORDER, orderRouter);
