@@ -8,7 +8,7 @@ OneBite Bakery Platform
 
 ## Current Milestone
 
-Milestone 20 — Backend Stabilization & Release Readiness
+Milestone 21 — Frontend Planning Sprint & Design Foundation
 
 Status:
 Completed
@@ -17,7 +17,7 @@ Completed
 
 ## Last Completed Milestone
 
-Milestone 20 — Backend Stabilization & Release Readiness
+Milestone 21 — Frontend Planning Sprint & Design Foundation
 
 ---
 
@@ -91,17 +91,13 @@ main
 
 ✅ Backend Stabilization & Release Readiness
 
+✅ Frontend Planning Sprint & Design Foundation
+
 ---
 
 ## Pending Modules
 
-⬜ Reviews
-
-⬜ Favorites
-
-⬜ Dashboard
-
-⬜ Frontend
+⬜ Frontend Implementation
 
 ⬜ Deployment
 
