@@ -7,6 +7,7 @@ export { favoriteRouter } from "./favorite/index.js";
 export { healthRouter } from "./health/index.js";
 export { occasionRouter } from "./occasion/index.js";
 export { orderRouter } from "./order/index.js";
+export { paymentRouter } from "./payment/index.js";
 export { productRouter } from "./product/index.js";
 export { reviewRouter } from "./review/index.js";
 export { searchRouter } from "./search/index.js";

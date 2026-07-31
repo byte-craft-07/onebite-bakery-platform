@@ -9,6 +9,7 @@ export const ROUTES = {
   MEDIA: "/media",
   OCCASION: "/occasions",
   ORDER: "/orders",
+  PAYMENT: "/payments",
   PRODUCT: "/products",
   REVIEW: "/reviews",
   SEARCH: "/search",

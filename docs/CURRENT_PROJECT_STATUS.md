@@ -8,7 +8,7 @@ OneBite Bakery Platform
 
 ## Current Milestone
 
-Milestone 14 — Order Creation & Order Lifecycle Foundation
+Milestone 15 — Payment Integration Foundation
 
 Status:
 Completed
@@ -17,7 +17,7 @@ Completed
 
 ## Last Completed Milestone
 
-Milestone 14 — Order Creation & Order Lifecycle Foundation
+Milestone 15 — Payment Integration Foundation
 
 ---
 
@@ -79,11 +79,11 @@ main
 
 ✅ Order Creation & Order Lifecycle Foundation
 
+✅ Payment Integration Foundation
+
 ---
 
 ## Pending Modules
-
-⬜ Payment Gateway Integration
 
 ⬜ Reviews
 

@@ -10,6 +10,7 @@ import {
   healthRouter,
   occasionRouter,
   orderRouter,
+  paymentRouter,
   productRouter,
   reviewRouter,
   searchRouter,
@@ -31,6 +32,7 @@ apiRoutes.use(ROUTES.MEDIA, uploadRouter);
 apiRoutes.use(ROUTES.CART, cartRouter);
 apiRoutes.use(ROUTES.CHECKOUT, checkoutRouter);
 apiRoutes.use(ROUTES.ORDER, orderRouter);
+apiRoutes.use(ROUTES.PAYMENT, paymentRouter);
 apiRoutes.use(ROUTES.REVIEW, reviewRouter);
 apiRoutes.use(ROUTES.FAVORITE, favoriteRouter);
 apiRoutes.use(ROUTES.SETTINGS, settingsRouter);
