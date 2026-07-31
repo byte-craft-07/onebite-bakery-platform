@@ -8,7 +8,7 @@ OneBite Bakery Platform
 
 ## Current Milestone
 
-Milestone 22 — Frontend Foundation & Design System Implementation
+Milestone 23 — Customer Website Foundation (Public Experience)
 
 Status:
 Completed
@@ -17,7 +17,7 @@ Completed
 
 ## Last Completed Milestone
 
-Milestone 22 — Frontend Foundation & Design System Implementation
+Milestone 23 — Customer Website Foundation (Public Experience)
 
 ---
 
@@ -95,11 +95,13 @@ main
 
 ✅ Frontend Foundation & Design System Implementation
 
+✅ Customer Website Foundation (Public Experience)
+
 ---
 
 ## Pending Modules
 
-⬜ Customer Facing Web Application (Pages & Journeys)
+⬜ Customer Facing Web Application (Interactive Cart & Checkout)
 
 ⬜ Admin Dashboard Web Application
 

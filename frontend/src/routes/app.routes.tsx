@@ -4,16 +4,13 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { AuthLayout } from "@/layouts/AuthLayout";
 import { PublicLayout } from "@/layouts/PublicLayout";
+import { CategoriesPage } from "@/pages/public/CategoriesPage";
+import { HomePage } from "@/pages/public/HomePage";
+import { AboutPage, ContactPage } from "@/pages/public/InformationPages";
+import { OccasionsPage } from "@/pages/public/OccasionsPage";
+import { ProductDetailsPage } from "@/pages/public/ProductDetailsPage";
+import { ProductsListingPage } from "@/pages/public/ProductsListingPage";
 import { AdminRoute, GuestRoute } from "@/routes/guards";
-
-const HomePage: React.FC = () => (
-  <div className="py-12 text-center space-y-4">
-    <h1 className="text-4xl font-extrabold text-[#E67E22]">Welcome to OneBite Bakery</h1>
-    <p className="text-lg text-[#6E5D4F] max-w-xl mx-auto">
-      Freshly baked cakes, artisanal pastries, custom cakes, and delicious treats delivered straight to your doorstep.
-    </p>
-  </div>
-);
 
 const LoginPage: React.FC = () => (
   <div className="space-y-4">
@@ -40,9 +37,15 @@ export const AppRoutes: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
+        {/* Public Website Routes */}
         <Route path="/" element={<PublicLayout />}>
           <Route index element={<HomePage />} />
+          <Route path="products" element={<ProductsListingPage />} />
+          <Route path="products/:slug" element={<ProductDetailsPage />} />
+          <Route path="categories" element={<CategoriesPage />} />
+          <Route path="occasions" element={<OccasionsPage />} />
+          <Route path="about" element={<AboutPage />} />
+          <Route path="contact" element={<ContactPage />} />
         </Route>
 
         {/* Guest Auth Routes */}
