@@ -1,4 +1,4 @@
-import { model, Schema, type Types } from "mongoose";
+import { model, models, Schema, Model, type Types } from "mongoose";
 
 import { COLLECTION_NAMES } from "../../../db/constants/collection-names.js";
 import { INDEX_NAMES } from "../../../db/constants/index-names.js";
@@ -116,8 +116,6 @@ mediaSchema.index(
   { name: INDEX_NAMES.MEDIA_MIME_TYPE },
 );
 
-export const MediaModel = model<Media>(
-  "Media",
-  mediaSchema,
-  COLLECTION_NAMES.MEDIA,
-);
+export const MediaModel =
+  (models.Media as Model<Media>) ||
+  model<Media>("Media", mediaSchema, COLLECTION_NAMES.MEDIA);

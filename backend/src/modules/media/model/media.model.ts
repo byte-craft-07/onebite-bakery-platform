@@ -1,4 +1,4 @@
-import { model, Schema, type Types } from "mongoose";
+import { model, models, Schema, Model, type Types } from "mongoose";
 
 import { baseSchemaOptions } from "../../../db/schema-options.js";
 import type { TimestampedDocument } from "../../../db/types/base-document.types.js";
@@ -109,4 +109,6 @@ const mediaSchema = new Schema<Media>(
   baseSchemaOptions,
 );
 
-export const MediaModel = model<Media>("Media", mediaSchema, "media");
+export const MediaModel =
+  (models.Media as Model<Media>) ||
+  model<Media>("Media", mediaSchema, "media");
