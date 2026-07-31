@@ -8,7 +8,7 @@ OneBite Bakery Platform
 
 ## Current Milestone
 
-Milestone 25A — Product Discovery Experience
+Milestone 25B — Shopping Experience
 
 Status:
 Completed
@@ -17,7 +17,7 @@ Completed
 
 ## Last Completed Milestone
 
-Milestone 25A — Product Discovery Experience
+Milestone 25B — Shopping Experience
 
 ---
 
@@ -101,11 +101,11 @@ main
 
 ✅ Product Discovery Experience (Frontend & Search Integration)
 
+✅ Shopping Experience (Cart, Checkout & Order Creation)
+
 ---
 
 ## Pending Modules
-
-⬜ Customer Facing Web Application (Interactive Cart & Checkout)
 
 ⬜ Admin Dashboard Web Application
 

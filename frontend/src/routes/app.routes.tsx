@@ -6,6 +6,8 @@ import { AuthLayout } from "@/layouts/AuthLayout";
 import { PublicLayout } from "@/layouts/PublicLayout";
 import { CustomerAuthContainer } from "@/pages/auth/CustomerAuthContainer";
 import { SessionExpiredPage, UnauthorizedPage } from "@/pages/auth/StatusPages";
+import { CartPage } from "@/pages/customer/CartPage";
+import { CheckoutPage } from "@/pages/customer/CheckoutPage";
 import { CustomerProfilePage } from "@/pages/customer/CustomerProfilePage";
 import { CategoriesPage } from "@/pages/public/CategoriesPage";
 import { HomePage } from "@/pages/public/HomePage";
@@ -43,9 +45,15 @@ export const AppRoutes: React.FC = () => {
           <Route path="about" element={<AboutPage />} />
           <Route path="contact" element={<ContactPage />} />
 
-          {/* Protected Customer Account Routes */}
+          {/* Cart & Checkout Routes */}
+          <Route path="cart" element={<CartPage />} />
+
+          {/* Protected Customer Routes */}
           <Route path="customer" element={<ProtectedRoute />}>
             <Route path="profile" element={<CustomerProfilePage />} />
+          </Route>
+          <Route path="checkout" element={<ProtectedRoute />}>
+            <Route index element={<CheckoutPage />} />
           </Route>
         </Route>
 
