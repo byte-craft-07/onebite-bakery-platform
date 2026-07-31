@@ -1,1 +1,8 @@
-export type { CreateProductDto, UpdateProductDto } from "./product.dto.js";
+export type {
+  ComboItemDto,
+  CreateProductDto,
+  UpdateAvailabilityDto,
+  UpdateInventoryDto,
+  UpdatePricingDto,
+  UpdateProductDto,
+} from "./product.dto.js";

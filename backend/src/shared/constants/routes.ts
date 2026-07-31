@@ -5,6 +5,8 @@ export const ROUTES = {
   CATEGORY: "/categories",
   FAVORITE: "/favorites",
   HEALTH: "/health",
+  MEDIA: "/media",
+  OCCASION: "/occasions",
   ORDER: "/orders",
   PRODUCT: "/products",
   REVIEW: "/reviews",

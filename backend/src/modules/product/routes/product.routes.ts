@@ -4,23 +4,56 @@ import { requireAuth, requireRoles } from "../../auth/index.js";
 import { validateRequest } from "../../../shared/middlewares/validate-request.middleware.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { ProductController } from "../controller/index.js";
-import { ProductRepository } from "../repository/index.js";
+import { InventoryRepository, ProductRepository } from "../repository/index.js";
 import { ProductService } from "../service/index.js";
 import {
   createProductSchema,
   productIdParamSchema,
   productSlugParamSchema,
+  publicProductQuerySchema,
+  updateAvailabilitySchema,
+  updateInventorySchema,
+  updatePricingSchema,
   updateProductSchema,
 } from "../validators/index.js";
 
 export const productRouter = Router();
 
 const productRepository = new ProductRepository();
-const productService = new ProductService(productRepository);
+const inventoryRepository = new InventoryRepository();
+const productService = new ProductService(productRepository, inventoryRepository);
 const productController = new ProductController(productService);
 const ownerOnly = [requireAuth, requireRoles(["admin"])] as const;
 
-productRouter.get("/", asyncHandler(productController.listPublic));
+productRouter.get(
+  "/",
+  validateRequest({ query: publicProductQuerySchema }),
+  asyncHandler(productController.listPublicCatalog),
+);
+
+productRouter.get(
+  "/featured",
+  validateRequest({ query: publicProductQuerySchema }),
+  asyncHandler(productController.listFeatured),
+);
+
+productRouter.get(
+  "/trending",
+  validateRequest({ query: publicProductQuerySchema }),
+  asyncHandler(productController.listTrending),
+);
+
+productRouter.get(
+  "/recommended",
+  validateRequest({ query: publicProductQuerySchema }),
+  asyncHandler(productController.listRecommended),
+);
+
+productRouter.get(
+  "/seasonal",
+  validateRequest({ query: publicProductQuerySchema }),
+  asyncHandler(productController.listSeasonal),
+);
 
 productRouter.get(
   "/admin",
@@ -35,6 +68,13 @@ productRouter.get(
   asyncHandler(productController.getById),
 );
 
+productRouter.get(
+  "/admin/:id/inventory",
+  ...ownerOnly,
+  validateRequest({ params: productIdParamSchema }),
+  asyncHandler(productController.getInventory),
+);
+
 productRouter.post(
   "/",
   ...ownerOnly,
@@ -47,6 +87,30 @@ productRouter.patch(
   ...ownerOnly,
   validateRequest({ params: productIdParamSchema, body: updateProductSchema }),
   asyncHandler(productController.update),
+);
+
+productRouter.patch(
+  "/:id/pricing",
+  ...ownerOnly,
+  validateRequest({ params: productIdParamSchema, body: updatePricingSchema }),
+  asyncHandler(productController.updatePricing),
+);
+
+productRouter.patch(
+  "/:id/inventory",
+  ...ownerOnly,
+  validateRequest({ params: productIdParamSchema, body: updateInventorySchema }),
+  asyncHandler(productController.updateInventory),
+);
+
+productRouter.patch(
+  "/:id/availability",
+  ...ownerOnly,
+  validateRequest({
+    params: productIdParamSchema,
+    body: updateAvailabilitySchema,
+  }),
+  asyncHandler(productController.updateAvailability),
 );
 
 productRouter.delete(

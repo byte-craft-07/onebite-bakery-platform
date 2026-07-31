@@ -4,6 +4,7 @@ export { cartRouter } from "./cart/index.js";
 export { categoryRouter } from "./category/index.js";
 export { favoriteRouter } from "./favorite/index.js";
 export { healthRouter } from "./health/index.js";
+export { occasionRouter } from "./occasion/index.js";
 export { orderRouter } from "./order/index.js";
 export { productRouter } from "./product/index.js";
 export { reviewRouter } from "./review/index.js";
@@ -11,4 +12,3 @@ export { searchRouter } from "./search/index.js";
 export { settingsRouter } from "./settings/index.js";
 export { uploadRouter } from "./upload/index.js";
 export { userRouter } from "./user/index.js";
-

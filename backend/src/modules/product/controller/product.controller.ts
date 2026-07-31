@@ -5,11 +5,16 @@ import { sendSuccess } from "../../../shared/responses/api-response.js";
 import type { RequestContext } from "../../../shared/types/request-context.types.js";
 import { createRequestContext } from "../../../shared/utils/request-context.js";
 import type { AuthenticatedRequest } from "../../auth/index.js";
-import {
-  PRODUCT_RESPONSE_MESSAGES,
-} from "../constants/index.js";
-import type { CreateProductDto, UpdateProductDto } from "../dto/index.js";
+import { PRODUCT_RESPONSE_MESSAGES } from "../constants/index.js";
+import type {
+  CreateProductDto,
+  UpdateAvailabilityDto,
+  UpdateInventoryDto,
+  UpdatePricingDto,
+  UpdateProductDto,
+} from "../dto/index.js";
 import type { ProductService } from "../service/index.js";
+import type { PublicProductQueryDto } from "../types/index.js";
 
 export class ProductController {
   public constructor(private readonly productService: ProductService) {}
@@ -43,6 +48,68 @@ export class ProductController {
     return sendSuccess(response, {
       message: PRODUCT_RESPONSE_MESSAGES.UPDATED,
       data: { product },
+    });
+  };
+
+  public updatePricing = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const product = await this.productService.updatePricing(
+      this.getParam(request, "id"),
+      request.body as UpdatePricingDto,
+      this.createAuthContext(request),
+    );
+
+    return sendSuccess(response, {
+      message: PRODUCT_RESPONSE_MESSAGES.PRICING_UPDATED,
+      data: { product },
+    });
+  };
+
+  public updateInventory = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const inventory = await this.productService.updateInventory(
+      this.getParam(request, "id"),
+      request.body as UpdateInventoryDto,
+      this.createAuthContext(request),
+    );
+
+    return sendSuccess(response, {
+      message: PRODUCT_RESPONSE_MESSAGES.INVENTORY_UPDATED,
+      data: { inventory },
+    });
+  };
+
+  public updateAvailability = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const product = await this.productService.updateAvailability(
+      this.getParam(request, "id"),
+      request.body as UpdateAvailabilityDto,
+      this.createAuthContext(request),
+    );
+
+    return sendSuccess(response, {
+      message: PRODUCT_RESPONSE_MESSAGES.AVAILABILITY_UPDATED,
+      data: { product },
+    });
+  };
+
+  public getInventory = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const inventory = await this.productService.getInventory(
+      this.getParam(request, "id"),
+    );
+
+    return sendSuccess(response, {
+      message: PRODUCT_RESPONSE_MESSAGES.FETCHED,
+      data: { inventory },
     });
   };
 
@@ -102,15 +169,73 @@ export class ProductController {
     });
   };
 
-  public listPublic = async (
-    _request: Request,
+  public listPublicCatalog = async (
+    request: Request,
     response: Response,
   ): Promise<Response> => {
-    const products = await this.productService.listPublicProducts();
+    const result = await this.productService.queryPublicCatalog(
+      request.query as PublicProductQueryDto,
+    );
 
     return sendSuccess(response, {
       message: PRODUCT_RESPONSE_MESSAGES.LISTED,
-      data: { products },
+      data: result,
+    });
+  };
+
+  public listFeatured = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const result = await this.productService.listFeaturedProducts(
+      request.query as PublicProductQueryDto,
+    );
+
+    return sendSuccess(response, {
+      message: PRODUCT_RESPONSE_MESSAGES.LISTED,
+      data: result,
+    });
+  };
+
+  public listTrending = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const result = await this.productService.listTrendingProducts(
+      request.query as PublicProductQueryDto,
+    );
+
+    return sendSuccess(response, {
+      message: PRODUCT_RESPONSE_MESSAGES.LISTED,
+      data: result,
+    });
+  };
+
+  public listRecommended = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const result = await this.productService.listRecommendedProducts(
+      request.query as PublicProductQueryDto,
+    );
+
+    return sendSuccess(response, {
+      message: PRODUCT_RESPONSE_MESSAGES.LISTED,
+      data: result,
+    });
+  };
+
+  public listSeasonal = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const result = await this.productService.listSeasonalProducts(
+      request.query as PublicProductQueryDto,
+    );
+
+    return sendSuccess(response, {
+      message: PRODUCT_RESPONSE_MESSAGES.LISTED,
+      data: result,
     });
   };
 

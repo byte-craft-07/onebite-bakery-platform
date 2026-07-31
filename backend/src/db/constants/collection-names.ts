@@ -6,6 +6,9 @@ export const COLLECTION_NAMES = {
   CATEGORIES: "categories",
   OCCASIONS: "occasions",
   PRODUCTS: "products",
+  MEDIA: "media",
+  CARTS: "carts",
+  ORDERS: "orders",
   SETTINGS: "settings",
 } as const;
 

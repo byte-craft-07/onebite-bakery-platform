@@ -1,4 +1,5 @@
-import type { ProductType } from "../constants/index.js";
+import type { ProductType, StockStatus } from "../constants/index.js";
+import type { ComboItemDto } from "../dto/index.js";
 
 export interface ProductResponse {
   id: string;
@@ -9,10 +10,16 @@ export interface ProductResponse {
   categoryId: string;
   occasionIds: string[];
   productType: ProductType;
+  comboItems?: ComboItemDto[];
   price: number;
   compareAtPrice?: number;
+  taxCategory?: string;
   imageUrls: string[];
   thumbnailUrl: string;
+  stockStatus: StockStatus;
+  isAvailable: boolean;
+  availableFrom?: Date;
+  availableUntil?: Date;
   isActive: boolean;
   isFeatured: boolean;
   isTrending: boolean;
@@ -26,4 +33,22 @@ export interface ProductResponse {
   seoKeywords: string[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface ProductInventoryResponse {
+  id: string;
+  price: number;
+  compareAtPrice?: number;
+  costPrice?: number;
+  taxCategory?: string;
+  stockQuantity: number;
+  lowStockThreshold: number;
+  trackInventory: boolean;
+  allowBackorder: boolean;
+  stockStatus: StockStatus;
+  isAvailable: boolean;
+  deliveryEligible: boolean;
+  pickupEligible: boolean;
+  availableFrom?: Date;
+  availableUntil?: Date;
 }

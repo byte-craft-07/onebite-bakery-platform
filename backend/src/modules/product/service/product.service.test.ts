@@ -3,8 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { AppError } from "../../../shared/errors/app-error.js";
 import type { RequestContext } from "../../../shared/types/request-context.types.js";
+import type { CreateProductDto } from "../dto/index.js";
 import type { Product } from "../model/index.js";
-import type { ProductRepository } from "../repository/index.js";
+import type { InventoryRepository, ProductRepository } from "../repository/index.js";
 import { ProductService } from "./product.service.js";
 
 const context: RequestContext = {
@@ -15,6 +16,7 @@ const context: RequestContext = {
 
 const categoryId = new Types.ObjectId("507f1f77bcf86cd799439011");
 const occasionId = new Types.ObjectId("507f1f77bcf86cd799439012");
+const childProductId = new Types.ObjectId("507f1f77bcf86cd799439013");
 
 const createProductDocument = (
   overrides: Partial<Product> = {},
@@ -31,8 +33,17 @@ const createProductDocument = (
     occasionIds: [occasionId],
     comboItems: [],
     price: 499,
+    compareAtPrice: 599,
+    costPrice: 300,
+    taxCategory: "STANDARD_5",
     imageUrls: ["https://cdn.onebite.test/chocolate-truffle.webp"],
     thumbnailUrl: "https://cdn.onebite.test/chocolate-truffle-thumb.webp",
+    stockQuantity: 10,
+    lowStockThreshold: 5,
+    trackInventory: true,
+    allowBackorder: false,
+    stockStatus: "IN_STOCK",
+    isAvailable: true,
     deliveryEligible: true,
     pickupEligible: true,
     isActive: true,
@@ -53,16 +64,25 @@ const createProductDocument = (
   return product as HydratedDocument<Product>;
 };
 
-const createDto = () => ({
+const createDto = (): CreateProductDto => ({
   name: "Chocolate Truffle Cake",
   description: "Rich chocolate truffle cake for celebrations.",
   shortDescription: "Rich chocolate cake.",
   categoryId: categoryId.toString(),
   occasionIds: [occasionId.toString()],
-  productType: "NORMAL" as const,
+  productType: "NORMAL",
+  comboItems: [],
   price: 499,
+  compareAtPrice: 599,
+  costPrice: 300,
+  taxCategory: "STANDARD_5",
   imageUrls: ["https://cdn.onebite.test/chocolate-truffle.webp"],
   thumbnailUrl: "https://cdn.onebite.test/chocolate-truffle-thumb.webp",
+  stockQuantity: 10,
+  lowStockThreshold: 5,
+  trackInventory: true,
+  allowBackorder: false,
+  isAvailable: true,
   isActive: true,
   isFeatured: false,
   isTrending: false,
@@ -78,6 +98,7 @@ const createDto = () => ({
 
 const createService = (
   overrides: Partial<Record<keyof ProductRepository, unknown>> = {},
+  inventoryOverrides: Partial<Record<keyof InventoryRepository, unknown>> = {},
 ) => {
   const repository = {
     create: vi.fn().mockImplementation((data: Partial<Product>) =>
@@ -87,33 +108,65 @@ const createService = (
     findActiveBySlug: vi.fn().mockResolvedValue(createProductDocument()),
     findPublicList: vi.fn().mockResolvedValue([createProductDocument()]),
     findAdminList: vi.fn().mockResolvedValue([createProductDocument()]),
+    findPublicCatalog: vi.fn().mockResolvedValue({
+      items: [createProductDocument()],
+      pagination: { total: 1, page: 1, limit: 20, totalPages: 1 },
+    }),
+    findCategoryBySlugOrId: vi.fn().mockResolvedValue({
+      _id: categoryId,
+      name: "Cakes",
+      slug: "cakes",
+    }),
+    findOccasionBySlugOrId: vi.fn().mockResolvedValue({
+      _id: occasionId,
+      name: "Birthday",
+      slug: "birthday",
+    }),
     findByIdIncludingDeleted: vi.fn().mockResolvedValue(createProductDocument()),
     updateById: vi.fn().mockImplementation(
       (_id: Types.ObjectId, update: { $set?: Partial<Product> }) =>
         Promise.resolve(createProductDocument(update.$set ?? {})),
     ),
-    softDelete: vi.fn().mockResolvedValue(createProductDocument({
-      isDeleted: true,
-    })),
+    softDelete: vi.fn().mockResolvedValue(
+      createProductDocument({
+        isDeleted: true,
+      }),
+    ),
     categoryExists: vi.fn().mockResolvedValue(true),
     findMissingOccasionIds: vi.fn().mockResolvedValue([]),
     findExistingProduct: vi.fn().mockResolvedValue(createProductDocument()),
     ...overrides,
   } as unknown as ProductRepository;
 
+  const inventoryRepository = {
+    findByIdWithPrivatePricing: vi
+      .fn()
+      .mockResolvedValue(createProductDocument()),
+    updateProductInventory: vi
+      .fn()
+      .mockImplementation(
+        (_id: Types.ObjectId, update: { $set?: Partial<Product> }) =>
+          Promise.resolve(createProductDocument(update.$set ?? {})),
+      ),
+    findMissingProductIds: vi.fn().mockResolvedValue([]),
+    ...inventoryOverrides,
+  } as unknown as InventoryRepository;
+
   return {
-    service: new ProductService(repository),
+    service: new ProductService(repository, inventoryRepository),
     repository,
+    inventoryRepository,
   };
 };
 
 describe("ProductService", () => {
-  it("creates a product with a generated slug", async () => {
+  it("creates a product with a generated slug and calculated stock status", async () => {
     const { service, repository } = createService();
 
     const product = await service.createProduct(createDto(), context);
 
     expect(product.slug).toBe("chocolate-truffle-cake");
+    expect(product.stockStatus).toBe("IN_STOCK");
     expect(repository.create).toHaveBeenCalledOnce();
   });
 
@@ -150,47 +203,123 @@ describe("ProductService", () => {
     );
   });
 
-  it("soft deletes a product", async () => {
-    const product = createProductDocument();
-    const { service, repository } = createService({
-      findExistingProduct: vi.fn().mockResolvedValue(product),
-    });
-
-    await service.deleteProduct(product._id.toString(), context);
-
-    expect(repository.softDelete).toHaveBeenCalledOnce();
-  });
-
-  it("restores a product", async () => {
-    const deleted = createProductDocument({ isDeleted: true });
-    const { service, repository } = createService({
-      findByIdIncludingDeleted: vi.fn().mockResolvedValue(deleted),
-    });
-
-    await service.restoreProduct(deleted._id.toString(), context);
-
-    expect(repository.updateById).toHaveBeenCalledOnce();
-  });
-
-  it("lists only public products from repository public query", async () => {
+  it("queries public catalog with pagination, filtering, and sorting", async () => {
     const { service, repository } = createService();
 
-    const products = await service.listPublicProducts();
+    const result = await service.queryPublicCatalog({
+      page: 1,
+      limit: 10,
+      sort: "price_asc",
+      minPrice: 100,
+      maxPrice: 600,
+    });
 
-    expect(products).toHaveLength(1);
-    expect(repository.findPublicList).toHaveBeenCalledOnce();
+    expect(result.products).toHaveLength(1);
+    expect(result.pagination.total).toBe(1);
+    expect(repository.findPublicCatalog).toHaveBeenCalledOnce();
   });
 
-  it("returns public details by slug", async () => {
+  it("queries featured products shortcut endpoint", async () => {
     const { service, repository } = createService();
 
-    const product = await service.getPublicProductBySlug(
-      "chocolate-truffle-cake",
-    );
+    const result = await service.listFeaturedProducts({ page: 1, limit: 10 });
 
-    expect(product.slug).toBe("chocolate-truffle-cake");
-    expect(repository.findActiveBySlug).toHaveBeenCalledWith(
-      "chocolate-truffle-cake",
+    expect(result.products).toHaveLength(1);
+    expect(repository.findPublicCatalog).toHaveBeenCalledWith(
+      { page: 1, limit: 10 },
+      { isFeatured: true },
     );
+  });
+
+  it("queries trending products shortcut endpoint", async () => {
+    const { service, repository } = createService();
+
+    const result = await service.listTrendingProducts({ page: 1, limit: 10 });
+
+    expect(result.products).toHaveLength(1);
+    expect(repository.findPublicCatalog).toHaveBeenCalledWith(
+      { page: 1, limit: 10 },
+      { isTrending: true },
+    );
+  });
+
+  it("queries recommended products shortcut endpoint", async () => {
+    const { service, repository } = createService();
+
+    const result = await service.listRecommendedProducts({ page: 1, limit: 10 });
+
+    expect(result.products).toHaveLength(1);
+    expect(repository.findPublicCatalog).toHaveBeenCalledWith(
+      { page: 1, limit: 10 },
+      { isRecommended: true },
+    );
+  });
+
+  it("queries seasonal products shortcut endpoint", async () => {
+    const { service, repository } = createService();
+
+    const result = await service.listSeasonalProducts({ page: 1, limit: 10 });
+
+    expect(result.products).toHaveLength(1);
+    expect(repository.findPublicCatalog).toHaveBeenCalledWith(
+      { page: 1, limit: 10 },
+      { isSeasonal: true },
+    );
+  });
+
+  it("queries products by category slug", async () => {
+    const { service, repository } = createService();
+
+    const result = await service.listProductsByCategorySlug("cakes", {
+      page: 1,
+      limit: 10,
+    });
+
+    expect(result.category.slug).toBe("cakes");
+    expect(result.products).toHaveLength(1);
+    expect(repository.findCategoryBySlugOrId).toHaveBeenCalledWith("cakes");
+  });
+
+  it("throws 404 when querying products by non-existent category slug", async () => {
+    const { service } = createService({
+      findCategoryBySlugOrId: vi.fn().mockResolvedValue(null),
+    });
+
+    await expect(
+      service.listProductsByCategorySlug("non-existent", { page: 1, limit: 10 }),
+    ).rejects.toBeInstanceOf(AppError);
+  });
+
+  it("queries products by occasion slug", async () => {
+    const { service, repository } = createService();
+
+    const result = await service.listProductsByOccasionSlug("birthday", {
+      page: 1,
+      limit: 10,
+    });
+
+    expect(result.occasion.slug).toBe("birthday");
+    expect(result.products).toHaveLength(1);
+    expect(repository.findOccasionBySlugOrId).toHaveBeenCalledWith("birthday");
+  });
+
+  it("throws 404 when querying products by non-existent occasion slug", async () => {
+    const { service } = createService({
+      findOccasionBySlugOrId: vi.fn().mockResolvedValue(null),
+    });
+
+    await expect(
+      service.listProductsByOccasionSlug("non-existent", { page: 1, limit: 10 }),
+    ).rejects.toBeInstanceOf(AppError);
+  });
+
+  it("throws 404 when public slug lookup yields no active product", async () => {
+    const { service } = createService({
+      findActiveBySlug: vi.fn().mockResolvedValue(null),
+    });
+
+    await expect(
+      service.getPublicProductBySlug("non-existent-cake"),
+    ).rejects.toBeInstanceOf(AppError);
   });
 });

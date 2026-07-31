@@ -74,10 +74,7 @@ const addressSchema = new Schema<Address>(
       trim: true,
       match: [/^[0-9]{4,10}$/, "Pincode must be 4 to 10 digits."],
     },
-    location: {
-      type: geoJsonPointSchemaFields,
-      required: true,
-    },
+    location: geoJsonPointSchemaFields,
     isDefault: {
       type: Boolean,
       default: false,

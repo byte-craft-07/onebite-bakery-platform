@@ -5,9 +5,11 @@ import { sendSuccess } from "../../../shared/responses/api-response.js";
 import type { RequestContext } from "../../../shared/types/request-context.types.js";
 import { createRequestContext } from "../../../shared/utils/request-context.js";
 import type { AuthenticatedRequest } from "../../auth/index.js";
-import {
-  CATEGORY_RESPONSE_MESSAGES,
-} from "../constants/index.js";
+import { PRODUCT_RESPONSE_MESSAGES } from "../../product/constants/index.js";
+import { ProductRepository } from "../../product/repository/index.js";
+import { ProductService } from "../../product/service/index.js";
+import type { PublicProductQueryDto } from "../../product/types/index.js";
+import { CATEGORY_RESPONSE_MESSAGES } from "../constants/index.js";
 import type {
   CreateCategoryDto,
   ReorderCategoriesDto,
@@ -16,7 +18,21 @@ import type {
 import type { CategoryService } from "../service/index.js";
 
 export class CategoryController {
-  public constructor(private readonly categoryService: CategoryService) {}
+  private _productService?: ProductService;
+
+  public constructor(
+    private readonly categoryService: CategoryService,
+    productService?: ProductService,
+  ) {
+    this._productService = productService;
+  }
+
+  private get productService(): ProductService {
+    if (!this._productService) {
+      this._productService = new ProductService(new ProductRepository());
+    }
+    return this._productService;
+  }
 
   public create = async (
     request: Request,
@@ -115,6 +131,27 @@ export class CategoryController {
     return sendSuccess(response, {
       message: CATEGORY_RESPONSE_MESSAGES.LISTED,
       data: { categories },
+    });
+  };
+
+  public listProductsBySlug = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const slug = request.params.slug;
+
+    if (typeof slug !== "string") {
+      throw new Error("Validated slug parameter is missing.");
+    }
+
+    const result = await this.productService.listProductsByCategorySlug(
+      slug,
+      request.query as PublicProductQueryDto,
+    );
+
+    return sendSuccess(response, {
+      message: PRODUCT_RESPONSE_MESSAGES.LISTED,
+      data: result,
     });
   };
 

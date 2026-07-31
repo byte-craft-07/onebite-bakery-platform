@@ -1,3 +1,4 @@
+import path from "node:path";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import express, { type Application } from "express";
@@ -28,7 +29,7 @@ export const createApp = (): Application => {
       redact: ["req.headers.authorization", "req.headers.cookie"],
     }),
   );
-  app.use(helmet());
+  app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
   app.use(cors(corsOptions));
   app.use(rateLimit(globalRateLimitOptions));
   app.use(cookieParser());
@@ -37,6 +38,8 @@ export const createApp = (): Application => {
   app.use(mongoSanitize);
   app.use(hpp());
   app.use(compression());
+
+  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
   app.use(env.apiPrefix, apiRoutes);
   app.use(notFoundHandler);

@@ -3,6 +3,7 @@ import { Router } from "express";
 import { requireAuth, requireRoles } from "../../auth/index.js";
 import { validateRequest } from "../../../shared/middlewares/validate-request.middleware.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
+import { publicProductQuerySchema } from "../../product/validators/index.js";
 import { CategoryController } from "../controller/index.js";
 import { CategoryRepository } from "../repository/index.js";
 import { CategoryService } from "../service/index.js";
@@ -26,6 +27,12 @@ categoryRouter.get(
   "/admin",
   ...ownerOnly,
   asyncHandler(categoryController.listAdmin),
+);
+
+categoryRouter.get(
+  "/:slug/products",
+  validateRequest({ query: publicProductQuerySchema }),
+  asyncHandler(categoryController.listProductsBySlug),
 );
 
 categoryRouter.patch(
