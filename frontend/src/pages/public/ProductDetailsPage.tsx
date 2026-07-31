@@ -1,16 +1,57 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Check, Heart, ShieldCheck, ShoppingBag, Star, Truck } from "lucide-react";
+import { ArrowLeft, Heart, ShieldCheck, ShoppingBag, Star, Truck } from "lucide-react";
 
-import { Badge } from "@/components/ui/DisplayComponents";
-import { MOCK_PRODUCTS } from "@/data/mockData";
+import { Badge, Skeleton } from "@/components/ui/DisplayComponents";
+import { catalogService, type ProductItem } from "@/services/catalog.service";
 
 export const ProductDetailsPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const product = MOCK_PRODUCTS.find((p) => p.slug === slug) || MOCK_PRODUCTS[0];
 
+  const [product, setProduct] = useState<ProductItem | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedWeight, setSelectedWeight] = useState("500g");
+
+  useEffect(() => {
+    if (slug) {
+      setIsLoading(true);
+      catalogService
+        .getProductBySlug(slug)
+        .then(setProduct)
+        .catch(() => setProduct(null))
+        .finally(() => setIsLoading(false));
+    }
+  }, [slug]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 max-w-5xl mx-auto py-12">
+        <Skeleton className="h-8 w-32 rounded-lg" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          <Skeleton className="h-80 w-full rounded-3xl" />
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-3/4 rounded-xl" />
+            <Skeleton className="h-6 w-1/2 rounded-lg" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="text-center py-16 space-y-4">
+        <h2 className="text-2xl font-bold text-[#2C1E16]">Product Not Found</h2>
+        <Link to="/products" className="text-sm font-bold text-[#E67E22] hover:underline">
+          Return to Catalog
+        </Link>
+      </div>
+    );
+  }
+
+  const imageUrl = product.mainImage || (product.images && product.images[0]) || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
 
   return (
     <div className="space-y-12 pb-16">
@@ -23,21 +64,21 @@ export const ProductDetailsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
         {/* Product Image */}
         <div className="rounded-3xl overflow-hidden border border-[#E8E2D9] bg-white shadow-lg aspect-4/3">
-          <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+          <img src={imageUrl} alt={product.name} className="w-full h-full object-cover" />
         </div>
 
         {/* Product Info */}
         <div className="space-y-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Badge variant="primary">{product.category}</Badge>
+              <Badge variant="primary">{product.productType}</Badge>
               {product.isEggless ? <Badge variant="success">100% Eggless</Badge> : null}
             </div>
             <h1 className="text-3xl font-extrabold text-[#2C1E16]">{product.name}</h1>
             <div className="flex items-center gap-2 text-amber-500 text-sm font-bold mt-2">
               <Star className="h-4 w-4 fill-current" />
-              <span>{product.rating}</span>
-              <span className="text-[#6E5D4F]">({product.reviewCount} customer reviews)</span>
+              <span>{product.rating ?? 4.8}</span>
+              <span className="text-[#6E5D4F]">({product.reviewCount ?? 42} customer reviews)</span>
             </div>
           </div>
 
@@ -90,9 +131,12 @@ export const ProductDetailsPage: React.FC = () => {
               </button>
             </div>
 
-            <button className="flex-1 h-12 bg-[#E67E22] text-white font-bold rounded-xl hover:bg-[#D35400] transition-colors flex items-center justify-center gap-2 shadow-md">
+            <button
+              disabled={!product.isAvailable}
+              className="flex-1 h-12 bg-[#E67E22] text-white font-bold rounded-xl hover:bg-[#D35400] transition-colors flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
+            >
               <ShoppingBag className="h-5 w-5" />
-              <span>Add to Cart</span>
+              <span>{product.isAvailable ? "Add to Cart" : "Currently Unavailable"}</span>
             </button>
 
             <button className="p-3.5 border border-[#E8E2D9] rounded-xl text-[#2C1E16] hover:text-[#C0392B] transition-colors">

@@ -3,15 +3,17 @@ import { Link } from "react-router-dom";
 import { Heart, ShoppingBag, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/DisplayComponents";
-import type { MockProduct } from "@/data/mockData";
+import type { ProductItem } from "@/services/catalog.service";
 
-export const ProductCard: React.FC<{ product: MockProduct }> = ({ product }) => {
+export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => {
+  const imageUrl = product.mainImage || (product.images && product.images[0]) || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
+
   return (
     <div className="group relative rounded-2xl border border-[#E8E2D9] bg-white overflow-hidden shadow-[0_4px_16px_rgba(44,30,22,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(44,30,22,0.12)] flex flex-col">
       {/* Image & Badges Container */}
       <div className="relative aspect-4/3 w-full overflow-hidden bg-[#F9F6F0]">
         <img
-          src={product.image}
+          src={imageUrl}
           alt={product.name}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
@@ -20,6 +22,7 @@ export const ProductCard: React.FC<{ product: MockProduct }> = ({ product }) => 
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
           {product.isEggless ? <Badge variant="success">Eggless</Badge> : null}
           {product.isBestseller ? <Badge variant="primary">Bestseller</Badge> : null}
+          {!product.isAvailable ? <Badge variant="danger">Out of Stock</Badge> : null}
         </div>
 
         <button
@@ -35,8 +38,8 @@ export const ProductCard: React.FC<{ product: MockProduct }> = ({ product }) => 
         <div>
           <div className="flex items-center gap-1 text-amber-500 text-xs font-bold mb-1">
             <Star className="h-3.5 w-3.5 fill-current" />
-            <span>{product.rating}</span>
-            <span className="text-[#6E5D4F]">({product.reviewCount})</span>
+            <span>{product.rating ?? 4.8}</span>
+            <span className="text-[#6E5D4F]">({product.reviewCount ?? 42})</span>
           </div>
 
           <Link to={`/products/${product.slug}`}>
@@ -58,10 +61,11 @@ export const ProductCard: React.FC<{ product: MockProduct }> = ({ product }) => 
           </div>
 
           <button
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#E67E22] text-white text-xs font-semibold hover:bg-[#D35400] transition-colors"
+            disabled={!product.isAvailable}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#E67E22] text-white text-xs font-semibold hover:bg-[#D35400] transition-colors disabled:opacity-50"
           >
             <ShoppingBag className="h-3.5 w-3.5" />
-            <span>Add</span>
+            <span>{product.isAvailable ? "Add" : "Unavailable"}</span>
           </button>
         </div>
       </div>

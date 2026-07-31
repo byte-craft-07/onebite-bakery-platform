@@ -6,6 +6,7 @@ import { CategoryCard, ComboCard, OccasionCard, ReviewCard } from "@/components/
 import { ProductCard } from "@/components/cards/ProductCard";
 import { Button } from "@/components/ui/Button";
 import { MOCK_CATEGORIES, MOCK_COMBOS, MOCK_OCCASIONS, MOCK_PRODUCTS, MOCK_REVIEWS } from "@/data/mockData";
+import type { ProductItem } from "@/services/catalog.service";
 
 export const HomePage: React.FC = () => {
   return (
@@ -80,9 +81,25 @@ export const HomePage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {MOCK_PRODUCTS.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {MOCK_PRODUCTS.map((p) => {
+            const productItem: ProductItem = {
+              id: p.id,
+              name: p.name,
+              slug: p.slug,
+              description: p.description,
+              productType: "NORMAL",
+              price: p.price,
+              compareAtPrice: p.compareAtPrice,
+              sku: `SKU-${p.id}`,
+              isEggless: p.isEggless,
+              isAvailable: true,
+              isBestseller: p.isBestseller,
+              mainImage: p.image,
+              rating: p.rating,
+              reviewCount: p.reviewCount,
+            };
+            return <ProductCard key={p.id} product={productItem} />;
+          })}
         </div>
       </section>
 
