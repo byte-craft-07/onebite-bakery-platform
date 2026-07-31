@@ -7,6 +7,7 @@ export const ROUTES = {
   FAVORITE: "/favorites",
   HEALTH: "/health",
   MEDIA: "/media",
+  NOTIFICATION: "/notifications",
   OCCASION: "/occasions",
   ORDER: "/orders",
   PAYMENT: "/payments",

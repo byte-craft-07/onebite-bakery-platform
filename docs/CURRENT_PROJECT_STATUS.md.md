@@ -8,7 +8,7 @@ OneBite Bakery Platform
 
 ## Current Milestone
 
-Milestone 17 — Search & Discovery Foundation
+Milestone 18 — Notification System Foundation
 
 Status:
 Completed
@@ -17,7 +17,7 @@ Completed
 
 ## Last Completed Milestone
 
-Milestone 17 — Search & Discovery Foundation
+Milestone 18 — Notification System Foundation
 
 ---
 
@@ -84,6 +84,8 @@ main
 ✅ Media Upload System Foundation
 
 ✅ Search & Discovery Foundation
+
+✅ Notification System Foundation
 
 ---
 

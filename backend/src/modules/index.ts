@@ -6,6 +6,7 @@ export { checkoutRouter } from "./checkout/index.js";
 export { favoriteRouter } from "./favorite/index.js";
 export { healthRouter } from "./health/index.js";
 export { mediaRouter } from "./media/index.js";
+export { notificationRouter } from "./notification/index.js";
 export { occasionRouter } from "./occasion/index.js";
 export { orderRouter } from "./order/index.js";
 export { paymentRouter } from "./payment/index.js";
