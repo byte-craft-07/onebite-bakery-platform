@@ -8,7 +8,7 @@ OneBite Bakery Platform
 
 ## Current Milestone
 
-Milestone 23 — Customer Website Foundation (Public Experience)
+Milestone 24 — Customer Authentication & Account Experience
 
 Status:
 Completed
@@ -17,7 +17,7 @@ Completed
 
 ## Last Completed Milestone
 
-Milestone 23 — Customer Website Foundation (Public Experience)
+Milestone 24 — Customer Authentication & Account Experience
 
 ---
 
@@ -96,6 +96,8 @@ main
 ✅ Frontend Foundation & Design System Implementation
 
 ✅ Customer Website Foundation (Public Experience)
+
+✅ Customer Authentication & Account Experience
 
 ---
 

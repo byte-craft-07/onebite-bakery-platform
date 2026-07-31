@@ -1,40 +1,63 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export interface UserSession {
-  id: string;
-  phone?: string;
-  email?: string;
-  name?: string;
-  role: "customer" | "admin";
-}
+import { authService, type UserProfileResponse } from "@/services/auth.service";
 
 export interface AuthContextType {
-  user: UserSession | null;
+  user: UserProfileResponse | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   role: "customer" | "admin" | null;
-  login: (user: UserSession) => void;
-  logout: () => void;
+  login: (user: UserProfileResponse) => void;
+  logout: () => Promise<void>;
+  logoutAll: () => Promise<void>;
+  refreshSession: () => Promise<void>;
   hasRole: (requiredRole: "customer" | "admin") => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserSession | null>(null);
+  const [user, setUser] = useState<UserProfileResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const refreshSession = async () => {
+    try {
+      setIsLoading(true);
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+    } catch (_err) {
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Initial session verification foundation
-    setIsLoading(false);
+    refreshSession();
   }, []);
 
-  const login = (sessionUser: UserSession) => {
+  const login = (sessionUser: UserProfileResponse) => {
     setUser(sessionUser);
   };
 
-  const logout = () => {
-    setUser(null);
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (_err) {
+      // Ignore API logout errors and clear client state
+    } finally {
+      setUser(null);
+    }
+  };
+
+  const logoutAll = async () => {
+    try {
+      await authService.logoutAll();
+    } catch (_err) {
+      // Ignore errors
+    } finally {
+      setUser(null);
+    }
   };
 
   const hasRole = (requiredRole: "customer" | "admin"): boolean => {
@@ -50,6 +73,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: user?.role ?? null,
         login,
         logout,
+        logoutAll,
+        refreshSession,
         hasRole,
       }}
     >

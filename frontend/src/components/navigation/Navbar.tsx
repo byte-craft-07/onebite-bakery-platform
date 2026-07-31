@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, Menu, Search, ShoppingBag, X } from "lucide-react";
+import { Heart, LogOut, Menu, Search, ShoppingBag, User, X } from "lucide-react";
+
+import { useAuth } from "@/contexts/auth.context";
 
 export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  const { user, isAuthenticated, logout } = useAuth();
 
   return (
     <>
@@ -53,6 +57,32 @@ export const Navbar: React.FC = () => {
               <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-white text-[#E67E22]">3</span>
             </button>
 
+            {isAuthenticated ? (
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/customer/profile"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#FFF3E6] border border-[#E67E22]/30 text-xs font-bold text-[#E67E22] hover:bg-[#E67E22] hover:text-white transition-colors"
+                >
+                  <User className="h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
+                <button
+                  onClick={logout}
+                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/auth/login"
+                className="px-4 py-2 rounded-xl border border-[#2C1E16] text-xs font-bold text-[#2C1E16] hover:bg-[#2C1E16] hover:text-white transition-colors"
+              >
+                Log In
+              </Link>
+            )}
+
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="lg:hidden p-2 text-[#2C1E16]"
@@ -96,8 +126,11 @@ export const Navbar: React.FC = () => {
                 <Link to="/products" onClick={() => setIsMobileMenuOpen(false)}>Products</Link>
                 <Link to="/categories" onClick={() => setIsMobileMenuOpen(false)}>Categories</Link>
                 <Link to="/occasions" onClick={() => setIsMobileMenuOpen(false)}>Occasions</Link>
-                <Link to="/about" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
-                <Link to="/contact" onClick={() => setIsMobileMenuOpen(false)}>Contact</Link>
+                {isAuthenticated ? (
+                  <Link to="/customer/profile" onClick={() => setIsMobileMenuOpen(false)}>Customer Profile</Link>
+                ) : (
+                  <Link to="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>Log In</Link>
+                )}
               </nav>
             </div>
 

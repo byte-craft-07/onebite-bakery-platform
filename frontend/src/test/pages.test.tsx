@@ -7,6 +7,7 @@ import { CategoryCard, ComboCard, OccasionCard, ReviewCard } from "@/components/
 import { ProductCard } from "@/components/cards/ProductCard";
 import { Footer } from "@/components/navigation/Footer";
 import { Navbar } from "@/components/navigation/Navbar";
+import { AuthProvider } from "@/contexts/auth.context";
 import { MOCK_CATEGORIES, MOCK_COMBOS, MOCK_OCCASIONS, MOCK_PRODUCTS, MOCK_REVIEWS } from "@/data/mockData";
 import { CategoriesPage } from "@/pages/public/CategoriesPage";
 import { HomePage } from "@/pages/public/HomePage";
@@ -18,10 +19,12 @@ import { ProductsListingPage } from "@/pages/public/ProductsListingPage";
 describe("Public Customer Experience Components & Pages", () => {
   it("renders Navbar and Footer navigation components", () => {
     render(
-      <MemoryRouter>
-        <Navbar />
-        <Footer />
-      </MemoryRouter>,
+      <AuthProvider>
+        <MemoryRouter>
+          <Navbar />
+          <Footer />
+        </MemoryRouter>
+      </AuthProvider>,
     );
 
     expect(screen.getAllByText("OneBite")[0]).toBeDefined();
