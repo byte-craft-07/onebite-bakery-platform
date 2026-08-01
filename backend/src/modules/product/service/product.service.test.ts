@@ -203,6 +203,92 @@ describe("ProductService", () => {
     );
   });
 
+  it("creates combo products with validated child products", async () => {
+    const { service, inventoryRepository } = createService();
+
+    const product = await service.createProduct(
+      {
+        ...createDto(),
+        name: "Birthday Combo",
+        productType: "COMBO",
+        comboItems: [{ productId: childProductId.toString(), quantity: 2 }],
+      },
+      context,
+    );
+
+    expect(product.productType).toBe("COMBO");
+    expect(product.comboItems).toEqual([
+      { productId: childProductId.toString(), quantity: 2 },
+    ]);
+    expect(inventoryRepository.findMissingProductIds).toHaveBeenCalledOnce();
+  });
+
+  it("rejects combo products without child products", async () => {
+    const { service } = createService();
+
+    await expect(
+      service.createProduct(
+        { ...createDto(), productType: "COMBO", comboItems: [] },
+        context,
+      ),
+    ).rejects.toBeInstanceOf(AppError);
+  });
+
+  it("rejects duplicate combo child products", async () => {
+    const { service } = createService();
+
+    await expect(
+      service.createProduct(
+        {
+          ...createDto(),
+          productType: "COMBO",
+          comboItems: [
+            { productId: childProductId.toString(), quantity: 1 },
+            { productId: childProductId.toString(), quantity: 2 },
+          ],
+        },
+        context,
+      ),
+    ).rejects.toBeInstanceOf(AppError);
+  });
+
+  it("rejects invalid combo child product references", async () => {
+    const { service } = createService({}, {
+      findMissingProductIds: vi.fn().mockResolvedValue([childProductId]),
+    });
+
+    await expect(
+      service.createProduct(
+        {
+          ...createDto(),
+          productType: "COMBO",
+          comboItems: [{ productId: childProductId.toString(), quantity: 1 }],
+        },
+        context,
+      ),
+    ).rejects.toBeInstanceOf(AppError);
+  });
+
+  it("rejects combo self-reference during product update", async () => {
+    const productId = new Types.ObjectId("507f1f77bcf86cd799439014");
+    const { service } = createService({
+      findExistingProduct: vi
+        .fn()
+        .mockResolvedValue(createProductDocument({ _id: productId })),
+    });
+
+    await expect(
+      service.updateProduct(
+        productId.toString(),
+        {
+          productType: "COMBO",
+          comboItems: [{ productId: productId.toString(), quantity: 1 }],
+        },
+        context,
+      ),
+    ).rejects.toBeInstanceOf(AppError);
+  });
+
   it("queries public catalog with pagination, filtering, and sorting", async () => {
     const { service, repository } = createService();
 

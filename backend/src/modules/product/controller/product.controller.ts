@@ -13,11 +13,14 @@ import type {
   UpdatePricingDto,
   UpdateProductDto,
 } from "../dto/index.js";
-import type { ProductService } from "../service/index.js";
+import type { InventoryService, ProductService } from "../service/index.js";
 import type { PublicProductQueryDto } from "../types/index.js";
 
 export class ProductController {
-  public constructor(private readonly productService: ProductService) {}
+  public constructor(
+    private readonly productService: ProductService,
+    private readonly inventoryService: InventoryService,
+  ) {}
 
   public create = async (
     request: Request,
@@ -55,7 +58,7 @@ export class ProductController {
     request: Request,
     response: Response,
   ): Promise<Response> => {
-    const product = await this.productService.updatePricing(
+    const inventory = await this.inventoryService.updatePricing(
       this.getParam(request, "id"),
       request.body as UpdatePricingDto,
       this.createAuthContext(request),
@@ -63,7 +66,7 @@ export class ProductController {
 
     return sendSuccess(response, {
       message: PRODUCT_RESPONSE_MESSAGES.PRICING_UPDATED,
-      data: { product },
+      data: { inventory },
     });
   };
 
@@ -71,7 +74,7 @@ export class ProductController {
     request: Request,
     response: Response,
   ): Promise<Response> => {
-    const inventory = await this.productService.updateInventory(
+    const inventory = await this.inventoryService.updateInventory(
       this.getParam(request, "id"),
       request.body as UpdateInventoryDto,
       this.createAuthContext(request),
@@ -87,7 +90,7 @@ export class ProductController {
     request: Request,
     response: Response,
   ): Promise<Response> => {
-    const product = await this.productService.updateAvailability(
+    const inventory = await this.inventoryService.updateAvailability(
       this.getParam(request, "id"),
       request.body as UpdateAvailabilityDto,
       this.createAuthContext(request),
@@ -95,7 +98,7 @@ export class ProductController {
 
     return sendSuccess(response, {
       message: PRODUCT_RESPONSE_MESSAGES.AVAILABILITY_UPDATED,
-      data: { product },
+      data: { inventory },
     });
   };
 
@@ -103,7 +106,7 @@ export class ProductController {
     request: Request,
     response: Response,
   ): Promise<Response> => {
-    const inventory = await this.productService.getInventory(
+    const inventory = await this.inventoryService.getInventory(
       this.getParam(request, "id"),
     );
 

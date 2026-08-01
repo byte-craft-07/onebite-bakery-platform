@@ -342,10 +342,61 @@ Product foundation includes:
 
 Product foundation must not implement:
 
-* inventory
 * stock deduction
 * upload integration
 * search indexing
 * cart/order/checkout behavior
 * review/favorite behavior
 * combo inventory logic
+
+---
+
+# Pricing And Inventory Foundation Contract
+
+Owner product inventory APIs:
+
+* `GET /products/admin/:id/inventory`
+* `PATCH /products/:id/pricing`
+* `PATCH /products/:id/inventory`
+* `PATCH /products/:id/availability`
+
+Pricing rules:
+
+* `price` must be positive.
+* `compareAtPrice` must be greater than or equal to `price`.
+* `costPrice` is owner-only and must never appear in public product responses.
+* `taxCategory` is stored for future tax calculation but does not calculate tax in this milestone.
+
+Inventory rules:
+
+* `stockStatus` values are `IN_STOCK`, `LOW_STOCK`, `OUT_OF_STOCK`, and `PRE_ORDER`.
+* Stock status is derived from stock quantity, low-stock threshold, tracking, and backorder settings unless an explicit future-ready status is accepted.
+* Add-to-cart must not reserve stock.
+* Checkout and order modules will own stock deduction.
+
+Combo foundation rules:
+
+* Combo products reference existing products through `comboItems`.
+* Combo products cannot reference themselves.
+* Combo products cannot contain duplicate child products.
+* Combo products do not maintain separate inventory.
+* Dynamic combo availability and stock deduction belong to future checkout/inventory milestones.
+
+Public product responses may expose:
+
+* `price`
+* `compareAtPrice`
+* `stockStatus`
+* `isAvailable`
+* `deliveryEligible`
+* `pickupEligible`
+* `availableFrom`
+* `availableUntil`
+
+Public product responses must not expose:
+
+* `costPrice`
+* `stockQuantity`
+* `lowStockThreshold`
+* `trackInventory`
+* `allowBackorder`

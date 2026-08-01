@@ -13,16 +13,12 @@ import {
 import type {
   ComboItemDto,
   CreateProductDto,
-  UpdateAvailabilityDto,
-  UpdateInventoryDto,
-  UpdatePricingDto,
   UpdateProductDto,
 } from "../dto/index.js";
 import type { ComboItem, Product } from "../model/index.js";
 import { InventoryRepository, type ProductRepository } from "../repository/index.js";
 import type {
   PaginatedResult,
-  ProductInventoryResponse,
   ProductResponse,
   PublicProductQueryDto,
 } from "../types/index.js";
@@ -179,118 +175,6 @@ export class ProductService {
     }
 
     return this.toResponse(updated);
-  }
-
-  public async updatePricing(
-    id: string,
-    dto: UpdatePricingDto,
-    context: RequestContext,
-  ): Promise<ProductResponse> {
-    const productId = toObjectId(id);
-    await this.getExistingProduct(productId);
-
-    const update: UpdateQuery<Product> = {
-      $set: {
-        price: dto.price,
-        compareAtPrice: dto.compareAtPrice,
-        costPrice: dto.costPrice,
-        taxCategory: dto.taxCategory,
-        updatedBy: context.userId ? toObjectId(context.userId) : undefined,
-      },
-    };
-
-    const updated = await this.inventoryRepository.updateProductInventory(
-      productId,
-      update,
-    );
-
-    if (!updated) {
-      throw this.createNotFoundError();
-    }
-
-    return this.toResponse(updated);
-  }
-
-  public async updateInventory(
-    id: string,
-    dto: UpdateInventoryDto,
-    context: RequestContext,
-  ): Promise<ProductInventoryResponse> {
-    const productId = toObjectId(id);
-    const existing = await this.getExistingProduct(productId);
-
-    const stockStatus = calculateStockStatus({
-      stockQuantity: dto.stockQuantity,
-      lowStockThreshold: dto.lowStockThreshold,
-      trackInventory: dto.trackInventory,
-      allowBackorder: dto.allowBackorder,
-      explicitStockStatus: dto.stockStatus,
-    });
-
-    const update: UpdateQuery<Product> = {
-      $set: {
-        stockQuantity: dto.stockQuantity,
-        lowStockThreshold: dto.lowStockThreshold,
-        trackInventory: dto.trackInventory,
-        allowBackorder: dto.allowBackorder,
-        stockStatus,
-        updatedBy: context.userId ? toObjectId(context.userId) : undefined,
-      },
-    };
-
-    const updated = await this.inventoryRepository.updateProductInventory(
-      productId,
-      update,
-    );
-
-    if (!updated) {
-      throw this.createNotFoundError();
-    }
-
-    return this.toInventoryResponse(updated);
-  }
-
-  public async updateAvailability(
-    id: string,
-    dto: UpdateAvailabilityDto,
-    context: RequestContext,
-  ): Promise<ProductResponse> {
-    const productId = toObjectId(id);
-    await this.getExistingProduct(productId);
-
-    const update: UpdateQuery<Product> = {
-      $set: {
-        isAvailable: dto.isAvailable,
-        deliveryEligible: dto.deliveryEligible,
-        pickupEligible: dto.pickupEligible,
-        availableFrom: dto.availableFrom,
-        availableUntil: dto.availableUntil,
-        updatedBy: context.userId ? toObjectId(context.userId) : undefined,
-      },
-    };
-
-    const updated = await this.inventoryRepository.updateProductInventory(
-      productId,
-      update,
-    );
-
-    if (!updated) {
-      throw this.createNotFoundError();
-    }
-
-    return this.toResponse(updated);
-  }
-
-  public async getInventory(id: string): Promise<ProductInventoryResponse> {
-    const productId = toObjectId(id);
-    const product =
-      await this.inventoryRepository.findByIdWithPrivatePricing(productId);
-
-    if (!product) {
-      throw this.createNotFoundError();
-    }
-
-    return this.toInventoryResponse(product);
   }
 
   public async deleteProduct(
@@ -573,6 +457,19 @@ export class ProductService {
     }
 
     const childObjectIds = comboItems.map((item) => toObjectId(item.productId));
+    const uniqueChildIds = new Set(
+      childObjectIds.map((childObjectId) => childObjectId.toString()),
+    );
+
+    if (uniqueChildIds.size !== childObjectIds.length) {
+      throw new AppError(
+        PRODUCT_ERROR_MESSAGES.INVALID_COMBO,
+        HTTP_STATUS.UNPROCESSABLE_ENTITY,
+        [],
+        true,
+        APP_ERROR_CODES.PRODUCT_INVALID_COMBO,
+      );
+    }
 
     if (productId && childObjectIds.some((id) => id.equals(productId))) {
       throw new AppError(
@@ -750,32 +647,6 @@ export class ProductService {
       seoKeywords: product.seoKeywords,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
-    };
-  }
-
-  private toInventoryResponse(product: Product): ProductInventoryResponse {
-    const productIdStr = product._id ? product._id.toString() : "";
-
-    return {
-      id: productIdStr,
-      price: product.price,
-      ...(typeof product.compareAtPrice === "number"
-        ? { compareAtPrice: product.compareAtPrice }
-        : {}),
-      ...(typeof product.costPrice === "number"
-        ? { costPrice: product.costPrice }
-        : {}),
-      ...(product.taxCategory ? { taxCategory: product.taxCategory } : {}),
-      stockQuantity: product.stockQuantity,
-      lowStockThreshold: product.lowStockThreshold,
-      trackInventory: product.trackInventory,
-      allowBackorder: product.allowBackorder,
-      stockStatus: product.stockStatus,
-      isAvailable: product.isAvailable,
-      deliveryEligible: product.deliveryEligible,
-      pickupEligible: product.pickupEligible,
-      ...(product.availableFrom ? { availableFrom: product.availableFrom } : {}),
-      ...(product.availableUntil ? { availableUntil: product.availableUntil } : {}),
     };
   }
 

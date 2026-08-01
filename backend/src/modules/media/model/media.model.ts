@@ -1,4 +1,4 @@
-import { model, models, Schema, Model, type Types } from "mongoose";
+import { model, models, Schema, type Model, type Types } from "mongoose";
 
 import { baseSchemaOptions } from "../../../db/schema-options.js";
 import type { TimestampedDocument } from "../../../db/types/base-document.types.js";

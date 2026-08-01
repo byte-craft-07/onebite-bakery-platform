@@ -83,16 +83,36 @@ const compareAtPriceRule = (data: {
   );
 };
 
-export const createProductSchema = productSchemaBase.refine(compareAtPriceRule, {
-  message: "Compare-at price must be greater than or equal to price.",
-  path: ["compareAtPrice"],
-});
+const availabilityDateRule = (data: {
+  availableFrom?: Date;
+  availableUntil?: Date;
+}): boolean => {
+  return (
+    !data.availableFrom ||
+    !data.availableUntil ||
+    data.availableFrom <= data.availableUntil
+  );
+};
+
+export const createProductSchema = productSchemaBase
+  .refine(compareAtPriceRule, {
+    message: "Compare-at price must be greater than or equal to price.",
+    path: ["compareAtPrice"],
+  })
+  .refine(availabilityDateRule, {
+    message: "Available-from date must be before available-until date.",
+    path: ["availableUntil"],
+  });
 
 export const updateProductSchema = productSchemaBase
   .partial()
   .refine(compareAtPriceRule, {
     message: "Compare-at price must be greater than or equal to price.",
     path: ["compareAtPrice"],
+  })
+  .refine(availabilityDateRule, {
+    message: "Available-from date must be before available-until date.",
+    path: ["availableUntil"],
   });
 
 export const updatePricingSchema = z
@@ -124,10 +144,7 @@ export const updateAvailabilitySchema = z
     availableUntil: z.coerce.date().optional(),
   })
   .refine(
-    (data) =>
-      !data.availableFrom ||
-      !data.availableUntil ||
-      data.availableFrom <= data.availableUntil,
+    availabilityDateRule,
     {
       message: "Available-from date must be before available-until date.",
       path: ["availableUntil"],

@@ -17,7 +17,7 @@ export { ProductModel } from "./model/index.js";
 export type { ComboItem, Product } from "./model/index.js";
 export { InventoryRepository, ProductRepository } from "./repository/index.js";
 export { productRouter } from "./routes/index.js";
-export { ProductService } from "./service/index.js";
+export { InventoryService, ProductService } from "./service/index.js";
 export type {
   PaginatedResult,
   ProductInventoryResponse,

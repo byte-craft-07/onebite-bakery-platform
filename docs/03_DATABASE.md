@@ -251,10 +251,20 @@ Implementation Notes:
 | comboItems       | Object[] |
 | price            | Number   |
 | compareAtPrice   | Number   |
+| costPrice        | Number   |
+| taxCategory      | String   |
 | imageUrls        | String[] |
 | thumbnailUrl     | String   |
+| stockQuantity    | Number   |
+| lowStockThreshold | Number  |
+| trackInventory   | Boolean  |
+| allowBackorder   | Boolean  |
+| stockStatus      | String   |
+| isAvailable      | Boolean  |
 | deliveryEligible | Boolean  |
 | pickupEligible   | Boolean  |
+| availableFrom    | Date     |
+| availableUntil   | Date     |
 | isActive         | Boolean  |
 | isFeatured       | Boolean  |
 | isTrending       | Boolean  |
@@ -279,6 +289,13 @@ Combo Item Fields:
 * productId
 * quantity
 
+Stock Status Values:
+
+* IN_STOCK
+* LOW_STOCK
+* OUT_OF_STOCK
+* PRE_ORDER
+
 Indexes:
 
 * slug (unique)
@@ -286,13 +303,17 @@ Indexes:
 * productType
 * occasionIds
 * isActive + isDeleted
-* name (text)
+* stockStatus
+* public discovery compound indexes for category, occasion, featured, trending, seasonal, recommended, and price filters
 
 Implementation Notes:
 
 * Decoration items use the same Product architecture as bakery items.
 * Combo products are first-class products and reference child products through `comboItems`.
 * Combo inventory is deducted from child products during future checkout logic.
+* Combo products do not maintain separate inventory; availability depends on child products.
+* `costPrice` is owner-only and must never be exposed by public APIs.
+* Public product APIs may expose `price`, `compareAtPrice`, `stockStatus`, and availability fields only.
 * Product-level `deliveryEligible` prepares checkout delivery decisions.
 * Public product APIs expose only active, non-deleted products.
 * Upload integration is not part of the product foundation; product media stores URL strings only.
@@ -615,6 +636,13 @@ branches → orders (1:N)
 Stock is deducted only after successful order creation.
 
 No stock reservation on Add to Cart.
+
+Inventory foundation:
+
+* Inventory updates are owner-only.
+* `stockStatus` is derived from stock quantity, threshold, tracking, and backorder settings unless explicitly set to a future-ready status.
+* `costPrice`, `stockQuantity`, `lowStockThreshold`, `trackInventory`, and `allowBackorder` are internal/owner fields.
+* Checkout will later use these fields for stock deduction and combo availability, but no checkout deduction exists in the product foundation.
 
 ---
 

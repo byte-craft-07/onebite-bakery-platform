@@ -52,9 +52,17 @@ GET     /products/admin
 
 GET     /products/admin/:id
 
+GET     /products/admin/:id/inventory
+
 POST    /products
 
 PATCH   /products/:id
+
+PATCH   /products/:id/pricing
+
+PATCH   /products/:id/inventory
+
+PATCH   /products/:id/availability
 
 DELETE  /products/:id
 
@@ -67,6 +75,10 @@ GET     /products/best-sellers
 GET     /products/new-arrivals
 
 GET     /products/seasonal
+
+Public product responses expose price, compare-at price, stock status, and availability.
+
+Public product responses must never expose cost price, stock quantity, low-stock threshold, inventory tracking rules, or backorder rules.
 
 --------------------------------------------------
 

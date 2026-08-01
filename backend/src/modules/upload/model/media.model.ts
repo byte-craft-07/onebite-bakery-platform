@@ -1,4 +1,4 @@
-import { model, models, Schema, Model, type Types } from "mongoose";
+import { model, models, Schema, type Model, type Types } from "mongoose";
 
 import { COLLECTION_NAMES } from "../../../db/constants/collection-names.js";
 import { INDEX_NAMES } from "../../../db/constants/index-names.js";

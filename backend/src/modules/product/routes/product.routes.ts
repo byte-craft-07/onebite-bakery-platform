@@ -5,7 +5,7 @@ import { validateRequest } from "../../../shared/middlewares/validate-request.mi
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { ProductController } from "../controller/index.js";
 import { InventoryRepository, ProductRepository } from "../repository/index.js";
-import { ProductService } from "../service/index.js";
+import { InventoryService, ProductService } from "../service/index.js";
 import {
   createProductSchema,
   productIdParamSchema,
@@ -22,7 +22,8 @@ export const productRouter = Router();
 const productRepository = new ProductRepository();
 const inventoryRepository = new InventoryRepository();
 const productService = new ProductService(productRepository, inventoryRepository);
-const productController = new ProductController(productService);
+const inventoryService = new InventoryService(inventoryRepository);
+const productController = new ProductController(productService, inventoryService);
 const ownerOnly = [requireAuth, requireRoles(["admin"])] as const;
 
 productRouter.get(
