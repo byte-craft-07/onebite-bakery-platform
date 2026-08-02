@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Building, Home, LogOut, MapPin, Plus, Shield, Trash2 } from "lucide-react";
+import { Building, Home, LayoutDashboard, LogOut, MapPin, Plus, Shield, Trash2 } from "lucide-react";
 
 import { Badge, Card, Modal, Skeleton } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
@@ -106,11 +107,21 @@ export const CustomerProfilePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {user?.role === "admin" ? (
+            <Link to="/admin/dashboard">
+              <Button className="bg-[#2C1E16] text-white hover:bg-[#1E1713] flex items-center gap-2 shadow-md">
+                <LayoutDashboard className="h-4 w-4 text-[#E67E22]" />
+                <span>Go to Admin Panel</span>
+              </Button>
+            </Link>
+          ) : null}
+
           <Button variant="outline" size="sm" onClick={logout}>
             <LogOut className="h-4 w-4 mr-1.5" />
             <span>Logout</span>
           </Button>
+
           <Button variant="danger" size="sm" onClick={logoutAll}>
             <Shield className="h-4 w-4 mr-1.5" />
             <span>Logout All Devices</span>
@@ -148,7 +159,7 @@ export const CustomerProfilePage: React.FC = () => {
                   </div>
                   <button
                     onClick={() => handleDeleteAddress(addr.id)}
-                    className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                    className="text-gray-400 hover:text-red-500 transition-colors p-1 cursor-pointer"
                     aria-label="Delete Address"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -164,7 +175,7 @@ export const CustomerProfilePage: React.FC = () => {
                 {!addr.isDefault ? (
                   <button
                     onClick={() => handleSetDefault(addr.id)}
-                    className="text-xs font-semibold text-[#E67E22] hover:underline"
+                    className="text-xs font-semibold text-[#E67E22] hover:underline cursor-pointer"
                   >
                     Set as Default
                   </button>

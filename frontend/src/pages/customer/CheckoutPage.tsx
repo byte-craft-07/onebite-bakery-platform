@@ -1,12 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Plus, ShieldCheck } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 import { AddressSelector, CheckoutSummary, DeliverySelector } from "@/components/shopping/CheckoutComponents";
 import { Button } from "@/components/ui/Button";
-import { Card, Skeleton } from "@/components/ui/DisplayComponents";
+import { Card, Modal, Skeleton } from "@/components/ui/DisplayComponents";
+import { Input } from "@/components/ui/FormControls";
 import { addressService, type Address } from "@/services/address.service";
 import { checkoutService, type CheckoutPreviewResponse } from "@/services/checkout.service";
+
+const inlineAddressSchema = z.object({
+  name: z.string().trim().min(2, "Name is required."),
+  phone: z.string().trim().regex(/^[6-9]\d{9}$/, "Valid 10-digit phone required."),
+  street: z.string().trim().min(5, "Full street address required."),
+  city: z.string().trim().min(2, "City required."),
+  state: z.string().trim().min(2, "State required."),
+  pincode: z.string().trim().regex(/^\d{6}$/, "Valid 6-digit pincode required."),
+  landmark: z.string().trim().optional(),
+});
+
+type InlineAddressData = z.infer<typeof inlineAddressSchema>;
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +36,13 @@ export const CheckoutPage: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [placedOrder, setPlacedOrder] = useState<{ id: string; orderNumber: string; totalAmount: number } | null>(null);
 
+  const [isAddAddressModalOpen, setIsAddAddressModalOpen] = useState(false);
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+
+  const addressForm = useForm<InlineAddressData>({
+    resolver: zodResolver(inlineAddressSchema),
+  });
+
   const fetchAddressesAndPreview = async () => {
     try {
       setIsLoading(true);
@@ -28,7 +51,7 @@ export const CheckoutPage: React.FC = () => {
         checkoutService.getCheckoutPreview(fulfillmentType).catch(() => null),
       ]);
       setAddresses(addrList);
-      if (addrList.length > 0 && !selectedAddressId) {
+      if (addrList.length > 0) {
         const defaultAddr = addrList.find((a) => a.isDefault) || addrList[0];
         setSelectedAddressId(defaultAddr?.id);
       }
@@ -42,10 +65,34 @@ export const CheckoutPage: React.FC = () => {
     fetchAddressesAndPreview();
   }, [fulfillmentType]);
 
+  const handleCreateInlineAddress = async (data: InlineAddressData) => {
+    setIsAddingAddress(true);
+    try {
+      const created = await addressService.createAddress({
+        ...data,
+        addressType: "HOME",
+        isDefault: true,
+      });
+      const updatedList = await addressService.getAddresses();
+      setAddresses(updatedList);
+      setSelectedAddressId(created.id);
+      setIsAddAddressModalOpen(false);
+      addressForm.reset();
+    } catch (_err) {
+      // Fallback
+    } finally {
+      setIsAddingAddress(false);
+    }
+  };
+
   const handlePlaceOrder = async () => {
     setErrorMsg(null);
 
     if (fulfillmentType === "HOME_DELIVERY" && !selectedAddressId) {
+      if (addresses.length === 0) {
+        setIsAddAddressModalOpen(true);
+        return;
+      }
       setErrorMsg("Please select a delivery address for Home Delivery.");
       return;
     }
@@ -125,12 +172,29 @@ export const CheckoutPage: React.FC = () => {
 
           {fulfillmentType === "HOME_DELIVERY" ? (
             <Card className="space-y-4">
-              <h3 className="text-lg font-bold text-[#2C1E16]">2. Delivery Address</h3>
-              <AddressSelector
-                addresses={addresses}
-                selectedAddressId={selectedAddressId}
-                onSelect={setSelectedAddressId}
-              />
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-[#2C1E16]">2. Delivery Address</h3>
+                <Button size="sm" variant="outline" onClick={() => setIsAddAddressModalOpen(true)}>
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  <span>Add New Address</span>
+                </Button>
+              </div>
+
+              {addresses.length > 0 ? (
+                <AddressSelector
+                  addresses={addresses}
+                  selectedAddressId={selectedAddressId}
+                  onSelect={setSelectedAddressId}
+                />
+              ) : (
+                <div className="p-6 bg-[#FFFBF5] rounded-2xl border-2 border-dashed border-[#E8E2D9] text-center space-y-3">
+                  <p className="text-xs text-[#6E5D4F]">No delivery address found for home delivery.</p>
+                  <Button size="sm" onClick={() => setIsAddAddressModalOpen(true)}>
+                    <Plus className="h-4 w-4 mr-1.5" />
+                    <span>Create Delivery Address Now</span>
+                  </Button>
+                </div>
+              )}
             </Card>
           ) : null}
 
@@ -166,6 +230,28 @@ export const CheckoutPage: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Inline Create Address Modal */}
+      <Modal isOpen={isAddAddressModalOpen} onClose={() => setIsAddAddressModalOpen(false)} title="Create Delivery Address">
+        <form onSubmit={addressForm.handleSubmit(handleCreateInlineAddress)} className="space-y-4 pt-2">
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Recipient Name" placeholder="Ananya Sharma" {...addressForm.register("name")} error={addressForm.formState.errors.name?.message} />
+            <Input label="Recipient Phone" placeholder="9876543210" {...addressForm.register("phone")} error={addressForm.formState.errors.phone?.message} />
+          </div>
+
+          <Input label="Street Address" placeholder="Flat 402, Sunshine Heights, Connaught Place" {...addressForm.register("street")} error={addressForm.formState.errors.street?.message} />
+
+          <div className="grid grid-cols-3 gap-3">
+            <Input label="City" placeholder="New Delhi" {...addressForm.register("city")} error={addressForm.formState.errors.city?.message} />
+            <Input label="State" placeholder="Delhi" {...addressForm.register("state")} error={addressForm.formState.errors.state?.message} />
+            <Input label="Pincode" placeholder="110001" maxLength={6} {...addressForm.register("pincode")} error={addressForm.formState.errors.pincode?.message} />
+          </div>
+
+          <Button type="submit" className="w-full mt-4" isLoading={isAddingAddress}>
+            Save Address & Select for Checkout
+          </Button>
+        </form>
+      </Modal>
     </div>
   );
 };
