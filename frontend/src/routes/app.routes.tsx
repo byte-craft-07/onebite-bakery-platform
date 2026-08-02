@@ -23,6 +23,7 @@ import { CustomerAuthContainer } from "@/pages/auth/CustomerAuthContainer";
 import { SessionExpiredPage, UnauthorizedPage } from "@/pages/auth/StatusPages";
 import { CartPage } from "@/pages/customer/CartPage";
 import { CheckoutPage } from "@/pages/customer/CheckoutPage";
+import { CustomerDashboardPage } from "@/pages/customer/CustomerDashboardPage";
 import { CustomerNotificationsPage } from "@/pages/customer/CustomerNotificationsPage";
 import { CustomerProfilePage } from "@/pages/customer/CustomerProfilePage";
 import { CustomerSettingsPage } from "@/pages/customer/CustomerSettingsPage";
@@ -71,6 +72,8 @@ export const AppRoutes: React.FC = () => {
 
           {/* Protected Customer Account & Order Routes */}
           <Route path="customer" element={<ProtectedRoute />}>
+            <Route index element={<Navigate to="/customer/dashboard" replace />} />
+            <Route path="dashboard" element={<CustomerDashboardPage />} />
             <Route path="profile" element={<CustomerProfilePage />} />
             <Route path="orders" element={<OrdersHistoryPage />} />
             <Route path="orders/:id" element={<OrderDetailsPage />} />

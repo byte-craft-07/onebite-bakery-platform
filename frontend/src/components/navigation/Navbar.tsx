@@ -106,11 +106,11 @@ export const Navbar: React.FC = () => {
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
                 <Link
-                  to="/customer/profile"
+                  to="/customer/dashboard"
                   className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#FFF3E6] border border-[#E67E22]/30 text-xs font-bold text-[#E67E22] hover:bg-[#E67E22] hover:text-white transition-colors"
                 >
                   <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">Profile</span>
+                  <span className="hidden sm:inline">Dashboard</span>
                 </Link>
                 <button
                   onClick={logout}
@@ -178,7 +178,7 @@ export const Navbar: React.FC = () => {
                 <Link to="/combos" onClick={() => setIsMobileMenuOpen(false)}>Celebration Combos</Link>
                 <Link to="/decorations" onClick={() => setIsMobileMenuOpen(false)}>Party Decoration Shop</Link>
                 {isAuthenticated ? (
-                  <Link to="/customer/profile" onClick={() => setIsMobileMenuOpen(false)}>Customer Profile</Link>
+                  <Link to="/customer/dashboard" onClick={() => setIsMobileMenuOpen(false)}>Customer Dashboard</Link>
                 ) : (
                   <Link to="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>Log In</Link>
                 )}

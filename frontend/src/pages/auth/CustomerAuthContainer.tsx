@@ -71,7 +71,7 @@ export const CustomerAuthContainer: React.FC = () => {
       if (res.data.user.role === "admin") {
         navigate("/admin/dashboard", { replace: true });
       } else {
-        navigate("/customer/profile", { replace: true });
+        navigate("/customer/dashboard", { replace: true });
       }
     } catch (err: any) {
       setApiError(err?.response?.data?.error?.message || "Invalid or expired OTP code.");
