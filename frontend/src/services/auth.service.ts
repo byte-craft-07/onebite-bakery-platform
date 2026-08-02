@@ -28,8 +28,8 @@ export const authService = {
       const response = await apiClient.post<{ success: boolean; message: string }>("/auth/send-otp", payload);
       return response.data;
     } catch (err: any) {
-      if (import.meta.env.DEV && payload.phone === "9999999999") {
-        return { success: true, message: "Dev mode OTP bypass ready." };
+      if (import.meta.env.DEV) {
+        return { success: true, message: "Dev mode OTP verification code is 123456." };
       }
       throw err;
     }
@@ -43,20 +43,21 @@ export const authService = {
       }>("/auth/verify-otp", payload);
       return response.data;
     } catch (err: any) {
-      if (import.meta.env.DEV && payload.phone === "9999999999" && (payload.code === "123456" || payload.code === "1234")) {
-        const devAdminUser: UserProfileResponse = {
-          id: "dev-admin-id",
-          phone: "9999999999",
-          name: "Development Admin",
-          email: "admin@onebite.local",
-          role: "admin",
+      if (import.meta.env.DEV) {
+        const isDevAdmin = payload.phone === "9999999999";
+        const devUser: UserProfileResponse = {
+          id: isDevAdmin ? "dev-admin-id" : `usr-${Date.now()}`,
+          phone: payload.phone,
+          name: isDevAdmin ? "Development Admin" : "Bakery Customer",
+          email: isDevAdmin ? "admin@onebite.local" : "customer@onebite.local",
+          role: isDevAdmin ? "admin" : "customer",
           isActive: true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
         return {
           success: true,
-          data: { user: devAdminUser, accessToken: "dev-admin-token" },
+          data: { user: devUser, accessToken: "dev-session-token" },
         };
       }
       throw err;

@@ -45,10 +45,13 @@ export const CustomerAuthContainer: React.FC = () => {
     try {
       await authService.sendOtp({ phone: data.phone, purpose: "login" });
       setPhone(data.phone);
+      if (import.meta.env.DEV) {
+        otpForm.setValue("code", "123456");
+      }
       setStep("otp");
     } catch (err: any) {
-      if (import.meta.env.DEV && data.phone === "9999999999") {
-        setPhone("9999999999");
+      if (import.meta.env.DEV) {
+        setPhone(data.phone);
         otpForm.setValue("code", "123456");
         setStep("otp");
       } else {
@@ -90,10 +93,10 @@ export const CustomerAuthContainer: React.FC = () => {
       <div className="p-3 bg-[#FFF3E6] border border-[#E67E22]/30 rounded-xl text-center space-y-1.5">
         <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#E67E22]">
           <UserCheck className="h-4 w-4" />
-          <span>Development Mode Quick Admin Access</span>
+          <span>Development Mode Quick Access</span>
         </div>
         <p className="text-[11px] text-[#6E5D4F]">
-          Mobile: <code className="font-bold text-[#2C1E16]">9999999999</code> &bull; OTP: <code className="font-bold text-[#2C1E16]">123456</code>
+          Any Phone (e.g. <code className="font-bold text-[#2C1E16]">9876543210</code>) or Admin <code className="font-bold text-[#2C1E16]">9999999999</code> &bull; OTP: <code className="font-bold text-[#2C1E16]">123456</code>
         </p>
         <button
           type="button"
