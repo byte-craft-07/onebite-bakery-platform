@@ -196,6 +196,25 @@ export const HomePage: React.FC = () => {
 
       {/* Customer Moving Reviews Marquee Section (Right to Left Slowly) */}
       <section className="space-y-8 overflow-hidden">
+        <style>{`
+          @keyframes marqueeAutoMove {
+            0% {
+              transform: translate3d(0, 0, 0);
+            }
+            100% {
+              transform: translate3d(-50%, 0, 0);
+            }
+          }
+          .animate-marquee-auto-move {
+            display: flex !important;
+            width: max-content !important;
+            animation: marqueeAutoMove 22s linear infinite !important;
+            will-change: transform;
+          }
+          .animate-marquee-auto-move:hover {
+            animation-play-state: paused !important;
+          }
+        `}</style>
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <h2 className="text-3xl font-extrabold text-[#2C1E16]">Real Customer Reviews & Ratings</h2>
           <p className="text-sm text-[#6E5D4F]">Live verified feedback from recent bakery order deliveries</p>
@@ -203,9 +222,9 @@ export const HomePage: React.FC = () => {
 
         {/* Moving Marquee Loop */}
         <div className="relative w-full overflow-hidden py-4">
-          <div className="flex gap-6 animate-marquee-scroll hover:[animation-play-state:paused] w-max">
+          <div className="animate-marquee-auto-move flex gap-6">
             {[...reviews, ...reviews, ...reviews, ...reviews, ...reviews, ...reviews].map((review, idx) => (
-              <ReviewCard key={`rev-loop-${review.id}-${idx}`} review={review} />
+              <ReviewCard key={`rev-auto-${review.id}-${idx}`} review={review} />
             ))}
           </div>
         </div>
