@@ -69,10 +69,15 @@ export const Navbar: React.FC = () => {
               </button>
             ) : null}
 
-            <Link to="/" className="flex items-center gap-2">
-              <span className="text-2xl font-extrabold text-[#E67E22] tracking-tight">OneBite</span>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#FFF3E6] text-[#E67E22] border border-[#E67E22]/30">
-                Bakery
+            <Link to="/" className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="text-2xl font-extrabold text-[#E67E22] tracking-tight">OneBite</span>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#FFF3E6] text-[#E67E22] border border-[#E67E22]/30">
+                  Bakery
+                </span>
+              </div>
+              <span className="text-[10px] font-bold text-[#6E5D4F] tracking-wide hidden sm:block">
+                Pure Joy in Every Single Bite
               </span>
             </Link>
           </div>
@@ -193,7 +198,10 @@ export const Navbar: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-6">
-              <div className="text-xl font-extrabold text-[#E67E22]">OneBite Bakery</div>
+              <div className="space-y-0.5">
+                <div className="text-xl font-extrabold text-[#E67E22]">OneBite Bakery</div>
+                <p className="text-xs font-bold text-[#6E5D4F]">Pure Joy in Every Single Bite</p>
+              </div>
               <nav className="flex flex-col gap-4 font-medium text-base text-[#2C1E16]">
                 <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
                 <Link to="/products" onClick={() => setIsMobileMenuOpen(false)}>Products</Link>
@@ -211,7 +219,7 @@ export const Navbar: React.FC = () => {
             </div>
 
             <div className="pt-6 border-t border-[#E8E2D9] text-xs text-[#6E5D4F]">
-              Freshly baked with love &bull; 100% Quality Guaranteed
+              Pure Joy in Every Single Bite &bull; 100% Quality Guaranteed
             </div>
           </div>
         </div>

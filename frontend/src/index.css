@@ -10,8 +10,14 @@
 }
 
 .animate-marquee {
-  animation: marquee 50s linear infinite;
+  display: flex !important;
+  width: max-content !important;
+  animation: marquee 30s linear infinite !important;
   will-change: transform;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused !important;
 }
 
 /* Global Custom Form Controls & Select Option Styling */

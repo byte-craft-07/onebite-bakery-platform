@@ -8,9 +8,14 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
         {/* Brand Column */}
         <div className="space-y-4">
-          <h3 className="text-2xl font-extrabold text-[#E67E22]">OneBite Bakery</h3>
+          <div className="space-y-1">
+            <h3 className="text-2xl font-extrabold text-[#E67E22]">OneBite Bakery</h3>
+            <p className="text-xs font-extrabold text-[#E8E2D9] uppercase tracking-wider">
+              Pure Joy in Every Single Bite
+            </p>
+          </div>
           <p className="text-xs text-[#E8E2D9]/80 leading-relaxed">
-            Handcrafted artisanal cakes, pastries, custom cake creations, and fresh daily breads prepared with premium ingredients.
+            Handcrafted artisanal cakes, pastries, custom cake creations, and fresh daily breads prepared with premium 100% natural ingredients.
           </p>
           <div className="flex items-center gap-3 pt-2">
             <a href="#" className="p-2 rounded-full bg-white/10 hover:bg-[#E67E22] transition-colors"><Share2 className="h-4 w-4" /></a>
@@ -66,7 +71,7 @@ export const Footer: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 pt-12 mt-12 border-t border-white/10 text-center text-xs text-[#E8E2D9]/60">
-        <p>&copy; {new Date().getFullYear()} OneBite Bakery Platform. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} OneBite Bakery Platform &bull; Pure Joy in Every Single Bite. All rights reserved.</p>
       </div>
     </footer>
   );
