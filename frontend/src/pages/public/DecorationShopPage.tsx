@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, Heart, PartyPopper, ShoppingBag, Sparkles, Star } from "lucide-react";
+import { Check, Heart, PartyPopper, ShoppingBag, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/DisplayComponents";
 import { cartService } from "@/services/cart.service";
@@ -81,9 +81,9 @@ export const DecorationShopPage: React.FC = () => {
     <div className="space-y-10 pb-16">
       {/* Header Banner */}
       <div className="rounded-3xl bg-gradient-to-r from-[#FFF3E6] via-[#FFFBF5] to-[#FFF3E6] border border-[#E8E2D9] p-8 md:p-12 text-center space-y-4 shadow-xs">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E67E22]/10 text-[#E67E22] text-xs font-bold">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E67E22]/10 text-[#E67E22] text-xs font-bold uppercase tracking-wider">
           <PartyPopper className="h-4 w-4" />
-          <span>Section 34 &bull; Party Decoration Accessories</span>
+          <span>Party Decoration Accessories</span>
         </div>
         <h1 className="text-3xl md:text-4xl font-extrabold text-[#2C1E16]">
           Celebration Party Decoration Shop
