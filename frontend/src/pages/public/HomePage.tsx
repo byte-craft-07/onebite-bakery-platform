@@ -194,7 +194,7 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Customer Moving Reviews Marquee Section */}
+      {/* Customer Moving Reviews Marquee Section (Right to Left Slowly) */}
       <section className="space-y-8 overflow-hidden">
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <h2 className="text-3xl font-extrabold text-[#2C1E16]">Real Customer Reviews & Ratings</h2>
@@ -204,7 +204,7 @@ export const HomePage: React.FC = () => {
         {/* Moving Marquee Loop */}
         <div className="relative w-full overflow-hidden py-4">
           <div className="flex gap-6 animate-marquee hover:[animation-play-state:paused] w-max">
-            {[...reviews, ...reviews, ...reviews].map((review, idx) => (
+            {[...reviews, ...reviews, ...reviews, ...reviews].map((review, idx) => (
               <ReviewCard key={`${review.id}-${idx}`} review={review} />
             ))}
           </div>
