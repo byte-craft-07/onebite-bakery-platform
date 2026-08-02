@@ -1,21 +1,33 @@
 import { apiClient } from "./api.client";
+import { adminOperationsService } from "@/features/admin/services/adminOperations.service";
 
-export interface OrderItem {
+export interface OrderItemDetails {
   id: string;
   productId: string;
   name: string;
   unitPrice: number;
   quantity: number;
   itemTotal: number;
+  isEggless?: boolean;
 }
 
 export interface OrderDetails {
   id: string;
   orderNumber: string;
-  orderStatus: "PENDING" | "CONFIRMED" | "PREPARING" | "OUT_FOR_DELIVERY" | "DELIVERED" | "CANCELLED";
+  orderStatus:
+    | "PENDING"
+    | "CONFIRMED"
+    | "PREPARING"
+    | "BAKING"
+    | "QUALITY_CHECK"
+    | "PACKED"
+    | "OUT_FOR_DELIVERY"
+    | "DELIVERED"
+    | "CANCELLED"
+    | "REFUNDED";
   paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
   fulfillmentType: "HOME_DELIVERY" | "STORE_PICKUP";
-  items: OrderItem[];
+  items: OrderItemDetails[];
   subtotal: number;
   deliveryFee: number;
   taxAmount: number;
@@ -30,6 +42,8 @@ export interface OrderDetails {
   };
 }
 
+const LOCAL_ORDERS_KEY = "onebite_customer_orders_list";
+
 const mockOrders: OrderDetails[] = [
   {
     id: "ord-101",
@@ -41,51 +55,88 @@ const mockOrders: OrderDetails[] = [
       {
         id: "item-1",
         productId: "prod-1",
-        name: "Belgian Dark Chocolate Truffle Cake",
+        name: "Belgian Dark Chocolate Truffle Cake (1 Kg)",
         unitPrice: 649,
-        quantity: 2,
-        itemTotal: 1298,
+        quantity: 1,
+        itemTotal: 649,
+        isEggless: true,
       },
-    ],
-    subtotal: 1298,
-    deliveryFee: 0,
-    taxAmount: 64,
-    discountAmount: 0,
-    totalAmount: 1362,
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-    deliveryAddress: {
-      street: "Flat 402, Sunshine Heights, Connaught Place",
-      city: "New Delhi",
-      state: "Delhi",
-      pincode: "110001",
-    },
-  },
-  {
-    id: "ord-102",
-    orderNumber: "OB-98211",
-    orderStatus: "CONFIRMED",
-    paymentStatus: "PAID",
-    fulfillmentType: "STORE_PICKUP",
-    items: [
       {
         id: "item-2",
         productId: "prod-2",
-        name: "Classic Red Velvet Cream Cheese Cake",
-        unitPrice: 699,
-        quantity: 1,
-        itemTotal: 699,
+        name: "Red Velvet Cream Cheese Pastry",
+        unitPrice: 169,
+        quantity: 2,
+        itemTotal: 338,
+        isEggless: true,
       },
     ],
-    subtotal: 699,
+    subtotal: 987,
+    deliveryFee: 49,
+    taxAmount: 49,
+    discountAmount: 0,
+    totalAmount: 1085,
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    deliveryAddress: {
+      street: "Flat 402, Sunshine Apartments, Civil Lines",
+      city: "New Delhi",
+      state: "Delhi",
+      pincode: "110054",
+    },
+  },
+  {
+    id: "ord-100",
+    orderNumber: "OB-98195",
+    orderStatus: "DELIVERED",
+    paymentStatus: "PAID",
+    fulfillmentType: "HOME_DELIVERY",
+    items: [
+      {
+        id: "item-3",
+        productId: "prod-3",
+        name: "Fresh Sourdough Whole Wheat Bread",
+        unitPrice: 140,
+        quantity: 5,
+        itemTotal: 700,
+        isEggless: true,
+      },
+    ],
+    subtotal: 700,
     deliveryFee: 0,
     taxAmount: 35,
     discountAmount: 0,
-    totalAmount: 734,
+    totalAmount: 735,
     createdAt: new Date(Date.now() - 86400000).toISOString(),
   },
 ];
 
 export const orderService = {
+  addOrder: (order: OrderDetails) => {
+    try {
+      const existing = orderService.getLocalOrders();
+      const updated = [order, ...existing];
+      localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(updated));
+      adminOperationsService.addOrderRecord({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        totalAmount: order.totalAmount,
+        fulfillmentType: order.fulfillmentType,
+      });
+    } catch (_e) {
+      // Ignore
+    }
+  },
+
+  getLocalOrders: (): OrderDetails[] => {
+    try {
+      const stored = localStorage.getItem(LOCAL_ORDERS_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch (_e) {
+      // Ignore
+    }
+    return mockOrders;
+  },
+
   getCustomerOrders: async (): Promise<OrderDetails[]> => {
     try {
       const response = await apiClient.get<{
@@ -98,7 +149,7 @@ export const orderService = {
     } catch (_err) {
       // Fallback to local customer orders
     }
-    return mockOrders;
+    return orderService.getLocalOrders();
   },
 
   getOrderById: async (id: string): Promise<OrderDetails> => {
@@ -114,38 +165,11 @@ export const orderService = {
       // Fallback
     }
 
-    const found = mockOrders.find((o) => o.id === id || o.orderNumber === id);
+    const localList = orderService.getLocalOrders();
+    const found = localList.find((o) => o.id === id || o.orderNumber === id);
     if (found) return found;
 
-    return {
-      id,
-      orderNumber: id.startsWith("OB-") ? id : `OB-${Date.now().toString().slice(-5)}`,
-      orderStatus: "CONFIRMED",
-      paymentStatus: "PAID",
-      fulfillmentType: "HOME_DELIVERY",
-      items: [
-        {
-          id: "item-gen",
-          productId: "prod-1",
-          name: "Belgian Dark Chocolate Truffle Cake",
-          unitPrice: 649,
-          quantity: 1,
-          itemTotal: 649,
-        },
-      ],
-      subtotal: 649,
-      deliveryFee: 49,
-      taxAmount: 32,
-      discountAmount: 0,
-      totalAmount: 730,
-      createdAt: new Date().toISOString(),
-      deliveryAddress: {
-        street: "Main Market Road, Block C",
-        city: "New Delhi",
-        state: "Delhi",
-        pincode: "110001",
-      },
-    };
+    return localList[0] || mockOrders[0];
   },
 
   cancelOrder: async (id: string, reason?: string) => {
@@ -156,6 +180,13 @@ export const orderService = {
       }>(`/orders/${id}/cancel`, { reason });
       return response.data.data.order;
     } catch (_err) {
+      const localList = orderService.getLocalOrders();
+      const idx = localList.findIndex((o) => o.id === id);
+      if (idx >= 0) {
+        localList[idx].orderStatus = "CANCELLED";
+        localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(localList));
+        return localList[idx];
+      }
       return { id, orderStatus: "CANCELLED" } as any;
     }
   },

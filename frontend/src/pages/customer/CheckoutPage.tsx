@@ -13,6 +13,7 @@ import { addressService, type Address } from "@/services/address.service";
 import { checkoutService, type CheckoutPreviewResponse } from "@/services/checkout.service";
 import { emailNotificationService } from "@/services/email.service";
 import { invoiceService } from "@/services/invoice.service";
+import { orderService, type OrderDetails } from "@/services/order.service";
 import { razorpayService } from "@/services/razorpay.service";
 import { whatsappSmsService } from "@/services/whatsappSms.service";
 
@@ -103,14 +104,14 @@ export const CheckoutPage: React.FC = () => {
       emailNotificationService.sendOrderConfirmationEmail(order as any, customerEmail);
       whatsappSmsService.sendOrderStatusNotification(customerPhone, order.orderNumber, "CONFIRMED");
 
-      setPlacedOrder({
+      const newOrderData: OrderDetails = {
         id: order.id,
         orderNumber: order.orderNumber,
-        orderStatus: order.orderStatus || "CONFIRMED",
+        orderStatus: (order.orderStatus as any) || "CONFIRMED",
         paymentStatus: paymentDetails ? "PAID" : "PENDING",
         fulfillmentType,
         items: [
-          { id: "item-1", productId: "prod-1", name: "Belgian Dark Chocolate Truffle Cake", unitPrice: order.totalAmount, quantity: 1, itemTotal: order.totalAmount }
+          { id: "item-1", productId: "prod-1", name: "Belgian Dark Chocolate Truffle Cake", unitPrice: order.totalAmount, quantity: 1, itemTotal: order.totalAmount, isEggless: true }
         ],
         subtotal: order.totalAmount,
         deliveryFee: fulfillmentType === "HOME_DELIVERY" ? 50 : 0,
@@ -124,7 +125,10 @@ export const CheckoutPage: React.FC = () => {
           state: selectedAddress.state,
           pincode: selectedAddress.pincode,
         } : undefined,
-      });
+      };
+
+      orderService.addOrder(newOrderData);
+      setPlacedOrder(newOrderData);
     } catch (err: any) {
       setErrorMsg(err?.response?.data?.error?.message || "Failed to create order. Please verify cart items.");
     } finally {
