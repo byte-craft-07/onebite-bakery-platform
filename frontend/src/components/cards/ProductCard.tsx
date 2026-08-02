@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/DisplayComponents";
 import type { ProductItem } from "@/services/catalog.service";
 import { cartService } from "@/services/cart.service";
 
+const FALLBACK_PRODUCT_IMAGE = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
+
 export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
@@ -13,7 +15,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
   const imageUrl =
     product.mainImage ||
     (product.images && product.images[0]) ||
-    "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
+    FALLBACK_PRODUCT_IMAGE;
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -44,6 +46,10 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
           <img
             src={imageUrl}
             alt={product.name}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+            }}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
@@ -57,7 +63,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
 
         <button
           aria-label="Add to favorites"
-          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-xs text-[#2C1E16] hover:text-[#C0392B] transition-colors shadow-sm z-10"
+          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-xs text-[#2C1E16] hover:text-[#C0392B] transition-colors shadow-sm z-10 cursor-pointer"
         >
           <Heart className="h-4 w-4" />
         </button>

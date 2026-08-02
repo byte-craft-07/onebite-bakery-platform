@@ -4,15 +4,22 @@ import { ArrowRight, Check, Star } from "lucide-react";
 
 import type { MockCategory, MockCombo, MockOccasion, MockReview } from "@/data/mockData";
 
+const FALLBACK_CATEGORY_IMAGE = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
+const FALLBACK_OCCASION_IMAGE = "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80";
+
 export const CategoryCard: React.FC<{ category: MockCategory }> = ({ category }) => {
   return (
     <Link
       to={`/categories/${category.slug}`}
-      className="group relative rounded-2xl overflow-hidden aspect-4/3 border border-[#E8E2D9] shadow-md flex flex-col justify-end p-6"
+      className="group relative rounded-2xl overflow-hidden aspect-4/3 border border-[#E8E2D9] shadow-md flex flex-col justify-end p-6 bg-[#F9F6F0]"
     >
       <img
-        src={category.image}
+        src={category.image || FALLBACK_CATEGORY_IMAGE}
         alt={category.name}
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = FALLBACK_CATEGORY_IMAGE;
+        }}
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         loading="lazy"
       />
@@ -32,11 +39,15 @@ export const OccasionCard: React.FC<{ occasion: MockOccasion }> = ({ occasion })
   return (
     <Link
       to={`/occasions/${occasion.slug}`}
-      className="group relative rounded-2xl overflow-hidden aspect-3/2 border border-[#E8E2D9] shadow-md flex flex-col justify-end p-6"
+      className="group relative rounded-2xl overflow-hidden aspect-3/2 border border-[#E8E2D9] shadow-md flex flex-col justify-end p-6 bg-[#F9F6F0]"
     >
       <img
-        src={occasion.image}
+        src={occasion.image || FALLBACK_OCCASION_IMAGE}
         alt={occasion.name}
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = FALLBACK_OCCASION_IMAGE;
+        }}
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="lazy"
       />
@@ -56,7 +67,16 @@ export const ComboCard: React.FC<{ combo: MockCombo }> = ({ combo }) => {
   return (
     <div className="rounded-2xl border border-[#E8E2D9] bg-white p-6 shadow-md flex flex-col md:flex-row gap-6 items-center">
       <div className="w-full md:w-1/3 aspect-4/3 rounded-xl overflow-hidden bg-[#F9F6F0]">
-        <img src={combo.image} alt={combo.title} className="h-full w-full object-cover" loading="lazy" />
+        <img
+          src={combo.image || FALLBACK_CATEGORY_IMAGE}
+          alt={combo.title}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = FALLBACK_CATEGORY_IMAGE;
+          }}
+          className="h-full w-full object-cover"
+          loading="lazy"
+        />
       </div>
 
       <div className="w-full md:w-2/3 space-y-3">
@@ -90,7 +110,15 @@ export const ReviewCard: React.FC<{ review: MockReview }> = ({ review }) => {
   return (
     <div className="rounded-2xl border border-[#E8E2D9] bg-[#FFFBF5] p-6 shadow-sm space-y-3">
       <div className="flex items-center gap-3">
-        <img src={review.avatar} alt={review.name} className="h-10 w-10 rounded-full object-cover" />
+        <img
+          src={review.avatar}
+          alt={review.name}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80";
+          }}
+          className="h-10 w-10 rounded-full object-cover"
+        />
         <div>
           <h4 className="text-sm font-bold text-[#2C1E16]">{review.name}</h4>
           <div className="flex text-amber-500 text-xs">
