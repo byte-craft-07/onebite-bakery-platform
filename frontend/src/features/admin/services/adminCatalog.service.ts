@@ -1,4 +1,5 @@
 import { apiClient } from "@/services/api.client";
+import { catalogService } from "@/services/catalog.service";
 
 export interface CreateProductPayload {
   name: string;
@@ -22,6 +23,10 @@ export interface CreateProductPayload {
 }
 
 export const adminCatalogService = {
+  getProducts: async () => {
+    return catalogService.searchProducts({});
+  },
+
   createProduct: async (payload: CreateProductPayload) => {
     const response = await apiClient.post<{
       success: boolean;
