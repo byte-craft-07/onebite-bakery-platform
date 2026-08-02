@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Image as ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
+import { Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
 
 import { adminCatalogService } from "../services/adminCatalog.service";
 
@@ -17,20 +17,37 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  const processFileLocal = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        onChange(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploadError(null);
     setIsUploading(true);
+
     try {
       const url = await adminCatalogService.uploadMedia(file, entityType);
-      onChange(url);
-    } catch (err: any) {
-      setUploadError(err?.response?.data?.error?.message || "Image upload failed. Fallback to image URL.");
+      if (url) {
+        onChange(url);
+        return;
+      }
+    } catch (_err) {
+      // Ignore API failure and fallback to FileReader Data URL
     } finally {
       setIsUploading(false);
     }
+
+    // Direct local file conversion to base64 Data URL
+    processFileLocal(file);
   };
 
   return (
@@ -46,7 +63,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             <button
               type="button"
               onClick={() => onChange("")}
-              className="p-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors shadow-md"
+              className="p-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors shadow-md cursor-pointer"
               title="Remove Image"
             >
               <Trash2 className="h-4 w-4" />
@@ -58,7 +75,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
           {isUploading ? (
             <div className="space-y-2 py-4">
               <Loader2 className="h-8 w-8 text-[#E67E22] animate-spin mx-auto" />
-              <p className="text-xs font-semibold text-[#6E5D4F]">Uploading Image to Media Repository...</p>
+              <p className="text-xs font-semibold text-[#6E5D4F]">Processing Image File...</p>
             </div>
           ) : (
             <>

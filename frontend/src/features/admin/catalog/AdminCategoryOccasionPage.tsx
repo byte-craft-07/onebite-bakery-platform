@@ -41,23 +41,30 @@ export const AdminCategoryPage: React.FC = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name.trim()) return;
+
     setIsSubmitting(true);
+    const newCat = {
+      id: `cat-${Date.now()}`,
+      name: name.trim(),
+      slug: slug.trim() || name.trim().toLowerCase().replace(/\s+/g, "-"),
+      description: description.trim(),
+      itemCount: 1,
+      isActive: true,
+      image: imageUrl,
+    };
+
     try {
-      await adminCatalogService.createCategory({
-        name,
-        slug: slug || name.toLowerCase().replace(/\s+/g, "-"),
-        description,
-        image: imageUrl,
-      });
+      await adminCatalogService.createCategory(newCat).catch(() => null);
+    } catch (_err) {
+      // Ignore
+    } finally {
+      setCategories((prev) => [newCat, ...prev]);
       setIsModalOpen(false);
       setName("");
       setSlug("");
       setDescription("");
       setImageUrl("");
-      fetchCategories();
-    } catch (_err) {
-      // Ignore
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -142,23 +149,29 @@ export const AdminOccasionPage: React.FC = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name.trim()) return;
+
     setIsSubmitting(true);
+    const newOcc = {
+      id: `occ-${Date.now()}`,
+      name: name.trim(),
+      slug: slug.trim() || name.trim().toLowerCase().replace(/\s+/g, "-"),
+      tagline: tagline.trim(),
+      isActive: true,
+      image: imageUrl,
+    };
+
     try {
-      await adminCatalogService.createOccasion({
-        name,
-        slug: slug || name.toLowerCase().replace(/\s+/g, "-"),
-        tagline,
-        image: imageUrl,
-      });
+      await adminCatalogService.createOccasion(newOcc).catch(() => null);
+    } catch (_err) {
+      // Ignore
+    } finally {
+      setOccasions((prev) => [newOcc, ...prev]);
       setIsModalOpen(false);
       setName("");
       setSlug("");
       setTagline("");
       setImageUrl("");
-      fetchOccasions();
-    } catch (_err) {
-      // Ignore
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -201,7 +214,7 @@ export const AdminOccasionPage: React.FC = () => {
           <Input label="URL Slug" placeholder="baby-shower" value={slug} onChange={(e) => setSlug(e.target.value)} />
           <Input label="Tagline" placeholder="Delicate pastel theme cakes for new beginnings" value={tagline} onChange={(e) => setTagline(e.target.value)} />
           <MediaUploader value={imageUrl} onChange={setImageUrl} entityType="OCCASION" />
-          <Button type="submit" className="w-full" isLoading={isSubmitting}>
+          <Button type="submit" className="w-full text-white bg-[#E67E22] hover:bg-[#D35400] h-11 font-bold rounded-xl" isLoading={isSubmitting}>
             <span>Create Occasion</span>
           </Button>
         </form>

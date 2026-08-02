@@ -67,18 +67,18 @@ export const Modal: React.FC<{
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl border border-[#E8E2D9] max-w-lg w-full p-6 shadow-2xl animate-in fade-in zoom-in-95">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white rounded-2xl border border-[#E8E2D9] max-w-lg w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 my-8 max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#E8E2D9] shrink-0">
           {title ? <h3 className="text-xl font-bold text-[#2C1E16]">{title}</h3> : <div />}
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1"
+            className="text-gray-400 hover:text-gray-700 text-2xl font-bold p-1 leading-none cursor-pointer"
           >
             &times;
           </button>
         </div>
-        {children}
+        <div className="flex-1 overflow-y-auto pr-1 space-y-4">{children}</div>
       </div>
     </div>
   );
