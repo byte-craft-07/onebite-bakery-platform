@@ -37,73 +37,88 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
   const { logout } = useAuth();
 
   return (
-    <aside
-      className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-[#2C1E16] text-[#FFFBF5] p-6 flex flex-col justify-between transition-transform duration-300 ${
-        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-      }`}
-    >
-      <div className="space-y-6 overflow-y-auto pr-1">
-        {/* Header Logo */}
-        <div className="flex items-center justify-between">
-          <Link to="/" title="Go to Home Page Storefront" className="flex items-center gap-2 group">
-            <span className="text-xl font-extrabold text-[#E67E22] tracking-tight group-hover:text-amber-400 transition-colors">OneBite</span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/10 text-white uppercase">
-              Admin
-            </span>
-          </Link>
-          {onClose ? (
-            <button onClick={onClose} className="lg:hidden p-1 text-gray-400 hover:text-white">
-              <X className="h-5 w-5" />
-            </button>
-          ) : null}
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isOpen ? (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      ) : null}
+
+      <aside
+        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-[#2C1E16] text-[#FFFBF5] p-5 sm:p-6 flex flex-col justify-between transition-transform duration-300 shadow-2xl lg:shadow-none ${
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        <div className="space-y-6 overflow-y-auto pr-1">
+          {/* Header Logo */}
+          <div className="flex items-center justify-between">
+            <Link to="/" title="Go to Home Page Storefront" className="flex items-center gap-2 group">
+              <span className="text-xl font-extrabold text-[#E67E22] tracking-tight group-hover:text-amber-400 transition-colors">OneBite</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/10 text-white uppercase">
+                Admin
+              </span>
+            </Link>
+            {onClose ? (
+              <button onClick={onClose} className="lg:hidden p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/10">
+                <X className="h-5 w-5" />
+              </button>
+            ) : null}
+          </div>
+
+          {/* Nav Links */}
+          <nav className="space-y-1 text-xs">
+            {navSections.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  onClick={onClose}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
+                    isActive
+                      ? "bg-[#E67E22] text-white font-bold shadow-sm"
+                      : "text-[#E8E2D9]/70 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
         </div>
 
-        {/* Nav Links */}
-        <nav className="space-y-1 text-xs">
-          {navSections.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.id}
-                to={item.path}
-                onClick={onClose}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  isActive
-                    ? "bg-[#E67E22] text-white font-bold shadow-sm"
-                    : "text-[#E8E2D9]/70 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
+        {/* Footer Actions */}
+        <div className="pt-4 border-t border-white/10 space-y-2.5 shrink-0">
+          <Link
+            to="/"
+            onClick={onClose}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#E67E22] hover:bg-[#D35400] text-xs font-bold text-white transition-colors shadow-sm cursor-pointer"
+          >
+            <Home className="h-4 w-4" />
+            <span>Go to Home Page</span>
+          </Link>
 
-      {/* Footer Actions */}
-      <div className="pt-4 border-t border-white/10 space-y-2.5 shrink-0">
-        <Link
-          to="/"
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#E67E22] hover:bg-[#D35400] text-xs font-bold text-white transition-colors shadow-sm cursor-pointer"
-        >
-          <Home className="h-4 w-4" />
-          <span>Go to Home Page</span>
-        </Link>
+          <button
+            onClick={() => {
+              if (onClose) onClose();
+              logout();
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-white/10 hover:bg-red-600/80 text-xs font-bold text-white transition-colors cursor-pointer"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Exit Admin</span>
+          </button>
 
-        <button
-          onClick={logout}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-white/10 hover:bg-red-600/80 text-xs font-bold text-white transition-colors cursor-pointer"
-        >
-          <LogOut className="h-4 w-4" />
-          <span>Exit Admin</span>
-        </button>
-
-        <p className="text-[10px] text-center text-[#E8E2D9]/50">
-          OneBite Platform Engine &bull; v1.0.0
-        </p>
-      </div>
-    </aside>
+          <p className="text-[10px] text-center text-[#E8E2D9]/50">
+            OneBite Platform Engine &bull; v1.0.0
+          </p>
+        </div>
+      </aside>
+    </>
   );
 };

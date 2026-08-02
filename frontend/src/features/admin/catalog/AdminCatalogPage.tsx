@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { AlertCircle, Edit, Plus, Trash2 } from "lucide-react";
+import { Edit, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { catalogService, type ProductItem } from "@/services/catalog.service";
 import {
   AdminPageHeader,
   AdminTable,
+  AdminTableSkeleton,
   AdminToolbar,
 } from "../components/AdminComponents";
 import { adminCatalogService } from "../services/adminCatalog.service";
@@ -68,44 +69,61 @@ export const AdminCatalogPage: React.FC = () => {
       />
 
       <AdminTable headers={["Image", "Product Name", "SKU", "Price", "Stock Status", "Actions"]}>
-        {products.map((p) => (
-          <tr key={p.id} className="hover:bg-[#F9F6F0]/50 transition-colors">
-            <td className="px-4 py-3">
-              <div className="h-10 w-10 rounded-lg overflow-hidden bg-gray-100 border">
-                <img src={p.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=200&q=80"} alt={p.name} className="h-full w-full object-cover" />
-              </div>
-            </td>
-            <td className="px-4 py-3 font-bold text-[#2C1E16]">{p.name}</td>
-            <td className="px-4 py-3 font-mono text-gray-500">{p.sku}</td>
-            <td className="px-4 py-3 font-extrabold">₹{p.price}</td>
-            <td className="px-4 py-3">
-              {p.isAvailable ? (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800">In Stock</span>
-              ) : (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800">Out of Stock</span>
-              )}
-            </td>
-            <td className="px-4 py-3 flex items-center gap-2">
-              <button
-                onClick={() => {
-                  setSelectedProduct(p);
-                  setIsModalOpen(true);
-                }}
-                className="p-1.5 text-gray-500 hover:text-[#E67E22] transition-colors"
-                title="Edit Product"
-              >
-                <Edit className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => handleDelete(p.id)}
-                className="p-1.5 text-gray-500 hover:text-red-600 transition-colors"
-                title="Delete Product"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+        {isLoading ? (
+          <AdminTableSkeleton columns={6} rows={5} />
+        ) : products.length > 0 ? (
+          products.map((p) => (
+            <tr key={p.id} className="hover:bg-[#F9F6F0]/50 transition-colors">
+              <td className="px-4 py-3">
+                <div className="h-10 w-10 rounded-lg overflow-hidden bg-gray-100 border border-[#E8E2D9]">
+                  <img
+                    src={p.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=200&q=80"}
+                    alt={p.name}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              </td>
+              <td className="px-4 py-3 font-bold text-[#2C1E16]">{p.name}</td>
+              <td className="px-4 py-3 font-mono text-gray-500 text-xs">{p.sku}</td>
+              <td className="px-4 py-3 font-extrabold text-[#2C1E16]">₹{p.price}</td>
+              <td className="px-4 py-3">
+                {p.isAvailable ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800">In Stock</span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800">Out of Stock</span>
+                )}
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setSelectedProduct(p);
+                      setIsModalOpen(true);
+                    }}
+                    className="p-1.5 text-gray-500 hover:text-[#E67E22] transition-colors cursor-pointer"
+                    title="Edit Product"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(p.id)}
+                    className="p-1.5 text-gray-500 hover:text-red-600 transition-colors cursor-pointer"
+                    title="Delete Product"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan={6} className="text-center py-8 text-xs text-[#6E5D4F]">
+              No products found in catalog.
             </td>
           </tr>
-        ))}
+        )}
       </AdminTable>
 
       <ProductFormModal

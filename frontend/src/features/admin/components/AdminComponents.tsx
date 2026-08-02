@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertCircle, CheckCircle2, ChevronRight, Loader2, Search } from "lucide-react";
+import { AlertCircle, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 
@@ -33,6 +33,20 @@ export const AdminStatCard: React.FC<{
       ) : null}
     </div>
   </AdminCard>
+);
+
+// AdminStatCardSkeleton
+export const AdminStatCardSkeleton: React.FC = () => (
+  <div className="rounded-2xl border border-[#E8E2D9] bg-white p-6 space-y-3 animate-pulse">
+    <div className="flex items-center justify-between">
+      <div className="h-3 bg-[#E8E2D9]/70 rounded-md w-24" />
+      <div className="h-8 w-8 rounded-xl bg-[#FFF3E6]" />
+    </div>
+    <div className="flex items-baseline justify-between pt-1">
+      <div className="h-7 bg-[#E8E2D9]/80 rounded-md w-20" />
+      <div className="h-3 bg-[#E8E2D9]/60 rounded-md w-16" />
+    </div>
+  </div>
 );
 
 // AdminPageHeader
@@ -87,18 +101,33 @@ export const AdminTable: React.FC<{
   headers: string[];
   children: React.ReactNode;
 }> = ({ headers, children }) => (
-  <div className="overflow-x-auto rounded-2xl border border-[#E8E2D9] bg-white">
-    <table className="w-full text-left text-xs text-[#2C1E16]">
+  <div className="overflow-x-auto rounded-2xl border border-[#E8E2D9] bg-white shadow-2xs max-w-full">
+    <table className="w-full min-w-[600px] text-left text-xs text-[#2C1E16]">
       <thead className="bg-[#FFF3E6] border-b border-[#E8E2D9] text-[#6E5D4F] uppercase tracking-wider font-bold">
         <tr>
           {headers.map((h, i) => (
-            <th key={i} className="px-4 py-3.5">{h}</th>
+            <th key={i} className="px-4 py-3.5 whitespace-nowrap">{h}</th>
           ))}
         </tr>
       </thead>
       <tbody className="divide-y divide-[#E8E2D9]">{children}</tbody>
     </table>
   </div>
+);
+
+// AdminTableSkeleton
+export const AdminTableSkeleton: React.FC<{ columns: number; rows?: number }> = ({ columns, rows = 4 }) => (
+  <>
+    {Array.from({ length: rows }).map((_, rIdx) => (
+      <tr key={rIdx} className="animate-pulse">
+        {Array.from({ length: columns }).map((_, cIdx) => (
+          <td key={cIdx} className="px-4 py-4">
+            <div className="h-4 bg-[#E8E2D9]/60 rounded-md w-3/4" />
+          </td>
+        ))}
+      </tr>
+    ))}
+  </>
 );
 
 // AdminEmptyState
@@ -112,14 +141,6 @@ export const AdminEmptyState: React.FC<{
     <h4 className="text-sm font-bold text-[#2C1E16]">{title}</h4>
     {description ? <p className="text-xs text-[#6E5D4F] max-w-sm mx-auto">{description}</p> : null}
     {action ? <div className="pt-2">{action}</div> : null}
-  </div>
-);
-
-// AdminLoading
-export const AdminLoading: React.FC<{ label?: string }> = ({ label = "Loading Admin Modules..." }) => (
-  <div className="py-16 text-center space-y-3">
-    <Loader2 className="h-8 w-8 text-[#E67E22] animate-spin mx-auto" />
-    <p className="text-xs font-semibold text-[#6E5D4F]">{label}</p>
   </div>
 );
 

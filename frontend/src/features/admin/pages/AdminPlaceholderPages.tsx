@@ -1,16 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
-  Activity,
-  AlertTriangle,
-  Bell,
-  CheckCircle2,
   DollarSign,
-  Lock,
-  Mail,
   Send,
-  Settings,
-  Shield,
-  ShoppingBag,
   TrendingUp,
   UserCheck,
   UserX,
@@ -24,7 +15,9 @@ import {
   AdminCard,
   AdminPageHeader,
   AdminStatCard,
+  AdminStatCardSkeleton,
   AdminTable,
+  AdminTableSkeleton,
   AdminToolbar,
 } from "../components/AdminComponents";
 import {
@@ -41,10 +34,16 @@ export { AdminHealthLogsPage as AdminLogsPage } from "./AdminHealthLogsPage";
 export const AdminCustomersPage: React.FC = () => {
   const [customers, setCustomers] = useState<AdminCustomerSummary[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchCustomers = async () => {
-    const list = await adminOperationsService.getCustomers();
-    setCustomers(list);
+    setIsLoading(true);
+    try {
+      const list = await adminOperationsService.getCustomers();
+      setCustomers(list);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -76,40 +75,50 @@ export const AdminCustomersPage: React.FC = () => {
       />
 
       <AdminTable headers={["Name", "Contact Phone", "Email", "Account Role", "Status", "Access Action"]}>
-        {filtered.map((usr) => (
-          <tr key={usr.id} className="hover:bg-[#F9F6F0]/50 transition-colors">
-            <td className="px-4 py-3 font-bold text-[#2C1E16]">{usr.name}</td>
-            <td className="px-4 py-3 font-mono text-xs">{usr.phone}</td>
-            <td className="px-4 py-3 text-xs text-[#6E5D4F]">{usr.email || "N/A"}</td>
-            <td className="px-4 py-3">
-              <Badge variant={usr.role === "admin" ? "primary" : "neutral"}>
-                {usr.role.toUpperCase()}
-              </Badge>
-            </td>
-            <td className="px-4 py-3">
-              <Badge variant={usr.status === "active" ? "success" : "danger"}>
-                {usr.status.toUpperCase()}
-              </Badge>
-            </td>
-            <td className="px-4 py-3">
-              {usr.role !== "admin" ? (
-                <button
-                  onClick={() => handleToggleStatus(usr)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                    usr.status === "active"
-                      ? "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
-                      : "bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
-                  }`}
-                >
-                  {usr.status === "active" ? <UserX className="h-3.5 w-3.5" /> : <UserCheck className="h-3.5 w-3.5" />}
-                  <span>{usr.status === "active" ? "Block Access" : "Unblock User"}</span>
-                </button>
-              ) : (
-                <span className="text-xs text-gray-400 font-medium">Protected System Admin</span>
-              )}
+        {isLoading ? (
+          <AdminTableSkeleton columns={6} rows={4} />
+        ) : filtered.length > 0 ? (
+          filtered.map((usr) => (
+            <tr key={usr.id} className="hover:bg-[#F9F6F0]/50 transition-colors">
+              <td className="px-4 py-3 font-bold text-[#2C1E16]">{usr.name}</td>
+              <td className="px-4 py-3 font-mono text-xs">{usr.phone}</td>
+              <td className="px-4 py-3 text-xs text-[#6E5D4F]">{usr.email || "N/A"}</td>
+              <td className="px-4 py-3">
+                <Badge variant={usr.role === "admin" ? "primary" : "neutral"}>
+                  {usr.role.toUpperCase()}
+                </Badge>
+              </td>
+              <td className="px-4 py-3">
+                <Badge variant={usr.status === "active" ? "success" : "danger"}>
+                  {usr.status.toUpperCase()}
+                </Badge>
+              </td>
+              <td className="px-4 py-3">
+                {usr.role !== "admin" ? (
+                  <button
+                    onClick={() => handleToggleStatus(usr)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                      usr.status === "active"
+                        ? "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
+                        : "bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
+                    }`}
+                  >
+                    {usr.status === "active" ? <UserX className="h-3.5 w-3.5" /> : <UserCheck className="h-3.5 w-3.5" />}
+                    <span>{usr.status === "active" ? "Block Access" : "Unblock User"}</span>
+                  </button>
+                ) : (
+                  <span className="text-xs text-gray-400 font-medium">Protected System Admin</span>
+                )}
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan={6} className="text-center py-8 text-xs text-[#6E5D4F]">
+              No customer records found.
             </td>
           </tr>
-        ))}
+        )}
       </AdminTable>
     </div>
   );
@@ -118,9 +127,14 @@ export const AdminCustomersPage: React.FC = () => {
 export const AdminPaymentsPage: React.FC = () => {
   const [payments, setPayments] = useState<AdminPaymentSummary[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    adminOperationsService.getPayments().then(setPayments);
+    setIsLoading(true);
+    adminOperationsService.getPayments().then((res) => {
+      setPayments(res);
+      setIsLoading(false);
+    });
   }, []);
 
   const filtered = payments.filter(
@@ -142,22 +156,32 @@ export const AdminPaymentsPage: React.FC = () => {
       />
 
       <AdminTable headers={["Transaction ID", "Order #", "Amount", "Payment Gateway Method", "Status", "Timestamp"]}>
-        {filtered.map((pay) => (
-          <tr key={pay.id} className="hover:bg-[#F9F6F0]/50 transition-colors">
-            <td className="px-4 py-3 font-mono text-xs font-bold text-[#E67E22]">{pay.paymentId}</td>
-            <td className="px-4 py-3 font-mono font-bold text-[#2C1E16]">#{pay.orderNumber}</td>
-            <td className="px-4 py-3 font-extrabold text-[#2C1E16]">₹{pay.amount}</td>
-            <td className="px-4 py-3 font-medium text-xs text-[#6E5D4F]">{pay.method}</td>
-            <td className="px-4 py-3">
-              <Badge variant={pay.status === "PAID" ? "success" : "warning"}>
-                {pay.status}
-              </Badge>
-            </td>
-            <td className="px-4 py-3 text-xs text-gray-400">
-              {new Date(pay.createdAt).toLocaleString()}
+        {isLoading ? (
+          <AdminTableSkeleton columns={6} rows={4} />
+        ) : filtered.length > 0 ? (
+          filtered.map((pay) => (
+            <tr key={pay.id} className="hover:bg-[#F9F6F0]/50 transition-colors">
+              <td className="px-4 py-3 font-mono text-xs font-bold text-[#E67E22]">{pay.paymentId}</td>
+              <td className="px-4 py-3 font-mono font-bold text-[#2C1E16]">#{pay.orderNumber}</td>
+              <td className="px-4 py-3 font-extrabold text-[#2C1E16]">₹{pay.amount}</td>
+              <td className="px-4 py-3 font-medium text-xs text-[#6E5D4F]">{pay.method}</td>
+              <td className="px-4 py-3">
+                <Badge variant={pay.status === "PAID" ? "success" : "warning"}>
+                  {pay.status}
+                </Badge>
+              </td>
+              <td className="px-4 py-3 text-xs text-gray-400">
+                {new Date(pay.createdAt).toLocaleString()}
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan={6} className="text-center py-8 text-xs text-[#6E5D4F]">
+              No payment transactions recorded yet.
             </td>
           </tr>
-        ))}
+        )}
       </AdminTable>
     </div>
   );
@@ -165,6 +189,7 @@ export const AdminPaymentsPage: React.FC = () => {
 
 export const AdminNotificationsPage: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [broadcastTitle, setBroadcastTitle] = useState("");
   const [broadcastMsg, setBroadcastMsg] = useState("");
@@ -172,8 +197,13 @@ export const AdminNotificationsPage: React.FC = () => {
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
   const fetchNotifications = async () => {
-    const list = await adminOperationsService.getNotifications();
-    setNotifications(list);
+    setIsLoading(true);
+    try {
+      const list = await adminOperationsService.getNotifications();
+      setNotifications(list);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -221,17 +251,27 @@ export const AdminNotificationsPage: React.FC = () => {
       ) : null}
 
       <AdminTable headers={["Timestamp", "Recipient", "Notification Type", "Title", "Delivery Status"]}>
-        {notifications.map((notif, idx) => (
-          <tr key={idx} className="hover:bg-[#F9F6F0]/50 transition-colors">
-            <td className="px-4 py-3 text-xs text-gray-400">{new Date(notif.createdAt).toLocaleString()}</td>
-            <td className="px-4 py-3 font-medium text-xs">{notif.recipient}</td>
-            <td className="px-4 py-3 font-mono text-xs text-[#E67E22]">{notif.type}</td>
-            <td className="px-4 py-3 font-bold text-[#2C1E16]">{notif.title}</td>
-            <td className="px-4 py-3">
-              <Badge variant="success">{notif.status || "DELIVERED"}</Badge>
+        {isLoading ? (
+          <AdminTableSkeleton columns={5} rows={4} />
+        ) : notifications.length > 0 ? (
+          notifications.map((notif, idx) => (
+            <tr key={idx} className="hover:bg-[#F9F6F0]/50 transition-colors">
+              <td className="px-4 py-3 text-xs text-gray-400">{new Date(notif.createdAt).toLocaleString()}</td>
+              <td className="px-4 py-3 font-medium text-xs">{notif.recipient}</td>
+              <td className="px-4 py-3 font-mono text-xs text-[#E67E22]">{notif.type}</td>
+              <td className="px-4 py-3 font-bold text-[#2C1E16]">{notif.title}</td>
+              <td className="px-4 py-3">
+                <Badge variant="success">{notif.status || "DELIVERED"}</Badge>
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan={5} className="text-center py-8 text-xs text-[#6E5D4F]">
+              No system notifications yet.
             </td>
           </tr>
-        ))}
+        )}
       </AdminTable>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Dispatch Broadcast Notification">
@@ -283,28 +323,28 @@ export const AdminAnalyticsPage: React.FC = () => {
         <AdminStatCard
           title="Total Gross Revenue"
           value={metrics ? `₹${metrics.totalRevenue.toLocaleString()}` : "₹2,48,500"}
-          change="+18.4% vs last month"
+          change="Real Sales Sum"
           isPositive={true}
           icon={<DollarSign className="h-5 w-5 text-green-600" />}
         />
         <AdminStatCard
           title="Total Completed Orders"
           value={metrics ? `${metrics.totalOrders}` : "312"}
-          change="+12.2% vs last month"
+          change="System Orders"
           isPositive={true}
-          icon={<ShoppingBag className="h-5 w-5 text-[#E67E22]" />}
+          icon={<TrendingUp className="h-5 w-5 text-[#E67E22]" />}
         />
         <AdminStatCard
           title="Active Customers"
           value={metrics ? `${metrics.activeCustomers}` : "184"}
-          change="+8.9% growth"
+          change="Accounts"
           isPositive={true}
           icon={<Users className="h-5 w-5 text-blue-600" />}
         />
         <AdminStatCard
           title="Average Order Value"
           value={metrics ? `₹${metrics.averageOrderValue}` : "₹796"}
-          change="+4.2% higher"
+          change="Calculated AOV"
           isPositive={true}
           icon={<TrendingUp className="h-5 w-5 text-amber-600" />}
         />
@@ -459,7 +499,7 @@ export const AdminSettingsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setSettings({ ...settings, isOrderAcceptanceActive: !settings.isOrderAcceptanceActive })}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                 settings.isOrderAcceptanceActive
                   ? "bg-green-600 text-white"
                   : "bg-red-600 text-white"
