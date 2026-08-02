@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { CheckCircle, Clock, Eye, RefreshCw, Truck } from "lucide-react";
 
 import { Badge } from "@/components/ui/DisplayComponents";
-import { Button } from "@/components/ui/Button";
+import { CustomSelect } from "@/components/ui/FormControls";
 import {
-  AdminCard,
   AdminPageHeader,
   AdminTable,
   AdminToolbar,
@@ -15,10 +13,8 @@ export const AdminOrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<AdminOrderSummary[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
-  const [isLoading, setIsLoading] = useState(true);
 
   const fetchOrders = async () => {
-    setIsLoading(true);
     try {
       const list = await adminOperationsService.getAllOrders({
         orderStatus: selectedStatus !== "ALL" ? selectedStatus : undefined,
@@ -27,8 +23,6 @@ export const AdminOrdersPage: React.FC = () => {
       setOrders(list);
     } catch (_err) {
       setOrders([]);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -45,6 +39,15 @@ export const AdminOrdersPage: React.FC = () => {
     }
   };
 
+  const statusOptions = [
+    { label: "PENDING", value: "PENDING" },
+    { label: "CONFIRMED", value: "CONFIRMED" },
+    { label: "PREPARING", value: "PREPARING" },
+    { label: "OUT FOR DELIVERY", value: "OUT_FOR_DELIVERY" },
+    { label: "DELIVERED", value: "DELIVERED" },
+    { label: "CANCELLED", value: "CANCELLED" },
+  ];
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
@@ -58,7 +61,7 @@ export const AdminOrdersPage: React.FC = () => {
           <button
             key={st}
             onClick={() => setSelectedStatus(st)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
               selectedStatus === st
                 ? "bg-[#E67E22] text-white shadow-xs"
                 : "bg-white border border-[#E8E2D9] text-[#2C1E16] hover:bg-[#F9F6F0]"
@@ -95,18 +98,12 @@ export const AdminOrdersPage: React.FC = () => {
               </Badge>
             </td>
             <td className="px-4 py-3">
-              <select
+              <CustomSelect
                 value={ord.orderStatus}
-                onChange={(e) => handleStatusChange(ord.id, e.target.value)}
-                className="p-1.5 rounded-lg border border-[#E8E2D9] text-xs outline-none bg-white font-semibold text-[#2C1E16]"
-              >
-                <option value="PENDING">PENDING</option>
-                <option value="CONFIRMED">CONFIRMED</option>
-                <option value="PREPARING">PREPARING</option>
-                <option value="OUT_FOR_DELIVERY">OUT FOR DELIVERY</option>
-                <option value="DELIVERED">DELIVERED</option>
-                <option value="CANCELLED">CANCELLED</option>
-              </select>
+                onChange={(newVal) => handleStatusChange(ord.id, newVal)}
+                options={statusOptions}
+                className="h-8 text-[11px] min-w-[150px]"
+              />
             </td>
           </tr>
         ))}

@@ -10,8 +10,8 @@ export const Footer: React.FC = () => {
         <div className="space-y-4">
           <div className="space-y-1">
             <h3 className="text-2xl font-extrabold text-[#E67E22]">OneBite Bakery</h3>
-            <p className="text-xs font-extrabold text-[#E8E2D9] uppercase tracking-wider">
-              Pure Joy in Every Single Bite
+            <p className="text-xs font-extrabold text-[#E8E2D9] tracking-wider">
+              हर जश्न का पहला निवाला। &bull; Pure Joy in Every Single Bite
             </p>
           </div>
           <p className="text-xs text-[#E8E2D9]/80 leading-relaxed">
@@ -71,7 +71,7 @@ export const Footer: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 pt-12 mt-12 border-t border-white/10 text-center text-xs text-[#E8E2D9]/60">
-        <p>&copy; {new Date().getFullYear()} OneBite Bakery Platform &bull; Pure Joy in Every Single Bite. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} OneBite Bakery Platform &bull; हर जश्न का पहला निवाला। (Pure Joy in Every Single Bite). All rights reserved.</p>
       </div>
     </footer>
   );

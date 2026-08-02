@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { Modal } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/FormControls";
+import { CustomSelect, Input } from "@/components/ui/FormControls";
 import { MediaUploader } from "./MediaUploader";
 import { adminCatalogService, type CreateProductPayload } from "../services/adminCatalog.service";
 
@@ -82,6 +82,13 @@ export const ProductFormModal: React.FC<{
     }
   };
 
+  const productTypeOptions = [
+    { label: "Normal Cake / Pastry", value: "NORMAL" },
+    { label: "Combo Hamper Box", value: "COMBO" },
+    { label: "Custom Tier Cake", value: "CUSTOM_CAKE" },
+    { label: "Party Accessory", value: "DECORATION" },
+  ];
+
   return (
     <Modal
       isOpen={isOpen}
@@ -127,15 +134,18 @@ export const ProductFormModal: React.FC<{
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-[#2C1E16] mb-1">Product Type</label>
-            <select {...form.register("productType")} className="w-full p-2.5 rounded-lg border border-[#E8E2D9] text-xs outline-none bg-white">
-              <option value="NORMAL">Normal Cake / Pastry</option>
-              <option value="COMBO">Combo Hamper Box</option>
-              <option value="CUSTOM_CAKE">Custom Tier Cake</option>
-              <option value="DECORATION">Party Accessory</option>
-            </select>
-          </div>
+          <Controller
+            control={form.control}
+            name="productType"
+            render={({ field }) => (
+              <CustomSelect
+                label="Product Type"
+                value={field.value || "NORMAL"}
+                onChange={field.onChange}
+                options={productTypeOptions}
+              />
+            )}
+          />
 
           <Input label="Initial Stock Quantity" type="number" {...form.register("stockQuantity")} />
         </div>

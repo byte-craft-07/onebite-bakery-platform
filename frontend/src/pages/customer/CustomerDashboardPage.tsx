@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Package,
   Plus,
+  ShieldCheck,
   ShoppingBag,
   Trash2,
   TrendingUp,
@@ -38,6 +39,7 @@ import {
   type SupportTicket,
 } from "@/services/customerDashboard.service";
 import { favoritesService } from "@/services/favorites.service";
+import { invoiceService } from "@/services/invoice.service";
 import { orderService, type OrderDetails } from "@/services/order.service";
 
 export const CustomerDashboardPage: React.FC = () => {
@@ -86,7 +88,17 @@ export const CustomerDashboardPage: React.FC = () => {
 
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
-  // Initial Fetch
+  const [now] = useState(Date.now());
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 4 && hour < 12) return "Good Morning";
+    if (hour >= 12 && hour < 17) return "Good Afternoon";
+    if (hour >= 17 && hour < 22) return "Good Evening";
+    return "Good Night";
+  };
+
+  // Dashboard Data Fetching (runs once on mount)
   const loadDashboardData = async () => {
     setIsLoading(true);
     try {
@@ -217,18 +229,21 @@ export const CustomerDashboardPage: React.FC = () => {
     "Delivered",
   ];
 
-  const getStageIndex = (status: string) => {
-    switch (status) {
-      case "PENDING": return 0;
-      case "CONFIRMED": return 1;
-      case "PREPARING": return 2;
-      case "BAKING": return 3;
-      case "QUALITY_CHECK": return 4;
-      case "PACKED": return 5;
-      case "OUT_FOR_DELIVERY": return 6;
-      case "DELIVERED": return 7;
-      default: return 1;
-    }
+  const getStageIndex = (order: OrderDetails) => {
+    if (order.orderStatus === "DELIVERED") return 7;
+    if (order.orderStatus === "CANCELLED") return 0;
+
+    const createdAtTime = new Date(order.createdAt).getTime();
+    const elapsedMinutes = (now - createdAtTime) / 60000;
+
+    if (elapsedMinutes < 2) return 0;
+    if (elapsedMinutes < 5) return 1;
+    if (elapsedMinutes < 10) return 2;
+    if (elapsedMinutes < 15) return 3;
+    if (elapsedMinutes < 20) return 4;
+    if (elapsedMinutes < 25) return 5;
+    if (elapsedMinutes < 35) return 6;
+    return 7;
   };
 
   if (isLoading) {
@@ -262,7 +277,7 @@ export const CustomerDashboardPage: React.FC = () => {
                 Personal Control Center
               </span>
               <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                Good Morning, {user?.name || "Valued Customer"} ❤️
+                {getGreeting()}, {user?.name || "Valued Customer"} ❤️
               </h1>
               <p className="text-xs text-[#E8E2D9]/80">
                 Welcome back to OneBite Artisanal Bakery &bull; Member Since: {analytics?.memberSince || "January 2026"}
@@ -270,7 +285,14 @@ export const CustomerDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link to="/customer/security">
+              <Button size="sm" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                <ShieldCheck className="h-4 w-4 mr-1.5 text-[#27AE60]" />
+                <span>Security Center</span>
+              </Button>
+            </Link>
+
             <Link to="/products">
               <Button size="sm" className="bg-[#E67E22] hover:bg-[#D35400] text-white border-none shadow-md">
                 <ShoppingBag className="h-4 w-4 mr-1.5" />
@@ -338,7 +360,7 @@ export const CustomerDashboardPage: React.FC = () => {
         {runningOrders.length > 0 ? (
           <div className="space-y-6">
             {runningOrders.map((ord) => {
-              const currentStageIdx = getStageIndex(ord.orderStatus);
+              const currentStageIdx = getStageIndex(ord);
               return (
                 <Card key={ord.id} className="p-6 space-y-6 border-[#E67E22]/40 bg-[#FFFBF5]">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#E8E2D9] pb-4 gap-2">
@@ -474,8 +496,8 @@ export const CustomerDashboardPage: React.FC = () => {
                         >
                           Reorder
                         </button>
-                        <button onClick={() => window.print()} className="text-gray-400 hover:text-gray-700 cursor-pointer">
-                          Invoice
+                        <button onClick={() => invoiceService.downloadOrderInvoice(ord)} className="text-gray-400 hover:text-[#E67E22] font-bold cursor-pointer">
+                          Invoice PDF
                         </button>
                       </div>
                     </td>

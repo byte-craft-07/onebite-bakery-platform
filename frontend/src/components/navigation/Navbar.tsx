@@ -33,12 +33,10 @@ export const Navbar: React.FC = () => {
 
     window.addEventListener("onebite_cart_updated", handleCartUpdate);
     window.addEventListener("storage", handleCartUpdate);
-    const interval = setInterval(syncCartCount, 2000);
 
     return () => {
       window.removeEventListener("onebite_cart_updated", handleCartUpdate);
       window.removeEventListener("storage", handleCartUpdate);
-      clearInterval(interval);
     };
   }, []);
 
@@ -77,7 +75,7 @@ export const Navbar: React.FC = () => {
                 </span>
               </div>
               <span className="text-[10px] font-bold text-[#6E5D4F] tracking-wide hidden sm:block">
-                Pure Joy in Every Single Bite
+                हर जश्न का पहला निवाला। &bull; Pure Joy in Every Single Bite
               </span>
             </Link>
           </div>
@@ -200,7 +198,7 @@ export const Navbar: React.FC = () => {
             <div className="space-y-6">
               <div className="space-y-0.5">
                 <div className="text-xl font-extrabold text-[#E67E22]">OneBite Bakery</div>
-                <p className="text-xs font-bold text-[#6E5D4F]">Pure Joy in Every Single Bite</p>
+                <p className="text-xs font-bold text-[#6E5D4F]">हर जश्न का पहला निवाला। &bull; Pure Joy in Every Single Bite</p>
               </div>
               <nav className="flex flex-col gap-4 font-medium text-base text-[#2C1E16]">
                 <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
@@ -219,7 +217,7 @@ export const Navbar: React.FC = () => {
             </div>
 
             <div className="pt-6 border-t border-[#E8E2D9] text-xs text-[#6E5D4F]">
-              Pure Joy in Every Single Bite &bull; 100% Quality Guaranteed
+              हर जश्न का पहला निवाला। &bull; 100% Quality Guaranteed
             </div>
           </div>
         </div>

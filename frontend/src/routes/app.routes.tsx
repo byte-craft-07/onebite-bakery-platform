@@ -17,6 +17,7 @@ import {
   AdminReportsPage,
   AdminSettingsPage,
 } from "@/features/admin";
+import { AdminSecurityPage } from "@/features/admin/pages/AdminSecurityPage";
 import { AuthLayout } from "@/layouts/AuthLayout";
 import { PublicLayout } from "@/layouts/PublicLayout";
 import { CustomerAuthContainer } from "@/pages/auth/CustomerAuthContainer";
@@ -26,6 +27,7 @@ import { CheckoutPage } from "@/pages/customer/CheckoutPage";
 import { CustomerDashboardPage } from "@/pages/customer/CustomerDashboardPage";
 import { CustomerNotificationsPage } from "@/pages/customer/CustomerNotificationsPage";
 import { CustomerProfilePage } from "@/pages/customer/CustomerProfilePage";
+import { CustomerSecurityPage } from "@/pages/customer/CustomerSecurityPage";
 import { CustomerSettingsPage } from "@/pages/customer/CustomerSettingsPage";
 import { FavoritesPage } from "@/pages/customer/FavoritesPage";
 import { OrderDetailsPage, OrdersHistoryPage } from "@/pages/customer/OrdersPages";
@@ -36,17 +38,11 @@ import { CustomCakePage } from "@/pages/public/CustomCakePage";
 import { DecorationShopPage } from "@/pages/public/DecorationShopPage";
 import { HomePage } from "@/pages/public/HomePage";
 import { AboutPage, ContactPage } from "@/pages/public/InformationPages";
+import { NotFoundPage } from "@/pages/public/NotFoundPage";
 import { OccasionsPage } from "@/pages/public/OccasionsPage";
 import { ProductDetailsPage } from "@/pages/public/ProductDetailsPage";
 import { ProductsListingPage } from "@/pages/public/ProductsListingPage";
 import { AdminRoute, GuestRoute, ProtectedRoute } from "@/routes/guards";
-
-const NotFoundPage: React.FC = () => (
-  <div className="py-16 text-center space-y-4">
-    <h1 className="text-5xl font-extrabold text-[#E67E22]">404</h1>
-    <p className="text-lg text-[#6E5D4F]">Page not found.</p>
-  </div>
-);
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -80,6 +76,7 @@ export const AppRoutes: React.FC = () => {
             <Route path="favorites" element={<FavoritesPage />} />
             <Route path="notifications" element={<CustomerNotificationsPage />} />
             <Route path="settings" element={<CustomerSettingsPage />} />
+            <Route path="security" element={<CustomerSecurityPage />} />
           </Route>
 
           <Route path="checkout" element={<ProtectedRoute />}>
@@ -90,6 +87,9 @@ export const AppRoutes: React.FC = () => {
           </Route>
           <Route path="order/success/:orderId" element={<OrderSuccessPage />} />
           <Route path="order/failure/:orderId" element={<OrderFailurePage />} />
+
+          {/* 404 Inside Layout */}
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         {/* Guest Auth Routes */}
@@ -120,11 +120,9 @@ export const AppRoutes: React.FC = () => {
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
             <Route path="logs" element={<AdminLogsPage />} />
+            <Route path="security" element={<AdminSecurityPage />} />
           </Route>
         </Route>
-
-        {/* 404 Fallback */}
-        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );

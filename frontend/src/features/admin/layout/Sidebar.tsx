@@ -12,6 +12,7 @@ import {
   LogOut,
   Package,
   Settings,
+  ShieldCheck,
   ShoppingBag,
   Sparkles,
   Users,
@@ -32,8 +33,9 @@ const navSections = [
   { id: "media", label: "Media Library", path: "/admin/media", icon: ImageIcon },
   { id: "analytics", label: "Platform Analytics", path: "/admin/analytics", icon: BarChart3 },
   { id: "reports", label: "Reports Console", path: "/admin/reports", icon: FileSpreadsheet },
+  { id: "security", label: "Security & Audit", path: "/admin/security", icon: ShieldCheck },
   { id: "settings", label: "System Settings", path: "/admin/settings", icon: Settings },
-  { id: "logs", label: "Audit & Activity Logs", path: "/admin/logs", icon: FileText },
+  { id: "logs", label: "Activity Logs", path: "/admin/logs", icon: FileText },
 ];
 
 export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ isOpen = false, onClose }) => {
@@ -82,7 +84,7 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
                   key={item.id}
                   to={item.path}
                   onClick={onClose}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2 rounded-xl font-medium transition-colors ${
                     isActive
                       ? "bg-[#E67E22] text-white font-bold shadow-sm"
                       : "text-[#E8E2D9]/70 hover:bg-white/10 hover:text-white"

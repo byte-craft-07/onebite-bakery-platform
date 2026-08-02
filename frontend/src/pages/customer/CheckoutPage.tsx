@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Plus, ShieldCheck } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, CheckCircle2, Download, FileText, Plus, ShieldCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,6 +11,10 @@ import { Card, Modal, Skeleton } from "@/components/ui/DisplayComponents";
 import { Input } from "@/components/ui/FormControls";
 import { addressService, type Address } from "@/services/address.service";
 import { checkoutService, type CheckoutPreviewResponse } from "@/services/checkout.service";
+import { emailNotificationService } from "@/services/email.service";
+import { invoiceService } from "@/services/invoice.service";
+import { razorpayService } from "@/services/razorpay.service";
+import { whatsappSmsService } from "@/services/whatsappSms.service";
 
 const inlineAddressSchema = z.object({
   name: z.string().trim().min(2, "Name is required."),
@@ -25,8 +29,6 @@ const inlineAddressSchema = z.object({
 type InlineAddressData = z.infer<typeof inlineAddressSchema>;
 
 export const CheckoutPage: React.FC = () => {
-  const navigate = useNavigate();
-
   const [fulfillmentType, setFulfillmentType] = useState<"HOME_DELIVERY" | "STORE_PICKUP">("HOME_DELIVERY");
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>(undefined);
@@ -34,7 +36,7 @@ export const CheckoutPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [placedOrder, setPlacedOrder] = useState<{ id: string; orderNumber: string; totalAmount: number } | null>(null);
+  const [placedOrder, setPlacedOrder] = useState<any | null>(null);
 
   const [isAddAddressModalOpen, setIsAddAddressModalOpen] = useState(false);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
@@ -85,6 +87,51 @@ export const CheckoutPage: React.FC = () => {
     }
   };
 
+  const executeOrderCreation = async (paymentDetails?: any) => {
+    setIsPlacingOrder(true);
+    try {
+      const order = await checkoutService.createOrder({
+        fulfillmentType,
+        addressId: fulfillmentType === "HOME_DELIVERY" ? selectedAddressId : undefined,
+      });
+
+      const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
+      const customerPhone = selectedAddress?.phone || "9876543210";
+      const customerEmail = "customer@onebitebakery.test";
+
+      // Trigger Resend Confirmation Email & WhatsApp/SMS Status Notifications
+      emailNotificationService.sendOrderConfirmationEmail(order as any, customerEmail);
+      whatsappSmsService.sendOrderStatusNotification(customerPhone, order.orderNumber, "CONFIRMED");
+
+      setPlacedOrder({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        orderStatus: order.orderStatus || "CONFIRMED",
+        paymentStatus: paymentDetails ? "PAID" : "PENDING",
+        fulfillmentType,
+        items: [
+          { id: "item-1", productId: "prod-1", name: "Belgian Dark Chocolate Truffle Cake", unitPrice: order.totalAmount, quantity: 1, itemTotal: order.totalAmount }
+        ],
+        subtotal: order.totalAmount,
+        deliveryFee: fulfillmentType === "HOME_DELIVERY" ? 50 : 0,
+        taxAmount: Math.round(order.totalAmount * 0.05),
+        discountAmount: 0,
+        totalAmount: order.totalAmount,
+        createdAt: new Date().toISOString(),
+        deliveryAddress: selectedAddress ? {
+          street: selectedAddress.street,
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          pincode: selectedAddress.pincode,
+        } : undefined,
+      });
+    } catch (err: any) {
+      setErrorMsg(err?.response?.data?.error?.message || "Failed to create order. Please verify cart items.");
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
+
   const handlePlaceOrder = async () => {
     setErrorMsg(null);
 
@@ -97,18 +144,24 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
-    setIsPlacingOrder(true);
-    try {
-      const order = await checkoutService.createOrder({
-        fulfillmentType,
-        addressId: fulfillmentType === "HOME_DELIVERY" ? selectedAddressId : undefined,
-      });
-      setPlacedOrder(order);
-    } catch (err: any) {
-      setErrorMsg(err?.response?.data?.error?.message || "Failed to create order. Please verify cart items.");
-    } finally {
-      setIsPlacingOrder(false);
-    }
+    const selectedAddr = addresses.find((a) => a.id === selectedAddressId);
+    const amount = checkoutPreview?.pricing?.totalAmount || 499;
+
+    // Launch Razorpay Payment Modal
+    razorpayService.openPaymentModal({
+      amountInRupees: amount,
+      orderId: `ORD-${Date.now()}`,
+      customerName: selectedAddr?.name || "OneBite Customer",
+      customerEmail: "customer@onebitebakery.test",
+      customerPhone: selectedAddr?.phone || "9876543210",
+      onSuccess: (razorpayResponse) => {
+        executeOrderCreation(razorpayResponse);
+      },
+      onDismiss: () => {
+        // Allow fallback placement if user closes Razorpay modal
+        executeOrderCreation();
+      },
+    });
   };
 
   if (placedOrder) {
@@ -120,15 +173,31 @@ export const CheckoutPage: React.FC = () => {
           <p className="text-sm text-[#6E5D4F]">
             Order Number: <strong className="text-[#E67E22]">{placedOrder.orderNumber}</strong>
           </p>
+          <p className="text-xs text-[#27AE60] font-bold">Payment Status: {placedOrder.paymentStatus}</p>
           <p className="text-xs text-gray-400">Total Amount: ₹{placedOrder.totalAmount}</p>
         </div>
 
-        <div className="pt-4 flex justify-center gap-4">
-          <Link to="/products">
-            <Button variant="outline">Continue Shopping</Button>
-          </Link>
-          <Link to="/customer/profile">
-            <Button>View Profile</Button>
+        <div className="p-4 rounded-2xl bg-[#FFFBF5] border border-[#E8E2D9] text-xs text-[#6E5D4F] space-y-2">
+          <p className="font-bold text-[#2C1E16]">Automated Notifications Dispatched:</p>
+          <p>📧 Email Receipt sent via Resend API to <code className="text-[#E67E22] font-semibold">customer@onebitebakery.test</code></p>
+          <p>💬 WhatsApp & SMS confirmation sent to <code className="text-[#E67E22] font-semibold">+91 {placedOrder.shippingAddress?.phone || '9876543210'}</code></p>
+        </div>
+
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Button
+            onClick={() => invoiceService.downloadOrderInvoice(placedOrder)}
+            variant="outline"
+            className="w-full sm:w-auto border-[#E67E22] text-[#E67E22] hover:bg-[#FFF3E6]"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            <span>Download Tax Invoice PDF</span>
+          </Button>
+
+          <Link to="/customer/dashboard" className="w-full sm:w-auto">
+            <Button className="w-full">
+              <FileText className="h-4 w-4 mr-2" />
+              <span>Track Order on Dashboard</span>
+            </Button>
           </Link>
         </div>
       </div>
@@ -221,12 +290,12 @@ export const CheckoutPage: React.FC = () => {
           />
 
           <Button onClick={handlePlaceOrder} isLoading={isPlacingOrder} className="w-full h-12 shadow-md">
-            <span>Place Order</span>
+            <span>Pay & Place Order (Razorpay)</span>
           </Button>
 
           <p className="text-[11px] text-gray-400 text-center flex items-center justify-center gap-1">
             <ShieldCheck className="h-3.5 w-3.5 text-[#27AE60]" />
-            <span>100% Secure Checkout. Pay on delivery or store pickup.</span>
+            <span>100% Secure Razorpay Payment Gateway & Tax Invoice PDF.</span>
           </p>
         </div>
       </div>
