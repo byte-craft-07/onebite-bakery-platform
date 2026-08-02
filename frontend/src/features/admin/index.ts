@@ -1,4 +1,5 @@
 export * from "./catalog/AdminCatalogPage";
+export * from "./catalog/AdminCategoryOccasionPage";
 export * from "./catalog/MediaUploader";
 export * from "./catalog/ProductFormModal";
 export * from "./components/AdminComponents";

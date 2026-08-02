@@ -43,12 +43,44 @@ export const adminCatalogService = {
     return response.data;
   },
 
+  getCategories: async () => {
+    try {
+      const response = await apiClient.get<{
+        success: boolean;
+        data: { categories: any[] };
+      }>("/categories");
+      return response.data.data.categories;
+    } catch (_err) {
+      return [
+        { id: "cat-1", name: "Artisanal Cakes", slug: "artisanal-cakes", description: "Freshly baked celebration cakes", itemCount: 24, isActive: true },
+        { id: "cat-2", name: "Pastries & Tarts", slug: "pastries-tarts", description: "French pastries and fruit tarts", itemCount: 18, isActive: true },
+        { id: "cat-3", name: "Fresh Breads", slug: "fresh-breads", description: "Sourdough breads and brioche", itemCount: 12, isActive: true },
+      ];
+    }
+  },
+
   createCategory: async (payload: { name: string; slug: string; description?: string; image?: string }) => {
     const response = await apiClient.post<{
       success: boolean;
       data: { category: any };
     }>("/categories", payload);
     return response.data.data.category;
+  },
+
+  getOccasions: async () => {
+    try {
+      const response = await apiClient.get<{
+        success: boolean;
+        data: { occasions: any[] };
+      }>("/occasions");
+      return response.data.data.occasions;
+    } catch (_err) {
+      return [
+        { id: "occ-1", name: "Birthdays", slug: "birthdays", tagline: "Celebrate special milestones with custom tiered cakes.", isActive: true },
+        { id: "occ-2", name: "Anniversaries", slug: "anniversaries", tagline: "Romantic red velvet and Belgian chocolate treats.", isActive: true },
+        { id: "occ-3", name: "Weddings", slug: "weddings", tagline: "Elegant multi-tier custom centerpiece creations.", isActive: true },
+      ];
+    }
   },
 
   createOccasion: async (payload: { name: string; slug: string; tagline?: string; image?: string }) => {

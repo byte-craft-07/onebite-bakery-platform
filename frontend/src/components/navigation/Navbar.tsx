@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Heart, LogOut, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 
 import { useAuth } from "@/contexts/auth.context";
@@ -7,8 +7,19 @@ import { useAuth } from "@/contexts/auth.context";
 export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth();
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchOpen(false);
+      setSearchQuery("");
+    }
+  };
 
   return (
     <>
@@ -23,17 +34,19 @@ export const Navbar: React.FC = () => {
           </Link>
 
           {/* Desktop Links */}
-          <nav className="hidden lg:flex items-center gap-8 font-medium text-sm text-[#2C1E16]">
+          <nav className="hidden lg:flex items-center gap-7 font-medium text-sm text-[#2C1E16]">
             <Link to="/" className="hover:text-[#E67E22] transition-colors">Home</Link>
             <Link to="/products" className="hover:text-[#E67E22] transition-colors">Products</Link>
             <Link to="/categories" className="hover:text-[#E67E22] transition-colors">Categories</Link>
             <Link to="/occasions" className="hover:text-[#E67E22] transition-colors">Occasions</Link>
+            <Link to="/custom-cake" className="hover:text-[#E67E22] transition-colors font-bold text-[#E67E22]">Custom Cake</Link>
+            <Link to="/combos" className="hover:text-[#E67E22] transition-colors">Combos</Link>
             <Link to="/about" className="hover:text-[#E67E22] transition-colors">About Us</Link>
             <Link to="/contact" className="hover:text-[#E67E22] transition-colors">Contact</Link>
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className="p-2 rounded-full text-[#2C1E16] hover:bg-[#F9F6F0] transition-colors"
@@ -42,29 +55,31 @@ export const Navbar: React.FC = () => {
               <Search className="h-5 w-5" />
             </button>
 
-            <button
+            <Link
+              to={isAuthenticated ? "/customer/favorites" : "/auth/login"}
               className="p-2 rounded-full text-[#2C1E16] hover:bg-[#F9F6F0] transition-colors relative"
               aria-label="Favorites"
             >
               <Heart className="h-5 w-5" />
-            </button>
+            </Link>
 
-            <button
+            <Link
+              to="/cart"
               className="p-2.5 rounded-xl bg-[#E67E22] text-white hover:bg-[#D35400] transition-colors flex items-center gap-2 shadow-sm"
               aria-label="View Cart"
             >
               <ShoppingBag className="h-5 w-5" />
-              <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-white text-[#E67E22]">3</span>
-            </button>
+              <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-white text-[#E67E22]">1</span>
+            </Link>
 
             {isAuthenticated ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Link
                   to="/customer/profile"
                   className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#FFF3E6] border border-[#E67E22]/30 text-xs font-bold text-[#E67E22] hover:bg-[#E67E22] hover:text-white transition-colors"
                 >
                   <User className="h-4 w-4" />
-                  <span>Profile</span>
+                  <span className="hidden sm:inline">Profile</span>
                 </Link>
                 <button
                   onClick={logout}
@@ -95,20 +110,22 @@ export const Navbar: React.FC = () => {
 
         {/* Search Overlay */}
         {isSearchOpen ? (
-          <div className="border-t border-[#E8E2D9] bg-white p-4 animate-in slide-in-from-top-2">
+          <form onSubmit={handleSearchSubmit} className="border-t border-[#E8E2D9] bg-white p-4 animate-in slide-in-from-top-2">
             <div className="max-w-3xl mx-auto flex items-center gap-3">
               <Search className="h-5 w-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search Belgian Chocolate Cake, Croissants, Eggless tarts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full text-sm outline-none bg-transparent"
                 autoFocus
               />
-              <button onClick={() => setIsSearchOpen(false)} className="text-xs font-semibold text-gray-500">
+              <button type="button" onClick={() => setIsSearchOpen(false)} className="text-xs font-semibold text-gray-500">
                 Cancel
               </button>
             </div>
-          </div>
+          </form>
         ) : null}
       </header>
 
@@ -126,6 +143,8 @@ export const Navbar: React.FC = () => {
                 <Link to="/products" onClick={() => setIsMobileMenuOpen(false)}>Products</Link>
                 <Link to="/categories" onClick={() => setIsMobileMenuOpen(false)}>Categories</Link>
                 <Link to="/occasions" onClick={() => setIsMobileMenuOpen(false)}>Occasions</Link>
+                <Link to="/custom-cake" onClick={() => setIsMobileMenuOpen(false)}>Custom Cake Studio</Link>
+                <Link to="/combos" onClick={() => setIsMobileMenuOpen(false)}>Celebration Combos</Link>
                 {isAuthenticated ? (
                   <Link to="/customer/profile" onClick={() => setIsMobileMenuOpen(false)}>Customer Profile</Link>
                 ) : (

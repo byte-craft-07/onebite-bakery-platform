@@ -4,11 +4,13 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import {
   AdminAnalyticsPage,
   AdminCatalogPage,
+  AdminCategoryPage,
   AdminCustomersPage,
   AdminDashboardShell,
   AdminLayout,
   AdminLogsPage,
   AdminNotificationsPage,
+  AdminOccasionPage,
   AdminOrdersPage,
   AdminPaymentsPage,
   AdminSettingsPage,
@@ -24,6 +26,8 @@ import { FavoritesPage } from "@/pages/customer/FavoritesPage";
 import { OrderDetailsPage, OrdersHistoryPage } from "@/pages/customer/OrdersPages";
 import { OrderFailurePage, OrderSuccessPage, PaymentPage } from "@/pages/customer/PaymentPages";
 import { CategoriesPage } from "@/pages/public/CategoriesPage";
+import { CombosPage } from "@/pages/public/CombosPage";
+import { CustomCakePage } from "@/pages/public/CustomCakePage";
 import { HomePage } from "@/pages/public/HomePage";
 import { AboutPage, ContactPage } from "@/pages/public/InformationPages";
 import { OccasionsPage } from "@/pages/public/OccasionsPage";
@@ -51,6 +55,8 @@ export const AppRoutes: React.FC = () => {
           <Route path="categories/:slug" element={<ProductsListingPage />} />
           <Route path="occasions" element={<OccasionsPage />} />
           <Route path="occasions/:slug" element={<ProductsListingPage />} />
+          <Route path="custom-cake" element={<CustomCakePage />} />
+          <Route path="combos" element={<CombosPage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="contact" element={<ContactPage />} />
 
@@ -92,6 +98,8 @@ export const AppRoutes: React.FC = () => {
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboardShell />} />
             <Route path="catalog" element={<AdminCatalogPage />} />
+            <Route path="categories" element={<AdminCategoryPage />} />
+            <Route path="occasions" element={<AdminOccasionPage />} />
             <Route path="orders" element={<AdminOrdersPage />} />
             <Route path="customers" element={<AdminCustomersPage />} />
             <Route path="payments" element={<AdminPaymentsPage />} />

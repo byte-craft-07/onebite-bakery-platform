@@ -9,8 +9,8 @@ import {
   LogOut,
   Package,
   Settings,
-  Shield,
   ShoppingBag,
+  Sparkles,
   Users,
   X,
 } from "lucide-react";
@@ -20,6 +20,8 @@ import { useAuth } from "@/contexts/auth.context";
 const navSections = [
   { id: "dashboard", label: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
   { id: "catalog", label: "Catalog & Products", path: "/admin/catalog", icon: Package },
+  { id: "categories", label: "Categories", path: "/admin/categories", icon: Box },
+  { id: "occasions", label: "Occasions", path: "/admin/occasions", icon: Sparkles },
   { id: "orders", label: "Order Management", path: "/admin/orders", icon: ShoppingBag },
   { id: "customers", label: "Customer Accounts", path: "/admin/customers", icon: Users },
   { id: "payments", label: "Payments & Financials", path: "/admin/payments", icon: Box },
