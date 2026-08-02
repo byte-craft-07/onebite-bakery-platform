@@ -182,7 +182,7 @@ export const ReviewCard: React.FC<{ review: MockReview }> = ({ review }) => {
           className="h-10 w-10 rounded-full object-cover border border-[#E67E22]/30"
         />
         <div>
-          <h4 className="text-sm font-bold text-[#2C1E16]">{review.name}</h4>
+          <h4 className="text-sm font-bold text-[#2C1E16]">{(review as any).customerName || review.name || "Verified Customer"}</h4>
           <div className="flex text-amber-500 text-xs">
             {Array.from({ length: review.rating }).map((_, i) => (
               <Star key={i} className="h-3 w-3 fill-current" />

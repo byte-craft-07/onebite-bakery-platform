@@ -1,23 +1,22 @@
 @import "tailwindcss";
 
-@keyframes marqueeTrack {
+@keyframes marqueeScroll {
   0% {
     transform: translate3d(0, 0, 0);
   }
   100% {
-    transform: translate3d(-100%, 0, 0);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
-.animate-marquee-track {
+.animate-marquee-scroll {
   display: flex !important;
-  flex-shrink: 0 !important;
-  min-width: 100% !important;
-  animation: marqueeTrack 30s linear infinite !important;
+  width: max-content !important;
+  animation: marqueeScroll 24s linear infinite !important;
   will-change: transform;
 }
 
-.marquee-container:hover .animate-marquee-track {
+.animate-marquee-scroll:hover {
   animation-play-state: paused !important;
 }
 
