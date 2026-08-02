@@ -12,3 +12,51 @@
 .animate-marquee {
   animation: marquee 25s linear infinite;
 }
+
+/* Global Custom Form Controls & Select Option Styling */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E67E22' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 1.1rem;
+  padding-right: 2.5rem !important;
+  cursor: pointer;
+  accent-color: #e67e22;
+}
+
+select option {
+  background-color: #ffffff !important;
+  color: #2c1e16 !important;
+  padding: 10px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+select option:checked,
+select option:hover,
+select option:focus {
+  background-color: #fff3e6 !important;
+  color: #e67e22 !important;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+select,
+textarea {
+  border-radius: 0.75rem;
+  transition: all 0.2s ease-in-out;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #e67e22 !important;
+  box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.2) !important;
+}
