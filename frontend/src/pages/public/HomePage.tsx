@@ -5,22 +5,38 @@ import { ArrowRight, Award, Cake, Clock, ShieldCheck } from "lucide-react";
 import { CategoryCard, ComboCard, OccasionCard, ReviewCard } from "@/components/cards/DomainCards";
 import { ProductCard } from "@/components/cards/ProductCard";
 import { Button } from "@/components/ui/Button";
-import { MOCK_CATEGORIES, MOCK_COMBOS, MOCK_OCCASIONS, MOCK_PRODUCTS, type MockReview } from "@/data/mockData";
-import type { ProductItem } from "@/services/catalog.service";
+import { MOCK_COMBOS, type MockReview } from "@/data/mockData";
+import { catalogService, type CategoryItem, type OccasionItem, type ProductItem } from "@/services/catalog.service";
 import { reviewService } from "@/services/review.service";
 
 export const HomePage: React.FC = () => {
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [products, setProducts] = useState<ProductItem[]>([]);
+  const [occasions, setOccasions] = useState<OccasionItem[]>([]);
   const [reviews, setReviews] = useState<MockReview[]>([]);
 
-  const fetchReviews = async () => {
-    const list = await reviewService.getReviews();
-    setReviews(list);
+  const fetchHomeData = async () => {
+    try {
+      const catList = await catalogService.getCategories();
+      setCategories(catList);
+
+      const prodRes = await catalogService.searchProducts({ limit: 8 });
+      setProducts(prodRes.products);
+
+      const occList = await catalogService.getOccasions();
+      setOccasions(occList);
+
+      const revList = await reviewService.getReviews();
+      setReviews(revList);
+    } catch (_err) {
+      // Ignore
+    }
   };
 
   useEffect(() => {
-    fetchReviews();
-    window.addEventListener("onebite_review_submitted", fetchReviews);
-    return () => window.removeEventListener("onebite_review_submitted", fetchReviews);
+    fetchHomeData();
+    window.addEventListener("onebite_review_submitted", fetchHomeData);
+    return () => window.removeEventListener("onebite_review_submitted", fetchHomeData);
   }, []);
 
   return (
@@ -75,8 +91,17 @@ export const HomePage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {MOCK_CATEGORIES.map((category) => (
-            <CategoryCard key={category.id} category={category} />
+          {categories.map((category) => (
+            <CategoryCard
+              key={category.id}
+              category={{
+                id: category.id,
+                name: category.name,
+                slug: category.slug,
+                image: category.image || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
+                itemCount: category.itemCount || 1,
+              }}
+            />
           ))}
         </div>
       </section>
@@ -95,25 +120,9 @@ export const HomePage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {MOCK_PRODUCTS.map((p) => {
-            const productItem: ProductItem = {
-              id: p.id,
-              name: p.name,
-              slug: p.slug,
-              description: p.description,
-              productType: "NORMAL",
-              price: p.price,
-              compareAtPrice: p.compareAtPrice,
-              sku: `SKU-${p.id}`,
-              isEggless: p.isEggless,
-              isAvailable: true,
-              isBestseller: p.isBestseller,
-              mainImage: p.image,
-              rating: p.rating,
-              reviewCount: p.reviewCount,
-            };
-            return <ProductCard key={p.id} product={productItem} />;
-          })}
+          {products.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
         </div>
       </section>
 
@@ -125,8 +134,17 @@ export const HomePage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {MOCK_OCCASIONS.map((occasion) => (
-            <OccasionCard key={occasion.id} occasion={occasion} />
+          {occasions.map((occasion) => (
+            <OccasionCard
+              key={occasion.id}
+              occasion={{
+                id: occasion.id,
+                name: occasion.name,
+                slug: occasion.slug,
+                image: occasion.image || "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80",
+                tagline: occasion.tagline || "Artisanal celebration cakes.",
+              }}
+            />
           ))}
         </div>
       </section>

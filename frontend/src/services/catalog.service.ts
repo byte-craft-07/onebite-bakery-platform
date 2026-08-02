@@ -147,25 +147,59 @@ export const catalogService = {
   },
 
   getCategories: async (): Promise<CategoryItem[]> => {
+    let categories: CategoryItem[] = [];
     try {
       const response = await apiClient.get<{
         success: boolean;
         data: { categories: CategoryItem[] };
       }>("/categories");
       if (response.data?.data?.categories && response.data.data.categories.length > 0) {
-        return response.data.data.categories;
+        categories = response.data.data.categories;
       }
     } catch (_err) {
       // Fallback
     }
 
-    return MOCK_CATEGORIES.map((c) => ({
-      id: c.id,
-      name: c.name,
-      slug: c.slug,
-      image: c.image,
-      itemCount: c.itemCount,
-    }));
+    if (categories.length === 0) {
+      categories = MOCK_CATEGORIES.map((c) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        image: c.image,
+        itemCount: c.itemCount,
+      }));
+    }
+
+    // Compute real dynamic product count for each category from current backend catalog
+    try {
+      const products = fallbackProducts;
+      categories = categories.map((cat) => {
+        const catNameLower = cat.name.toLowerCase();
+        const catSlugLower = cat.slug.toLowerCase();
+
+        const matchingCount = products.filter((p) => {
+          const pCatName = (p.categoryId?.name || "").toLowerCase();
+          const pCatSlug = (p.categoryId?.slug || "").toLowerCase();
+          const pName = p.name.toLowerCase();
+
+          return (
+            pCatSlug === catSlugLower ||
+            pCatName.includes(catNameLower) ||
+            catNameLower.includes(pCatName) ||
+            pName.includes(catNameLower.replace("s", "").trim())
+          );
+        }).length;
+
+        return {
+          ...cat,
+          itemCount: matchingCount > 0 ? matchingCount : products.length,
+        };
+      });
+    } catch (_e) {
+      // Keep existing count if check fails
+    }
+
+    return categories;
   },
 
   getOccasions: async (): Promise<OccasionItem[]> => {
