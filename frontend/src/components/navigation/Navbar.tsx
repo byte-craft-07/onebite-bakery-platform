@@ -1,16 +1,45 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Heart, LogOut, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 
 import { useAuth } from "@/contexts/auth.context";
+import { cartService } from "@/services/cart.service";
 
 export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [cartCount, setCartCount] = useState<number>(0);
 
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuth();
+
+  const syncCartCount = async () => {
+    try {
+      const cart = await cartService.getCart();
+      setCartCount(cart.itemCount || 0);
+    } catch (_err) {
+      setCartCount(0);
+    }
+  };
+
+  useEffect(() => {
+    syncCartCount();
+
+    const handleCartUpdate = () => {
+      syncCartCount();
+    };
+
+    window.addEventListener("onebite_cart_updated", handleCartUpdate);
+    window.addEventListener("storage", handleCartUpdate);
+    const interval = setInterval(syncCartCount, 2000);
+
+    return () => {
+      window.removeEventListener("onebite_cart_updated", handleCartUpdate);
+      window.removeEventListener("storage", handleCartUpdate);
+      clearInterval(interval);
+    };
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +98,9 @@ export const Navbar: React.FC = () => {
               aria-label="View Cart"
             >
               <ShoppingBag className="h-5 w-5" />
-              <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-white text-[#E67E22]">1</span>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white text-[#E67E22] min-w-[20px] text-center">
+                {cartCount}
+              </span>
             </Link>
 
             {isAuthenticated ? (
@@ -83,7 +114,7 @@ export const Navbar: React.FC = () => {
                 </Link>
                 <button
                   onClick={logout}
-                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                  className="p-2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
                   title="Logout"
                 >
                   <LogOut className="h-4 w-4" />

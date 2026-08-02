@@ -15,18 +15,39 @@ export interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const USER_STORAGE_KEY = "onebite_user";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfileResponse | null>(null);
+  const [user, setUser] = useState<UserProfileResponse | null>(() => {
+    try {
+      const stored = localStorage.getItem(USER_STORAGE_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch (_err) {
+      // Ignore
+    }
+    return null;
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const refreshSession = async () => {
     try {
       setIsLoading(true);
       const currentUser = await authService.getCurrentUser();
-      setUser(currentUser);
+      if (currentUser) {
+        setUser(currentUser);
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser));
+      }
     } catch (_err) {
-      setUser(null);
+      try {
+        const stored = localStorage.getItem(USER_STORAGE_KEY);
+        if (stored) {
+          setUser(JSON.parse(stored));
+        } else {
+          setUser(null);
+        }
+      } catch (_e) {
+        setUser(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -38,6 +59,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = (sessionUser: UserProfileResponse) => {
     setUser(sessionUser);
+    try {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(sessionUser));
+    } catch (_err) {
+      // Ignore
+    }
   };
 
   const logout = async () => {
@@ -47,6 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Ignore API logout errors and clear client state
     } finally {
       setUser(null);
+      localStorage.removeItem(USER_STORAGE_KEY);
     }
   };
 
@@ -57,6 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Ignore errors
     } finally {
       setUser(null);
+      localStorage.removeItem(USER_STORAGE_KEY);
     }
   };
 
