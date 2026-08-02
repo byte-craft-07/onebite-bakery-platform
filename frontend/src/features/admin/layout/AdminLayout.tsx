@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 
+import { GlobalTooltip } from "@/components/ui/GlobalTooltip";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
@@ -20,6 +21,7 @@ export const AdminLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+      <GlobalTooltip />
     </div>
   );
 };
