@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Bell, Check, Menu, Search } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Bell, Check, Home, Menu, Search } from "lucide-react";
 
 import { useAuth } from "@/contexts/auth.context";
 import { adminOperationsService } from "../services/adminOperations.service";
@@ -46,7 +47,17 @@ export const Topbar: React.FC<{ onMenuToggle: () => void }> = ({ onMenuToggle })
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        {/* View Storefront / Home Page Button */}
+        <Link
+          to="/"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FFF3E6] border border-[#E67E22]/30 text-xs font-bold text-[#E67E22] hover:bg-[#E67E22] hover:text-white transition-all shadow-2xs"
+          title="Return to Customer Storefront Home Page"
+        >
+          <Home className="h-4 w-4" />
+          <span className="hidden sm:inline">Storefront Home</span>
+        </Link>
+
         {/* Notification Bell Dropdown */}
         <div className="relative">
           <button
@@ -111,6 +122,12 @@ export const Topbar: React.FC<{ onMenuToggle: () => void }> = ({ onMenuToggle })
               <div className="p-2 border-b border-[#E8E2D9] text-gray-500">
                 Logged in as <strong>{user?.phone}</strong>
               </div>
+              <Link
+                to="/"
+                className="block w-full text-left p-2 rounded-lg text-[#E67E22] hover:bg-[#FFF3E6] font-semibold"
+              >
+                Go to Home Page
+              </Link>
               <button
                 onClick={logout}
                 className="w-full text-left p-2 rounded-lg text-red-600 hover:bg-red-50 font-semibold cursor-pointer"

@@ -5,6 +5,7 @@ import {
   Bell,
   Box,
   FileText,
+  Home,
   LayoutDashboard,
   LogOut,
   Package,
@@ -41,11 +42,11 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
         isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       }`}
     >
-      <div className="space-y-8">
+      <div className="space-y-6 overflow-y-auto pr-1">
         {/* Header Logo */}
         <div className="flex items-center justify-between">
-          <Link to="/admin/dashboard" className="flex items-center gap-2">
-            <span className="text-xl font-extrabold text-[#E67E22] tracking-tight">OneBite</span>
+          <Link to="/" title="Go to Home Page Storefront" className="flex items-center gap-2 group">
+            <span className="text-xl font-extrabold text-[#E67E22] tracking-tight group-hover:text-amber-400 transition-colors">OneBite</span>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/10 text-white uppercase">
               Admin
             </span>
@@ -81,15 +82,24 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
         </nav>
       </div>
 
-      {/* Footer Info */}
-      <div className="pt-6 border-t border-white/10 space-y-3">
+      {/* Footer Actions */}
+      <div className="pt-4 border-t border-white/10 space-y-2.5 shrink-0">
+        <Link
+          to="/"
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#E67E22] hover:bg-[#D35400] text-xs font-bold text-white transition-colors shadow-sm cursor-pointer"
+        >
+          <Home className="h-4 w-4" />
+          <span>Go to Home Page</span>
+        </Link>
+
         <button
           onClick={logout}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-white/10 hover:bg-red-600/80 text-xs font-bold text-white transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-white/10 hover:bg-red-600/80 text-xs font-bold text-white transition-colors cursor-pointer"
         >
           <LogOut className="h-4 w-4" />
           <span>Exit Admin</span>
         </button>
+
         <p className="text-[10px] text-center text-[#E8E2D9]/50">
           OneBite Platform Engine &bull; v1.0.0
         </p>
