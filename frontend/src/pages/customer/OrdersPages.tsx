@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Clock, PackageCheck, ShoppingBag, Truck } from "lucide-react";
+import { ArrowLeft, Clock, Download, MessageSquare, PackageCheck, RefreshCw, ShoppingBag, Truck } from "lucide-react";
 
 import { Badge, Card, EmptyState, Skeleton } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
 import { orderService, type OrderDetails } from "@/services/order.service";
+import { cartService } from "@/services/cart.service";
 
 export const OrdersHistoryPage: React.FC = () => {
   const [orders, setOrders] = useState<OrderDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
 
   useEffect(() => {
     orderService
@@ -17,6 +19,23 @@ export const OrdersHistoryPage: React.FC = () => {
       .catch(() => setOrders([]))
       .finally(() => setIsLoading(false));
   }, []);
+
+  const handleOrderAgain = async (ord: OrderDetails) => {
+    setReorderingId(ord.id);
+    try {
+      for (const item of ord.items) {
+        await cartService.addItem({
+          productId: item.productId,
+          quantity: item.quantity,
+        });
+      }
+      window.location.href = "/cart";
+    } catch (_err) {
+      window.location.href = "/cart";
+    } finally {
+      setReorderingId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -53,7 +72,7 @@ export const OrdersHistoryPage: React.FC = () => {
           <Card key={ord.id} className="space-y-4 border-[#E8E2D9]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#E8E2D9] pb-3 gap-2">
               <div>
-                <p className="text-xs text-gray-400">Order #{ord.orderNumber}</p>
+                <p className="text-xs font-bold text-[#2C1E16]">Order #{ord.orderNumber}</p>
                 <p className="text-xs text-[#6E5D4F]">{new Date(ord.createdAt).toLocaleDateString()}</p>
               </div>
 
@@ -76,13 +95,25 @@ export const OrdersHistoryPage: React.FC = () => {
               ))}
             </div>
 
-            <div className="pt-3 border-t border-[#E8E2D9] flex items-center justify-between">
+            <div className="pt-3 border-t border-[#E8E2D9] flex flex-wrap items-center justify-between gap-3">
               <span className="text-sm font-extrabold text-[#2C1E16]">Total: ₹{ord.totalAmount}</span>
-              <Link to={`/customer/orders/${ord.id}`}>
-                <Button variant="outline" size="sm">
-                  View Details & Tracking
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOrderAgain(ord)}
+                  isLoading={reorderingId === ord.id}
+                  className="flex items-center gap-1.5"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span>Order Again</span>
                 </Button>
-              </Link>
+
+                <Link to={`/customer/orders/${ord.id}`}>
+                  <Button size="sm">View Details & Tracking</Button>
+                </Link>
+              </div>
             </div>
           </Card>
         ))}
@@ -106,6 +137,15 @@ export const OrderDetailsPage: React.FC = () => {
         .finally(() => setIsLoading(false));
     }
   }, [id]);
+
+  const handleExportPDF = () => {
+    window.print();
+  };
+
+  const handleWhatsAppSupport = () => {
+    const text = encodeURIComponent(`Hi OneBite Bakery! I need support regarding my Order #${order?.orderNumber || id}.`);
+    window.open(`https://wa.me/919876543210?text=${text}`, "_blank");
+  };
 
   if (isLoading) {
     return (
@@ -138,10 +178,24 @@ export const OrderDetailsPage: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-16 max-w-4xl mx-auto">
-      <Link to="/customer/orders" className="inline-flex items-center gap-2 text-sm font-semibold text-[#6E5D4F] hover:text-[#E67E22]">
-        <ArrowLeft className="h-4 w-4" />
-        <span>Back to Order History</span>
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link to="/customer/orders" className="inline-flex items-center gap-2 text-sm font-semibold text-[#6E5D4F] hover:text-[#E67E22]">
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to Order History</span>
+        </Link>
+
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportPDF} className="flex items-center gap-1.5">
+            <Download className="h-3.5 w-3.5" />
+            <span>Download Invoice PDF</span>
+          </Button>
+
+          <Button variant="outline" size="sm" onClick={handleWhatsAppSupport} className="flex items-center gap-1.5 border-green-600 text-green-700 hover:bg-green-50">
+            <MessageSquare className="h-3.5 w-3.5 text-green-600" />
+            <span>WhatsApp Support</span>
+          </Button>
+        </div>
+      </div>
 
       <div className="flex items-center justify-between border-b border-[#E8E2D9] pb-4">
         <div>
@@ -176,7 +230,7 @@ export const OrderDetailsPage: React.FC = () => {
 
       {/* Order Items Breakdown */}
       <Card className="space-y-4">
-        <h3 className="text-lg font-bold text-[#2C1E16] border-b border-[#E8E2D9] pb-2">Order Items</h3>
+        <h3 className="text-lg font-bold text-[#2C1E16] border-b border-[#E8E2D9] pb-2">Order Items & Invoice Summary</h3>
         <div className="space-y-3">
           {order.items.map((item) => (
             <div key={item.id} className="flex justify-between items-center text-sm border-b border-[#E8E2D9] pb-2">
