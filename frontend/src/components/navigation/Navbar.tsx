@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, LogOut, Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { Heart, Home, LogOut, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 
 import { useAuth } from "@/contexts/auth.context";
 import { cartService } from "@/services/cart.service";
@@ -74,8 +74,8 @@ export const Navbar: React.FC = () => {
             <Link to="/about" className="hover:text-[#E67E22] transition-colors">About Us</Link>
           </nav>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          {/* Desktop Top Header Actions (Hidden on Mobile view) */}
+          <div className="hidden lg:flex items-center gap-3 sm:gap-4">
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className="p-2 rounded-full text-[#2C1E16] hover:bg-[#F9F6F0] transition-colors cursor-pointer"
@@ -128,10 +128,20 @@ export const Navbar: React.FC = () => {
                 Log In
               </Link>
             )}
+          </div>
 
+          {/* Mobile Top Header Hamburger Button */}
+          <div className="flex lg:hidden items-center gap-2">
+            <Link
+              to="/cart"
+              className="p-2 rounded-xl bg-[#E67E22] text-white flex items-center gap-1 text-xs font-bold"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              <span>{cartCount}</span>
+            </Link>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 text-[#2C1E16]"
+              className="p-2 text-[#2C1E16]"
               aria-label="Toggle Menu"
             >
               {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -162,7 +172,7 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Drawer */}
       {isMobileMenuOpen ? (
-        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs lg:hidden" onClick={() => setIsMobileMenuOpen(false)}>
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs lg:hidden" onClick={() => setIsMobileMenuOpen(false)}>
           <div
             className="w-4/5 max-w-xs h-full bg-[#FFFBF5] p-6 space-y-6 flex flex-col justify-between"
             onClick={(e) => e.stopPropagation()}
@@ -191,6 +201,68 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
       ) : null}
+
+      {/* Sticky Mobile Bottom Navigation Bar (< 1024px) */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FFFBF5]/95 backdrop-blur-md border-t border-[#E8E2D9] px-4 py-2 flex items-center justify-around shadow-[0_-4px_20px_rgba(44,30,22,0.1)]">
+        {/* Home */}
+        <Link
+          to="/"
+          className="flex flex-col items-center gap-0.5 text-[#2C1E16] hover:text-[#E67E22] transition-colors p-1"
+          data-tooltip="Home Page"
+        >
+          <Home className="h-5 w-5" />
+          <span className="text-[10px] font-bold">Home</span>
+        </Link>
+
+        {/* Search */}
+        <button
+          onClick={() => setIsSearchOpen(!isSearchOpen)}
+          className="flex flex-col items-center gap-0.5 text-[#2C1E16] hover:text-[#E67E22] transition-colors p-1 cursor-pointer"
+          data-tooltip="Search Products"
+        >
+          <Search className="h-5 w-5" />
+          <span className="text-[10px] font-bold">Search</span>
+        </button>
+
+        {/* Favorites */}
+        <Link
+          to={isAuthenticated ? "/customer/favorites" : "/auth/login"}
+          className="flex flex-col items-center gap-0.5 text-[#2C1E16] hover:text-[#E67E22] transition-colors p-1"
+          data-tooltip="Favorites"
+        >
+          <Heart className="h-5 w-5" />
+          <span className="text-[10px] font-bold">Favorites</span>
+        </Link>
+
+        {/* Cart */}
+        <Link
+          to="/cart"
+          className="flex flex-col items-center gap-0.5 text-[#2C1E16] hover:text-[#E67E22] transition-colors p-1 relative"
+          data-tooltip="Shopping Cart"
+        >
+          <div className="relative">
+            <ShoppingBag className="h-5 w-5 text-[#E67E22]" />
+            {cartCount > 0 ? (
+              <span className="absolute -top-1.5 -right-2.5 h-4 min-w-[16px] px-1 rounded-full bg-[#E67E22] text-white text-[9px] font-extrabold flex items-center justify-center">
+                {cartCount}
+              </span>
+            ) : null}
+          </div>
+          <span className="text-[10px] font-bold text-[#E67E22]">Cart</span>
+        </Link>
+
+        {/* Account / Dashboard */}
+        <Link
+          to={isAuthenticated ? "/customer/dashboard" : "/auth/login"}
+          className="flex flex-col items-center gap-0.5 text-[#2C1E16] hover:text-[#E67E22] transition-colors p-1"
+          data-tooltip={isAuthenticated ? "Customer Dashboard" : "Log In"}
+        >
+          <div className="p-0.5 rounded-full bg-[#FFF3E6] border border-[#E67E22]/30 text-[#E67E22]">
+            <User className="h-4 w-4" />
+          </div>
+          <span className="text-[10px] font-bold">{isAuthenticated ? "Account" : "Log In"}</span>
+        </Link>
+      </div>
     </>
   );
 };
