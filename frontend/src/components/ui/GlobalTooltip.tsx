@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 
+interface TooltipState {
+  text: string;
+  x: number;
+  y: number;
+  isBelow: boolean;
+}
+
 export const GlobalTooltip: React.FC = () => {
-  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
   useEffect(() => {
     const handleMouseOver = (e: MouseEvent) => {
@@ -11,7 +18,6 @@ export const GlobalTooltip: React.FC = () => {
         return;
       }
 
-      // Suppress native browser default tooltip popup by temporarily storing title attribute
       const dataTooltip = target.getAttribute("data-tooltip");
       const titleAttr = target.getAttribute("title");
       const ariaLabel = target.getAttribute("aria-label");
@@ -26,10 +32,16 @@ export const GlobalTooltip: React.FC = () => {
 
       if (text && text.trim() && text.length < 80) {
         const rect = target.getBoundingClientRect();
+        // If element is near top edge (< 60px), show tooltip below element
+        const isBelow = rect.top < 60;
+        const x = Math.max(20, Math.min(window.innerWidth - 20, rect.left + rect.width / 2));
+        const y = isBelow ? Math.min(window.innerHeight - 30, rect.bottom + 8) : Math.max(10, rect.top - 8);
+
         setTooltip({
           text: text.trim(),
-          x: Math.max(10, Math.min(window.innerWidth - 10, rect.left + rect.width / 2)),
-          y: Math.max(10, rect.top - 8),
+          x,
+          y,
+          isBelow,
         });
       }
     };
@@ -54,7 +66,7 @@ export const GlobalTooltip: React.FC = () => {
       style={{
         left: `${tooltip.x}px`,
         top: `${tooltip.y}px`,
-        transform: "translate(-50%, -100%)",
+        transform: tooltip.isBelow ? "translate(-50%, 0)" : "translate(-50%, -100%)",
       }}
       className="fixed z-[99999] pointer-events-none px-3 py-1.5 bg-[#2C1E16] text-[#FFFBF5] text-xs font-semibold rounded-xl shadow-2xl border border-[#E67E22]/60 animate-in fade-in zoom-in-95"
     >
