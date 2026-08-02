@@ -9,10 +9,12 @@ import {
   AdminDashboardShell,
   AdminLayout,
   AdminLogsPage,
+  AdminMediaPage,
   AdminNotificationsPage,
   AdminOccasionPage,
   AdminOrdersPage,
   AdminPaymentsPage,
+  AdminReportsPage,
   AdminSettingsPage,
 } from "@/features/admin";
 import { AuthLayout } from "@/layouts/AuthLayout";
@@ -21,13 +23,16 @@ import { CustomerAuthContainer } from "@/pages/auth/CustomerAuthContainer";
 import { SessionExpiredPage, UnauthorizedPage } from "@/pages/auth/StatusPages";
 import { CartPage } from "@/pages/customer/CartPage";
 import { CheckoutPage } from "@/pages/customer/CheckoutPage";
+import { CustomerNotificationsPage } from "@/pages/customer/CustomerNotificationsPage";
 import { CustomerProfilePage } from "@/pages/customer/CustomerProfilePage";
+import { CustomerSettingsPage } from "@/pages/customer/CustomerSettingsPage";
 import { FavoritesPage } from "@/pages/customer/FavoritesPage";
 import { OrderDetailsPage, OrdersHistoryPage } from "@/pages/customer/OrdersPages";
 import { OrderFailurePage, OrderSuccessPage, PaymentPage } from "@/pages/customer/PaymentPages";
 import { CategoriesPage } from "@/pages/public/CategoriesPage";
 import { CombosPage } from "@/pages/public/CombosPage";
 import { CustomCakePage } from "@/pages/public/CustomCakePage";
+import { DecorationShopPage } from "@/pages/public/DecorationShopPage";
 import { HomePage } from "@/pages/public/HomePage";
 import { AboutPage, ContactPage } from "@/pages/public/InformationPages";
 import { OccasionsPage } from "@/pages/public/OccasionsPage";
@@ -57,6 +62,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="occasions/:slug" element={<ProductsListingPage />} />
           <Route path="custom-cake" element={<CustomCakePage />} />
           <Route path="combos" element={<CombosPage />} />
+          <Route path="decorations" element={<DecorationShopPage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="contact" element={<ContactPage />} />
 
@@ -69,6 +75,8 @@ export const AppRoutes: React.FC = () => {
             <Route path="orders" element={<OrdersHistoryPage />} />
             <Route path="orders/:id" element={<OrderDetailsPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
+            <Route path="notifications" element={<CustomerNotificationsPage />} />
+            <Route path="settings" element={<CustomerSettingsPage />} />
           </Route>
 
           <Route path="checkout" element={<ProtectedRoute />}>
@@ -104,7 +112,9 @@ export const AppRoutes: React.FC = () => {
             <Route path="customers" element={<AdminCustomersPage />} />
             <Route path="payments" element={<AdminPaymentsPage />} />
             <Route path="notifications" element={<AdminNotificationsPage />} />
+            <Route path="media" element={<AdminMediaPage />} />
             <Route path="analytics" element={<AdminAnalyticsPage />} />
+            <Route path="reports" element={<AdminReportsPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
             <Route path="logs" element={<AdminLogsPage />} />
           </Route>

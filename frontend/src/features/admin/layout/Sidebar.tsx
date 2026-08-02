@@ -4,8 +4,10 @@ import {
   BarChart3,
   Bell,
   Box,
+  FileSpreadsheet,
   FileText,
   Home,
+  Image as ImageIcon,
   LayoutDashboard,
   LogOut,
   Package,
@@ -26,10 +28,12 @@ const navSections = [
   { id: "orders", label: "Order Management", path: "/admin/orders", icon: ShoppingBag },
   { id: "customers", label: "Customer Accounts", path: "/admin/customers", icon: Users },
   { id: "payments", label: "Payments & Financials", path: "/admin/payments", icon: Box },
-  { id: "notifications", label: "Notifications & Alerts", path: "/admin/notifications", icon: Bell },
+  { id: "notifications", label: "Notification Center", path: "/admin/notifications", icon: Bell },
+  { id: "media", label: "Media Library", path: "/admin/media", icon: ImageIcon },
   { id: "analytics", label: "Platform Analytics", path: "/admin/analytics", icon: BarChart3 },
+  { id: "reports", label: "Reports Console", path: "/admin/reports", icon: FileSpreadsheet },
   { id: "settings", label: "System Settings", path: "/admin/settings", icon: Settings },
-  { id: "logs", label: "Audit & Logs", path: "/admin/logs", icon: FileText },
+  { id: "logs", label: "Audit & Activity Logs", path: "/admin/logs", icon: FileText },
 ];
 
 export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ isOpen = false, onClose }) => {

@@ -63,22 +63,22 @@ export const Navbar: React.FC = () => {
           </Link>
 
           {/* Desktop Links */}
-          <nav className="hidden lg:flex items-center gap-7 font-medium text-sm text-[#2C1E16]">
+          <nav className="hidden lg:flex items-center gap-6 font-medium text-sm text-[#2C1E16]">
             <Link to="/" className="hover:text-[#E67E22] transition-colors">Home</Link>
             <Link to="/products" className="hover:text-[#E67E22] transition-colors">Products</Link>
             <Link to="/categories" className="hover:text-[#E67E22] transition-colors">Categories</Link>
             <Link to="/occasions" className="hover:text-[#E67E22] transition-colors">Occasions</Link>
             <Link to="/custom-cake" className="hover:text-[#E67E22] transition-colors font-bold text-[#E67E22]">Custom Cake</Link>
             <Link to="/combos" className="hover:text-[#E67E22] transition-colors">Combos</Link>
+            <Link to="/decorations" className="hover:text-[#E67E22] transition-colors">Decorations</Link>
             <Link to="/about" className="hover:text-[#E67E22] transition-colors">About Us</Link>
-            <Link to="/contact" className="hover:text-[#E67E22] transition-colors">Contact</Link>
           </nav>
 
           {/* Actions */}
           <div className="flex items-center gap-3 sm:gap-4">
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="p-2 rounded-full text-[#2C1E16] hover:bg-[#F9F6F0] transition-colors"
+              className="p-2 rounded-full text-[#2C1E16] hover:bg-[#F9F6F0] transition-colors cursor-pointer"
               aria-label="Open Search"
             >
               <Search className="h-5 w-5" />
@@ -176,6 +176,7 @@ export const Navbar: React.FC = () => {
                 <Link to="/occasions" onClick={() => setIsMobileMenuOpen(false)}>Occasions</Link>
                 <Link to="/custom-cake" onClick={() => setIsMobileMenuOpen(false)}>Custom Cake Studio</Link>
                 <Link to="/combos" onClick={() => setIsMobileMenuOpen(false)}>Celebration Combos</Link>
+                <Link to="/decorations" onClick={() => setIsMobileMenuOpen(false)}>Party Decoration Shop</Link>
                 {isAuthenticated ? (
                   <Link to="/customer/profile" onClick={() => setIsMobileMenuOpen(false)}>Customer Profile</Link>
                 ) : (
