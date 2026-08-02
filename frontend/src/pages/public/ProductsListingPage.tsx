@@ -37,12 +37,14 @@ export const ProductsListingPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      category: isCategoryPath ? slug : undefined,
-      occasion: isOccasionPath ? slug : undefined,
-      page: 1,
-    }));
+    if (slug) {
+      setFilters((prev) => ({
+        ...prev,
+        category: isCategoryPath ? slug : prev.category,
+        occasion: isOccasionPath ? slug : prev.occasion,
+        page: 1,
+      }));
+    }
   }, [slug, isCategoryPath, isOccasionPath]);
 
   const fetchProducts = async () => {
@@ -147,7 +149,7 @@ export const ProductsListingPage: React.FC = () => {
           ) : (
             <EmptyState
               title="No Products Found"
-              description="We couldn't find any products matching your search or selected category/occasion."
+              description="We couldn't find any products matching your search or selected category/occasion/price filters."
               action={
                 <button
                   onClick={handleResetFilters}

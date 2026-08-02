@@ -21,17 +21,19 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     { label: "Relevance", value: "relevance" },
     { label: "Price: Low to High", value: "price_asc" },
     { label: "Price: High to Low", value: "price_desc" },
+    { label: "Highest Rated ⭐", value: "rating" },
     { label: "Newest Additions", value: "newest" },
-    { label: "Most Popular", value: "popular" },
     { label: "Alphabetical (A-Z)", value: "alphabetical" },
   ];
 
   const productTypeOptions = [
     { label: "All Types", value: "" },
-    { label: "Cakes & Pastries", value: "NORMAL" },
-    { label: "Combos & Boxes", value: "COMBO" },
-    { label: "Custom Tier Cakes", value: "CUSTOM_CAKE" },
-    { label: "Party Accessories", value: "DECORATION" },
+    { label: "🌱 100% Eggless", value: "EGGLESS" },
+    { label: "🥚 Contains Egg", value: "EGG" },
+    { label: "🍰 Cakes & Pastries", value: "NORMAL" },
+    { label: "🎁 Combos & Hampers", value: "COMBO" },
+    { label: "👑 Custom Tier Cakes", value: "CUSTOM_CAKE" },
+    { label: "🎉 Party Accessories", value: "DECORATION" },
   ];
 
   return (
@@ -81,22 +83,29 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             >
               All Categories
             </button>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => onChange({ ...filters, category: cat.id, page: 1 })}
-                className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-                  filters.category === cat.id ? "bg-[#FFF3E6] text-[#E67E22] font-bold" : "text-[#6E5D4F] hover:bg-[#F9F6F0]"
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
+            {categories.map((cat) => {
+              const isSelected =
+                filters.category === cat.id ||
+                filters.category === cat.slug ||
+                (filters.category && cat.name.toLowerCase().includes(filters.category.toLowerCase()));
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => onChange({ ...filters, category: cat.slug || cat.id, page: 1 })}
+                  className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer flex items-center justify-between ${
+                    isSelected ? "bg-[#FFF3E6] text-[#E67E22] font-bold" : "text-[#6E5D4F] hover:bg-[#F9F6F0]"
+                  }`}
+                >
+                  <span>{cat.name}</span>
+                  {cat.itemCount ? <span className="text-[10px] opacity-70">({cat.itemCount})</span> : null}
+                </button>
+              );
+            })}
           </div>
         </div>
       ) : null}
 
-      {/* Price Range */}
+      {/* Price Range Filter */}
       <div className="space-y-2">
         <label className="block text-xs font-bold uppercase tracking-wider text-[#2C1E16]">
           Price Range (₹):

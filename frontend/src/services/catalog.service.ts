@@ -68,7 +68,7 @@ const fallbackProducts: ProductItem[] = MOCK_PRODUCTS.map((p) => ({
   name: p.name,
   slug: p.slug,
   description: p.description,
-  productType: "NORMAL",
+  productType: p.category.toLowerCase().includes("combo") ? "COMBO" : "NORMAL",
   price: p.price,
   compareAtPrice: p.compareAtPrice,
   sku: p.id,
@@ -79,7 +79,7 @@ const fallbackProducts: ProductItem[] = MOCK_PRODUCTS.map((p) => ({
   rating: p.rating,
   reviewCount: p.reviewCount,
   categoryId: {
-    id: "cat-1",
+    id: p.id.startsWith("c") ? `cat-${p.id}` : "cat-1",
     name: p.category,
     slug: p.category.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
   },
@@ -102,32 +102,93 @@ export const catalogService = {
 
     let list = [...fallbackProducts];
 
+    // 1. Text Search Query Filter
     if (params.q) {
-      const qLower = params.q.toLowerCase();
+      const qLower = params.q.toLowerCase().trim();
       list = list.filter(
-        (p) => p.name.toLowerCase().includes(qLower) || p.description.toLowerCase().includes(qLower)
+        (p) =>
+          p.name.toLowerCase().includes(qLower) ||
+          p.description.toLowerCase().includes(qLower) ||
+          (p.categoryId?.name || "").toLowerCase().includes(qLower)
       );
     }
 
+    // 2. Category Filter
     if (params.category) {
-      const catLower = params.category.toLowerCase();
-      const filtered = list.filter(
-        (p) =>
-          p.categoryId?.slug.includes(catLower) ||
-          catLower.includes(p.categoryId?.slug || "")
-      );
-      if (filtered.length > 0) {
-        list = filtered;
+      const catLower = params.category.toLowerCase().trim();
+      list = list.filter((p) => {
+        const pSlug = (p.categoryId?.slug || "").toLowerCase();
+        const pId = (p.categoryId?.id || "").toLowerCase();
+        const pName = (p.categoryId?.name || "").toLowerCase();
+        return (
+          pSlug === catLower ||
+          pId === catLower ||
+          pSlug.includes(catLower) ||
+          catLower.includes(pSlug) ||
+          pName.includes(catLower)
+        );
+      });
+    }
+
+    // 3. Product Type & Dietary Filter
+    if (params.productType) {
+      const pType = params.productType;
+      if (pType === "EGGLESS") {
+        list = list.filter((p) => p.isEggless === true);
+      } else if (pType === "EGG") {
+        list = list.filter((p) => p.isEggless === false);
+      } else {
+        list = list.filter((p) => p.productType === pType);
       }
     }
 
+    // 4. Price Range Filter (Min & Max)
+    if (typeof params.minPrice === "number" && !isNaN(params.minPrice)) {
+      list = list.filter((p) => p.price >= params.minPrice!);
+    }
+    if (typeof params.maxPrice === "number" && !isNaN(params.maxPrice)) {
+      list = list.filter((p) => p.price <= params.maxPrice!);
+    }
+
+    // 5. Sorting Engine
+    if (params.sort) {
+      switch (params.sort) {
+        case "price_asc":
+          list.sort((a, b) => a.price - b.price);
+          break;
+        case "price_desc":
+          list.sort((a, b) => b.price - a.price);
+          break;
+        case "rating":
+          list.sort((a, b) => (b.rating || 5) - (a.rating || 5));
+          break;
+        case "newest":
+          list.sort((a, b) => b.id.localeCompare(a.id));
+          break;
+        case "alphabetical":
+          list.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case "relevance":
+        default:
+          break;
+      }
+    }
+
+    // 6. Pagination
+    const page = params.page || 1;
+    const limit = params.limit || 12;
+    const total = list.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+    const startIndex = (page - 1) * limit;
+    const paginatedList = list.slice(startIndex, startIndex + limit);
+
     return {
-      products: list,
+      products: paginatedList,
       pagination: {
-        total: list.length,
-        page: 1,
-        limit: 12,
-        totalPages: 1,
+        total,
+        page,
+        limit,
+        totalPages,
       },
     };
   },
@@ -170,7 +231,7 @@ export const catalogService = {
       }));
     }
 
-    // Compute real dynamic product count for each category from current backend catalog
+    // Compute real dynamic product count for each category
     try {
       const products = fallbackProducts;
       categories = categories.map((cat) => {
