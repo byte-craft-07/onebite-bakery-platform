@@ -148,6 +148,26 @@ export const ComboCard: React.FC<{ combo: MockCombo }> = ({ combo }) => {
   );
 };
 
+export function formatTimeAgo(dateString?: string): string {
+  if (!dateString) return "Recently";
+  if (dateString === "Just now" || dateString.includes("ago")) return dateString;
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} ${minutes === 1 ? "min" : "mins"} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} ${days === 1 ? "day" : "days"} ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} ${months === 1 ? "month" : "months"} ago`;
+  return `${Math.floor(months / 12)} years ago`;
+}
+
 export const ReviewCard: React.FC<{ review: MockReview }> = ({ review }) => {
   return (
     <div className="rounded-2xl border border-[#E8E2D9] bg-[#FFFBF5] p-6 shadow-sm space-y-3 min-w-[280px] md:min-w-[320px] shrink-0">
@@ -171,7 +191,7 @@ export const ReviewCard: React.FC<{ review: MockReview }> = ({ review }) => {
         </div>
       </div>
       <p className="text-xs text-[#6E5D4F] italic line-clamp-3">"{review.comment}"</p>
-      <p className="text-[10px] text-gray-400 text-right">{review.date}</p>
+      <p className="text-[10px] text-gray-400 text-right">{formatTimeAgo((review as any).createdAt || review.date)}</p>
     </div>
   );
 };

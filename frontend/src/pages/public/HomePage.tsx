@@ -202,10 +202,15 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* Moving Marquee Loop */}
-        <div className="relative w-full overflow-hidden py-4">
-          <div className="flex gap-6 animate-marquee hover:[animation-play-state:paused] w-max">
-            {[...reviews, ...reviews, ...reviews, ...reviews].map((review, idx) => (
-              <ReviewCard key={`${review.id}-${idx}`} review={review} />
+        <div className="relative w-full overflow-hidden py-4 flex gap-6 marquee-container">
+          <div className="flex gap-6 animate-marquee-track">
+            {reviews.map((review, idx) => (
+              <ReviewCard key={`t1-${review.id}-${idx}`} review={review} />
+            ))}
+          </div>
+          <div className="flex gap-6 animate-marquee-track" aria-hidden="true">
+            {reviews.map((review, idx) => (
+              <ReviewCard key={`t2-${review.id}-${idx}`} review={review} />
             ))}
           </div>
         </div>

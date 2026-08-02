@@ -15,9 +15,13 @@ export interface ReviewPayload {
 export const reviewService = {
   getReviews: async (): Promise<MockReview[]> => {
     try {
-      const response = await apiClient.get<{ reviews: MockReview[] }>("/reviews");
-      if (response.data?.reviews && response.data.reviews.length > 0) {
-        return response.data.reviews;
+      const response = await apiClient.get<{
+        success: boolean;
+        data: { reviews: MockReview[] };
+      }>("/reviews");
+      const fetched = response.data?.data?.reviews || (response.data as any)?.reviews;
+      if (fetched && fetched.length > 0) {
+        return fetched;
       }
     } catch (_err) {
       // Ignore API errors and fallback to local storage
@@ -38,10 +42,10 @@ export const reviewService = {
   addReview: async (payload: ReviewPayload): Promise<MockReview> => {
     const newReview: MockReview = {
       id: `rev-${Date.now()}`,
-      name: payload.name || "Happy Customer",
+      name: payload.name || "Verified Customer",
       rating: payload.rating,
       comment: payload.comment,
-      date: "Just now",
+      date: new Date().toISOString(),
       avatar:
         payload.avatar ||
         "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
