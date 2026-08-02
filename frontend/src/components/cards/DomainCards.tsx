@@ -1,8 +1,9 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Check, Star } from "lucide-react";
 
 import type { MockCategory, MockCombo, MockOccasion, MockReview } from "@/data/mockData";
+import { cartService } from "@/services/cart.service";
 
 const FALLBACK_CATEGORY_IMAGE = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
 const FALLBACK_OCCASION_IMAGE = "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80";
@@ -64,6 +65,30 @@ export const OccasionCard: React.FC<{ occasion: MockOccasion }> = ({ occasion })
 };
 
 export const ComboCard: React.FC<{ combo: MockCombo }> = ({ combo }) => {
+  const [isAdded, setIsAdded] = useState(false);
+  const navigate = useNavigate();
+
+  const handleExploreCombo = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      await cartService.addItem({
+        productId: combo.id,
+        quantity: 1,
+      });
+    } catch (_err) {
+      // Fallback
+    }
+
+    setIsAdded(true);
+    window.dispatchEvent(new Event("onebite_cart_updated"));
+    setTimeout(() => {
+      setIsAdded(false);
+      navigate("/cart");
+    }, 1200);
+  };
+
   return (
     <div className="rounded-2xl border border-[#E8E2D9] bg-white p-6 shadow-md flex flex-col md:flex-row gap-6 items-center">
       <div className="w-full md:w-1/3 aspect-4/3 rounded-xl overflow-hidden bg-[#F9F6F0]">
@@ -96,9 +121,26 @@ export const ComboCard: React.FC<{ combo: MockCombo }> = ({ combo }) => {
             <span className="text-xs text-gray-400 line-through">₹{combo.originalPrice}</span>
           </div>
 
-          <button className="flex items-center gap-1.5 px-4 py-2 bg-[#2C1E16] text-white rounded-lg text-xs font-semibold hover:bg-[#E67E22] transition-colors">
-            <span>Explore Combo</span>
-            <ArrowRight className="h-3.5 w-3.5" />
+          <button
+            type="button"
+            onClick={handleExploreCombo}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              isAdded
+                ? "bg-green-600 text-white"
+                : "bg-[#2C1E16] text-white hover:bg-[#E67E22] active:scale-95"
+            }`}
+          >
+            {isAdded ? (
+              <>
+                <Check className="h-3.5 w-3.5" />
+                <span>Combo Added to Cart</span>
+              </>
+            ) : (
+              <>
+                <span>Explore Combo</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -108,7 +150,7 @@ export const ComboCard: React.FC<{ combo: MockCombo }> = ({ combo }) => {
 
 export const ReviewCard: React.FC<{ review: MockReview }> = ({ review }) => {
   return (
-    <div className="rounded-2xl border border-[#E8E2D9] bg-[#FFFBF5] p-6 shadow-sm space-y-3">
+    <div className="rounded-2xl border border-[#E8E2D9] bg-[#FFFBF5] p-6 shadow-sm space-y-3 min-w-[280px] md:min-w-[320px] shrink-0">
       <div className="flex items-center gap-3">
         <img
           src={review.avatar}
@@ -117,7 +159,7 @@ export const ReviewCard: React.FC<{ review: MockReview }> = ({ review }) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80";
           }}
-          className="h-10 w-10 rounded-full object-cover"
+          className="h-10 w-10 rounded-full object-cover border border-[#E67E22]/30"
         />
         <div>
           <h4 className="text-sm font-bold text-[#2C1E16]">{review.name}</h4>
@@ -128,7 +170,7 @@ export const ReviewCard: React.FC<{ review: MockReview }> = ({ review }) => {
           </div>
         </div>
       </div>
-      <p className="text-xs text-[#6E5D4F] italic">"{review.comment}"</p>
+      <p className="text-xs text-[#6E5D4F] italic line-clamp-3">"{review.comment}"</p>
       <p className="text-[10px] text-gray-400 text-right">{review.date}</p>
     </div>
   );

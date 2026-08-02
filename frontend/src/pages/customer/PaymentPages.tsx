@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle, CreditCard, RefreshCw, ShieldCheck } from "
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/DisplayComponents";
 import { paymentService } from "@/services/payment.service";
+import { OrderReviewForm } from "./OrdersPages";
 
 export const PaymentPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -19,10 +20,8 @@ export const PaymentPage: React.FC = () => {
     setIsProcessing(true);
 
     try {
-      // Initiate payment via backend API
       const initRes = await paymentService.initiatePayment({ orderId, provider: "RAZORPAY" });
 
-      // Simulate Razorpay SDK verification completion
       const verifyRes = await paymentService.verifyPayment({
         paymentId: initRes.paymentId,
         razorpayPaymentId: `pay_mock_${Date.now()}`,
@@ -74,22 +73,26 @@ export const OrderSuccessPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
 
   return (
-    <div className="py-16 max-w-xl mx-auto text-center space-y-6 bg-white border border-[#E8E2D9] rounded-3xl p-10 shadow-lg">
-      <CheckCircle className="h-16 w-16 text-[#27AE60] mx-auto animate-in zoom-in" />
-      <div className="space-y-2">
-        <h1 className="text-3xl font-extrabold text-[#2C1E16]">Payment Successful!</h1>
-        <p className="text-sm text-[#6E5D4F]">Thank you for your order. Our master bakers are preparing your items.</p>
-        {orderId ? <p className="text-xs font-mono text-[#E67E22]">Order Reference: #{orderId}</p> : null}
+    <div className="py-12 max-w-2xl mx-auto space-y-8">
+      <div className="text-center space-y-4 bg-white border border-[#E8E2D9] rounded-3xl p-8 shadow-lg">
+        <CheckCircle className="h-16 w-16 text-[#27AE60] mx-auto animate-in zoom-in" />
+        <div className="space-y-2">
+          <h1 className="text-3xl font-extrabold text-[#2C1E16]">Payment Successful!</h1>
+          <p className="text-sm text-[#6E5D4F]">Thank you for your order. Our master bakers are preparing your items.</p>
+          {orderId ? <p className="text-xs font-mono text-[#E67E22]">Order Reference: #{orderId}</p> : null}
+        </div>
+
+        <div className="pt-2 flex justify-center gap-4">
+          <Link to="/customer/orders">
+            <Button variant="outline">View Order History</Button>
+          </Link>
+          <Link to="/products">
+            <Button>Back to Catalog</Button>
+          </Link>
+        </div>
       </div>
 
-      <div className="pt-4 flex justify-center gap-4">
-        <Link to="/customer/orders">
-          <Button variant="outline">View Order History</Button>
-        </Link>
-        <Link to="/products">
-          <Button>Back to Catalog</Button>
-        </Link>
-      </div>
+      {orderId ? <OrderReviewForm orderId={orderId} /> : null}
     </div>
   );
 };

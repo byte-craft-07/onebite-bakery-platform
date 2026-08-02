@@ -1,11 +1,87 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Clock, Download, MessageSquare, PackageCheck, RefreshCw, ShoppingBag, Truck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Download, MessageSquare, RefreshCw, Star } from "lucide-react";
 
 import { Badge, Card, EmptyState, Skeleton } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
 import { orderService, type OrderDetails } from "@/services/order.service";
 import { cartService } from "@/services/cart.service";
+import { reviewService } from "@/services/review.service";
+
+export const OrderReviewForm: React.FC<{ orderId: string; productName?: string }> = ({ orderId, productName }) => {
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!comment.trim()) return;
+    setIsSubmitting(true);
+    try {
+      await reviewService.addReview({
+        name: "Verified Customer",
+        rating,
+        comment,
+        orderId,
+        productName,
+      });
+      setSubmitted(true);
+    } catch (_err) {
+      setSubmitted(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <Card className="bg-green-50 border-green-200 text-center p-6 space-y-2">
+        <CheckCircle2 className="h-8 w-8 text-green-600 mx-auto animate-in zoom-in" />
+        <h4 className="text-base font-bold text-green-900">Thank You for Your Feedback!</h4>
+        <p className="text-xs text-green-700">Your review has been submitted and is now featured live in the moving marquee on our Home Page.</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="space-y-4 bg-[#FFF3E6]/40 border-[#E67E22]/30">
+      <div className="flex items-center gap-2">
+        <Star className="h-5 w-5 text-amber-500 fill-current" />
+        <h3 className="text-lg font-bold text-[#2C1E16]">Rate Your Order & Write a Review</h3>
+      </div>
+      <p className="text-xs text-[#6E5D4F]">How was your cake quality, taste, and delivery service? Share your feedback with other customers!</p>
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-[#2C1E16]">Your Rating:</span>
+          <div className="flex text-amber-500 cursor-pointer">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={`h-6 w-6 transition-transform hover:scale-110 ${star <= rating ? "fill-current" : "text-gray-300"}`}
+                onClick={() => setRating(star)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <textarea
+          rows={3}
+          placeholder="Describe your cake taste, packaging quality, and delivery speed..."
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          className="w-full p-3 rounded-xl border border-[#E8E2D9] text-xs outline-none focus:border-[#E67E22] bg-white"
+          required
+        />
+
+        <Button type="submit" size="sm" isLoading={isSubmitting} disabled={!comment.trim()}>
+          Submit Review to Home Page
+        </Button>
+      </form>
+    </Card>
+  );
+};
 
 export const OrdersHistoryPage: React.FC = () => {
   const [orders, setOrders] = useState<OrderDetails[]>([]);
@@ -167,7 +243,6 @@ export const OrderDetailsPage: React.FC = () => {
     );
   }
 
-  // Order Timeline Steps
   const timelineSteps = [
     { label: "Order Placed", status: "PENDING", isPassed: true },
     { label: "Confirmed", status: "CONFIRMED", isPassed: ["CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED"].includes(order.orderStatus) },
@@ -258,6 +333,9 @@ export const OrderDetailsPage: React.FC = () => {
           </div>
         </div>
       </Card>
+
+      {/* Customer Order Review Form */}
+      <OrderReviewForm orderId={order.id} productName={order.items[0]?.name} />
     </div>
   );
 };

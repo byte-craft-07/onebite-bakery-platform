@@ -1,14 +1,28 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Cake, Clock, Award, ShieldCheck } from "lucide-react";
+import { ArrowRight, Award, Cake, Clock, ShieldCheck } from "lucide-react";
 
 import { CategoryCard, ComboCard, OccasionCard, ReviewCard } from "@/components/cards/DomainCards";
 import { ProductCard } from "@/components/cards/ProductCard";
 import { Button } from "@/components/ui/Button";
-import { MOCK_CATEGORIES, MOCK_COMBOS, MOCK_OCCASIONS, MOCK_PRODUCTS, MOCK_REVIEWS } from "@/data/mockData";
+import { MOCK_CATEGORIES, MOCK_COMBOS, MOCK_OCCASIONS, MOCK_PRODUCTS, type MockReview } from "@/data/mockData";
 import type { ProductItem } from "@/services/catalog.service";
+import { reviewService } from "@/services/review.service";
 
 export const HomePage: React.FC = () => {
+  const [reviews, setReviews] = useState<MockReview[]>([]);
+
+  const fetchReviews = async () => {
+    const list = await reviewService.getReviews();
+    setReviews(list);
+  };
+
+  useEffect(() => {
+    fetchReviews();
+    window.addEventListener("onebite_review_submitted", fetchReviews);
+    return () => window.removeEventListener("onebite_review_submitted", fetchReviews);
+  }, []);
+
   return (
     <div className="space-y-20 pb-16">
       {/* Hero Section */}
@@ -162,17 +176,20 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Customer Reviews Section */}
-      <section className="space-y-8">
+      {/* Customer Moving Reviews Marquee Section */}
+      <section className="space-y-8 overflow-hidden">
         <div className="text-center max-w-2xl mx-auto space-y-2">
-          <h2 className="text-3xl font-extrabold text-[#2C1E16]">Customer Testimonials</h2>
-          <p className="text-sm text-[#6E5D4F]">Hear what our community says about their experience</p>
+          <h2 className="text-3xl font-extrabold text-[#2C1E16]">Real Customer Reviews & Ratings</h2>
+          <p className="text-sm text-[#6E5D4F]">Live verified feedback from recent bakery order deliveries</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {MOCK_REVIEWS.map((review) => (
-            <ReviewCard key={review.id} review={review} />
-          ))}
+        {/* Moving Marquee Loop */}
+        <div className="relative w-full overflow-hidden py-4">
+          <div className="flex gap-6 animate-marquee hover:[animation-play-state:paused] w-max">
+            {[...reviews, ...reviews, ...reviews].map((review, idx) => (
+              <ReviewCard key={`${review.id}-${idx}`} review={review} />
+            ))}
+          </div>
         </div>
       </section>
 
