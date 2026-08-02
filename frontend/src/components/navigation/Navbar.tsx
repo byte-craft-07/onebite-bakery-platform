@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Heart, Home, LogOut, Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft, Heart, Home, LogOut, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 
 import { useAuth } from "@/contexts/auth.context";
 import { cartService } from "@/services/cart.service";
@@ -12,6 +12,7 @@ export const Navbar: React.FC = () => {
   const [cartCount, setCartCount] = useState<number>(0);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, logout } = useAuth();
 
   const syncCartCount = async () => {
@@ -54,13 +55,27 @@ export const Navbar: React.FC = () => {
     <>
       <header className="sticky top-0 z-50 border-b border-[#E8E2D9] bg-[#FFFBF5]/90 backdrop-blur-md transition-all">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-2xl font-extrabold text-[#E67E22] tracking-tight">OneBite</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#FFF3E6] text-[#E67E22] border border-[#E67E22]/30">
-              Bakery
-            </span>
-          </Link>
+          {/* Logo & Go Back Arrow Button */}
+          <div className="flex items-center gap-2">
+            {location.pathname !== "/" ? (
+              <button
+                onClick={() => navigate(-1)}
+                className="p-2 rounded-full text-[#2C1E16] hover:bg-[#FFF3E6] hover:text-[#E67E22] transition-colors cursor-pointer border border-[#E8E2D9] bg-white shadow-2xs"
+                aria-label="Go Back One Step"
+                title="Go Back"
+                data-tooltip="Go Back One Step"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+            ) : null}
+
+            <Link to="/" className="flex items-center gap-2">
+              <span className="text-2xl font-extrabold text-[#E67E22] tracking-tight">OneBite</span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#FFF3E6] text-[#E67E22] border border-[#E67E22]/30">
+                Bakery
+              </span>
+            </Link>
+          </div>
 
           {/* Desktop Links */}
           <nav className="hidden lg:flex items-center gap-6 font-medium text-sm text-[#2C1E16]">
