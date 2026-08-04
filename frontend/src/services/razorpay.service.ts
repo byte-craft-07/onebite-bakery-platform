@@ -120,16 +120,23 @@ export const razorpayService = {
         email: options.customerEmail,
         contact: options.customerPhone,
       },
-      method: {
-        upi: true,
-        card: true,
-        netbanking: true,
-        wallet: true,
-        paylater: true,
+      upi: {
+        flow: "intent",
       },
       config: {
         display: {
-          sequence: ["block.upi", "block.card", "block.netbanking", "block.wallet"],
+          blocks: {
+            upi_block: {
+              name: "Pay via UPI / QR Code (GPay, PhonePe, Paytm)",
+              instruments: [
+                {
+                  method: "upi",
+                  flows: ["qr", "intent", "collect"],
+                },
+              ],
+            },
+          },
+          sequence: ["block.upi_block"],
           preferences: {
             show_default_blocks: true,
           },
