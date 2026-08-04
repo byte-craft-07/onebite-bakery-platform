@@ -116,7 +116,7 @@ export const razorpayService = {
       name: "OneBite Bakery Platform",
       description: `Payment for Bakery Order #${options.orderId.slice(-6).toUpperCase()}`,
       image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=150&q=80",
-      order_id: razorpayOrder.id,
+      order_id: razorpayOrder.id && razorpayOrder.id.startsWith("order_") ? razorpayOrder.id : undefined,
       prefill: {
         name: options.customerName,
         email: options.customerEmail,
