@@ -56,6 +56,23 @@ export class AuthController {
     });
   };
 
+  public googleAuth = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const result = await this.authService.authenticateWithGoogle(
+      request.body,
+      createRequestContext(request),
+    );
+
+    setAuthCookies(response, result.tokens);
+
+    return sendSuccess(response, {
+      message: AUTH_RESPONSE_MESSAGES.AUTHENTICATED,
+      data: { user: result.user, tokens: result.tokens },
+    });
+  };
+
   public me = async (
     request: Request,
     response: Response,

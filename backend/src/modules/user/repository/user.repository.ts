@@ -14,6 +14,12 @@ export class UserRepository extends BaseRepository<User> {
     return UserModel.findOne({ phone }).exec();
   }
 
+  public async findByEmail(
+    email: string,
+  ): Promise<HydratedDocument<User> | null> {
+    return UserModel.findOne({ email }).exec();
+  }
+
   public async createCustomerFromPhone(
     phone: string,
   ): Promise<HydratedDocument<User>> {

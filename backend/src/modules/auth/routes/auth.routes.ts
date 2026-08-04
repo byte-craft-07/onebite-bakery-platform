@@ -108,20 +108,7 @@ authRouter.post(
 
 authRouter.post(
   "/google",
-  asyncHandler(async (req, res) => {
-    const { token } = req.body;
-    res.json({
-      success: true,
-      token: `jwt_google_${Date.now()}`,
-      user: {
-        id: `usr_google_${Date.now()}`,
-        name: "Google Verified Customer",
-        email: "customer.google@onebitebakery.in",
-        role: "customer",
-        profilePhoto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
-      },
-    });
-  }),
+  asyncHandler(authController.googleAuth),
 );
 
 authRouter.get(
