@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { AddressSelector, CheckoutSummary, DeliverySelector } from "@/components/shopping/CheckoutComponents";
+import { useAuth } from "@/contexts/auth.context";
 import { Button } from "@/components/ui/Button";
 import { Card, Modal, Skeleton } from "@/components/ui/DisplayComponents";
 import { Input } from "@/components/ui/FormControls";
@@ -30,6 +31,7 @@ const inlineAddressSchema = z.object({
 type InlineAddressData = z.infer<typeof inlineAddressSchema>;
 
 export const CheckoutPage: React.FC = () => {
+  const { user } = useAuth();
   const [fulfillmentType, setFulfillmentType] = useState<"HOME_DELIVERY" | "STORE_PICKUP">("HOME_DELIVERY");
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>(undefined);
@@ -155,9 +157,9 @@ export const CheckoutPage: React.FC = () => {
     razorpayService.openPaymentModal({
       amountInRupees: amount,
       orderId: `ORD-${Date.now()}`,
-      customerName: selectedAddr?.name || "OneBite Customer",
-      customerEmail: "customer@onebitebakery.test",
-      customerPhone: selectedAddr?.phone || "9876543210",
+      customerName: selectedAddr?.name || user?.name || "OneBite Customer",
+      customerEmail: user?.email && user.email.includes("@") && !user.email.endsWith(".test") ? user.email : "customer@onebitebakery.com",
+      customerPhone: (selectedAddr?.phone || user?.phone || "9876543210").replace(/\D/g, "").slice(-10) || "9876543210",
       onSuccess: (razorpayResponse) => {
         executeOrderCreation(razorpayResponse);
       },
