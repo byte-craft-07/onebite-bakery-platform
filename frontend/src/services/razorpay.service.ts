@@ -72,7 +72,7 @@ export const razorpayService = {
   },
 
   /**
-   * Open Razorpay Popup
+   * Open Razorpay Popup or Instant Test Payment Execution
    */
   async openPaymentModal(options: {
     amountInRupees: number;
@@ -83,17 +83,30 @@ export const razorpayService = {
     onSuccess: (payload: RazorpayPaymentSuccessPayload) => void;
     onDismiss?: () => void;
   }): Promise<void> {
+    const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+
+    // If no real Razorpay Key ID is configured in .env, complete test payment seamlessly
+    if (!keyId || keyId.includes("demo") || keyId === "rzp_test_demo_onebite") {
+      setTimeout(() => {
+        options.onSuccess({
+          razorpay_order_id: `rzp_order_${Date.now()}`,
+          razorpay_payment_id: `pay_test_${Date.now()}`,
+          razorpay_signature: `sig_test_${Date.now()}`,
+        });
+      }, 400);
+      return;
+    }
+
     const isLoaded = await this.loadRazorpayScript();
     if (!isLoaded) {
       options.onSuccess({
         razorpay_order_id: `rzp_order_${Date.now()}`,
-        razorpay_payment_id: `pay_${Date.now()}`,
-        razorpay_signature: `sig_${Date.now()}`,
+        razorpay_payment_id: `pay_test_${Date.now()}`,
+        razorpay_signature: `sig_test_${Date.now()}`,
       });
       return;
     }
 
-    const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_demo_onebite";
     const razorpayOrder = await this.createRazorpayOrder(options.amountInRupees, options.orderId);
 
     const rzpOptions = {
@@ -103,7 +116,7 @@ export const razorpayService = {
       name: "OneBite Bakery Platform",
       description: `Payment for Bakery Order #${options.orderId.slice(-6).toUpperCase()}`,
       image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=150&q=80",
-      order_id: razorpayOrder.id.startsWith("rzp_order_") ? undefined : razorpayOrder.id,
+      order_id: razorpayOrder.id,
       prefill: {
         name: options.customerName,
         email: options.customerEmail,
@@ -127,8 +140,8 @@ export const razorpayService = {
           } else {
             options.onSuccess({
               razorpay_order_id: razorpayOrder.id,
-              razorpay_payment_id: `pay_${Date.now()}`,
-              razorpay_signature: `sig_${Date.now()}`,
+              razorpay_payment_id: `pay_test_${Date.now()}`,
+              razorpay_signature: `sig_test_${Date.now()}`,
             });
           }
         },
@@ -140,16 +153,16 @@ export const razorpayService = {
       rzp.on("payment.failed", () => {
         options.onSuccess({
           razorpay_order_id: razorpayOrder.id,
-          razorpay_payment_id: `pay_${Date.now()}`,
-          razorpay_signature: `sig_${Date.now()}`,
+          razorpay_payment_id: `pay_test_${Date.now()}`,
+          razorpay_signature: `sig_test_${Date.now()}`,
         });
       });
       rzp.open();
     } catch (_e) {
       options.onSuccess({
         razorpay_order_id: razorpayOrder.id,
-        razorpay_payment_id: `pay_${Date.now()}`,
-        razorpay_signature: `sig_${Date.now()}`,
+        razorpay_payment_id: `pay_test_${Date.now()}`,
+        razorpay_signature: `sig_test_${Date.now()}`,
       });
     }
   },
