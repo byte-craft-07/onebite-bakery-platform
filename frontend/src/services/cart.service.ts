@@ -35,7 +35,12 @@ const getLocalCart = (): CartResponse => {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (raw) {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.items)) {
+        const itemCount = parsed.items.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
+        const subtotal = parsed.items.reduce((sum: number, item: any) => sum + (item.itemTotal || 0), 0);
+        return { ...parsed, itemCount, subtotal };
+      }
     }
   } catch (_err) {
     // Ignore
@@ -60,6 +65,9 @@ const saveLocalCart = (cart: CartResponse): CartResponse => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedCart));
   } catch (_err) {
     // Ignore
+  }
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("onebite_cart_updated"));
   }
   return updatedCart;
 };
@@ -91,6 +99,9 @@ export const cartService = {
         data: { cart: CartResponse };
       }>("/cart/items", payload);
       if (response.data?.data?.cart) {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("onebite_cart_updated"));
+        }
         return response.data.data.cart;
       }
     } catch (_err) {
@@ -152,6 +163,9 @@ export const cartService = {
         data: { cart: CartResponse };
       }>(`/cart/items/${itemId}`, { quantity });
       if (response.data?.data?.cart) {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("onebite_cart_updated"));
+        }
         return response.data.data.cart;
       }
     } catch (_err) {
@@ -182,6 +196,9 @@ export const cartService = {
         data: { cart: CartResponse };
       }>(`/cart/items/${itemId}`);
       if (response.data?.data?.cart) {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("onebite_cart_updated"));
+        }
         return response.data.data.cart;
       }
     } catch (_err) {
@@ -200,5 +217,8 @@ export const cartService = {
       // Ignore
     }
     localStorage.removeItem(LOCAL_STORAGE_KEY);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("onebite_cart_updated"));
+    }
   },
 };

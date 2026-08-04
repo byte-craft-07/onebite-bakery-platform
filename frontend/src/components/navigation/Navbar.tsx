@@ -67,16 +67,13 @@ export const Navbar: React.FC = () => {
               </button>
             ) : null}
 
-            <Link to="/" className="flex flex-col">
+            <Link to="/" className="flex flex-col justify-center">
               <div className="flex items-center gap-1.5">
                 <span className="text-2xl font-extrabold text-[#E67E22] tracking-tight">OneBite</span>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#FFF3E6] text-[#E67E22] border border-[#E67E22]/30">
                   Bakery
                 </span>
               </div>
-              <span className="text-[10px] font-bold text-[#6E5D4F] tracking-wide hidden sm:block">
-                हर जश्न का पहला निवाला। &bull; Pure Joy in Every Single Bite
-              </span>
             </Link>
           </div>
 
