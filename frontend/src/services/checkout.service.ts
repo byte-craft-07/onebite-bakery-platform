@@ -1,6 +1,8 @@
 import { apiClient } from "./api.client";
 import { cartService } from "./cart.service";
 
+const isDevelopment = import.meta.env.DEV;
+
 export interface CheckoutPreviewResponse {
   fulfillmentType: "HOME_DELIVERY" | "STORE_PICKUP";
   items: Array<{
@@ -38,8 +40,10 @@ export const checkoutService = {
       if (response.data?.data?.checkout && response.data.data.checkout.pricing?.subtotal > 0) {
         return response.data.data.checkout;
       }
-    } catch (_err) {
-      // Fallback to local cart preview calculation
+    } catch {
+      if (!isDevelopment) {
+        throw new Error("Unable to load checkout preview.");
+      }
     }
 
     const cart = await cartService.getCart();
@@ -83,7 +87,11 @@ export const checkoutService = {
         data: { isValid: boolean; warnings?: string[] };
       }>("/checkout/validate", payload);
       return response.data.data;
-    } catch (_err) {
+    } catch {
+      if (!isDevelopment) {
+        throw new Error("Unable to validate checkout.");
+      }
+
       return { isValid: true };
     }
   },
@@ -99,8 +107,10 @@ export const checkoutService = {
         window.dispatchEvent(new Event("onebite_cart_updated"));
         return response.data.data.order;
       }
-    } catch (_err) {
-      // Fallback
+    } catch {
+      if (!isDevelopment) {
+        throw new Error("Unable to create order.");
+      }
     }
 
     const preview = await checkoutService.getCheckoutPreview(payload.fulfillmentType);

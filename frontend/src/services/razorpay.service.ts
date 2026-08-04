@@ -1,5 +1,11 @@
 import { apiClient } from "./api.client";
 
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayCheckoutOptions) => RazorpayCheckoutInstance;
+  }
+}
+
 export interface RazorpayOrderResponse {
   id: string;
   amount: number;
@@ -14,13 +20,47 @@ export interface RazorpayPaymentSuccessPayload {
   razorpay_signature: string;
 }
 
+interface RazorpayCheckoutInstance {
+  on(eventName: "payment.failed", handler: () => void): void;
+  open(): void;
+}
+
+interface RazorpayCheckoutOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  image: string;
+  order_id?: string;
+  prefill: {
+    name: string;
+    email: string;
+    contact: string;
+  };
+  readonly: {
+    contact: boolean;
+    email: boolean;
+    name: boolean;
+  };
+  theme: {
+    color: string;
+  };
+  handler: (response: RazorpayPaymentSuccessPayload) => Promise<void>;
+  modal: {
+    ondismiss: () => void;
+  };
+}
+
+const isDevelopment = import.meta.env.DEV;
+
 export const razorpayService = {
   /**
    * Dynamically load Razorpay Checkout JS SDK script
    */
   loadRazorpayScript(): Promise<boolean> {
     return new Promise((resolve) => {
-      if ((window as any).Razorpay) {
+      if (window.Razorpay) {
         resolve(true);
         return;
       }
@@ -39,18 +79,20 @@ export const razorpayService = {
   async createRazorpayOrder(amountInRupees: number, orderId: string): Promise<RazorpayOrderResponse> {
     try {
       const response = await apiClient.post<RazorpayOrderResponse>("/payments/razorpay/create-order", {
-        amount: amountInRupees * 100, // Razorpay works in paise
+        amount: Math.round(amountInRupees * 100), // Razorpay works in paise
         currency: "INR",
         receipt: `receipt_${orderId}`,
       });
       if (response.data?.id) return response.data;
-    } catch (_err) {
-      // Ignore API error and fallback to simulated order
+    } catch {
+      if (!isDevelopment) {
+        throw new Error("Unable to create Razorpay order.");
+      }
     }
 
     return {
       id: `rzp_local_${Date.now()}`,
-      amount: amountInRupees * 100,
+      amount: Math.round(amountInRupees * 100),
       currency: "INR",
       receipt: `receipt_${orderId}`,
       status: "created",
@@ -64,11 +106,13 @@ export const razorpayService = {
     try {
       const response = await apiClient.post<{ verified: boolean }>("/payments/razorpay/verify", payload);
       if (response.data) return response.data;
-    } catch (_err) {
-      // Ignore API error and fallback
+    } catch {
+      if (!isDevelopment) {
+        throw new Error("Unable to verify Razorpay payment.");
+      }
     }
 
-    return { verified: true };
+    return { verified: false };
   },
 
   /**
@@ -114,6 +158,11 @@ export const razorpayService = {
         email: options.customerEmail || "ajaykterha@gmail.com",
         contact: options.customerPhone || "7897671632",
       },
+      readonly: {
+        contact: true,
+        email: true,
+        name: true,
+      },
       theme: {
         color: "#E67E22",
       },
@@ -122,7 +171,7 @@ export const razorpayService = {
         if (verifyRes.verified) {
           options.onSuccess(response);
         } else {
-          options.onSuccess(response);
+          options.onDismiss?.();
         }
       },
       modal: {
@@ -135,14 +184,19 @@ export const razorpayService = {
     };
 
     try {
-      const rzp = new (window as any).Razorpay(rzpOptions);
+      if (!window.Razorpay) {
+        options.onDismiss?.();
+        return;
+      }
+
+      const rzp = new window.Razorpay(rzpOptions);
       rzp.on("payment.failed", () => {
         if (options.onDismiss) {
           options.onDismiss();
         }
       });
       rzp.open();
-    } catch (_e) {
+    } catch {
       if (options.onDismiss) {
         options.onDismiss();
       }
