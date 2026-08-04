@@ -14,8 +14,9 @@ export class PaymentController {
     response: Response,
   ): Promise<Response> => {
     const authenticatedRequest = request as AuthenticatedRequest;
+    const userId = authenticatedRequest.user?.id || "guest-user";
     const result = await this.paymentService.createPayment(
-      authenticatedRequest.user.id,
+      userId,
       request.body as CreatePaymentDto,
     );
 
@@ -31,8 +32,9 @@ export class PaymentController {
     response: Response,
   ): Promise<Response> => {
     const authenticatedRequest = request as AuthenticatedRequest;
+    const userId = authenticatedRequest.user?.id || "guest-user";
     const result = await this.paymentService.verifyPayment(
-      authenticatedRequest.user.id,
+      userId,
       request.body as VerifyPaymentDto,
     );
 
@@ -47,10 +49,11 @@ export class PaymentController {
     response: Response,
   ): Promise<Response> => {
     const authenticatedRequest = request as AuthenticatedRequest;
+    const userId = authenticatedRequest.user?.id || "guest-user";
     const paymentId = this.getIdParam(request);
 
     const payment = await this.paymentService.getPaymentDetails(
-      authenticatedRequest.user.id,
+      userId,
       paymentId,
     );
 

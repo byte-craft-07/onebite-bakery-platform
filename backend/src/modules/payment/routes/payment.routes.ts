@@ -6,6 +6,7 @@ import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { PaymentController } from "../controller/index.js";
 import { PaymentRepository } from "../repository/index.js";
 import { PaymentService } from "../service/index.js";
+import { RazorpayProvider } from "../provider/razorpay.provider.js";
 import {
   createPaymentSchema,
   paymentIdParamSchema,
@@ -17,6 +18,7 @@ export const paymentRouter = Router();
 const paymentRepository = new PaymentRepository();
 const paymentService = new PaymentService(paymentRepository);
 const paymentController = new PaymentController(paymentService);
+const razorpayProvider = new RazorpayProvider();
 
 paymentRouter.post(
   "/create",
@@ -32,15 +34,23 @@ paymentRouter.post(
   asyncHandler(paymentController.verifyPayment),
 );
 
-// Razorpay Direct Integration Endpoints
+// Razorpay Direct Integration Endpoints (Real Razorpay API Call)
 paymentRouter.post(
   "/razorpay/create-order",
   asyncHandler(async (req, res) => {
-    const { amount, receipt } = req.body;
+    const { amount, currency, receipt } = req.body;
+    const amountInRupees = (amount || 49900) / 100;
+
+    const orderResult = await razorpayProvider.createOrder(
+      amountInRupees,
+      currency || "INR",
+      receipt || `receipt_${Date.now()}`,
+    );
+
     res.json({
-      id: `rzp_order_${Date.now()}`,
-      amount: amount || 49900,
-      currency: "INR",
+      id: orderResult.providerOrderId,
+      amount: orderResult.amount * 100,
+      currency: orderResult.currency,
       receipt: receipt || `receipt_${Date.now()}`,
       status: "created",
     });
@@ -50,7 +60,14 @@ paymentRouter.post(
 paymentRouter.post(
   "/razorpay/verify",
   asyncHandler(async (req, res) => {
-    res.json({ verified: true, message: "Razorpay HMAC SHA-256 signature verified" });
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const isVerified = razorpayProvider.verifySignature(
+      razorpay_order_id || "",
+      razorpay_payment_id || "",
+      razorpay_signature || "",
+    );
+
+    res.json({ verified: isVerified, message: "Razorpay HMAC SHA-256 signature verified" });
   }),
 );
 
