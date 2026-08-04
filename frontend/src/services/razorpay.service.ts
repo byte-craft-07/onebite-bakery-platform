@@ -49,7 +49,7 @@ export const razorpayService = {
     }
 
     return {
-      id: `rzp_order_${Date.now()}`,
+      id: `rzp_local_${Date.now()}`,
       amount: amountInRupees * 100,
       currency: "INR",
       receipt: `receipt_${orderId}`,
@@ -99,6 +99,14 @@ export const razorpayService = {
 
     const razorpayOrder = await this.createRazorpayOrder(options.amountInRupees, options.orderId);
 
+    // Validate real server-created Razorpay order ID (e.g. order_TLZ1nlVM41WRJV)
+    const isRealRazorpayOrderId = (id?: string) => {
+      if (!id) return false;
+      return id.startsWith("order_") && !id.includes("receipt") && !id.includes("local") && !id.includes("mock") && id.length <= 25;
+    };
+
+    const validOrderId = isRealRazorpayOrderId(razorpayOrder.id) ? razorpayOrder.id : undefined;
+
     const rzpOptions = {
       key: keyId,
       amount: razorpayOrder.amount,
@@ -106,7 +114,7 @@ export const razorpayService = {
       name: "OneBite Bakery Platform",
       description: `Payment for Bakery Order #${options.orderId.slice(-6).toUpperCase()}`,
       image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=150&q=80",
-      order_id: razorpayOrder.id && razorpayOrder.id.startsWith("order_") ? razorpayOrder.id : undefined,
+      order_id: validOrderId,
       prefill: {
         name: options.customerName,
         email: options.customerEmail,

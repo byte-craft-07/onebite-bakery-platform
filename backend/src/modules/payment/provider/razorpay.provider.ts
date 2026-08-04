@@ -57,7 +57,7 @@ export class RazorpayProvider implements IPaymentProvider {
     }
 
     const randomHex = crypto.randomBytes(4).toString("hex");
-    const providerOrderId = `order_${receipt.replace(/[^a-zA-Z0-9]/g, "")}_${randomHex}`.slice(0, 40);
+    const providerOrderId = `rzp_local_${receipt.replace(/[^a-zA-Z0-9]/g, "")}_${randomHex}`.slice(0, 40);
 
     return {
       providerOrderId,
