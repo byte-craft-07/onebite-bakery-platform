@@ -158,8 +158,8 @@ export const CheckoutPage: React.FC = () => {
       amountInRupees: amount,
       orderId: `ORD-${Date.now()}`,
       customerName: selectedAddr?.name || user?.name || "OneBite Customer",
-      customerEmail: user?.email && user.email.includes("@") && !user.email.endsWith(".test") ? user.email : "customer@onebitebakery.com",
-      customerPhone: (selectedAddr?.phone || user?.phone || "9876543210").replace(/\D/g, "").slice(-10) || "9876543210",
+      customerEmail: user?.email && user.email.includes("@") && !user.email.endsWith(".test") ? user.email : "ajaykterha@gmail.com",
+      customerPhone: (selectedAddr?.phone || user?.phone || "7897671632").replace(/\D/g, "").slice(-10) || "7897671632",
       onSuccess: (razorpayResponse) => {
         executeOrderCreation(razorpayResponse);
       },

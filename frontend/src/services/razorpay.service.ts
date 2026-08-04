@@ -83,13 +83,7 @@ export const razorpayService = {
     onSuccess: (payload: RazorpayPaymentSuccessPayload) => void;
     onDismiss?: () => void;
   }): Promise<void> {
-    const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
-
-    // If no real Razorpay Key ID is configured in .env, trigger dismissal or error
-    if (!keyId || keyId.includes("demo") || keyId === "rzp_test_demo_onebite") {
-      if (options.onDismiss) options.onDismiss();
-      return;
-    }
+    const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_TLYhqUJgQVFJ7z";
 
     const isLoaded = await this.loadRazorpayScript();
     if (!isLoaded) {
@@ -116,31 +110,9 @@ export const razorpayService = {
       image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=150&q=80",
       order_id: validOrderId,
       prefill: {
-        name: options.customerName,
-        email: options.customerEmail,
-        contact: options.customerPhone,
-      },
-      upi: {
-        flow: "intent",
-      },
-      config: {
-        display: {
-          blocks: {
-            upi_block: {
-              name: "Pay via UPI / QR Code (GPay, PhonePe, Paytm)",
-              instruments: [
-                {
-                  method: "upi",
-                  flows: ["qr", "intent", "collect"],
-                },
-              ],
-            },
-          },
-          sequence: ["block.upi_block"],
-          preferences: {
-            show_default_blocks: true,
-          },
-        },
+        name: options.customerName || "OneBite Customer",
+        email: options.customerEmail || "ajaykterha@gmail.com",
+        contact: options.customerPhone || "7897671632",
       },
       theme: {
         color: "#E67E22",
