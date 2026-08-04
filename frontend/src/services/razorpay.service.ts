@@ -72,7 +72,7 @@ export const razorpayService = {
   },
 
   /**
-   * Open Razorpay Popup or Instant Test Payment Execution
+   * Open Razorpay Popup
    */
   async openPaymentModal(options: {
     amountInRupees: number;
@@ -85,25 +85,15 @@ export const razorpayService = {
   }): Promise<void> {
     const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
-    // If no real Razorpay Key ID is configured in .env, complete test payment seamlessly
+    // If no real Razorpay Key ID is configured in .env, trigger dismissal or error
     if (!keyId || keyId.includes("demo") || keyId === "rzp_test_demo_onebite") {
-      setTimeout(() => {
-        options.onSuccess({
-          razorpay_order_id: `rzp_order_${Date.now()}`,
-          razorpay_payment_id: `pay_test_${Date.now()}`,
-          razorpay_signature: `sig_test_${Date.now()}`,
-        });
-      }, 400);
+      if (options.onDismiss) options.onDismiss();
       return;
     }
 
     const isLoaded = await this.loadRazorpayScript();
     if (!isLoaded) {
-      options.onSuccess({
-        razorpay_order_id: `rzp_order_${Date.now()}`,
-        razorpay_payment_id: `pay_test_${Date.now()}`,
-        razorpay_signature: `sig_test_${Date.now()}`,
-      });
+      if (options.onDismiss) options.onDismiss();
       return;
     }
 
@@ -112,7 +102,7 @@ export const razorpayService = {
     const rzpOptions = {
       key: keyId,
       amount: razorpayOrder.amount,
-      currency: razorpayOrder.currency,
+      currency: razorpayOrder.currency || "INR",
       name: "OneBite Bakery Platform",
       description: `Payment for Bakery Order #${options.orderId.slice(-6).toUpperCase()}`,
       image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=150&q=80",
@@ -121,6 +111,21 @@ export const razorpayService = {
         name: options.customerName,
         email: options.customerEmail,
         contact: options.customerPhone,
+      },
+      method: {
+        upi: true,
+        card: true,
+        netbanking: true,
+        wallet: true,
+        paylater: true,
+      },
+      config: {
+        display: {
+          sequence: ["block.upi", "block.card", "block.netbanking", "block.wallet"],
+          preferences: {
+            show_default_blocks: true,
+          },
+        },
       },
       theme: {
         color: "#E67E22",
@@ -137,12 +142,6 @@ export const razorpayService = {
         ondismiss: () => {
           if (options.onDismiss) {
             options.onDismiss();
-          } else {
-            options.onSuccess({
-              razorpay_order_id: razorpayOrder.id,
-              razorpay_payment_id: `pay_test_${Date.now()}`,
-              razorpay_signature: `sig_test_${Date.now()}`,
-            });
           }
         },
       },
@@ -151,19 +150,15 @@ export const razorpayService = {
     try {
       const rzp = new (window as any).Razorpay(rzpOptions);
       rzp.on("payment.failed", () => {
-        options.onSuccess({
-          razorpay_order_id: razorpayOrder.id,
-          razorpay_payment_id: `pay_test_${Date.now()}`,
-          razorpay_signature: `sig_test_${Date.now()}`,
-        });
+        if (options.onDismiss) {
+          options.onDismiss();
+        }
       });
       rzp.open();
     } catch (_e) {
-      options.onSuccess({
-        razorpay_order_id: razorpayOrder.id,
-        razorpay_payment_id: `pay_test_${Date.now()}`,
-        razorpay_signature: `sig_test_${Date.now()}`,
-      });
+      if (options.onDismiss) {
+        options.onDismiss();
+      }
     }
   },
 };

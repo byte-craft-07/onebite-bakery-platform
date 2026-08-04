@@ -19,7 +19,8 @@ export class RazorpayProvider implements IPaymentProvider {
 
     if (this.keyId && this.keySecret) {
       try {
-        this.instance = new Razorpay({
+        const RazorpayCtor = (Razorpay as any).default || Razorpay;
+        this.instance = new RazorpayCtor({
           key_id: this.keyId,
           key_secret: this.keySecret,
         });
@@ -43,13 +44,15 @@ export class RazorpayProvider implements IPaymentProvider {
           currency,
           receipt: receipt.slice(0, 40),
         });
-        return {
-          providerOrderId: order.id,
-          amount: Number(order.amount) / 100,
-          currency: order.currency,
-        };
+        if (order && order.id) {
+          return {
+            providerOrderId: order.id,
+            amount: Number(order.amount) / 100,
+            currency: order.currency,
+          };
+        }
       } catch (_err) {
-        // Fallback if Razorpay API call fails or rate limited
+        // Fallback below if order creation API fails
       }
     }
 

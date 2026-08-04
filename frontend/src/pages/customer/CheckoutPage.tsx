@@ -162,8 +162,8 @@ export const CheckoutPage: React.FC = () => {
         executeOrderCreation(razorpayResponse);
       },
       onDismiss: () => {
-        // Allow fallback placement if user closes Razorpay modal
-        executeOrderCreation();
+        setIsPlacingOrder(false);
+        setErrorMsg("Payment was cancelled or failed. Your order was not placed.");
       },
     });
   };
