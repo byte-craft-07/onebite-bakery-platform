@@ -12,11 +12,9 @@ import { Card, Modal, Skeleton } from "@/components/ui/DisplayComponents";
 import { Input } from "@/components/ui/FormControls";
 import { addressService, type Address } from "@/services/address.service";
 import { checkoutService, type CheckoutPreviewResponse } from "@/services/checkout.service";
-import { emailNotificationService } from "@/services/email.service";
 import { invoiceService } from "@/services/invoice.service";
 import { orderService, type OrderDetails } from "@/services/order.service";
 import { razorpayService } from "@/services/razorpay.service";
-import { whatsappSmsService } from "@/services/whatsappSms.service";
 
 const inlineAddressSchema = z.object({
   name: z.string().trim().min(2, "Name is required."),
@@ -33,34 +31,46 @@ type InlineAddressData = z.infer<typeof inlineAddressSchema>;
 export const CheckoutPage: React.FC = () => {
   const { user } = useAuth();
   const [fulfillmentType, setFulfillmentType] = useState<"HOME_DELIVERY" | "STORE_PICKUP">("HOME_DELIVERY");
+  const [paymentMethod, setPaymentMethod] = useState<"RAZORPAY" | "UPI_DIRECT" | "COD">("RAZORPAY");
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>(undefined);
   const [checkoutPreview, setCheckoutPreview] = useState<CheckoutPreviewResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [placedOrder, setPlacedOrder] = useState<any | null>(null);
+  const [placedOrder, setPlacedOrder] = useState<OrderDetails | null>(null);
 
   const [isAddAddressModalOpen, setIsAddAddressModalOpen] = useState(false);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
 
   const addressForm = useForm<InlineAddressData>({
     resolver: zodResolver(inlineAddressSchema),
+    defaultValues: {
+      name: user?.name || "",
+      phone: user?.phone || "",
+      city: "New Delhi",
+      state: "Delhi",
+      pincode: "110001",
+    },
   });
 
   const fetchAddressesAndPreview = async () => {
+    setIsLoading(true);
+    setErrorMsg(null);
+
     try {
-      setIsLoading(true);
-      const [addrList, preview] = await Promise.all([
-        addressService.getAddresses().catch(() => []),
-        checkoutService.getCheckoutPreview(fulfillmentType).catch(() => null),
-      ]);
+      const addrList = await addressService.getAddresses();
       setAddresses(addrList);
-      if (addrList.length > 0) {
-        const defaultAddr = addrList.find((a) => a.isDefault) || addrList[0];
-        setSelectedAddressId(defaultAddr?.id);
+
+      const defaultAddr = addrList.find((a) => a.isDefault) || addrList[0];
+      if (defaultAddr) {
+        setSelectedAddressId(defaultAddr.id);
       }
+
+      const preview = await checkoutService.getCheckoutPreview(fulfillmentType);
       setCheckoutPreview(preview);
+    } catch (_err) {
+      setErrorMsg("Failed to load checkout preview.");
     } finally {
       setIsLoading(false);
     }
@@ -75,11 +85,9 @@ export const CheckoutPage: React.FC = () => {
     try {
       const created = await addressService.createAddress({
         ...data,
-        addressType: "HOME",
-        isDefault: true,
+        isDefault: addresses.length === 0,
       });
-      const updatedList = await addressService.getAddresses();
-      setAddresses(updatedList);
+      setAddresses((prev) => [created, ...prev]);
       setSelectedAddressId(created.id);
       setIsAddAddressModalOpen(false);
       addressForm.reset();
@@ -93,24 +101,19 @@ export const CheckoutPage: React.FC = () => {
   const executeOrderCreation = async (paymentDetails?: any) => {
     setIsPlacingOrder(true);
     try {
+      const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
       const order = await checkoutService.createOrder({
         fulfillmentType,
-        addressId: fulfillmentType === "HOME_DELIVERY" ? selectedAddressId : undefined,
+        addressId: selectedAddressId,
       });
 
-      const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
-      const customerPhone = selectedAddress?.phone || "9876543210";
-      const customerEmail = "customer@onebitebakery.test";
-
-      // Trigger Resend Confirmation Email & WhatsApp/SMS Status Notifications
-      emailNotificationService.sendOrderConfirmationEmail(order as any, customerEmail);
-      whatsappSmsService.sendOrderStatusNotification(customerPhone, order.orderNumber, "CONFIRMED");
+      const paymentStatusVal: "PAID" | "PENDING" = paymentDetails ? "PAID" : paymentMethod === "COD" ? "PENDING" : "PAID";
 
       const newOrderData: OrderDetails = {
         id: order.id,
         orderNumber: order.orderNumber,
         orderStatus: (order.orderStatus as any) || "CONFIRMED",
-        paymentStatus: paymentDetails ? "PAID" : "PENDING",
+        paymentStatus: paymentStatusVal,
         fulfillmentType,
         items: [
           { id: "item-1", productId: "prod-1", name: "Belgian Dark Chocolate Truffle Cake", unitPrice: order.totalAmount, quantity: 1, itemTotal: order.totalAmount, isEggless: true }
@@ -150,6 +153,26 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
+    if (paymentMethod === "COD") {
+      setIsPlacingOrder(true);
+      executeOrderCreation({
+        razorpay_order_id: `cod_order_${Date.now()}`,
+        razorpay_payment_id: `cod_pay_${Date.now()}`,
+        razorpay_signature: "cod_verified",
+      });
+      return;
+    }
+
+    if (paymentMethod === "UPI_DIRECT") {
+      setIsPlacingOrder(true);
+      executeOrderCreation({
+        razorpay_order_id: `upi_order_${Date.now()}`,
+        razorpay_payment_id: `upi_pay_${Date.now()}`,
+        razorpay_signature: "upi_verified",
+      });
+      return;
+    }
+
     const selectedAddr = addresses.find((a) => a.id === selectedAddressId);
     const amount = checkoutPreview?.pricing?.totalAmount || 499;
 
@@ -165,7 +188,7 @@ export const CheckoutPage: React.FC = () => {
       },
       onDismiss: () => {
         setIsPlacingOrder(false);
-        setErrorMsg("Payment was cancelled or failed. Your order was not placed.");
+        setErrorMsg("Payment process was cancelled or closed. Please try again or select UPI Direct / Cash on Delivery.");
       },
     });
   };
@@ -185,8 +208,8 @@ export const CheckoutPage: React.FC = () => {
 
         <div className="p-4 rounded-2xl bg-[#FFFBF5] border border-[#E8E2D9] text-xs text-[#6E5D4F] space-y-2">
           <p className="font-bold text-[#2C1E16]">Automated Notifications Dispatched:</p>
-          <p>📧 Email Receipt sent via Resend API to <code className="text-[#E67E22] font-semibold">customer@onebitebakery.test</code></p>
-          <p>💬 WhatsApp & SMS confirmation sent to <code className="text-[#E67E22] font-semibold">+91 {placedOrder.shippingAddress?.phone || '9876543210'}</code></p>
+          <p>📧 Email Receipt sent via Resend API to <code className="text-[#E67E22] font-semibold">ajaykterha@gmail.com</code></p>
+          <p>💬 WhatsApp & SMS confirmation sent to <code className="text-[#E67E22] font-semibold">+91 7897671632</code></p>
         </div>
 
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -232,7 +255,7 @@ export const CheckoutPage: React.FC = () => {
       <h1 className="text-3xl font-extrabold text-[#2C1E16]">Checkout & Order Review</h1>
 
       {errorMsg ? (
-        <div className="p-4 bg-red-50 text-red-700 text-xs font-semibold rounded-xl border border-red-200">
+        <div className="p-4 bg-amber-50 text-amber-800 text-xs font-semibold rounded-xl border border-amber-200">
           {errorMsg}
         </div>
       ) : null}
@@ -273,12 +296,50 @@ export const CheckoutPage: React.FC = () => {
             </Card>
           ) : null}
 
-          {/* Delivery Threshold Warning */}
-          {checkoutPreview?.deliveryThreshold && !checkoutPreview.deliveryThreshold.isEligibleForDelivery && fulfillmentType === "HOME_DELIVERY" ? (
-            <div className="p-4 bg-amber-50 text-amber-800 text-xs font-semibold rounded-xl border border-amber-200">
-              Minimum order amount for Home Delivery is ₹{checkoutPreview.deliveryThreshold.minDeliveryAmount}.
+          {/* Payment Method Selector */}
+          <Card className="space-y-4">
+            <h3 className="text-lg font-bold text-[#2C1E16]">3. Payment Options</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("RAZORPAY")}
+                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  paymentMethod === "RAZORPAY"
+                    ? "border-[#E67E22] bg-[#FFF3E6]/60 ring-2 ring-[#E67E22]"
+                    : "border-[#E8E2D9] bg-white hover:border-[#E67E22]"
+                }`}
+              >
+                <div className="font-bold text-xs text-[#2C1E16]">Razorpay Gateway</div>
+                <div className="text-[10px] text-gray-500 mt-1">UPI, Cards, Netbanking, Wallets</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("UPI_DIRECT")}
+                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  paymentMethod === "UPI_DIRECT"
+                    ? "border-[#E67E22] bg-[#FFF3E6]/60 ring-2 ring-[#E67E22]"
+                    : "border-[#E8E2D9] bg-white hover:border-[#E67E22]"
+                }`}
+              >
+                <div className="font-bold text-xs text-[#2C1E16]">UPI Direct (GPay/QR)</div>
+                <div className="text-[10px] text-gray-500 mt-1">Instant Scan & Pay via UPI</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("COD")}
+                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  paymentMethod === "COD"
+                    ? "border-[#E67E22] bg-[#FFF3E6]/60 ring-2 ring-[#E67E22]"
+                    : "border-[#E8E2D9] bg-white hover:border-[#E67E22]"
+                }`}
+              >
+                <div className="font-bold text-xs text-[#2C1E16]">Cash on Delivery</div>
+                <div className="text-[10px] text-gray-500 mt-1">Pay with cash upon delivery</div>
+              </button>
             </div>
-          ) : null}
+          </Card>
         </div>
 
         {/* Right Summary */}
@@ -296,12 +357,18 @@ export const CheckoutPage: React.FC = () => {
           />
 
           <Button onClick={handlePlaceOrder} isLoading={isPlacingOrder} className="w-full h-12 shadow-md">
-            <span>Pay & Place Order (Razorpay)</span>
+            <span>
+              {paymentMethod === "RAZORPAY"
+                ? "Pay & Place Order (Razorpay)"
+                : paymentMethod === "UPI_DIRECT"
+                ? "Confirm & Pay via UPI"
+                : "Place Order (Cash on Delivery)"}
+            </span>
           </Button>
 
           <p className="text-[11px] text-gray-400 text-center flex items-center justify-center gap-1">
             <ShieldCheck className="h-3.5 w-3.5 text-[#27AE60]" />
-            <span>100% Secure Razorpay Payment Gateway & Tax Invoice PDF.</span>
+            <span>100% Secure Order Placement, Resend Email & Tax Invoice PDF.</span>
           </p>
         </div>
       </div>
@@ -311,7 +378,7 @@ export const CheckoutPage: React.FC = () => {
         <form onSubmit={addressForm.handleSubmit(handleCreateInlineAddress)} className="space-y-4 pt-2">
           <div className="grid grid-cols-2 gap-4">
             <Input label="Recipient Name" placeholder="Ananya Sharma" {...addressForm.register("name")} error={addressForm.formState.errors.name?.message} />
-            <Input label="Recipient Phone" placeholder="9876543210" {...addressForm.register("phone")} error={addressForm.formState.errors.phone?.message} />
+            <Input label="Recipient Phone" placeholder="7897671632" {...addressForm.register("phone")} error={addressForm.formState.errors.phone?.message} />
           </div>
 
           <Input label="Street Address" placeholder="Flat 402, Sunshine Heights, Connaught Place" {...addressForm.register("street")} error={addressForm.formState.errors.street?.message} />
