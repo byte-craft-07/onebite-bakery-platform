@@ -139,6 +139,9 @@ export const seedDevelopmentData = async (): Promise<void> => {
           imageUrls: ["https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80"],
           thumbnailUrl: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
           stockStatus: "IN_STOCK",
+          seoTitle: "Belgian Dark Chocolate Truffle Cake",
+          seoDescription: "Order rich 70% Belgian dark chocolate ganache cake online",
+          seoKeywords: ["cake", "chocolate", "truffle"],
         },
         {
           name: "Red Velvet Cream Cheese Pastry",
@@ -158,6 +161,9 @@ export const seedDevelopmentData = async (): Promise<void> => {
           imageUrls: ["https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?auto=format&fit=crop&w=600&q=80"],
           thumbnailUrl: "https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?auto=format&fit=crop&w=600&q=80",
           stockStatus: "IN_STOCK",
+          seoTitle: "Red Velvet Cream Cheese Pastry",
+          seoDescription: "Classic red velvet sponge layered with smooth Philadelphia cream cheese",
+          seoKeywords: ["pastry", "red velvet", "cream cheese"],
         },
         {
           name: "Fresh Sourdough Whole Wheat Bread",
@@ -177,6 +183,9 @@ export const seedDevelopmentData = async (): Promise<void> => {
           imageUrls: ["https://images.unsplash.com/photo-1589367920969-ab8e050bbb04?auto=format&fit=crop&w=600&q=80"],
           thumbnailUrl: "https://images.unsplash.com/photo-1589367920969-ab8e050bbb04?auto=format&fit=crop&w=600&q=80",
           stockStatus: "IN_STOCK",
+          seoTitle: "Fresh Sourdough Whole Wheat Bread",
+          seoDescription: "Artisan sourdough bread baked fresh every morning with 100% organic whole wheat flour",
+          seoKeywords: ["bread", "sourdough", "whole wheat"],
         },
       ]);
       logger.info("Default Bakery Products seeded into MongoDB");
