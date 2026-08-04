@@ -97,15 +97,16 @@ export class AuthService {
 
     let user = await this.userRepository.findByEmail(userEmail);
     if (!user) {
+      const phone = `9${Math.floor(100000000 + Math.random() * 900000000)}`;
       user = await this.userRepository.create({
         name: userName,
         email: userEmail,
-        phone: `9${Math.floor(100000000 + Math.random() * 900000000)}`,
+        phone,
         role: userRole,
         isVerified: true,
         status: "active",
         lastLogin: new Date(),
-      } as any);
+      });
     } else {
       this.ensureUserCanAuthenticate(user);
     }

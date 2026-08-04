@@ -1,4 +1,6 @@
 import { Router } from "express";
+
+import { requireAuth, requireRoles } from "../../auth/index.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 
 export const settingsRouter = Router();
@@ -30,6 +32,8 @@ settingsRouter.get(
 
 settingsRouter.put(
   "/",
+  requireAuth,
+  requireRoles(["admin"]),
   asyncHandler(async (req, res) => {
     storeSettings = { ...storeSettings, ...req.body };
     res.json({

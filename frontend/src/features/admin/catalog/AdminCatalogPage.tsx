@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Edit, Plus, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
 import { catalogService, type ProductItem } from "@/services/catalog.service";
 import {
   AdminPageHeader,
@@ -9,15 +7,11 @@ import {
   AdminTableSkeleton,
   AdminToolbar,
 } from "../components/AdminComponents";
-import { adminCatalogService } from "../services/adminCatalog.service";
-import { ProductFormModal } from "./ProductFormModal";
 
 export const AdminCatalogPage: React.FC = () => {
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -35,32 +29,11 @@ export const AdminCatalogPage: React.FC = () => {
     fetchProducts();
   }, [searchQuery]);
 
-  const handleDelete = async (id: string) => {
-    try {
-      await adminCatalogService.deleteProduct(id);
-      fetchProducts();
-    } catch (_err) {
-      // Ignore
-    }
-  };
-
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="Catalog & Inventory Management"
         description="Create, update, soft-delete products, and manage stock quantities."
-        actions={
-          <Button
-            size="sm"
-            onClick={() => {
-              setSelectedProduct(null);
-              setIsModalOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4 mr-1.5" />
-            <span>Add New Product</span>
-          </Button>
-        }
       />
 
       <AdminToolbar
@@ -95,25 +68,7 @@ export const AdminCatalogPage: React.FC = () => {
                 )}
               </td>
               <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setSelectedProduct(p);
-                      setIsModalOpen(true);
-                    }}
-                    className="p-1.5 text-gray-500 hover:text-[#E67E22] transition-colors cursor-pointer"
-                    title="Edit Product"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(p.id)}
-                    className="p-1.5 text-gray-500 hover:text-red-600 transition-colors cursor-pointer"
-                    title="Delete Product"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
+                <span className="text-xs text-gray-400 font-medium">Read only</span>
               </td>
             </tr>
           ))
@@ -125,13 +80,6 @@ export const AdminCatalogPage: React.FC = () => {
           </tr>
         )}
       </AdminTable>
-
-      <ProductFormModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={fetchProducts}
-        initialData={selectedProduct}
-      />
     </div>
   );
 };

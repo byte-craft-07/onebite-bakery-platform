@@ -36,7 +36,7 @@ export const adminCatalogService = {
   },
 
   updateProduct: async (id: string, payload: Partial<CreateProductPayload>) => {
-    const response = await apiClient.put<{
+    const response = await apiClient.patch<{
       success: boolean;
       data: { product: any };
     }>(`/products/${id}`, payload);
@@ -89,11 +89,8 @@ export const adminCatalogService = {
   },
 
   createOccasion: async (payload: { name: string; slug: string; tagline?: string; image?: string }) => {
-    const response = await apiClient.post<{
-      success: boolean;
-      data: { occasion: any };
-    }>("/occasions", payload);
-    return response.data.data.occasion;
+    void payload;
+    throw new Error("Occasion owner API is not available yet.");
   },
 
   uploadMedia: async (file: File, entityType = "PRODUCT"): Promise<string> => {

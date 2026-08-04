@@ -198,7 +198,7 @@ export const catalogService = {
       const response = await apiClient.get<{
         success: boolean;
         data: { product: ProductItem };
-      }>(`/products/slug/${slug}`);
+      }>(`/products/${slug}`);
       return response.data.data.product;
     } catch (_err) {
       const found = fallbackProducts.find((p) => p.slug === slug);

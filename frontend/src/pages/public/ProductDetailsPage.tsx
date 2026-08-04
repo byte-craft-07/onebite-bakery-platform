@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Heart, ShieldCheck, ShoppingBag, Star, Truck } from "lucide-react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { ArrowLeft, ShieldCheck, ShoppingBag, Star, Truck } from "lucide-react";
 
 import { Badge, Skeleton } from "@/components/ui/DisplayComponents";
+import { cartService } from "@/services/cart.service";
 import { catalogService, type ProductItem } from "@/services/catalog.service";
 
 export const ProductDetailsPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
 
   const [product, setProduct] = useState<ProductItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedWeight, setSelectedWeight] = useState("500g");
 
@@ -52,6 +55,25 @@ export const ProductDetailsPage: React.FC = () => {
   }
 
   const imageUrl = product.mainImage || (product.images && product.images[0]) || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
+  const handleAddToCart = async () => {
+    if (!product.isAvailable || isAddingToCart) {
+      return;
+    }
+
+    setIsAddingToCart(true);
+    try {
+      await cartService.addItem({
+        productId: product.id,
+        quantity,
+        customization: {
+          message: `Portion: ${selectedWeight}`,
+        },
+      });
+      navigate("/cart");
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
 
   return (
     <div className="space-y-12 pb-16">
@@ -133,14 +155,11 @@ export const ProductDetailsPage: React.FC = () => {
 
             <button
               disabled={!product.isAvailable}
+              onClick={handleAddToCart}
               className="flex-1 h-12 bg-[#E67E22] text-white font-bold rounded-xl hover:bg-[#D35400] transition-colors flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
             >
               <ShoppingBag className="h-5 w-5" />
-              <span>{product.isAvailable ? "Add to Cart" : "Currently Unavailable"}</span>
-            </button>
-
-            <button className="p-3.5 border border-[#E8E2D9] rounded-xl text-[#2C1E16] hover:text-[#C0392B] transition-colors">
-              <Heart className="h-5 w-5" />
+              <span>{product.isAvailable ? (isAddingToCart ? "Adding..." : "Add to Cart") : "Currently Unavailable"}</span>
             </button>
           </div>
 

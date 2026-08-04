@@ -3,8 +3,6 @@ import {
   DollarSign,
   Send,
   TrendingUp,
-  UserCheck,
-  UserX,
   Users,
 } from "lucide-react";
 
@@ -50,11 +48,6 @@ export const AdminCustomersPage: React.FC = () => {
     fetchCustomers();
   }, []);
 
-  const handleToggleStatus = async (user: AdminCustomerSummary) => {
-    await adminOperationsService.toggleCustomerStatus(user.id, user.status);
-    fetchCustomers();
-  };
-
   const filtered = customers.filter(
     (c) =>
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -94,21 +87,9 @@ export const AdminCustomersPage: React.FC = () => {
                 </Badge>
               </td>
               <td className="px-4 py-3">
-                {usr.role !== "admin" ? (
-                  <button
-                    onClick={() => handleToggleStatus(usr)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                      usr.status === "active"
-                        ? "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
-                        : "bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
-                    }`}
-                  >
-                    {usr.status === "active" ? <UserX className="h-3.5 w-3.5" /> : <UserCheck className="h-3.5 w-3.5" />}
-                    <span>{usr.status === "active" ? "Block Access" : "Unblock User"}</span>
-                  </button>
-                ) : (
-                  <span className="text-xs text-gray-400 font-medium">Protected System Admin</span>
-                )}
+                <span className="text-xs text-gray-400 font-medium">
+                  {usr.role === "admin" ? "Protected System Admin" : "Read only"}
+                </span>
               </td>
             </tr>
           ))

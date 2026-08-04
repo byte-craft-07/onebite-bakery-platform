@@ -36,7 +36,8 @@ describe("Admin Catalog Management & Media Uploader Tests", () => {
     );
 
     expect(screen.getByText("Catalog & Inventory Management")).toBeDefined();
-    expect(screen.getByText("Add New Product")).toBeDefined();
+    expect(screen.queryByText("Add New Product")).toBeNull();
+    expect(screen.getByText("Actions")).toBeDefined();
   });
 
   it("tests adminCatalogService method definitions", () => {

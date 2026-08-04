@@ -200,7 +200,7 @@ export const adminOperationsService = {
       const response = await apiClient.get<{
         success: boolean;
         data: { orders: AdminOrderSummary[] };
-      }>("/orders", { params });
+      }>("/orders/admin/orders", { params });
       if (response.data?.data?.orders && response.data.data.orders.length > 0) {
         return response.data.data.orders;
       }
@@ -256,7 +256,7 @@ export const adminOperationsService = {
       const response = await apiClient.patch<{
         success: boolean;
         data: { order: any };
-      }>(`/orders/${orderId}/status`, { status });
+      }>(`/orders/admin/orders/${orderId}/status`, { status });
       if (response.data?.data?.order) {
         return response.data.data.order;
       }
@@ -345,7 +345,7 @@ export const adminOperationsService = {
       const response = await apiClient.get<{
         success: boolean;
         data: { notifications: any[] };
-      }>("/notifications");
+      }>("/notifications/history");
       if (response.data?.data?.notifications) {
         return response.data.data.notifications;
       }
@@ -370,7 +370,17 @@ export const adminOperationsService = {
     setStored(NOTIFS_KEY, [newNotif, ...current]);
 
     try {
-      await apiClient.post<{ success: boolean }>("/notifications/broadcast", payload);
+      await apiClient.post<{ success: boolean }>("/notifications/send", {
+        recipient: "broadcast",
+        type: "ADMIN_NOTIFICATION",
+        template: "admin-broadcast",
+        payload: {
+          title: payload.title,
+          message: payload.message,
+          targetRole: payload.targetRole,
+        },
+        provider: "EMAIL",
+      });
     } catch (_err) {
       // Ignore
     }
@@ -452,7 +462,7 @@ export const adminOperationsService = {
       const response = await apiClient.get<{
         success: boolean;
         data: { auditLogs: any[] };
-      }>("/platform/audit-logs");
+      }>("/platform/audit");
       if (response.data?.data?.auditLogs && response.data.data.auditLogs.length > 0) {
         return response.data.data.auditLogs;
       }

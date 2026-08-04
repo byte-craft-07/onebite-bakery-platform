@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
 
 import { Badge, Modal } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
@@ -78,12 +77,6 @@ export const AdminCategoryPage: React.FC = () => {
       <AdminPageHeader
         title="Category Management"
         description="Organize bakery products into customer browsing categories."
-        actions={
-          <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            <span>Add New Category</span>
-          </Button>
-        }
       />
 
       <AdminToolbar searchPlaceholder="Search category name..." onSearchChange={setSearchQuery} />
@@ -185,12 +178,6 @@ export const AdminOccasionPage: React.FC = () => {
       <AdminPageHeader
         title="Occasion Management"
         description="Manage celebration occasion categories (Birthdays, Weddings, Anniversaries)."
-        actions={
-          <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            <span>Add New Occasion</span>
-          </Button>
-        }
       />
 
       <AdminToolbar searchPlaceholder="Search occasion name..." onSearchChange={setSearchQuery} />

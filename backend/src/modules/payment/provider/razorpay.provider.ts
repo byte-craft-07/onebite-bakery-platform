@@ -6,6 +6,11 @@ import type {
   IPaymentProvider,
 } from "./payment-provider.interface.js";
 
+type RazorpayConstructor = new (options: {
+  key_id: string;
+  key_secret: string;
+}) => Razorpay;
+
 export class RazorpayProvider implements IPaymentProvider {
   public readonly providerName = "RAZORPAY";
 
@@ -19,7 +24,7 @@ export class RazorpayProvider implements IPaymentProvider {
 
     if (this.keyId && this.keySecret) {
       try {
-        const RazorpayCtor = (Razorpay as any).default || Razorpay;
+        const RazorpayCtor = Razorpay as unknown as RazorpayConstructor;
         this.instance = new RazorpayCtor({
           key_id: this.keyId,
           key_secret: this.keySecret,

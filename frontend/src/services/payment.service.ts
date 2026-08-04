@@ -27,7 +27,7 @@ export const paymentService = {
     const response = await apiClient.post<{
       success: boolean;
       data: { payment: InitiatePaymentResponse };
-    }>("/payments/initiate", payload);
+    }>("/payments/create", payload);
     return response.data.data.payment;
   },
 

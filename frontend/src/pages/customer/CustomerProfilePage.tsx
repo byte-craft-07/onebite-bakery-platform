@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Building, Home, LayoutDashboard, LogOut, MapPin, Plus, Shield, Trash2 } from "lucide-react";
+import { Building, Home, LayoutDashboard, LogOut, MapPin, Shield } from "lucide-react";
 
 import { Badge, Card, Modal, Skeleton } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
@@ -71,24 +71,6 @@ export const CustomerProfilePage: React.FC = () => {
     }
   };
 
-  const handleDeleteAddress = async (id: string) => {
-    try {
-      await addressService.deleteAddress(id);
-      fetchAddresses();
-    } catch (_err) {
-      // Ignore
-    }
-  };
-
-  const handleSetDefault = async (id: string) => {
-    try {
-      await addressService.setDefaultAddress(id);
-      fetchAddresses();
-    } catch (_err) {
-      // Ignore
-    }
-  };
-
   return (
     <div className="space-y-10 pb-16 max-w-5xl mx-auto">
       {/* Header Profile Card */}
@@ -136,10 +118,6 @@ export const CustomerProfilePage: React.FC = () => {
             <h2 className="text-xl font-bold text-[#2C1E16]">Saved Delivery Addresses</h2>
             <p className="text-xs text-[#6E5D4F]">Manage your delivery locations for fast checkout</p>
           </div>
-          <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            <span>Add New Address</span>
-          </Button>
         </div>
 
         {isLoadingAddresses ? (
@@ -157,13 +135,6 @@ export const CustomerProfilePage: React.FC = () => {
                     <span className="text-xs font-bold uppercase">{addr.addressType}</span>
                     {addr.isDefault ? <Badge variant="success">Default</Badge> : null}
                   </div>
-                  <button
-                    onClick={() => handleDeleteAddress(addr.id)}
-                    className="text-gray-400 hover:text-red-500 transition-colors p-1 cursor-pointer"
-                    aria-label="Delete Address"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
                 </div>
 
                 <div className="text-xs text-[#6E5D4F] space-y-1">
@@ -172,14 +143,6 @@ export const CustomerProfilePage: React.FC = () => {
                   {addr.landmark ? <p className="text-gray-400">Landmark: {addr.landmark}</p> : null}
                 </div>
 
-                {!addr.isDefault ? (
-                  <button
-                    onClick={() => handleSetDefault(addr.id)}
-                    className="text-xs font-semibold text-[#E67E22] hover:underline cursor-pointer"
-                  >
-                    Set as Default
-                  </button>
-                ) : null}
               </Card>
             ))}
           </div>

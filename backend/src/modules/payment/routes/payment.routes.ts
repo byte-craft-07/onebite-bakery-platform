@@ -37,6 +37,7 @@ paymentRouter.post(
 // Razorpay Direct Integration Endpoints (Real Razorpay API Call)
 paymentRouter.post(
   "/razorpay/create-order",
+  requireAuth,
   asyncHandler(async (req, res) => {
     const { amount, currency, receipt } = req.body;
     const amountInRupees = (amount || 49900) / 100;
@@ -59,6 +60,7 @@ paymentRouter.post(
 
 paymentRouter.post(
   "/razorpay/verify",
+  requireAuth,
   asyncHandler(async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
     const isVerified = razorpayProvider.verifySignature(
