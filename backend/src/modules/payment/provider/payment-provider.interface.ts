@@ -2,6 +2,7 @@ export interface CreateProviderOrderResult {
   providerOrderId: string;
   amount: number;
   currency: string;
+  isMock: boolean;
 }
 
 export interface IPaymentProvider {

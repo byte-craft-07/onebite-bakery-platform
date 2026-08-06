@@ -1,6 +1,11 @@
 import { Router } from "express";
+import { z } from "zod";
 
+import { env } from "../../../config/env.js";
 import { requireAuth } from "../../auth/index.js";
+import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
+import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
+import { AppError } from "../../../shared/errors/app-error.js";
 import { validateRequest } from "../../../shared/middlewares/validate-request.middleware.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { PaymentController } from "../controller/index.js";
@@ -20,6 +25,18 @@ const paymentService = new PaymentService(paymentRepository);
 const paymentController = new PaymentController(paymentService);
 const razorpayProvider = new RazorpayProvider();
 
+const razorpayCreateOrderSchema = z.object({
+  amount: z.number().int().min(100),
+  currency: z.literal("INR").default("INR"),
+  receipt: z.string().trim().min(1).max(40),
+});
+
+const razorpayVerifySchema = z.object({
+  razorpay_order_id: z.string().trim().min(5),
+  razorpay_payment_id: z.string().trim().min(5),
+  razorpay_signature: z.string().trim().min(10),
+});
+
 paymentRouter.post(
   "/create",
   requireAuth,
@@ -38,38 +55,63 @@ paymentRouter.post(
 paymentRouter.post(
   "/razorpay/create-order",
   requireAuth,
+  validateRequest({ body: razorpayCreateOrderSchema }),
   asyncHandler(async (req, res) => {
-    const { amount, currency, receipt } = req.body;
-    const amountInRupees = (amount || 49900) / 100;
+    const { amount, currency, receipt } = req.body as z.infer<typeof razorpayCreateOrderSchema>;
+    const amountInRupees = amount / 100;
 
-    const orderResult = await razorpayProvider.createOrder(
-      amountInRupees,
-      currency || "INR",
-      receipt || `receipt_${Date.now()}`,
-    );
+    try {
+      const orderResult = await razorpayProvider.createOrder(
+        amountInRupees,
+        currency,
+        receipt,
+      );
 
-    res.json({
-      id: orderResult.providerOrderId,
-      amount: orderResult.amount * 100,
-      currency: orderResult.currency,
-      receipt: receipt || `receipt_${Date.now()}`,
-      status: "created",
-    });
+      res.json({
+        id: orderResult.providerOrderId,
+        amount: Math.round(orderResult.amount * 100),
+        currency: orderResult.currency,
+        receipt,
+        status: "created",
+        isMock: orderResult.isMock,
+        keyId: env.razorpayKeyId,
+      });
+    } catch {
+      throw new AppError(
+        "Unable to create Razorpay order.",
+        HTTP_STATUS.BAD_REQUEST,
+        [],
+        true,
+        APP_ERROR_CODES.PAYMENT_GATEWAY_ERROR,
+      );
+    }
   }),
 );
 
 paymentRouter.post(
   "/razorpay/verify",
   requireAuth,
+  validateRequest({ body: razorpayVerifySchema }),
   asyncHandler(async (req, res) => {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+      req.body as z.infer<typeof razorpayVerifySchema>;
     const isVerified = razorpayProvider.verifySignature(
-      razorpay_order_id || "",
-      razorpay_payment_id || "",
-      razorpay_signature || "",
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
     );
 
-    res.json({ verified: isVerified, message: "Razorpay HMAC SHA-256 signature verified" });
+    if (!isVerified) {
+      throw new AppError(
+        "Payment verification failed.",
+        HTTP_STATUS.BAD_REQUEST,
+        [],
+        true,
+        APP_ERROR_CODES.PAYMENT_INVALID_SIGNATURE,
+      );
+    }
+
+    res.json({ verified: true, message: "Razorpay HMAC SHA-256 signature verified" });
   }),
 );
 

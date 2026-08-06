@@ -25,6 +25,9 @@ const envSchema = z.object({
   OTP_HASH_SECRET: z.string().min(32).optional(),
   JWT_SECRET: z.string().min(32).optional(),
   JWT_REFRESH_SECRET: z.string().min(32).optional(),
+  RAZORPAY_KEY_ID: z.string().min(1).optional(),
+  RAZORPAY_KEY_SECRET: z.string().min(1).optional(),
+  RAZORPAY_WEBHOOK_SECRET: z.string().min(1).optional(),
   ACCESS_TOKEN_EXPIRES: z.string().default("15m"),
   REFRESH_TOKEN_EXPIRES: z.string().default("30d"),
   REQUIRE_DATABASE_CONNECTION: z
@@ -74,6 +77,18 @@ if (isProduction && !parsedEnv.data.JWT_REFRESH_SECRET) {
   throw new Error("JWT_REFRESH_SECRET must be configured in production.");
 }
 
+if (isProduction && !parsedEnv.data.RAZORPAY_KEY_ID) {
+  throw new Error("RAZORPAY_KEY_ID must be configured in production.");
+}
+
+if (isProduction && !parsedEnv.data.RAZORPAY_KEY_SECRET) {
+  throw new Error("RAZORPAY_KEY_SECRET must be configured in production.");
+}
+
+if (isProduction && !parsedEnv.data.RAZORPAY_WEBHOOK_SECRET) {
+  throw new Error("RAZORPAY_WEBHOOK_SECRET must be configured in production.");
+}
+
 export const env = {
   nodeEnv: parsedEnv.data.NODE_ENV,
   port: parsedEnv.data.PORT,
@@ -96,4 +111,7 @@ export const env = {
   accessTokenExpires: parsedEnv.data.ACCESS_TOKEN_EXPIRES,
   refreshTokenExpires: parsedEnv.data.REFRESH_TOKEN_EXPIRES,
   requireDatabaseConnection: parsedEnv.data.REQUIRE_DATABASE_CONNECTION,
+  razorpayKeyId: parsedEnv.data.RAZORPAY_KEY_ID,
+  razorpayKeySecret: parsedEnv.data.RAZORPAY_KEY_SECRET,
+  razorpayWebhookSecret: parsedEnv.data.RAZORPAY_WEBHOOK_SECRET,
 } as const;

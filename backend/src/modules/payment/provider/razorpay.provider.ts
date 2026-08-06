@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import Razorpay from "razorpay";
 
+import { env } from "../../../config/env.js";
 import type {
   CreateProviderOrderResult,
   IPaymentProvider,
@@ -19,8 +20,8 @@ export class RazorpayProvider implements IPaymentProvider {
   private instance?: Razorpay;
 
   public constructor() {
-    this.keyId = process.env.RAZORPAY_KEY_ID ?? "rzp_test_TLYhqUJgQVFJ7z";
-    this.keySecret = process.env.RAZORPAY_KEY_SECRET ?? "AjtJf7gADZGOps80SqTQcT9g";
+    this.keyId = env.razorpayKeyId ?? "";
+    this.keySecret = env.razorpayKeySecret ?? "";
 
     if (this.keyId && this.keySecret) {
       try {
@@ -54,11 +55,18 @@ export class RazorpayProvider implements IPaymentProvider {
             providerOrderId: order.id,
             amount: Number(order.amount) / 100,
             currency: order.currency,
+            isMock: false,
           };
         }
-      } catch (_err) {
-        // Fallback below if order creation API fails
+      } catch {
+        if (env.nodeEnv === "production") {
+          throw new Error("Razorpay order creation failed.");
+        }
       }
+    }
+
+    if (env.nodeEnv === "production") {
+      throw new Error("Razorpay is not configured.");
     }
 
     const randomHex = crypto.randomBytes(4).toString("hex");
@@ -68,6 +76,7 @@ export class RazorpayProvider implements IPaymentProvider {
       providerOrderId,
       amount,
       currency,
+      isMock: true,
     };
   }
 
@@ -77,6 +86,19 @@ export class RazorpayProvider implements IPaymentProvider {
     signature: string,
   ): boolean {
     if (!orderId || !paymentId || !signature) {
+      return false;
+    }
+
+    if (
+      env.nodeEnv !== "production" &&
+      orderId.startsWith("rzp_local_") &&
+      paymentId.startsWith("pay_local_") &&
+      signature === "development-mock-signature"
+    ) {
+      return true;
+    }
+
+    if (!this.keySecret) {
       return false;
     }
 

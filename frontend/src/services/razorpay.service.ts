@@ -12,6 +12,8 @@ export interface RazorpayOrderResponse {
   currency: string;
   receipt: string;
   status: string;
+  isMock?: boolean;
+  keyId?: string;
 }
 
 export interface RazorpayPaymentSuccessPayload {
@@ -53,6 +55,8 @@ interface RazorpayCheckoutOptions {
 }
 
 const isDevelopment = import.meta.env.DEV;
+const isMockRazorpayOrder = (order: RazorpayOrderResponse): boolean =>
+  Boolean(order.isMock) || order.id.startsWith("rzp_local_");
 
 export const razorpayService = {
   /**
@@ -137,6 +141,17 @@ export const razorpayService = {
 
     const razorpayOrder = await this.createRazorpayOrder(options.amountInRupees, options.orderId);
 
+    if (isDevelopment && isMockRazorpayOrder(razorpayOrder)) {
+      window.setTimeout(() => {
+        options.onSuccess({
+          razorpay_order_id: razorpayOrder.id,
+          razorpay_payment_id: `pay_local_${Date.now()}`,
+          razorpay_signature: "development-mock-signature",
+        });
+      }, 250);
+      return;
+    }
+
     // Validate real server-created Razorpay order ID (e.g. order_TLZ1nlVM41WRJV)
     const isRealRazorpayOrderId = (id?: string) => {
       if (!id) return false;
@@ -146,7 +161,7 @@ export const razorpayService = {
     const validOrderId = isRealRazorpayOrderId(razorpayOrder.id) ? razorpayOrder.id : undefined;
 
     const rzpOptions = {
-      key: keyId,
+      key: razorpayOrder.keyId || keyId,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency || "INR",
       name: "OneBite Bakery Platform",
