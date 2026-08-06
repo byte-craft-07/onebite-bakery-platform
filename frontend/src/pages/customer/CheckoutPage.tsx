@@ -176,21 +176,25 @@ export const CheckoutPage: React.FC = () => {
     const selectedAddr = addresses.find((a) => a.id === selectedAddressId);
     const amount = checkoutPreview?.pricing?.totalAmount || 499;
 
-    // Launch Razorpay Payment Modal
-    razorpayService.openPaymentModal({
-      amountInRupees: amount,
-      orderId: `ORD-${Date.now()}`,
-      customerName: selectedAddr?.name || user?.name || "OneBite Customer",
-      customerEmail: user?.email && user.email.includes("@") && !user.email.endsWith(".test") ? user.email : "ajaykterha@gmail.com",
-      customerPhone: (selectedAddr?.phone || user?.phone || "7897671632").replace(/\D/g, "").slice(-10) || "7897671632",
-      onSuccess: (razorpayResponse) => {
-        executeOrderCreation(razorpayResponse);
-      },
-      onDismiss: () => {
-        setIsPlacingOrder(false);
-        setErrorMsg("Payment process was cancelled or closed. Please try again or select UPI Direct / Cash on Delivery.");
-      },
-    });
+    try {
+      await razorpayService.openPaymentModal({
+        amountInRupees: amount,
+        orderId: `ORD-${Date.now()}`,
+        customerName: selectedAddr?.name || user?.name || "OneBite Customer",
+        customerEmail: user?.email && user.email.includes("@") && !user.email.endsWith(".test") ? user.email : "ajaykterha@gmail.com",
+        customerPhone: (selectedAddr?.phone || user?.phone || "7897671632").replace(/\D/g, "").slice(-10) || "7897671632",
+        onSuccess: (razorpayResponse) => {
+          executeOrderCreation(razorpayResponse);
+        },
+        onDismiss: () => {
+          setIsPlacingOrder(false);
+          setErrorMsg("Payment process was cancelled or closed. Please try again or select UPI Direct / Cash on Delivery.");
+        },
+      });
+    } catch (_err) {
+      setIsPlacingOrder(false);
+      setErrorMsg("Razorpay payment could not be started. Please verify Razorpay backend keys and try again.");
+    }
   };
 
   if (placedOrder) {

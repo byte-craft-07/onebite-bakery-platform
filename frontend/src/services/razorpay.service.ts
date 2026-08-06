@@ -55,6 +55,7 @@ interface RazorpayCheckoutOptions {
 }
 
 const isDevelopment = import.meta.env.DEV;
+const configuredRazorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID as string | undefined;
 const isMockRazorpayOrder = (order: RazorpayOrderResponse): boolean =>
   Boolean(order.isMock) || order.id.startsWith("rzp_local_");
 
@@ -89,7 +90,7 @@ export const razorpayService = {
       });
       if (response.data?.id) return response.data;
     } catch {
-      if (!isDevelopment) {
+      if (!isDevelopment || configuredRazorpayKeyId) {
         throw new Error("Unable to create Razorpay order.");
       }
     }
@@ -131,7 +132,7 @@ export const razorpayService = {
     onSuccess: (payload: RazorpayPaymentSuccessPayload) => void;
     onDismiss?: () => void;
   }): Promise<void> {
-    const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_TLYhqUJgQVFJ7z";
+    const keyId = configuredRazorpayKeyId || "rzp_test_TLYhqUJgQVFJ7z";
 
     const isLoaded = await this.loadRazorpayScript();
     if (!isLoaded) {
@@ -141,7 +142,11 @@ export const razorpayService = {
 
     const razorpayOrder = await this.createRazorpayOrder(options.amountInRupees, options.orderId);
 
-    if (isDevelopment && isMockRazorpayOrder(razorpayOrder)) {
+    if (configuredRazorpayKeyId && isMockRazorpayOrder(razorpayOrder)) {
+      throw new Error("Razorpay backend returned a mock order while Razorpay is configured.");
+    }
+
+    if (isDevelopment && !configuredRazorpayKeyId && isMockRazorpayOrder(razorpayOrder)) {
       window.setTimeout(() => {
         options.onSuccess({
           razorpay_order_id: razorpayOrder.id,
