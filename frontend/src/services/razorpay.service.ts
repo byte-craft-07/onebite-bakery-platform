@@ -144,7 +144,7 @@ export const razorpayService = {
 
     const isMockOrder = isMockRazorpayOrder(razorpayOrder);
 
-    if (isDevelopment && !configuredRazorpayKeyId && isMockOrder) {
+    if (isDevelopment && isMockOrder) {
       window.setTimeout(() => {
         options.onSuccess({
           razorpay_order_id: razorpayOrder.id,
