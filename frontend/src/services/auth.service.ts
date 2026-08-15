@@ -88,6 +88,57 @@ export const authService = {
     }
   },
 
+  getBackendCurrentUser: async () => {
+    const response = await apiClient.get<{
+      success: boolean;
+      data: { user: UserProfileResponse };
+    }>("/auth/me");
+    return response.data.data.user;
+  },
+
+  ensureDevBackendSession: async (phone: string) => {
+    try {
+      return await authService.getBackendCurrentUser();
+    } catch {
+      // Continue below and create a real HttpOnly-cookie session.
+    }
+
+    try {
+      const response = await apiClient.post<{
+        success: boolean;
+        data: { user: UserProfileResponse };
+      }>("/auth/verify-otp", {
+        phone,
+        purpose: "login",
+        otp: "123456",
+      });
+      return response.data.data.user;
+    } catch {
+      // No active OTP challenge yet, so create one below.
+    }
+
+    try {
+      await apiClient.post<{ success: boolean; message: string }>("/auth/send-otp", {
+        phone,
+        purpose: "login",
+      });
+    } catch (err: any) {
+      if (err?.response?.status !== 429) {
+        throw err;
+      }
+    }
+
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { user: UserProfileResponse };
+    }>("/auth/verify-otp", {
+      phone,
+      purpose: "login",
+      otp: "123456",
+    });
+    return response.data.data.user;
+  },
+
   logout: async () => {
     try {
       const response = await apiClient.post<{ success: boolean }>("/auth/logout");

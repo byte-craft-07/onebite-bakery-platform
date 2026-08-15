@@ -179,20 +179,8 @@ export const CheckoutPage: React.FC = () => {
 
     try {
       if (import.meta.env.DEV && user?.phone) {
-        try {
-          await authService.getCurrentUser();
-        } catch {
-          await authService.sendOtp({
-            phone: user.phone,
-            purpose: "login",
-          });
-          const session = await authService.verifyOtp({
-            phone: user.phone,
-            code: "123456",
-            purpose: "login",
-          });
-          login(session.data.user);
-        }
+        const backendUser = await authService.ensureDevBackendSession(user.phone);
+        login(backendUser);
       }
 
       await razorpayService.openPaymentModal({
