@@ -114,18 +114,10 @@ export const authService = {
       });
       return response.data.data.user;
     } catch {
-      // No active OTP challenge yet, so create one below.
-    }
-
-    try {
       await apiClient.post<{ success: boolean; message: string }>("/auth/send-otp", {
         phone,
         purpose: "login",
       });
-    } catch (err: any) {
-      if (err?.response?.status !== 429) {
-        throw err;
-      }
     }
 
     const response = await apiClient.post<{
