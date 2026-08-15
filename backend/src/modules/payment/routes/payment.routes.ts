@@ -8,6 +8,7 @@ import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
 import { AppError } from "../../../shared/errors/app-error.js";
 import { validateRequest } from "../../../shared/middlewares/validate-request.middleware.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
+import { logger } from "../../../shared/utils/logger.js";
 import { PaymentController } from "../controller/index.js";
 import { PaymentRepository } from "../repository/index.js";
 import { PaymentService } from "../service/index.js";
@@ -76,7 +77,18 @@ paymentRouter.post(
         isMock: orderResult.isMock,
         keyId: env.razorpayKeyId,
       });
-    } catch {
+    } catch (error) {
+      logger.error(
+        {
+          error,
+          provider: "RAZORPAY",
+          receipt,
+          hasKeyId: Boolean(env.razorpayKeyId),
+          hasKeySecret: Boolean(env.razorpayKeySecret),
+        },
+        "Razorpay order creation failed",
+      );
+
       throw new AppError(
         "Unable to create Razorpay order.",
         HTTP_STATUS.BAD_REQUEST,

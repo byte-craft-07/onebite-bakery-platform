@@ -1,9 +1,20 @@
 import dotenv from "dotenv";
+import path from "node:path";
 import { z } from "zod";
 
 import { API_PREFIX } from "../shared/constants/api-version.js";
 
+const backendRootDir = path.resolve(__dirname, "../..");
+
+dotenv.config({ path: path.join(backendRootDir, ".env") });
 dotenv.config();
+
+const environment = {
+  ...process.env,
+  MONGODB_URI: process.env.MONGODB_URI ?? process.env.MONGO_URI,
+  RAZORPAY_KEY_SECRET:
+    process.env.RAZORPAY_KEY_SECRET ?? process.env.RAZORPAY_SECRET,
+};
 
 const envSchema = z.object({
   NODE_ENV: z
@@ -36,7 +47,7 @@ const envSchema = z.object({
     .transform((value) => value === "true"),
 });
 
-const parsedEnv = envSchema.safeParse(process.env);
+const parsedEnv = envSchema.safeParse(environment);
 
 if (!parsedEnv.success) {
   throw new Error(
