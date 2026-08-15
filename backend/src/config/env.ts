@@ -39,6 +39,9 @@ const envSchema = z.object({
   RAZORPAY_KEY_ID: z.string().min(1).optional(),
   RAZORPAY_KEY_SECRET: z.string().min(1).optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().min(1).optional(),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  RESEND_FROM_EMAIL: z.string().email().optional(),
+  SENDER_EMAIL: z.string().email().optional(),
   ACCESS_TOKEN_EXPIRES: z.string().default("15m"),
   REFRESH_TOKEN_EXPIRES: z.string().default("30d"),
   REQUIRE_DATABASE_CONNECTION: z
@@ -125,4 +128,9 @@ export const env = {
   razorpayKeyId: parsedEnv.data.RAZORPAY_KEY_ID,
   razorpayKeySecret: parsedEnv.data.RAZORPAY_KEY_SECRET,
   razorpayWebhookSecret: parsedEnv.data.RAZORPAY_WEBHOOK_SECRET,
+  resendApiKey: parsedEnv.data.RESEND_API_KEY,
+  resendFromEmail:
+    parsedEnv.data.RESEND_FROM_EMAIL ??
+    parsedEnv.data.SENDER_EMAIL ??
+    "orders@onebitebakery.in",
 } as const;

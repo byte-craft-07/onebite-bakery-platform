@@ -371,7 +371,7 @@ export const adminOperationsService = {
 
     try {
       await apiClient.post<{ success: boolean }>("/notifications/send", {
-        recipient: "broadcast",
+        recipient: "orders@onebitebakery.in",
         type: "ADMIN_NOTIFICATION",
         template: "admin-broadcast",
         payload: {

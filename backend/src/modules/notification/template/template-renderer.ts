@@ -44,6 +44,14 @@ export class TemplateRenderer {
       subject: "OneBite System Notification: {{title}}",
       body: "<p>System Alert: {{message}}</p>",
     },
+    "admin-broadcast": {
+      subject: "OneBite Announcement: {{title}}",
+      body: "<p>Hello,</p><p>{{message}}</p>",
+    },
+    welcome: {
+      subject: "Welcome to OneBite Bakery",
+      body: "<p>Hello {{customerName}},</p><p>Welcome to OneBite Bakery. We are happy to have you here.</p>",
+    },
   };
 
   public static render(

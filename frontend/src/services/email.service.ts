@@ -7,13 +7,11 @@ export const emailNotificationService = {
    */
   async sendOrderConfirmationEmail(order: OrderDetails, recipientEmail: string): Promise<boolean> {
     try {
-      const resendApiKey = import.meta.env.VITE_RESEND_API_KEY;
       const response = await apiClient.post<{ success: boolean }>("/notifications/email/order-confirmation", {
         orderId: order.id,
         orderNumber: order.orderNumber,
         recipientEmail,
         totalAmount: order.totalAmount,
-        resendApiKey,
       });
       if (response.data?.success) return true;
     } catch (_err) {
