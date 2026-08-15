@@ -23,6 +23,9 @@ export interface UserProfileResponse {
   updatedAt: string;
 }
 
+const normalizeAuthPhone = (phone: string): string =>
+  phone.replace(/\D/g, "").slice(-10);
+
 export const authService = {
   sendOtp: async (payload: SendOtpPayload) => {
     try {
@@ -97,6 +100,12 @@ export const authService = {
   },
 
   ensureDevBackendSession: async (phone: string) => {
+    const normalizedPhone = normalizeAuthPhone(phone);
+
+    if (!normalizedPhone) {
+      throw new Error("A valid phone number is required for backend session sync.");
+    }
+
     try {
       return await authService.getBackendCurrentUser();
     } catch {
@@ -108,14 +117,14 @@ export const authService = {
         success: boolean;
         data: { user: UserProfileResponse };
       }>("/auth/verify-otp", {
-        phone,
+        phone: normalizedPhone,
         purpose: "login",
         otp: "123456",
       });
       return response.data.data.user;
     } catch {
       await apiClient.post<{ success: boolean; message: string }>("/auth/send-otp", {
-        phone,
+        phone: normalizedPhone,
         purpose: "login",
       });
     }
@@ -124,7 +133,7 @@ export const authService = {
       success: boolean;
       data: { user: UserProfileResponse };
     }>("/auth/verify-otp", {
-      phone,
+      phone: normalizedPhone,
       purpose: "login",
       otp: "123456",
     });

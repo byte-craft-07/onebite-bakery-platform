@@ -176,10 +176,11 @@ export const CheckoutPage: React.FC = () => {
 
     const selectedAddr = addresses.find((a) => a.id === selectedAddressId);
     const amount = checkoutPreview?.pricing?.totalAmount || 499;
+    const checkoutPhone = (selectedAddr?.phone || user?.phone || "9876543210").replace(/\D/g, "").slice(-10);
 
     try {
-      if (import.meta.env.DEV && user?.phone) {
-        const backendUser = await authService.ensureDevBackendSession(user.phone);
+      if (import.meta.env.DEV) {
+        const backendUser = await authService.ensureDevBackendSession(checkoutPhone);
         login(backendUser);
       }
 
@@ -188,7 +189,7 @@ export const CheckoutPage: React.FC = () => {
         orderId: `ORD-${Date.now()}`,
         customerName: selectedAddr?.name || user?.name || "OneBite Customer",
         customerEmail: user?.email && user.email.includes("@") && !user.email.endsWith(".test") ? user.email : "ajaykterha@gmail.com",
-        customerPhone: (selectedAddr?.phone || user?.phone || "7897671632").replace(/\D/g, "").slice(-10) || "7897671632",
+        customerPhone: checkoutPhone || "7897671632",
         onSuccess: (razorpayResponse) => {
           executeOrderCreation(razorpayResponse);
         },
@@ -197,9 +198,9 @@ export const CheckoutPage: React.FC = () => {
           setErrorMsg("Payment process was cancelled or closed. Please try again or select UPI Direct / Cash on Delivery.");
         },
       });
-    } catch (_err) {
+    } catch (err: any) {
       setIsPlacingOrder(false);
-      setErrorMsg("Razorpay payment could not be started. Please verify Razorpay backend keys and try again.");
+      setErrorMsg(err?.response?.data?.message || err?.message || "Razorpay payment could not be started. Please verify Razorpay backend keys and try again.");
     }
   };
 
