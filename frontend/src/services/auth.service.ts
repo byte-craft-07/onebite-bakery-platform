@@ -7,7 +7,8 @@ export interface SendOtpPayload {
 
 export interface VerifyOtpPayload {
   phone: string;
-  code: string;
+  code?: string;
+  otp?: string;
   purpose?: "login" | "verify_phone";
 }
 
@@ -37,10 +38,15 @@ export const authService = {
 
   verifyOtp: async (payload: VerifyOtpPayload) => {
     try {
+      const otp = payload.otp ?? payload.code;
       const response = await apiClient.post<{
         success: boolean;
-        data: { user: UserProfileResponse; accessToken: string };
-      }>("/auth/verify-otp", payload);
+        data: { user: UserProfileResponse; accessToken?: string };
+      }>("/auth/verify-otp", {
+        phone: payload.phone,
+        purpose: payload.purpose,
+        otp,
+      });
       return response.data;
     } catch (err: any) {
       if (import.meta.env.DEV) {
@@ -49,7 +55,7 @@ export const authService = {
           id: isDevAdmin ? "dev-admin-id" : `usr-${Date.now()}`,
           phone: payload.phone,
           name: isDevAdmin ? "Development Admin" : "Bakery Customer",
-          email: isDevAdmin ? "admin@onebite.local" : "customer@onebite.local",
+          email: isDevAdmin ? "admin@onebitebakery.com" : "customer@onebitebakery.com",
           role: isDevAdmin ? "admin" : "customer",
           isActive: true,
           createdAt: new Date().toISOString(),

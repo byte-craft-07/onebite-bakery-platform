@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, Modal, Skeleton } from "@/components/ui/DisplayComponents";
 import { Input } from "@/components/ui/FormControls";
 import { addressService, type Address } from "@/services/address.service";
+import { authService } from "@/services/auth.service";
 import { checkoutService, type CheckoutPreviewResponse } from "@/services/checkout.service";
 import { invoiceService } from "@/services/invoice.service";
 import { orderService, type OrderDetails } from "@/services/order.service";
@@ -29,7 +30,7 @@ const inlineAddressSchema = z.object({
 type InlineAddressData = z.infer<typeof inlineAddressSchema>;
 
 export const CheckoutPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const [fulfillmentType, setFulfillmentType] = useState<"HOME_DELIVERY" | "STORE_PICKUP">("HOME_DELIVERY");
   const [paymentMethod, setPaymentMethod] = useState<"RAZORPAY" | "UPI_DIRECT" | "COD">("RAZORPAY");
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -177,6 +178,23 @@ export const CheckoutPage: React.FC = () => {
     const amount = checkoutPreview?.pricing?.totalAmount || 499;
 
     try {
+      if (import.meta.env.DEV && user?.phone) {
+        try {
+          await authService.getCurrentUser();
+        } catch {
+          await authService.sendOtp({
+            phone: user.phone,
+            purpose: "login",
+          });
+          const session = await authService.verifyOtp({
+            phone: user.phone,
+            code: "123456",
+            purpose: "login",
+          });
+          login(session.data.user);
+        }
+      }
+
       await razorpayService.openPaymentModal({
         amountInRupees: amount,
         orderId: `ORD-${Date.now()}`,

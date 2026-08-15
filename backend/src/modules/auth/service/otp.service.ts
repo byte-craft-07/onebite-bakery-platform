@@ -138,23 +138,6 @@ export class OtpService {
     dto: VerifyOtpDto,
     context: RequestContext,
   ): Promise<VerifyOtpResult> {
-    // Development OTP Bypass (Only active for dev admin phone 9999999999 with code 123456 when nodeEnv !== "production")
-    if (
-      env.nodeEnv !== "production" &&
-      dto.phone === "9999999999" &&
-      dto.otp === "123456"
-    ) {
-      logger.info(
-        {
-          phone: maskPhone(dto.phone),
-          purpose: dto.purpose,
-          requestId: context.requestId,
-        },
-        "Development OTP bypass accepted for admin login",
-      );
-      return { verified: true };
-    }
-
     const challenge = await this.otpRepository.findLatestActiveChallenge(
       dto.phone,
       dto.purpose,
