@@ -48,6 +48,17 @@ interface RazorpayCheckoutOptions {
   theme: {
     color: string;
   };
+  config?: {
+    display: {
+      sequence: string[];
+      preferences: {
+        show_default_blocks: boolean;
+      };
+      hide: Array<{
+        method: string;
+      }>;
+    };
+  };
   handler: (response: RazorpayPaymentSuccessPayload) => Promise<void>;
   modal: {
     ondismiss: () => void;
@@ -180,6 +191,19 @@ export const razorpayService = {
       },
       theme: {
         color: "#E67E22",
+      },
+      config: {
+        display: {
+          sequence: ["upi", "netbanking", "wallet", "paylater"],
+          preferences: {
+            show_default_blocks: true,
+          },
+          hide: [
+            {
+              method: "card",
+            },
+          ],
+        },
       },
       handler: async (response: RazorpayPaymentSuccessPayload) => {
         const verifyRes = await razorpayService.verifyPayment(response);
