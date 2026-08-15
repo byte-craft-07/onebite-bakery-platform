@@ -144,15 +144,12 @@ export const razorpayService = {
 
     const isMockOrder = isMockRazorpayOrder(razorpayOrder);
 
-    if (isDevelopment && isMockOrder) {
-      window.setTimeout(() => {
-        options.onSuccess({
-          razorpay_order_id: razorpayOrder.id,
-          razorpay_payment_id: `pay_local_${Date.now()}`,
-          razorpay_signature: "development-mock-signature",
-        });
-      }, 250);
-      return;
+    if (configuredRazorpayKeyId && isMockOrder) {
+      throw new Error("Razorpay backend did not return a real order id. Please check backend Razorpay connectivity.");
+    }
+
+    if (isDevelopment && !configuredRazorpayKeyId && isMockOrder) {
+      throw new Error("Razorpay is not configured for this environment.");
     }
 
     // Validate real server-created Razorpay order ID (e.g. order_TLZ1nlVM41WRJV)
@@ -185,15 +182,6 @@ export const razorpayService = {
         color: "#E67E22",
       },
       handler: async (response: RazorpayPaymentSuccessPayload) => {
-        if (isDevelopment && isMockOrder) {
-          options.onSuccess({
-            razorpay_order_id: razorpayOrder.id,
-            razorpay_payment_id: response.razorpay_payment_id || `pay_local_${Date.now()}`,
-            razorpay_signature: response.razorpay_signature || "development-mock-signature",
-          });
-          return;
-        }
-
         const verifyRes = await razorpayService.verifyPayment(response);
         if (verifyRes.verified) {
           options.onSuccess(response);

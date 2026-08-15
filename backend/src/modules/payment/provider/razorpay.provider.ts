@@ -1,5 +1,4 @@
 import crypto from "node:crypto";
-import Razorpay from "razorpay";
 
 import { env } from "../../../config/env.js";
 import type {
@@ -7,33 +6,21 @@ import type {
   IPaymentProvider,
 } from "./payment-provider.interface.js";
 
-type RazorpayConstructor = new (options: {
-  key_id: string;
-  key_secret: string;
-}) => Razorpay;
+interface RazorpayOrderApiResponse {
+  id?: unknown;
+  amount?: unknown;
+  currency?: unknown;
+}
 
 export class RazorpayProvider implements IPaymentProvider {
   public readonly providerName = "RAZORPAY";
 
   private readonly keyId: string;
   private readonly keySecret: string;
-  private instance?: Razorpay;
 
   public constructor() {
     this.keyId = env.razorpayKeyId ?? "";
     this.keySecret = env.razorpayKeySecret ?? "";
-
-    if (this.keyId && this.keySecret) {
-      try {
-        const RazorpayCtor = Razorpay as unknown as RazorpayConstructor;
-        this.instance = new RazorpayCtor({
-          key_id: this.keyId,
-          key_secret: this.keySecret,
-        });
-      } catch (_err) {
-        // Ignore initialization error
-      }
-    }
   }
 
   public async createOrder(
@@ -43,26 +30,8 @@ export class RazorpayProvider implements IPaymentProvider {
   ): Promise<CreateProviderOrderResult> {
     const amountInPaise = Math.round(amount * 100);
 
-    if (this.instance) {
-      try {
-        const order = await this.instance.orders.create({
-          amount: Math.max(100, amountInPaise),
-          currency,
-          receipt: receipt.slice(0, 40),
-        });
-        if (order && order.id) {
-          return {
-            providerOrderId: order.id,
-            amount: Number(order.amount) / 100,
-            currency: order.currency,
-            isMock: false,
-          };
-        }
-      } catch {
-        if (env.nodeEnv === "production") {
-          throw new Error("Razorpay order creation failed.");
-        }
-      }
+    if (this.keyId && this.keySecret) {
+      return this.createOrderViaRestApi(amountInPaise, currency, receipt);
     }
 
     if (env.nodeEnv === "production") {
@@ -77,6 +46,50 @@ export class RazorpayProvider implements IPaymentProvider {
       amount,
       currency,
       isMock: true,
+    };
+  }
+
+  private async createOrderViaRestApi(
+    amountInPaise: number,
+    currency: string,
+    receipt: string,
+  ): Promise<CreateProviderOrderResult> {
+    const authToken = Buffer.from(`${this.keyId}:${this.keySecret}`).toString(
+      "base64",
+    );
+    const response = await fetch("https://api.razorpay.com/v1/orders", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${authToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        amount: Math.max(100, amountInPaise),
+        currency,
+        receipt: receipt.slice(0, 40),
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Razorpay order API failed with status ${response.status}.`);
+    }
+
+    const order = (await response.json()) as RazorpayOrderApiResponse;
+
+    if (
+      typeof order.id !== "string" ||
+      !order.id.startsWith("order_") ||
+      typeof order.amount !== "number" ||
+      typeof order.currency !== "string"
+    ) {
+      throw new Error("Razorpay order API returned an invalid order.");
+    }
+
+    return {
+      providerOrderId: order.id,
+      amount: order.amount / 100,
+      currency: order.currency,
+      isMock: false,
     };
   }
 
