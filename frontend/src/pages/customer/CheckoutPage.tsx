@@ -47,17 +47,29 @@ const ORDER_STATUSES = new Set<OrderStatus>([
 const normalizeOrderStatus = (status?: string): OrderStatus =>
   status && ORDER_STATUSES.has(status as OrderStatus) ? (status as OrderStatus) : "CONFIRMED";
 
+const isGenericBackendMessage = (message?: string): boolean =>
+  !message || message.trim().toLowerCase() === "something went wrong";
+
 const getCheckoutErrorMessage = (err: unknown, fallback: string): string => {
   if (isAxiosError(err)) {
     const responseData = err.response?.data as
       | { message?: string; error?: { message?: string }; code?: string }
       | undefined;
-    return (
-      responseData?.error?.message ||
-      responseData?.message ||
-      err.message ||
-      fallback
-    );
+    const apiMessage = responseData?.error?.message || responseData?.message;
+
+    if (apiMessage && !isGenericBackendMessage(apiMessage)) {
+      return apiMessage;
+    }
+
+    if (err.response?.status === 401) {
+      return "Your checkout session expired. Please login again and retry payment.";
+    }
+
+    if (err.response?.status === 429) {
+      return "Too many checkout attempts. Please wait a minute and try again.";
+    }
+
+    return fallback;
   }
 
   if (err instanceof Error) {
