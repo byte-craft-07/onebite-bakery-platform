@@ -89,9 +89,9 @@ export const razorpayService = {
         receipt: `receipt_${orderId}`,
       });
       if (response.data?.id) return response.data;
-    } catch {
+    } catch (err) {
       if (!isDevelopment || configuredRazorpayKeyId) {
-        throw new Error("Unable to create Razorpay order.");
+        throw err;
       }
     }
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { isAxiosError } from "axios";
 import { Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Download, FileText, Plus, ShieldCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -28,6 +29,43 @@ const inlineAddressSchema = z.object({
 });
 
 type InlineAddressData = z.infer<typeof inlineAddressSchema>;
+type OrderStatus = OrderDetails["orderStatus"];
+
+const ORDER_STATUSES = new Set<OrderStatus>([
+  "PENDING",
+  "CONFIRMED",
+  "PREPARING",
+  "BAKING",
+  "QUALITY_CHECK",
+  "PACKED",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "CANCELLED",
+  "REFUNDED",
+]);
+
+const normalizeOrderStatus = (status?: string): OrderStatus =>
+  status && ORDER_STATUSES.has(status as OrderStatus) ? (status as OrderStatus) : "CONFIRMED";
+
+const getCheckoutErrorMessage = (err: unknown, fallback: string): string => {
+  if (isAxiosError(err)) {
+    const responseData = err.response?.data as
+      | { message?: string; error?: { message?: string }; code?: string }
+      | undefined;
+    return (
+      responseData?.error?.message ||
+      responseData?.message ||
+      err.message ||
+      fallback
+    );
+  }
+
+  if (err instanceof Error) {
+    return err.message;
+  }
+
+  return fallback;
+};
 
 export const CheckoutPage: React.FC = () => {
   const { user, login } = useAuth();
@@ -99,7 +137,7 @@ export const CheckoutPage: React.FC = () => {
     }
   };
 
-  const executeOrderCreation = async (paymentDetails?: any) => {
+  const executeOrderCreation = async (paymentDetails?: unknown) => {
     setIsPlacingOrder(true);
     try {
       const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
@@ -113,7 +151,7 @@ export const CheckoutPage: React.FC = () => {
       const newOrderData: OrderDetails = {
         id: order.id,
         orderNumber: order.orderNumber,
-        orderStatus: (order.orderStatus as any) || "CONFIRMED",
+        orderStatus: normalizeOrderStatus(order.orderStatus),
         paymentStatus: paymentStatusVal,
         fulfillmentType,
         items: [
@@ -135,8 +173,8 @@ export const CheckoutPage: React.FC = () => {
 
       orderService.addOrder(newOrderData);
       setPlacedOrder(newOrderData);
-    } catch (err: any) {
-      setErrorMsg(err?.response?.data?.error?.message || "Failed to create order. Please verify cart items.");
+    } catch (err) {
+      setErrorMsg(getCheckoutErrorMessage(err, "Failed to create order. Please verify cart items."));
     } finally {
       setIsPlacingOrder(false);
     }
@@ -198,9 +236,9 @@ export const CheckoutPage: React.FC = () => {
           setErrorMsg("Payment process was cancelled or closed. Please try again or select UPI Direct / Cash on Delivery.");
         },
       });
-    } catch (err: any) {
+    } catch (err) {
       setIsPlacingOrder(false);
-      setErrorMsg(err?.response?.data?.message || err?.message || "Razorpay payment could not be started. Please verify Razorpay backend keys and try again.");
+      setErrorMsg(getCheckoutErrorMessage(err, "Razorpay payment could not be started. Please verify Razorpay backend keys and try again."));
     }
   };
 

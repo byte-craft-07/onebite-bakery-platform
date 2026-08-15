@@ -36,12 +36,28 @@ const processQueue = (error: Error | null) => {
   failedQueue = [];
 };
 
+const isAuthLifecycleRequest = (url?: string): boolean => {
+  if (!url) return false;
+  return [
+    "/auth/send-otp",
+    "/auth/verify-otp",
+    "/auth/refresh",
+    "/auth/logout",
+    "/auth/logout-all",
+  ].some((authPath) => url.includes(authPath));
+};
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !isAuthLifecycleRequest(originalRequest.url)
+    ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });

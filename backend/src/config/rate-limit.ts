@@ -5,7 +5,7 @@ import { ERROR_MESSAGES } from "../shared/constants/messages.js";
 
 export const globalRateLimitOptions: Partial<Options> = {
   windowMs: env.rateLimitWindowMs,
-  limit: env.rateLimitMax,
+  limit: env.nodeEnv === "production" ? env.rateLimitMax : Math.max(env.rateLimitMax, 1000),
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: {
@@ -14,4 +14,3 @@ export const globalRateLimitOptions: Partial<Options> = {
     errors: [],
   },
 };
-

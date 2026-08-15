@@ -1,6 +1,7 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 
+import { env } from "../../../config/env.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
 import { validateRequest } from "../../../shared/middlewares/validate-request.middleware.js";
@@ -35,10 +36,12 @@ const authService = new AuthService(
   refreshTokenRepository,
 );
 const authController = new AuthController(otpService, authService);
+const getRouteLimit = (productionLimit: number): number =>
+  env.nodeEnv === "production" ? productionLimit : Math.max(productionLimit, 100);
 
 const sendOtpRateLimiter = rateLimit({
   windowMs: OTP_RATE_LIMITS.SEND_WINDOW_MS,
-  limit: OTP_RATE_LIMITS.SEND_MAX,
+  limit: getRouteLimit(OTP_RATE_LIMITS.SEND_MAX),
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: {
@@ -52,7 +55,7 @@ const sendOtpRateLimiter = rateLimit({
 
 const verifyOtpRateLimiter = rateLimit({
   windowMs: OTP_RATE_LIMITS.VERIFY_WINDOW_MS,
-  limit: OTP_RATE_LIMITS.VERIFY_MAX,
+  limit: getRouteLimit(OTP_RATE_LIMITS.VERIFY_MAX),
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: {
@@ -66,7 +69,7 @@ const verifyOtpRateLimiter = rateLimit({
 
 const refreshRateLimiter = rateLimit({
   windowMs: AUTH_RATE_LIMITS.REFRESH_WINDOW_MS,
-  limit: AUTH_RATE_LIMITS.REFRESH_MAX,
+  limit: getRouteLimit(AUTH_RATE_LIMITS.REFRESH_MAX),
   standardHeaders: "draft-8",
   legacyHeaders: false,
   statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
@@ -80,7 +83,7 @@ const refreshRateLimiter = rateLimit({
 
 const sessionRateLimiter = rateLimit({
   windowMs: AUTH_RATE_LIMITS.SESSION_WINDOW_MS,
-  limit: AUTH_RATE_LIMITS.SESSION_MAX,
+  limit: getRouteLimit(AUTH_RATE_LIMITS.SESSION_MAX),
   standardHeaders: "draft-8",
   legacyHeaders: false,
   statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
