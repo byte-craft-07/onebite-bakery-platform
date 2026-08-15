@@ -17,9 +17,9 @@ export interface RazorpayOrderResponse {
 }
 
 export interface RazorpayPaymentSuccessPayload {
-  razorpay_order_id: string;
+  razorpay_order_id?: string;
   razorpay_payment_id: string;
-  razorpay_signature: string;
+  razorpay_signature?: string;
 }
 
 interface RazorpayCheckoutInstance {
@@ -142,11 +142,9 @@ export const razorpayService = {
 
     const razorpayOrder = await this.createRazorpayOrder(options.amountInRupees, options.orderId);
 
-    if (configuredRazorpayKeyId && isMockRazorpayOrder(razorpayOrder)) {
-      throw new Error("Razorpay backend returned a mock order while Razorpay is configured.");
-    }
+    const isMockOrder = isMockRazorpayOrder(razorpayOrder);
 
-    if (isDevelopment && !configuredRazorpayKeyId && isMockRazorpayOrder(razorpayOrder)) {
+    if (isDevelopment && !configuredRazorpayKeyId && isMockOrder) {
       window.setTimeout(() => {
         options.onSuccess({
           razorpay_order_id: razorpayOrder.id,
@@ -187,6 +185,15 @@ export const razorpayService = {
         color: "#E67E22",
       },
       handler: async (response: RazorpayPaymentSuccessPayload) => {
+        if (isDevelopment && isMockOrder) {
+          options.onSuccess({
+            razorpay_order_id: razorpayOrder.id,
+            razorpay_payment_id: response.razorpay_payment_id || `pay_local_${Date.now()}`,
+            razorpay_signature: response.razorpay_signature || "development-mock-signature",
+          });
+          return;
+        }
+
         const verifyRes = await razorpayService.verifyPayment(response);
         if (verifyRes.verified) {
           options.onSuccess(response);

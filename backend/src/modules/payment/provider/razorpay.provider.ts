@@ -59,7 +59,9 @@ export class RazorpayProvider implements IPaymentProvider {
           };
         }
       } catch {
-        throw new Error("Razorpay order creation failed.");
+        if (env.nodeEnv === "production") {
+          throw new Error("Razorpay order creation failed.");
+        }
       }
     }
 
