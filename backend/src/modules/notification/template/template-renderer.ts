@@ -24,6 +24,10 @@ export class TemplateRenderer {
       subject: "OneBite Order Confirmed - {{orderNumber}}",
       body: "<p>Hello {{customerName}},</p><p>Your order <strong>{{orderNumber}}</strong> has been confirmed! Estimated ready time: {{deliveryTime}}.</p>",
     },
+    "order-status-updated": {
+      subject: "OneBite Order Update - {{orderNumber}}",
+      body: "<p>Hello {{customerName}},</p><p>Your order <strong>{{orderNumber}}</strong> is now <strong>{{status}}</strong>.</p>",
+    },
     "payment-success": {
       subject: "Payment Successful for Order {{orderNumber}}",
       body: "<p>Hello {{customerName}},</p><p>We received your payment of ₹{{amount}} for order <strong>{{orderNumber}}</strong>. Payment ID: {{paymentId}}.</p>",

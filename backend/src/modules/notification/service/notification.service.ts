@@ -10,20 +10,26 @@ import type {
   SendNotificationDto,
 } from "../dto/index.js";
 import { type Notification } from "../model/index.js";
-import { EmailProvider, type INotificationProvider } from "../provider/index.js";
+import {
+  NotificationProviderFactory,
+  type INotificationProvider,
+} from "../provider/index.js";
 import type { NotificationRepository } from "../repository/index.js";
 import { TemplateRenderer } from "../template/index.js";
 import type { NotificationResponse } from "../types/index.js";
 
 export class NotificationService {
-  private readonly provider: INotificationProvider;
+  private readonly providerFactory: NotificationProviderFactory;
 
   public constructor(
     private readonly notificationRepository: NotificationRepository,
     provider?: INotificationProvider,
   ) {
-    this.provider = provider ?? new EmailProvider();
+    this.providerFactory = new NotificationProviderFactory();
+    this.injectedProvider = provider;
   }
+
+  private readonly injectedProvider?: INotificationProvider;
 
   public async send(
     dto: SendNotificationDto,
@@ -42,10 +48,11 @@ export class NotificationService {
     const rendered = TemplateRenderer.render(dto.template, dto.payload);
     const userObjId = dto.userId ? toObjectId(dto.userId) : undefined;
 
+    const providerType = dto.provider ?? "EMAIL";
     const notificationDoc = await this.notificationRepository.create({
       ...(userObjId ? { userId: userObjId } : {}),
       type: dto.type,
-      provider: dto.provider ?? "EMAIL",
+      provider: providerType,
       template: dto.template,
       subject: rendered.subject,
       recipient: dto.recipient,
@@ -54,14 +61,17 @@ export class NotificationService {
       retryCount: 0,
     });
 
-    const sendResult = await this.provider.send(
+    const provider = this.injectedProvider ?? this.providerFactory.getProvider(providerType);
+    const sendResult = await provider.send(
       dto.recipient,
       rendered.subject,
       rendered.body,
+      dto.payload,
     );
 
     if (sendResult.success) {
       notificationDoc.status = "SENT";
+      notificationDoc.providerMessageId = sendResult.providerMessageId;
       notificationDoc.sentAt = new Date();
       await notificationDoc.save();
     } else {
@@ -120,14 +130,19 @@ export class NotificationService {
     notificationDoc.status = "SENDING";
     await notificationDoc.save();
 
-    const sendResult = await this.provider.send(
+    const provider =
+      this.injectedProvider ??
+      this.providerFactory.getProvider(notificationDoc.provider);
+    const sendResult = await provider.send(
       notificationDoc.recipient,
       rendered.subject,
       rendered.body,
+      notificationDoc.payload,
     );
 
     if (sendResult.success) {
       notificationDoc.status = "SENT";
+      notificationDoc.providerMessageId = sendResult.providerMessageId;
       notificationDoc.sentAt = new Date();
       await notificationDoc.save();
     } else {
@@ -226,6 +241,9 @@ export class NotificationService {
       status: notification.status,
       payload: notification.payload,
       retryCount: notification.retryCount,
+      ...(notification.providerMessageId
+        ? { providerMessageId: notification.providerMessageId }
+        : {}),
       ...(notification.failureReason
         ? { failureReason: notification.failureReason }
         : {}),

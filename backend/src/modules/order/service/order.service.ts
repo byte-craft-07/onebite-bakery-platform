@@ -11,6 +11,7 @@ import { CartRepository, CartService } from "../../cart/index.js";
 import { CategoryModel } from "../../category/index.js";
 import { OccasionModel } from "../../occasion/index.js";
 import { ProductModel } from "../../product/index.js";
+import type { OrderNotificationService } from "../../notification/index.js";
 import {
   VALID_STATUS_TRANSITIONS,
 } from "../constants/index.js";
@@ -36,6 +37,7 @@ export class OrderService {
   public constructor(
     private readonly orderRepository: OrderRepository,
     cartService?: CartService,
+    private readonly orderNotificationService?: OrderNotificationService,
   ) {
     this.cartService = cartService ?? new CartService(new CartRepository());
   }
@@ -241,7 +243,10 @@ export class OrderService {
     // 7. Clear Customer Cart only after successful order creation
     await this.cartService.clearCart(customerId);
 
-    return this.toResponse(order);
+    const response = this.toResponse(order);
+    void this.orderNotificationService?.dispatchOrderCreated(response);
+
+    return response;
   }
 
   public async getOrder(
@@ -373,7 +378,10 @@ export class OrderService {
       throw this.createNotFoundError();
     }
 
-    return this.toResponse(updated);
+    const response = this.toResponse(updated);
+    void this.orderNotificationService?.dispatchOrderStatusUpdated(response);
+
+    return response;
   }
 
   public async reorder(
@@ -524,7 +532,10 @@ export class OrderService {
       throw this.createNotFoundError();
     }
 
-    return this.toResponse(updated);
+    const response = this.toResponse(updated);
+    void this.orderNotificationService?.dispatchOrderStatusUpdated(response);
+
+    return response;
   }
 
   public async adminUpdateReadyTime(

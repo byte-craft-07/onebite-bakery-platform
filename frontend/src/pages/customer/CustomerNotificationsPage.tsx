@@ -1,7 +1,22 @@
-import React, { useState } from "react";
-import { Bell, CheckCircle2, Info, Package, Tag } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, Info, Package, RefreshCw, Tag } from "lucide-react";
 
-import { Badge, Card } from "@/components/ui/DisplayComponents";
+import { Badge, Card, EmptyState, Skeleton } from "@/components/ui/DisplayComponents";
+import { Button } from "@/components/ui/Button";
+import { apiClient } from "@/services/api.client";
+
+interface BackendNotification {
+  id: string;
+  type: string;
+  provider: string;
+  subject: string;
+  recipient: string;
+  status: "PENDING" | "QUEUED" | "SENDING" | "SENT" | "FAILED" | "CANCELLED";
+  payload: Record<string, unknown>;
+  createdAt: string;
+  sentAt?: string;
+  failureReason?: string;
+}
 
 interface CustomerNotification {
   id: string;
@@ -9,93 +24,232 @@ interface CustomerNotification {
   message: string;
   type: "ORDER_UPDATE" | "PROMO" | "SYSTEM";
   timestamp: string;
+  status: BackendNotification["status"];
+  provider: string;
   isRead: boolean;
 }
 
-const INITIAL_NOTIFS: CustomerNotification[] = [
-  {
-    id: "cnt-1",
-    title: "Order #OB-98210 Out for Delivery",
-    message: "Your Belgian Dark Chocolate Truffle Cake order is out for delivery with our courier.",
-    type: "ORDER_UPDATE",
-    timestamp: "10 mins ago",
-    isRead: false,
-  },
-  {
-    id: "cnt-2",
-    title: "20% OFF Birthday Cake Promo Code",
-    message: "Use code BDAY20 on your next custom tier cake order.",
-    type: "PROMO",
-    timestamp: "2 hours ago",
-    isRead: false,
-  },
-  {
-    id: "cnt-3",
-    title: "Account Registered Successfully",
-    message: "Welcome to OneBite Artisanal Bakery. Enjoy 100% eggless baked goods.",
-    type: "SYSTEM",
-    timestamp: "Yesterday",
-    isRead: true,
-  },
-];
+const READ_STORAGE_KEY = "onebite_read_notification_ids";
+
+const getString = (
+  payload: Record<string, unknown>,
+  key: string,
+): string | undefined => {
+  const value = payload[key];
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+};
+
+const formatTimestamp = (value: string): string => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Recently";
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
+
+const mapNotificationType = (type: string): CustomerNotification["type"] => {
+  if (type.startsWith("ORDER_") || type.startsWith("PAYMENT_")) {
+    return "ORDER_UPDATE";
+  }
+
+  if (type === "ADMIN_NOTIFICATION") {
+    return "SYSTEM";
+  }
+
+  return "SYSTEM";
+};
+
+const toCustomerNotification = (
+  notification: BackendNotification,
+  readIds: Set<string>,
+): CustomerNotification => {
+  const title =
+    getString(notification.payload, "title") ||
+    notification.subject ||
+    "OneBite notification";
+  const message =
+    getString(notification.payload, "message") ||
+    getString(notification.payload, "status") ||
+    getString(notification.payload, "orderNumber") ||
+    notification.failureReason ||
+    "Your account has a new update.";
+
+  return {
+    id: notification.id,
+    title,
+    message,
+    type: mapNotificationType(notification.type),
+    timestamp: formatTimestamp(notification.sentAt || notification.createdAt),
+    status: notification.status,
+    provider: notification.provider,
+    isRead: readIds.has(notification.id),
+  };
+};
 
 export const CustomerNotificationsPage: React.FC = () => {
-  const [notifs, setNotifs] = useState<CustomerNotification[]>(INITIAL_NOTIFS);
+  const [notifications, setNotifications] = useState<CustomerNotification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [readIds, setReadIds] = useState<Set<string>>(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(READ_STORAGE_KEY) || "[]"));
+    } catch (_err) {
+      return new Set();
+    }
+  });
+
+  const unreadCount = useMemo(
+    () => notifications.filter((item) => !item.isRead).length,
+    [notifications],
+  );
+
+  const fetchNotifications = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const response = await apiClient.get<{
+        success: boolean;
+        data: { notifications: BackendNotification[] };
+      }>("/notifications/history", {
+        params: { limit: 50 },
+      });
+
+      const list = response.data.data.notifications
+        .filter((item) => item.provider === "IN_APP")
+        .map((item) => toCustomerNotification(item, readIds));
+      setNotifications(list);
+    } catch (_err) {
+      setErrorMessage("Unable to load notifications right now.");
+      setNotifications([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const persistReadIds = (nextReadIds: Set<string>) => {
+    localStorage.setItem(
+      READ_STORAGE_KEY,
+      JSON.stringify(Array.from(nextReadIds)),
+    );
+    setReadIds(nextReadIds);
+  };
 
   const markAllAsRead = () => {
-    setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    const nextReadIds = new Set([
+      ...Array.from(readIds),
+      ...notifications.map((item) => item.id),
+    ]);
+    persistReadIds(nextReadIds);
+    setNotifications((prev) =>
+      prev.map((item) => ({ ...item, isRead: true })),
+    );
   };
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-16">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#2C1E16]">Account Notifications & Alerts</h1>
-          <p className="text-xs text-[#6E5D4F]">Section 44 &bull; Track live order delivery status and special bakery offers</p>
+          <h1 className="text-2xl font-extrabold text-[#2C1E16]">
+            Account Notifications & Alerts
+          </h1>
+          <p className="text-xs text-[#6E5D4F]">
+            Live order updates, payment alerts, and account messages
+          </p>
         </div>
 
-        <button
-          type="button"
-          onClick={markAllAsRead}
-          className="text-xs font-bold text-[#E67E22] hover:underline cursor-pointer"
-        >
-          Mark all as read
-        </button>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="ghost" size="sm" onClick={fetchNotifications}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={markAllAsRead}>
+            Mark all read
+          </Button>
+        </div>
       </div>
 
+      <div className="flex items-center justify-between rounded-xl border border-[#E8E2D9] bg-[#FFFBF5] px-4 py-3">
+        <span className="text-xs font-semibold text-[#6E5D4F]">
+          Unread notifications
+        </span>
+        <Badge variant={unreadCount > 0 ? "warning" : "success"}>
+          {unreadCount}
+        </Badge>
+      </div>
+
+      {errorMessage ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-800">
+          {errorMessage}
+        </div>
+      ) : null}
+
       <div className="space-y-3">
-        {notifs.map((item) => (
-          <Card
-            key={item.id}
-            className={`flex items-start gap-4 p-5 transition-all ${
-              item.isRead ? "bg-white border-[#E8E2D9]" : "bg-[#FFFBF5] border-[#E67E22]/40 shadow-xs"
-            }`}
-          >
-            <div className="p-2.5 rounded-xl bg-[#FFF3E6] text-[#E67E22] shrink-0">
-              {item.type === "ORDER_UPDATE" ? (
-                <Package className="h-5 w-5" />
-              ) : item.type === "PROMO" ? (
-                <Tag className="h-5 w-5" />
-              ) : (
-                <Info className="h-5 w-5" />
-              )}
-            </div>
-
-            <div className="flex-1 space-y-1">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-[#2C1E16]">{item.title}</h3>
-                <span className="text-[11px] text-gray-400">{item.timestamp}</span>
+        {isLoading ? (
+          <>
+            <Skeleton className="h-24 rounded-2xl" />
+            <Skeleton className="h-24 rounded-2xl" />
+            <Skeleton className="h-24 rounded-2xl" />
+          </>
+        ) : notifications.length > 0 ? (
+          notifications.map((item) => (
+            <Card
+              key={item.id}
+              className={`flex items-start gap-4 p-5 transition-all ${
+                item.isRead
+                  ? "bg-white border-[#E8E2D9]"
+                  : "bg-[#FFFBF5] border-[#E67E22]/40 shadow-xs"
+              }`}
+            >
+              <div className="p-2.5 rounded-xl bg-[#FFF3E6] text-[#E67E22] shrink-0">
+                {item.type === "ORDER_UPDATE" ? (
+                  <Package className="h-5 w-5" />
+                ) : item.type === "PROMO" ? (
+                  <Tag className="h-5 w-5" />
+                ) : (
+                  <Info className="h-5 w-5" />
+                )}
               </div>
-              <p className="text-xs text-[#6E5D4F]">{item.message}</p>
-            </div>
 
-            {!item.isRead ? (
-              <span className="h-2 w-2 rounded-full bg-[#E67E22] shrink-0 mt-2" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-1" />
-            )}
-          </Card>
-        ))}
+              <div className="flex-1 space-y-1">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-sm font-bold text-[#2C1E16]">{item.title}</h3>
+                  <span className="text-[11px] text-gray-400 whitespace-nowrap">
+                    {item.timestamp}
+                  </span>
+                </div>
+                <p className="text-xs text-[#6E5D4F]">{item.message}</p>
+                <div className="flex items-center gap-2 pt-1">
+                  <Badge variant={item.status === "FAILED" ? "danger" : "success"}>
+                    {item.status}
+                  </Badge>
+                  <span className="text-[11px] text-gray-400">
+                    {item.provider}
+                  </span>
+                </div>
+              </div>
+
+              {!item.isRead ? (
+                <span className="h-2 w-2 rounded-full bg-[#E67E22] shrink-0 mt-2" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-1" />
+              )}
+            </Card>
+          ))
+        ) : (
+          <EmptyState
+            title="No Notifications"
+            description="Order updates and account alerts will appear here."
+          />
+        )}
       </div>
     </div>
   );

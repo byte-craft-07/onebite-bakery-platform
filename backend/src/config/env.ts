@@ -42,6 +42,11 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().min(1).optional(),
   RESEND_FROM_EMAIL: z.string().email().optional(),
   SENDER_EMAIL: z.string().email().optional(),
+  WHATSAPP_API_TOKEN: z.string().min(1).optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().min(1).optional(),
+  WHATSAPP_API_VERSION: z.string().min(1).default("v20.0"),
+  WHATSAPP_DEFAULT_TEMPLATE: z.string().min(1).default("hello_world"),
+  WHATSAPP_DEFAULT_LANGUAGE: z.string().min(1).default("en_US"),
   ACCESS_TOKEN_EXPIRES: z.string().default("15m"),
   REFRESH_TOKEN_EXPIRES: z.string().default("30d"),
   REQUIRE_DATABASE_CONNECTION: z
@@ -133,4 +138,9 @@ export const env = {
     parsedEnv.data.RESEND_FROM_EMAIL ??
     parsedEnv.data.SENDER_EMAIL ??
     "orders@onebitebakery.in",
+  whatsappApiToken: parsedEnv.data.WHATSAPP_API_TOKEN,
+  whatsappPhoneNumberId: parsedEnv.data.WHATSAPP_PHONE_NUMBER_ID,
+  whatsappApiVersion: parsedEnv.data.WHATSAPP_API_VERSION,
+  whatsappDefaultTemplate: parsedEnv.data.WHATSAPP_DEFAULT_TEMPLATE,
+  whatsappDefaultLanguage: parsedEnv.data.WHATSAPP_DEFAULT_LANGUAGE,
 } as const;

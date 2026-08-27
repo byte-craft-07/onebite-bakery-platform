@@ -2,6 +2,7 @@ export const NOTIFICATION_TYPES = [
   "OTP",
   "ORDER_CREATED",
   "ORDER_CONFIRMED",
+  "ORDER_STATUS_UPDATED",
   "PAYMENT_SUCCESS",
   "PAYMENT_FAILED",
   "ORDER_CANCELLED",
@@ -12,6 +13,7 @@ export const NOTIFICATION_TYPES = [
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 export const NOTIFICATION_PROVIDERS = [
+  "IN_APP",
   "EMAIL",
   "SMS",
   "WHATSAPP",

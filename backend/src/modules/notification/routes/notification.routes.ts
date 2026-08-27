@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 
 import { requireAuth, requireRoles } from "../../auth/index.js";
+import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
 import { validateRequest } from "../../../shared/middlewares/validate-request.middleware.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { NotificationController } from "../controller/index.js";
@@ -55,6 +56,16 @@ notificationRouter.post(
       provider: "EMAIL",
     });
 
+    if (notification.status !== "SENT") {
+      res.status(HTTP_STATUS.BAD_GATEWAY).json({
+        success: false,
+        message:
+          notification.failureReason ?? "Order confirmation email could not be sent.",
+        data: { notification },
+      });
+      return;
+    }
+
     res.json({
       success: true,
       message: `Order confirmation email processed for ${recipientEmail} for Order #${orderNumber}`,
@@ -78,6 +89,15 @@ notificationRouter.post(
       provider: "EMAIL",
     });
 
+    if (notification.status !== "SENT") {
+      res.status(HTTP_STATUS.BAD_GATEWAY).json({
+        success: false,
+        message: notification.failureReason ?? "Welcome email could not be sent.",
+        data: { notification },
+      });
+      return;
+    }
+
     res.json({
       success: true,
       message: `Welcome email processed for ${recipientEmail}`,
@@ -93,9 +113,32 @@ notificationRouter.post(
   asyncHandler(async (req, res) => {
     const { phone, orderNumber, status } =
       req.body as z.infer<typeof whatsappSmsStatusSchema>;
+    const notification = await notificationService.send({
+      recipient: phone,
+      type: "ORDER_CONFIRMED",
+      template: "order-confirmed",
+      payload: {
+        customerName: "Customer",
+        orderNumber,
+        deliveryTime: status,
+      },
+      provider: "WHATSAPP",
+    });
+
+    if (notification.status !== "SENT") {
+      res.status(HTTP_STATUS.BAD_GATEWAY).json({
+        success: false,
+        message:
+          notification.failureReason ?? "WhatsApp notification could not be sent.",
+        data: { notification },
+      });
+      return;
+    }
+
     res.json({
       success: true,
-      message: `Meta WhatsApp & SMS alert sent to +91 ${phone} for Order #${orderNumber} (${status})`,
+      message: `WhatsApp alert processed for +91 ${phone} for Order #${orderNumber} (${status})`,
+      data: { notification },
     });
   }),
 );

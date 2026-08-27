@@ -264,13 +264,13 @@ export const CheckoutPage: React.FC = () => {
             Order Number: <strong className="text-[#E67E22]">{placedOrder.orderNumber}</strong>
           </p>
           <p className="text-xs text-[#27AE60] font-bold">Payment Status: {placedOrder.paymentStatus}</p>
-          <p className="text-xs text-gray-400">Total Amount: ₹{placedOrder.totalAmount}</p>
+          <p className="text-xs text-gray-400">Total Amount: Rs. {placedOrder.totalAmount}</p>
         </div>
 
         <div className="p-4 rounded-2xl bg-[#FFFBF5] border border-[#E8E2D9] text-xs text-[#6E5D4F] space-y-2">
-          <p className="font-bold text-[#2C1E16]">Automated Notifications Dispatched:</p>
-          <p>📧 Email Receipt sent via Resend API to <code className="text-[#E67E22] font-semibold">ajaykterha@gmail.com</code></p>
-          <p>💬 WhatsApp & SMS confirmation sent to <code className="text-[#E67E22] font-semibold">+91 7897671632</code></p>
+          <p className="font-bold text-[#2C1E16]">Notifications queued by backend:</p>
+          <p>Email, WhatsApp, and in-app order updates are handled securely from the server.</p>
+          <p>Open your dashboard notifications to track delivery status updates.</p>
         </div>
 
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">

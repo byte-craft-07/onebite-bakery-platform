@@ -22,6 +22,7 @@ export interface Notification extends TimestampedDocument {
   status: NotificationStatus;
   payload: Record<string, unknown>;
   retryCount: number;
+  providerMessageId?: string;
   failureReason?: string;
   sentAt?: Date;
 }
@@ -78,6 +79,11 @@ const notificationSchema = new Schema<Notification>(
       required: true,
       default: 0,
       min: 0,
+    },
+    providerMessageId: {
+      type: String,
+      trim: true,
+      default: undefined,
     },
     failureReason: {
       type: String,

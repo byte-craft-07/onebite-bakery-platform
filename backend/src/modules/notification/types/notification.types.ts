@@ -15,6 +15,7 @@ export interface NotificationResponse {
   status: NotificationStatus;
   payload: Record<string, unknown>;
   retryCount: number;
+  providerMessageId?: string;
   failureReason?: string;
   sentAt?: Date;
   createdAt: Date;

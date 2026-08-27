@@ -11,12 +11,9 @@ export const whatsappSmsService = {
         orderNumber,
         status,
       });
-      if (response.data?.success) return true;
+      return Boolean(response.data?.success);
     } catch (_err) {
-      // Fallback
+      return false;
     }
-
-    console.log(`[WhatsApp & SMS Alert] Dispatched to +91 ${phone}: "Your OneBite Bakery Order #${orderNumber} is now ${status.replace(/_/g, " ")}!"`);
-    return true;
   },
 };

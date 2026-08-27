@@ -23,7 +23,7 @@ export type {
 } from "./provider/index.js";
 export { NotificationRepository } from "./repository/index.js";
 export { notificationRouter } from "./routes/index.js";
-export { NotificationService } from "./service/index.js";
+export { NotificationService, OrderNotificationService } from "./service/index.js";
 export { TemplateRenderer } from "./template/index.js";
 export type { RenderedTemplate } from "./template/index.js";
 export type { NotificationResponse } from "./types/index.js";

@@ -1,6 +1,11 @@
 import { Router } from "express";
 
 import { requireAuth, requireRoles } from "../../auth/index.js";
+import {
+  NotificationRepository,
+  NotificationService,
+  OrderNotificationService,
+} from "../../notification/index.js";
 import { validateRequest } from "../../../shared/middlewares/validate-request.middleware.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { OrderController } from "../controller/index.js";
@@ -18,7 +23,14 @@ import {
 export const orderRouter = Router();
 
 const orderRepository = new OrderRepository();
-const orderService = new OrderService(orderRepository);
+const notificationRepository = new NotificationRepository();
+const notificationService = new NotificationService(notificationRepository);
+const orderNotificationService = new OrderNotificationService(notificationService);
+const orderService = new OrderService(
+  orderRepository,
+  undefined,
+  orderNotificationService,
+);
 const orderController = new OrderController(orderService);
 const ownerOnly = [requireAuth, requireRoles(["admin"])] as const;
 

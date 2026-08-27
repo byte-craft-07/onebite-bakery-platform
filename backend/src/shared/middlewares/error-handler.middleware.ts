@@ -1,6 +1,7 @@
 import type { ErrorRequestHandler } from "express";
 import { ZodError } from "zod";
 
+import { env } from "../../config/env.js";
 import { APP_ERROR_CODES } from "../constants/app-error-code.js";
 import { HTTP_STATUS } from "../constants/http-status.js";
 import { ERROR_MESSAGES } from "../constants/messages.js";
@@ -40,7 +41,10 @@ export const errorHandler: ErrorRequestHandler = (
 
   return sendError(response, {
     statusCode: HTTP_STATUS.INTERNAL_SERVER_ERROR,
-    message: ERROR_MESSAGES.SOMETHING_WENT_WRONG,
+    message:
+      env.nodeEnv === "development" && error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.SOMETHING_WENT_WRONG,
     errors: [],
     code: APP_ERROR_CODES.INTERNAL_SERVER_ERROR,
   });

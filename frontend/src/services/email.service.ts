@@ -13,14 +13,10 @@ export const emailNotificationService = {
         recipientEmail,
         totalAmount: order.totalAmount,
       });
-      if (response.data?.success) return true;
+      return Boolean(response.data?.success);
     } catch (_err) {
-      // Fallback
+      return false;
     }
-
-    // Fallback console log confirmation for development
-    console.log(`[Resend Email Triggered] Sent Order #${order.orderNumber} receipt to ${recipientEmail}`);
-    return true;
   },
 
   /**
@@ -28,13 +24,13 @@ export const emailNotificationService = {
    */
   async sendWelcomeEmail(customerName: string, recipientEmail: string): Promise<boolean> {
     try {
-      await apiClient.post("/notifications/email/welcome", {
+      const response = await apiClient.post<{ success: boolean }>("/notifications/email/welcome", {
         customerName,
         recipientEmail,
       });
+      return Boolean(response.data?.success);
     } catch (_err) {
-      // Fallback
+      return false;
     }
-    return true;
   },
 };
