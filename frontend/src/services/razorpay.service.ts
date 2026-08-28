@@ -1,4 +1,5 @@
 import { apiClient } from "./api.client";
+import { paymentService, type InitiatePaymentResponse } from "./payment.service";
 
 declare global {
   interface Window {
@@ -14,6 +15,8 @@ export interface RazorpayOrderResponse {
   status: string;
   isMock?: boolean;
   keyId?: string;
+  paymentId?: string;
+  orderId?: string;
 }
 
 export interface RazorpayPaymentSuccessPayload {
@@ -50,13 +53,18 @@ interface RazorpayCheckoutOptions {
   };
   config?: {
     display: {
+      blocks: {
+        upi: {
+          name: string;
+          instruments: Array<{
+            method: "upi";
+          }>;
+        };
+      };
       sequence: string[];
       preferences: {
         show_default_blocks: boolean;
       };
-      hide: Array<{
-        method: string;
-      }>;
     };
   };
   handler: (response: RazorpayPaymentSuccessPayload) => Promise<void>;
@@ -92,12 +100,10 @@ export const razorpayService = {
   /**
    * Create Razorpay Order on Backend
    */
-  async createRazorpayOrder(amountInRupees: number, orderId: string): Promise<RazorpayOrderResponse> {
+  async createRazorpayOrder(orderId: string): Promise<RazorpayOrderResponse> {
     try {
       const response = await apiClient.post<RazorpayOrderResponse>("/payments/razorpay/create-order", {
-        amount: Math.round(amountInRupees * 100), // Razorpay works in paise
-        currency: "INR",
-        receipt: `receipt_${orderId}`,
+        orderId,
       });
       if (response.data?.id) return response.data;
     } catch (err) {
@@ -108,9 +114,9 @@ export const razorpayService = {
 
     return {
       id: `rzp_local_${Date.now()}`,
-      amount: Math.round(amountInRupees * 100),
+      amount: 0,
       currency: "INR",
-      receipt: `receipt_${orderId}`,
+      receipt: orderId,
       status: "created",
     };
   },
@@ -118,10 +124,19 @@ export const razorpayService = {
   /**
    * Verify Razorpay Payment Signature on Backend
    */
-  async verifyPayment(payload: RazorpayPaymentSuccessPayload): Promise<{ verified: boolean }> {
+  async verifyPayment(orderId: string, payload: RazorpayPaymentSuccessPayload): Promise<{ verified: boolean; paymentStatus?: string }> {
     try {
-      const response = await apiClient.post<{ verified: boolean }>("/payments/razorpay/verify", payload);
-      if (response.data) return response.data;
+      const result = await paymentService.verifyPayment({
+        orderId,
+        razorpayOrderId: payload.razorpay_order_id || "",
+        razorpayPaymentId: payload.razorpay_payment_id,
+        razorpaySignature: payload.razorpay_signature || "",
+      });
+
+      return {
+        verified: result.success,
+        paymentStatus: result.paymentStatus,
+      };
     } catch {
       if (!isDevelopment) {
         throw new Error("Unable to verify Razorpay payment.");
@@ -135,23 +150,29 @@ export const razorpayService = {
    * Open Razorpay Popup
    */
   async openPaymentModal(options: {
-    amountInRupees: number;
-    orderId: string;
+    payment: InitiatePaymentResponse;
     customerName: string;
     customerEmail: string;
     customerPhone: string;
     onSuccess: (payload: RazorpayPaymentSuccessPayload) => void;
     onDismiss?: () => void;
   }): Promise<void> {
-    const keyId = configuredRazorpayKeyId || "rzp_test_TLYhqUJgQVFJ7z";
-
     const isLoaded = await this.loadRazorpayScript();
     if (!isLoaded) {
       if (options.onDismiss) options.onDismiss();
       return;
     }
 
-    const razorpayOrder = await this.createRazorpayOrder(options.amountInRupees, options.orderId);
+    const razorpayOrder: RazorpayOrderResponse = {
+      id: options.payment.providerOrderId,
+      amount: Math.round(options.payment.amount * 100),
+      currency: options.payment.currency,
+      receipt: options.payment.orderId,
+      status: "created",
+      keyId: options.payment.razorpayKeyId,
+      paymentId: options.payment.paymentId,
+      orderId: options.payment.orderId,
+    };
 
     const isMockOrder = isMockRazorpayOrder(razorpayOrder);
 
@@ -171,12 +192,12 @@ export const razorpayService = {
 
     const validOrderId = isRealRazorpayOrderId(razorpayOrder.id) ? razorpayOrder.id : undefined;
 
-    const rzpOptions = {
-      key: razorpayOrder.keyId || keyId,
+    const rzpOptions: RazorpayCheckoutOptions = {
+      key: razorpayOrder.keyId || configuredRazorpayKeyId || "",
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency || "INR",
       name: "OneBite Bakery Platform",
-      description: `Payment for Bakery Order #${options.orderId.slice(-6).toUpperCase()}`,
+      description: `UPI payment for order #${options.payment.orderId.slice(-6).toUpperCase()}`,
       image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=150&q=80",
       order_id: validOrderId,
       prefill: {
@@ -194,19 +215,24 @@ export const razorpayService = {
       },
       config: {
         display: {
-          sequence: ["upi", "netbanking", "wallet", "paylater"],
-          preferences: {
-            show_default_blocks: true,
-          },
-          hide: [
-            {
-              method: "card",
+          blocks: {
+            upi: {
+              name: "Pay via UPI",
+              instruments: [
+                {
+                  method: "upi",
+                },
+              ],
             },
-          ],
+          },
+          sequence: ["block.upi"],
+          preferences: {
+            show_default_blocks: false,
+          },
         },
       },
       handler: async (response: RazorpayPaymentSuccessPayload) => {
-        const verifyRes = await razorpayService.verifyPayment(response);
+        const verifyRes = await razorpayService.verifyPayment(options.payment.orderId, response);
         if (verifyRes.verified) {
           options.onSuccess(response);
         } else {

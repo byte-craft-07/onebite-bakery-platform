@@ -100,8 +100,12 @@ export const checkoutService = {
     try {
       const response = await apiClient.post<{
         success: boolean;
-        data: { order: { id: string; orderNumber: string; totalAmount: number; orderStatus: string } };
-      }>("/orders", payload);
+        data: { order: { id: string; orderNumber: string; totalAmount: number; orderStatus: string; paymentStatus?: string } };
+      }>("/orders", {
+        deliveryMethod: payload.fulfillmentType,
+        ...(payload.addressId ? { addressId: payload.addressId } : {}),
+        ...(payload.customerNotes ? { notes: payload.customerNotes } : {}),
+      });
       if (response.data?.data?.order) {
         await cartService.clearCart();
         window.dispatchEvent(new Event("onebite_cart_updated"));
@@ -119,6 +123,7 @@ export const checkoutService = {
       orderNumber: `OB-${Math.floor(10000 + Math.random() * 90000)}`,
       totalAmount: preview.pricing.totalAmount,
       orderStatus: "CONFIRMED",
+      paymentStatus: "PENDING",
     };
 
     await cartService.clearCart();

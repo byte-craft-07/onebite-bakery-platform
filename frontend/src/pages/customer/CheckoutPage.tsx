@@ -16,6 +16,7 @@ import { authService } from "@/services/auth.service";
 import { checkoutService, type CheckoutPreviewResponse } from "@/services/checkout.service";
 import { invoiceService } from "@/services/invoice.service";
 import { orderService, type OrderDetails } from "@/services/order.service";
+import { paymentService } from "@/services/payment.service";
 import { razorpayService } from "@/services/razorpay.service";
 
 const inlineAddressSchema = z.object({
@@ -29,23 +30,6 @@ const inlineAddressSchema = z.object({
 });
 
 type InlineAddressData = z.infer<typeof inlineAddressSchema>;
-type OrderStatus = OrderDetails["orderStatus"];
-
-const ORDER_STATUSES = new Set<OrderStatus>([
-  "PENDING",
-  "CONFIRMED",
-  "PREPARING",
-  "BAKING",
-  "QUALITY_CHECK",
-  "PACKED",
-  "OUT_FOR_DELIVERY",
-  "DELIVERED",
-  "CANCELLED",
-  "REFUNDED",
-]);
-
-const normalizeOrderStatus = (status?: string): OrderStatus =>
-  status && ORDER_STATUSES.has(status as OrderStatus) ? (status as OrderStatus) : "CONFIRMED";
 
 const isGenericBackendMessage = (message?: string): boolean =>
   !message || message.trim().toLowerCase() === "something went wrong";
@@ -82,12 +66,12 @@ const getCheckoutErrorMessage = (err: unknown, fallback: string): string => {
 export const CheckoutPage: React.FC = () => {
   const { user, login } = useAuth();
   const [fulfillmentType, setFulfillmentType] = useState<"HOME_DELIVERY" | "STORE_PICKUP">("HOME_DELIVERY");
-  const [paymentMethod, setPaymentMethod] = useState<"RAZORPAY" | "UPI_DIRECT" | "COD">("RAZORPAY");
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>(undefined);
   const [checkoutPreview, setCheckoutPreview] = useState<CheckoutPreviewResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [paymentStateMessage, setPaymentStateMessage] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [placedOrder, setPlacedOrder] = useState<OrderDetails | null>(null);
 
@@ -149,51 +133,27 @@ export const CheckoutPage: React.FC = () => {
     }
   };
 
-  const executeOrderCreation = async (paymentDetails?: unknown) => {
-    setIsPlacingOrder(true);
-    try {
-      const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
-      const order = await checkoutService.createOrder({
-        fulfillmentType,
-        addressId: selectedAddressId,
-      });
+  const waitForPaidOrder = async (orderId: string): Promise<OrderDetails> => {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const latestOrder = await orderService.getOrderById(orderId);
 
-      const paymentStatusVal: "PAID" | "PENDING" = paymentDetails ? "PAID" : paymentMethod === "COD" ? "PENDING" : "PAID";
+      if (latestOrder.paymentStatus === "SUCCESS" || latestOrder.paymentStatus === "PAID") {
+        return latestOrder;
+      }
 
-      const newOrderData: OrderDetails = {
-        id: order.id,
-        orderNumber: order.orderNumber,
-        orderStatus: normalizeOrderStatus(order.orderStatus),
-        paymentStatus: paymentStatusVal,
-        fulfillmentType,
-        items: [
-          { id: "item-1", productId: "prod-1", name: "Belgian Dark Chocolate Truffle Cake", unitPrice: order.totalAmount, quantity: 1, itemTotal: order.totalAmount, isEggless: true }
-        ],
-        subtotal: order.totalAmount,
-        deliveryFee: fulfillmentType === "HOME_DELIVERY" ? 50 : 0,
-        taxAmount: Math.round(order.totalAmount * 0.05),
-        discountAmount: 0,
-        totalAmount: order.totalAmount,
-        createdAt: new Date().toISOString(),
-        deliveryAddress: selectedAddress ? {
-          street: selectedAddress.street,
-          city: selectedAddress.city,
-          state: selectedAddress.state,
-          pincode: selectedAddress.pincode,
-        } : undefined,
-      };
+      if (latestOrder.paymentStatus === "FAILED" || latestOrder.paymentStatus === "CANCELLED") {
+        throw new Error("Payment was not completed. Please retry with UPI.");
+      }
 
-      orderService.addOrder(newOrderData);
-      setPlacedOrder(newOrderData);
-    } catch (err) {
-      setErrorMsg(getCheckoutErrorMessage(err, "Failed to create order. Please verify cart items."));
-    } finally {
-      setIsPlacingOrder(false);
+      await new Promise((resolve) => setTimeout(resolve, 1500));
     }
+
+    throw new Error("Payment is being verified. Please check your orders page in a moment.");
   };
 
   const handlePlaceOrder = async () => {
     setErrorMsg(null);
+    setPaymentStateMessage(null);
 
     if (fulfillmentType === "HOME_DELIVERY" && !selectedAddressId) {
       if (addresses.length === 0) {
@@ -204,53 +164,55 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
-    if (paymentMethod === "COD") {
-      setIsPlacingOrder(true);
-      executeOrderCreation({
-        razorpay_order_id: `cod_order_${Date.now()}`,
-        razorpay_payment_id: `cod_pay_${Date.now()}`,
-        razorpay_signature: "cod_verified",
-      });
-      return;
-    }
-
-    if (paymentMethod === "UPI_DIRECT") {
-      setIsPlacingOrder(true);
-      executeOrderCreation({
-        razorpay_order_id: `upi_order_${Date.now()}`,
-        razorpay_payment_id: `upi_pay_${Date.now()}`,
-        razorpay_signature: "upi_verified",
-      });
-      return;
-    }
-
     const selectedAddr = addresses.find((a) => a.id === selectedAddressId);
-    const amount = checkoutPreview?.pricing?.totalAmount || 499;
     const checkoutPhone = (selectedAddr?.phone || user?.phone || "9876543210").replace(/\D/g, "").slice(-10);
 
     try {
+      setIsPlacingOrder(true);
       if (import.meta.env.DEV) {
         const backendUser = await authService.ensureDevBackendSession(checkoutPhone);
         login(backendUser);
       }
 
+      setPaymentStateMessage("Creating your order securely...");
+      const order = await checkoutService.createOrder({
+        fulfillmentType,
+        addressId: selectedAddressId,
+      });
+
+      setPaymentStateMessage("Starting UPI payment...");
+      const payment = await paymentService.initiatePayment({
+        orderId: order.id,
+        provider: "RAZORPAY",
+      });
+
       await razorpayService.openPaymentModal({
-        amountInRupees: amount,
-        orderId: `ORD-${Date.now()}`,
+        payment,
         customerName: selectedAddr?.name || user?.name || "OneBite Customer",
         customerEmail: user?.email && user.email.includes("@") && !user.email.endsWith(".test") ? user.email : "ajaykterha@gmail.com",
         customerPhone: checkoutPhone || "7897671632",
-        onSuccess: (razorpayResponse) => {
-          executeOrderCreation(razorpayResponse);
+        onSuccess: async () => {
+          setPaymentStateMessage("Payment received. Waiting for secure backend confirmation...");
+          try {
+            const paidOrder = await waitForPaidOrder(order.id);
+            orderService.addOrder(paidOrder);
+            setPlacedOrder(paidOrder);
+          } catch (err) {
+            setErrorMsg(getCheckoutErrorMessage(err, "Payment is being verified. Please check your orders page in a moment."));
+          } finally {
+            setIsPlacingOrder(false);
+          }
         },
         onDismiss: () => {
           setIsPlacingOrder(false);
-          setErrorMsg("Payment process was cancelled or closed. Please try again or select UPI Direct / Cash on Delivery.");
+          setPaymentStateMessage(null);
+          setErrorMsg("UPI payment was cancelled or closed. Please retry with UPI.");
         },
       });
     } catch (err) {
       setIsPlacingOrder(false);
-      setErrorMsg(getCheckoutErrorMessage(err, "Razorpay payment could not be started. Please verify Razorpay backend keys and try again."));
+      setPaymentStateMessage(null);
+      setErrorMsg(getCheckoutErrorMessage(err, "UPI payment could not be started. Please verify Razorpay backend keys and try again."));
     }
   };
 
@@ -321,6 +283,12 @@ export const CheckoutPage: React.FC = () => {
         </div>
       ) : null}
 
+      {paymentStateMessage ? (
+        <div className="p-4 bg-[#FFF3E6] text-[#2C1E16] text-xs font-semibold rounded-xl border border-[#E67E22]/30">
+          {paymentStateMessage}
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Left Options */}
         <div className="lg:col-span-2 space-y-6">
@@ -357,48 +325,13 @@ export const CheckoutPage: React.FC = () => {
             </Card>
           ) : null}
 
-          {/* Payment Method Selector */}
           <Card className="space-y-4">
-            <h3 className="text-lg font-bold text-[#2C1E16]">3. Payment Options</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("RAZORPAY")}
-                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                  paymentMethod === "RAZORPAY"
-                    ? "border-[#E67E22] bg-[#FFF3E6]/60 ring-2 ring-[#E67E22]"
-                    : "border-[#E8E2D9] bg-white hover:border-[#E67E22]"
-                }`}
-              >
-                <div className="font-bold text-xs text-[#2C1E16]">Razorpay Gateway</div>
-                <div className="text-[10px] text-gray-500 mt-1">UPI, Cards, Netbanking, Wallets</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("UPI_DIRECT")}
-                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                  paymentMethod === "UPI_DIRECT"
-                    ? "border-[#E67E22] bg-[#FFF3E6]/60 ring-2 ring-[#E67E22]"
-                    : "border-[#E8E2D9] bg-white hover:border-[#E67E22]"
-                }`}
-              >
-                <div className="font-bold text-xs text-[#2C1E16]">UPI Direct (GPay/QR)</div>
-                <div className="text-[10px] text-gray-500 mt-1">Instant Scan & Pay via UPI</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("COD")}
-                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                  paymentMethod === "COD"
-                    ? "border-[#E67E22] bg-[#FFF3E6]/60 ring-2 ring-[#E67E22]"
-                    : "border-[#E8E2D9] bg-white hover:border-[#E67E22]"
-                }`}
-              >
-                <div className="font-bold text-xs text-[#2C1E16]">Cash on Delivery</div>
-                <div className="text-[10px] text-gray-500 mt-1">Pay with cash upon delivery</div>
-              </button>
+            <h3 className="text-lg font-bold text-[#2C1E16]">3. Payment</h3>
+            <div className="p-4 rounded-2xl border border-[#E67E22] bg-[#FFF3E6]/60">
+              <div className="font-bold text-sm text-[#2C1E16]">Pay with UPI</div>
+              <div className="text-xs text-[#6E5D4F] mt-1">
+                Google Pay, PhonePe, Paytm, BHIM, and other UPI apps through Razorpay.
+              </div>
             </div>
           </Card>
         </div>
@@ -418,18 +351,12 @@ export const CheckoutPage: React.FC = () => {
           />
 
           <Button onClick={handlePlaceOrder} isLoading={isPlacingOrder} className="w-full h-12 shadow-md">
-            <span>
-              {paymentMethod === "RAZORPAY"
-                ? "Pay & Place Order (Razorpay)"
-                : paymentMethod === "UPI_DIRECT"
-                ? "Confirm & Pay via UPI"
-                : "Place Order (Cash on Delivery)"}
-            </span>
+            <span>Pay Rs. {checkoutPreview?.pricing.totalAmount ?? 0} with UPI</span>
           </Button>
 
           <p className="text-[11px] text-gray-400 text-center flex items-center justify-center gap-1">
             <ShieldCheck className="h-3.5 w-3.5 text-[#27AE60]" />
-            <span>100% Secure Order Placement, Resend Email & Tax Invoice PDF.</span>
+            <span>100% secure UPI payment through Razorpay.</span>
           </p>
         </div>
       </div>

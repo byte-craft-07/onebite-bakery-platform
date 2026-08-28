@@ -12,20 +12,22 @@ Business logic must never depend on a specific payment gateway.
 
 # Goals
 
-Support:
+Current production payment method:
+
+- Razorpay UPI only
+- UPI Intent on supported mobile web devices
+
+Disabled in customer checkout:
 
 - Cash on Delivery (COD)
-- Manual UPI Verification
+- Manual UPI screenshot verification
+- Credit Card
+- Debit Card
+- Wallet
+- Net Banking
+- EMI
 
-Future:
-
-- Razorpay
-- Stripe
-- PhonePe
-- Paytm
-- Google Pay
-
-without changing Order logic.
+Future providers may be added without changing Order logic, but current customer checkout must remain UPI-only until the business rule changes.
 
 ---
 
@@ -77,11 +79,9 @@ Payment Intent
 
 UPI
 
-If the customer changes from UPI to COD:
+Current checkout creates a Razorpay UPI payment intent only.
 
-Only Payment Intent changes.
-
-The Order remains unchanged.
+Changing away from UPI requires a future approved business decision.
 
 ---
 
@@ -147,6 +147,8 @@ PaytmProvider
 
 Business logic should communicate only through the interface.
 
+Current implementation note: only `RazorpayProvider` is active for customer checkout, and it must be configured for UPI-only payment methods.
+
 ---
 
 # Payment Status
@@ -169,23 +171,19 @@ PARTIALLY_REFUNDED (Future)
 
 # Payment Methods
 
-Supported
+Supported now:
 
-COD
+- UPI through Razorpay Checkout
 
-UPI
+Disabled now:
 
-Future
-
-Credit Card
-
-Debit Card
-
-Wallet
-
-Net Banking
-
-EMI
+- COD
+- Credit Card
+- Debit Card
+- Wallet
+- Net Banking
+- EMI
+- Manual UPI verification
 
 ---
 

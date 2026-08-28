@@ -55,7 +55,6 @@ const paymentSchema = new Schema<Payment>(
       type: String,
       trim: true,
       default: undefined,
-      index: true,
     },
     amount: {
       type: Number,
@@ -91,6 +90,15 @@ const paymentSchema = new Schema<Payment>(
     },
   },
   baseSchemaOptions,
+);
+
+paymentSchema.index(
+  { provider: 1, providerOrderId: 1 },
+  { unique: true, name: "uniq_payment_provider_order" },
+);
+paymentSchema.index(
+  { providerPaymentId: 1 },
+  { unique: true, sparse: true, name: "uniq_payment_provider_payment" },
 );
 
 export const PaymentModel = model<Payment>(

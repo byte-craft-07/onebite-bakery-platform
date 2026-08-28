@@ -12,14 +12,22 @@ export interface InitiatePaymentResponse {
   currency: string;
   provider: string;
   providerOrderId: string;
-  keyId?: string;
+  razorpayKeyId?: string;
 }
 
 export interface VerifyPaymentPayload {
-  paymentId: string;
+  orderId: string;
   razorpayPaymentId: string;
   razorpayOrderId: string;
   razorpaySignature: string;
+}
+
+export interface VerifyPaymentResponse {
+  success: boolean;
+  paymentId: string;
+  orderId: string;
+  paymentStatus: string;
+  message: string;
 }
 
 export const paymentService = {
@@ -34,8 +42,8 @@ export const paymentService = {
   verifyPayment: async (payload: VerifyPaymentPayload) => {
     const response = await apiClient.post<{
       success: boolean;
-      data: { isVerified: boolean; orderId: string };
+      data: { payment: VerifyPaymentResponse };
     }>("/payments/verify", payload);
-    return response.data.data;
+    return response.data.data.payment;
   },
 };

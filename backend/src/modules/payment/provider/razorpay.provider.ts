@@ -64,7 +64,7 @@ export class RazorpayProvider implements IPaymentProvider {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: Math.max(100, amountInPaise),
+        amount: amountInPaise,
         currency,
         receipt: receipt.slice(0, 40),
       }),

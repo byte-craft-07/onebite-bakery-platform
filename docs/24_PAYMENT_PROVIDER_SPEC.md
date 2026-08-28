@@ -12,18 +12,17 @@ This specification applies to all current and future providers.
 
 # Goals
 
-Support current providers:
+Support current provider:
 
-- Cash on Delivery (COD)
-- Manual UPI Verification
+- Razorpay UPI only
+
+Current checkout must not expose COD, manual UPI verification, cards, wallets, net banking, EMI, or pay-later methods.
 
 Support future providers without architecture changes:
 
-- Razorpay
-- Stripe
 - PhonePe
 - Paytm
-- Google Pay
+- Direct bank integrations
 
 Controllers and Services must never depend on provider-specific SDKs.
 
@@ -186,9 +185,9 @@ Verification should include:
 
 ---
 
-# Webhook Support (Future)
+# Webhook Support
 
-Future providers may use webhooks.
+Razorpay webhooks are the source of truth for final payment capture.
 
 Webhook flow:
 
@@ -211,6 +210,8 @@ Payment Service
 Order Update
 
 Webhook requests must always verify signatures before processing.
+
+Webhook processing must verify order mapping, amount, currency, payment method, and idempotency before marking an order paid.
 
 ---
 

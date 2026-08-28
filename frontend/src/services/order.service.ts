@@ -21,11 +21,13 @@ export interface OrderDetails {
     | "BAKING"
     | "QUALITY_CHECK"
     | "PACKED"
+    | "READY"
+    | "READY_FOR_PICKUP"
     | "OUT_FOR_DELIVERY"
     | "DELIVERED"
     | "CANCELLED"
     | "REFUNDED";
-  paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+  paymentStatus: "PENDING" | "PROCESSING" | "SUCCESS" | "PAID" | "FAILED" | "CANCELLED" | "REFUNDED";
   fulfillmentType: "HOME_DELIVERY" | "STORE_PICKUP";
   items: OrderItemDetails[];
   subtotal: number;
@@ -40,6 +42,51 @@ export interface OrderDetails {
     state: string;
     pincode: string;
   };
+}
+
+interface BackendOrderItem {
+  _id?: string;
+  id?: string;
+  productId?: string;
+  productName?: string;
+  productNameSnapshot?: string;
+  name?: string;
+  unitPrice?: number;
+  unitPriceSnapshot?: number;
+  quantity: number;
+  subtotal?: number;
+  itemTotal?: number;
+}
+
+interface BackendOrder {
+  id: string;
+  orderNumber: string;
+  orderStatus: OrderDetails["orderStatus"];
+  paymentStatus: OrderDetails["paymentStatus"];
+  deliveryMethod?: OrderDetails["fulfillmentType"];
+  fulfillmentType?: OrderDetails["fulfillmentType"];
+  items?: BackendOrderItem[];
+  subtotal?: number;
+  deliveryCharge?: number;
+  deliveryFee?: number;
+  totalAmount?: number;
+  taxAmount?: number;
+  discountAmount?: number;
+  pricingSnapshot?: {
+    subtotal?: number;
+    tax?: number;
+    deliveryCharge?: number;
+    discount?: number;
+    grandTotal?: number;
+  };
+  createdAt?: string;
+  addressSnapshot?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+  };
+  deliveryAddress?: OrderDetails["deliveryAddress"];
 }
 
 const LOCAL_ORDERS_KEY = "onebite_customer_orders_list";
@@ -110,6 +157,58 @@ const mockOrders: OrderDetails[] = [
   },
 ];
 
+const toDeliveryAddress = (
+  address?: BackendOrder["deliveryAddress"] | BackendOrder["addressSnapshot"],
+): OrderDetails["deliveryAddress"] => {
+  if (!address?.street || !address.city || !address.state || !address.pincode) {
+    return undefined;
+  }
+
+  return {
+    street: address.street,
+    city: address.city,
+    state: address.state,
+    pincode: address.pincode,
+  };
+};
+
+const toOrderDetails = (order: BackendOrder): OrderDetails => {
+  const pricing = order.pricingSnapshot;
+  const totalAmount = order.totalAmount ?? pricing?.grandTotal ?? 0;
+  const subtotal = order.subtotal ?? pricing?.subtotal ?? totalAmount;
+  const deliveryFee = order.deliveryFee ?? order.deliveryCharge ?? pricing?.deliveryCharge ?? 0;
+  const taxAmount = order.taxAmount ?? pricing?.tax ?? 0;
+  const discountAmount = order.discountAmount ?? pricing?.discount ?? 0;
+
+  return {
+    id: order.id,
+    orderNumber: order.orderNumber,
+    orderStatus: order.orderStatus,
+    paymentStatus: order.paymentStatus,
+    fulfillmentType: order.fulfillmentType ?? order.deliveryMethod ?? "HOME_DELIVERY",
+    items: (order.items ?? []).map((item, index) => {
+      const unitPrice = item.unitPrice ?? item.unitPriceSnapshot ?? 0;
+      const itemTotal = item.itemTotal ?? item.subtotal ?? unitPrice * item.quantity;
+
+      return {
+        id: item.id ?? item._id ?? `${order.id}-${index}`,
+        productId: item.productId ?? "",
+        name: item.name ?? item.productName ?? item.productNameSnapshot ?? "OneBite item",
+        unitPrice,
+        quantity: item.quantity,
+        itemTotal,
+      };
+    }),
+    subtotal,
+    deliveryFee,
+    taxAmount,
+    discountAmount,
+    totalAmount,
+    createdAt: order.createdAt ?? new Date().toISOString(),
+    deliveryAddress: toDeliveryAddress(order.deliveryAddress ?? order.addressSnapshot),
+  };
+};
+
 export const orderService = {
   addOrder: (order: OrderDetails) => {
     try {
@@ -141,10 +240,10 @@ export const orderService = {
     try {
       const response = await apiClient.get<{
         success: boolean;
-        data: { orders: OrderDetails[] };
+        data: { orders: BackendOrder[] };
       }>("/orders");
       if (response.data?.data?.orders && response.data.data.orders.length > 0) {
-        return response.data.data.orders;
+        return response.data.data.orders.map(toOrderDetails);
       }
     } catch (_err) {
       // Fallback to local customer orders
@@ -156,10 +255,10 @@ export const orderService = {
     try {
       const response = await apiClient.get<{
         success: boolean;
-        data: { order: OrderDetails };
+        data: { order: BackendOrder };
       }>(`/orders/${id}`);
       if (response.data?.data?.order) {
-        return response.data.data.order;
+        return toOrderDetails(response.data.data.order);
       }
     } catch (_err) {
       // Fallback
@@ -176,9 +275,9 @@ export const orderService = {
     try {
       const response = await apiClient.post<{
         success: boolean;
-        data: { order: OrderDetails };
+        data: { order: BackendOrder };
       }>(`/orders/${id}/cancel`, { reason });
-      return response.data.data.order;
+      return toOrderDetails(response.data.data.order);
     } catch (_err) {
       const localList = orderService.getLocalOrders();
       const idx = localList.findIndex((o) => o.id === id);
@@ -187,7 +286,7 @@ export const orderService = {
         localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(localList));
         return localList[idx];
       }
-      return { id, orderStatus: "CANCELLED" } as any;
+      throw new Error("Unable to cancel order.");
     }
   },
 };

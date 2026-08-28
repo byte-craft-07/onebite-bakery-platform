@@ -1,4 +1,5 @@
 import path from "node:path";
+import type { IncomingMessage } from "node:http";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import express, { type Application } from "express";
@@ -17,6 +18,10 @@ import { mongoSanitize } from "./shared/middlewares/mongo-sanitize.middleware.js
 import { notFoundHandler } from "./shared/middlewares/not-found.middleware.js";
 import { logger } from "./shared/utils/logger.js";
 
+interface RawBodyRequest extends IncomingMessage {
+  rawBody?: Buffer;
+}
+
 export const createApp = (): Application => {
   const app = express();
 
@@ -33,7 +38,14 @@ export const createApp = (): Application => {
   app.use(cors(corsOptions));
   app.use(rateLimit(globalRateLimitOptions));
   app.use(cookieParser());
-  app.use(express.json({ limit: env.jsonBodyLimit }));
+  app.use(
+    express.json({
+      limit: env.jsonBodyLimit,
+      verify: (request: RawBodyRequest, _response, buffer) => {
+        request.rawBody = Buffer.from(buffer);
+      },
+    }),
+  );
   app.use(express.urlencoded({ extended: true, limit: env.jsonBodyLimit }));
   app.use(mongoSanitize);
   app.use(hpp());

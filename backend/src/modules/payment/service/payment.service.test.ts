@@ -56,6 +56,7 @@ const createMockPaymentDocument = (overrides: Partial<Payment> = {}): HydratedDo
     amount: 1050,
     currency: "INR",
     paymentStatus: "CREATED",
+    paymentMethod: "UPI",
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -162,7 +163,7 @@ describe("PaymentService", () => {
     ).rejects.toBeInstanceOf(AppError);
   });
 
-  it("verifies payment signature, marks payment CAPTURED, and updates order to SUCCESS and CONFIRMED", async () => {
+  it("verifies payment signature without marking the order paid before webhook confirmation", async () => {
     const mockOrderDoc = createMockOrderDocument();
     vi.spyOn(OrderModel, "findById").mockImplementation(() => ({
       exec: vi.fn().mockResolvedValue(mockOrderDoc),
@@ -180,11 +181,12 @@ describe("PaymentService", () => {
     expect(response.success).toBe(true);
     expect(paymentRepository.updateStatus).toHaveBeenCalledWith(
       paymentId,
-      "CAPTURED",
+      "AUTHORIZED",
       { providerPaymentId: "pay_rzp_mock_999" },
     );
-    expect(mockOrderDoc.paymentStatus).toBe("SUCCESS");
-    expect(mockOrderDoc.orderStatus).toBe("CONFIRMED");
+    expect(response.paymentStatus).toBe("AUTHORIZED");
+    expect(mockOrderDoc.paymentStatus).toBe("PROCESSING");
+    expect(mockOrderDoc.orderStatus).toBe("PENDING");
     expect(mockOrderDoc.save).toHaveBeenCalledOnce();
   });
 
@@ -227,6 +229,10 @@ describe("PaymentService", () => {
             entity: {
               order_id: "order_rzp_mock_123",
               id: "pay_rzp_mock_999",
+              amount: 105000,
+              currency: "INR",
+              method: "upi",
+              status: "captured",
             },
           },
         },
@@ -237,9 +243,66 @@ describe("PaymentService", () => {
     expect(paymentRepository.updateStatus).toHaveBeenCalledWith(
       paymentId,
       "CAPTURED",
-      { providerPaymentId: "pay_rzp_mock_999" },
+      { providerPaymentId: "pay_rzp_mock_999", paymentMethod: "UPI" },
     );
     expect(mockOrderDoc.paymentStatus).toBe("SUCCESS");
+  });
+
+  it("rejects captured webhook when amount does not match the internal payment record", async () => {
+    const { service } = createService();
+
+    await expect(
+      service.handleWebhook(
+        JSON.stringify({ event: "payment.captured" }),
+        "valid_webhook_sig",
+        {
+          event: "payment.captured",
+          payload: {
+            payment: {
+              entity: {
+                order_id: "order_rzp_mock_123",
+                id: "pay_rzp_mock_999",
+                amount: 104900,
+                currency: "INR",
+                method: "upi",
+                status: "captured",
+              },
+            },
+          },
+        },
+      ),
+    ).rejects.toBeInstanceOf(AppError);
+  });
+
+  it("handles duplicate captured webhook idempotently", async () => {
+    const { service, paymentRepository } = createService({
+      findByProviderOrder: vi
+        .fn()
+        .mockResolvedValue(createMockPaymentDocument({ paymentStatus: "CAPTURED" })),
+    });
+
+    const result = await service.handleWebhook(
+      JSON.stringify({ event: "payment.captured" }),
+      "valid_webhook_sig",
+      {
+        event: "payment.captured",
+        payload: {
+          payment: {
+            entity: {
+              order_id: "order_rzp_mock_123",
+              id: "pay_rzp_mock_999",
+              amount: 105000,
+              currency: "INR",
+              method: "upi",
+              status: "captured",
+            },
+          },
+        },
+      },
+    );
+
+    expect(result.message).toBe("Webhook already processed.");
+    expect(paymentRepository.updateStatus).not.toHaveBeenCalled();
   });
 
   it("prevents unauthorized user from creating payment for another customer's order", async () => {

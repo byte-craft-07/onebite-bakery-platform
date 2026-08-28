@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 
 import { env } from "../../../config/env.js";
-import { requireAuth } from "../../auth/index.js";
+import { requireAuth, type AuthenticatedRequest } from "../../auth/index.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
 import { AppError } from "../../../shared/errors/app-error.js";
@@ -12,7 +12,6 @@ import { logger } from "../../../shared/utils/logger.js";
 import { PaymentController } from "../controller/index.js";
 import { PaymentRepository } from "../repository/index.js";
 import { PaymentService } from "../service/index.js";
-import { RazorpayProvider } from "../provider/razorpay.provider.js";
 import {
   createPaymentSchema,
   paymentIdParamSchema,
@@ -24,15 +23,13 @@ export const paymentRouter = Router();
 const paymentRepository = new PaymentRepository();
 const paymentService = new PaymentService(paymentRepository);
 const paymentController = new PaymentController(paymentService);
-const razorpayProvider = new RazorpayProvider();
 
 const razorpayCreateOrderSchema = z.object({
-  amount: z.number().int().min(100),
-  currency: z.literal("INR").default("INR"),
-  receipt: z.string().trim().min(1).max(40),
+  orderId: z.string().regex(/^[a-f\d]{24}$/i, "Invalid order id."),
 });
 
 const razorpayVerifySchema = z.object({
+  orderId: z.string().regex(/^[a-f\d]{24}$/i, "Invalid order id."),
   razorpay_order_id: z.string().trim().min(5),
   razorpay_payment_id: z.string().trim().min(5),
   razorpay_signature: z.string().trim().min(10),
@@ -58,31 +55,48 @@ paymentRouter.post(
   requireAuth,
   validateRequest({ body: razorpayCreateOrderSchema }),
   asyncHandler(async (req, res) => {
-    const { amount, currency, receipt } = req.body as z.infer<typeof razorpayCreateOrderSchema>;
-    const amountInRupees = amount / 100;
+    const authenticatedRequest = req as AuthenticatedRequest;
+    const userId = authenticatedRequest.user?.id;
+
+    if (!userId) {
+      throw new AppError(
+        "Authentication required.",
+        HTTP_STATUS.UNAUTHORIZED,
+        [],
+        true,
+        APP_ERROR_CODES.AUTHENTICATION_REQUIRED,
+      );
+    }
+
+    const { orderId } = req.body as z.infer<typeof razorpayCreateOrderSchema>;
 
     try {
-      const orderResult = await razorpayProvider.createOrder(
-        amountInRupees,
-        currency,
-        receipt,
-      );
+      const orderResult = await paymentService.createPayment(userId, {
+        orderId,
+        provider: "RAZORPAY",
+      });
 
       res.json({
         id: orderResult.providerOrderId,
         amount: Math.round(orderResult.amount * 100),
         currency: orderResult.currency,
-        receipt,
+        receipt: orderResult.orderId,
         status: "created",
-        isMock: orderResult.isMock,
-        keyId: env.razorpayKeyId,
+        isMock: !orderResult.providerOrderId.startsWith("order_"),
+        keyId: orderResult.razorpayKeyId,
+        paymentId: orderResult.paymentId,
+        orderId: orderResult.orderId,
       });
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
       logger.error(
         {
           error,
           provider: "RAZORPAY",
-          receipt,
+          orderId,
           hasKeyId: Boolean(env.razorpayKeyId),
           hasKeySecret: Boolean(env.razorpayKeySecret),
         },
@@ -105,25 +119,33 @@ paymentRouter.post(
   requireAuth,
   validateRequest({ body: razorpayVerifySchema }),
   asyncHandler(async (req, res) => {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-      req.body as z.infer<typeof razorpayVerifySchema>;
-    const isVerified = razorpayProvider.verifySignature(
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-    );
+    const authenticatedRequest = req as AuthenticatedRequest;
+    const userId = authenticatedRequest.user?.id;
 
-    if (!isVerified) {
+    if (!userId) {
       throw new AppError(
-        "Payment verification failed.",
-        HTTP_STATUS.BAD_REQUEST,
+        "Authentication required.",
+        HTTP_STATUS.UNAUTHORIZED,
         [],
         true,
-        APP_ERROR_CODES.PAYMENT_INVALID_SIGNATURE,
+        APP_ERROR_CODES.AUTHENTICATION_REQUIRED,
       );
     }
 
-    res.json({ verified: true, message: "Razorpay HMAC SHA-256 signature verified" });
+    const { orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+      req.body as z.infer<typeof razorpayVerifySchema>;
+    const result = await paymentService.verifyPayment(userId, {
+      orderId,
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+      razorpaySignature: razorpay_signature,
+    });
+
+    res.json({
+      verified: result.success,
+      paymentStatus: result.paymentStatus,
+      message: result.message,
+    });
   }),
 );
 

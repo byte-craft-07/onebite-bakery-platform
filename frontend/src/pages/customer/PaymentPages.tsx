@@ -1,11 +1,51 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, CheckCircle, CreditCard, RefreshCw, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/DisplayComponents";
 import { paymentService } from "@/services/payment.service";
+import { orderService, type OrderDetails } from "@/services/order.service";
+import { razorpayService } from "@/services/razorpay.service";
 import { OrderReviewForm } from "./OrdersPages";
+
+const getPaymentPageError = (error: unknown): string => {
+  if (
+    error &&
+    typeof error === "object" &&
+    "response" in error &&
+    error.response &&
+    typeof error.response === "object" &&
+    "data" in error.response
+  ) {
+    const data = error.response.data as
+      | { error?: { message?: string }; message?: string }
+      | undefined;
+    return data?.error?.message || data?.message || "Payment initiation failed. Please try again.";
+  }
+
+  return error instanceof Error
+    ? error.message
+    : "Payment initiation failed. Please try again.";
+};
+
+const waitForPaidOrder = async (orderId: string): Promise<OrderDetails> => {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const order = await orderService.getOrderById(orderId);
+
+    if (order.paymentStatus === "SUCCESS" || order.paymentStatus === "PAID") {
+      return order;
+    }
+
+    if (order.paymentStatus === "FAILED" || order.paymentStatus === "CANCELLED") {
+      throw new Error("UPI payment was not completed. Please retry.");
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+
+  throw new Error("Payment is still being verified. Please check your order status shortly.");
+};
 
 export const PaymentPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -13,30 +53,43 @@ export const PaymentPage: React.FC = () => {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
   const handlePayNow = async () => {
     if (!orderId) return;
     setErrorMsg(null);
+    setStatusMsg(null);
     setIsProcessing(true);
 
     try {
+      await orderService.getOrderById(orderId);
       const initRes = await paymentService.initiatePayment({ orderId, provider: "RAZORPAY" });
 
-      const verifyRes = await paymentService.verifyPayment({
-        paymentId: initRes.paymentId,
-        razorpayPaymentId: `pay_mock_${Date.now()}`,
-        razorpayOrderId: initRes.providerOrderId,
-        razorpaySignature: "mock_signature_valid",
+      setStatusMsg("Opening UPI payment...");
+      await razorpayService.openPaymentModal({
+        payment: initRes,
+        customerName: "OneBite Customer",
+        customerEmail: "customer@onebitebakery.com",
+        customerPhone: "7897671632",
+        onSuccess: async () => {
+          setStatusMsg("Payment received. Waiting for secure backend confirmation...");
+          try {
+            await waitForPaidOrder(orderId);
+            navigate(`/order/success/${orderId}`);
+          } catch (error) {
+            setErrorMsg(getPaymentPageError(error));
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        onDismiss: () => {
+          setStatusMsg(null);
+          setIsProcessing(false);
+          setErrorMsg("UPI payment was cancelled or closed. Please retry.");
+        },
       });
-
-      if (verifyRes.isVerified) {
-        navigate(`/order/success/${orderId}`);
-      } else {
-        navigate(`/order/failure/${orderId}`);
-      }
-    } catch (err: any) {
-      setErrorMsg(err?.response?.data?.error?.message || "Payment initiation failed. Please try again.");
-    } finally {
+    } catch (err) {
+      setErrorMsg(getPaymentPageError(err));
       setIsProcessing(false);
     }
   };
@@ -44,10 +97,10 @@ export const PaymentPage: React.FC = () => {
   return (
     <div className="py-16 max-w-xl mx-auto space-y-6">
       <Card className="text-center space-y-6 bg-white shadow-xl">
-        <CreditCard className="h-16 w-16 text-[#E67E22] mx-auto" />
+        <Smartphone className="h-16 w-16 text-[#E67E22] mx-auto" />
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-[#2C1E16]">Complete Order Payment</h1>
-          <p className="text-xs text-[#6E5D4F]">Secure Razorpay Payment Gateway Integration</p>
+          <p className="text-xs text-[#6E5D4F]">Secure UPI payment through Razorpay</p>
         </div>
 
         {errorMsg ? (
@@ -56,13 +109,19 @@ export const PaymentPage: React.FC = () => {
           </div>
         ) : null}
 
+        {statusMsg ? (
+          <div className="p-3 bg-[#FFF3E6] text-[#2C1E16] text-xs font-semibold rounded-lg border border-[#E67E22]/30">
+            {statusMsg}
+          </div>
+        ) : null}
+
         <Button onClick={handlePayNow} isLoading={isProcessing} className="w-full h-12 shadow-md">
-          <span>Pay Now via Razorpay</span>
+          <span>Pay Now with UPI</span>
         </Button>
 
         <p className="text-[11px] text-gray-400 flex items-center justify-center gap-1">
           <ShieldCheck className="h-3.5 w-3.5 text-[#27AE60]" />
-          <span>256-Bit Encrypted Secure Razorpay Gateway</span>
+          <span>Only UPI payments are accepted.</span>
         </p>
       </Card>
     </div>

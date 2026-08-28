@@ -1,6 +1,7 @@
 import type { HydratedDocument } from "mongoose";
 
 import { toObjectId } from "../../../db/utils/object-id.js";
+import { env } from "../../../config/env.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
 import { AppError } from "../../../shared/errors/app-error.js";
@@ -15,6 +16,16 @@ import type {
   PaymentDetailsResponse,
   VerifyPaymentResponse,
 } from "../types/index.js";
+
+interface RazorpayPaymentWebhookEntity {
+  id?: string;
+  order_id?: string;
+  amount?: number;
+  currency?: string;
+  status?: string;
+  method?: string;
+  error_description?: string;
+}
 
 export class PaymentService {
   private readonly provider: IPaymentProvider;
@@ -32,6 +43,16 @@ export class PaymentService {
   ): Promise<CreatePaymentResponse> {
     const orderObjId = toObjectId(dto.orderId);
     const customerObjId = toObjectId(customerId);
+
+    if (dto.provider && dto.provider !== "RAZORPAY") {
+      throw new AppError(
+        "Only UPI payments through Razorpay are supported.",
+        HTTP_STATUS.BAD_REQUEST,
+        [],
+        true,
+        APP_ERROR_CODES.PAYMENT_GATEWAY_ERROR,
+      );
+    }
 
     const order = await OrderModel.findById(orderObjId).exec();
 
@@ -81,6 +102,16 @@ export class PaymentService {
     // Always calculate amount from server-side order snapshot
     const payableAmount = order.pricingSnapshot?.grandTotal ?? order.totalAmount;
 
+    if (!Number.isFinite(payableAmount) || payableAmount <= 0) {
+      throw new AppError(
+        "Order payable amount is invalid.",
+        HTTP_STATUS.UNPROCESSABLE_ENTITY,
+        [],
+        true,
+        APP_ERROR_CODES.PAYMENT_GATEWAY_ERROR,
+      );
+    }
+
     const providerResult = await this.provider.createOrder(
       payableAmount,
       "INR",
@@ -95,7 +126,13 @@ export class PaymentService {
       amount: payableAmount,
       currency: "INR",
       paymentStatus: "CREATED",
+      paymentMethod: "UPI",
     });
+
+    if (order.paymentStatus === "PENDING") {
+      order.paymentStatus = "PROCESSING";
+      await order.save();
+    }
 
     const razorpayKeyId =
       this.provider instanceof RazorpayProvider
@@ -158,6 +195,29 @@ export class PaymentService {
       );
     }
 
+    if (
+      payment.orderId.toString() !== orderObjId.toString() ||
+      payment.userId.toString() !== customerId
+    ) {
+      throw new AppError(
+        "Payment record does not match this order.",
+        HTTP_STATUS.FORBIDDEN,
+        [],
+        true,
+        APP_ERROR_CODES.AUTHORIZATION_FAILED,
+      );
+    }
+
+    if (payment.paymentStatus === "CAPTURED") {
+      return {
+        success: true,
+        paymentId: payment._id.toString(),
+        orderId: order._id.toString(),
+        paymentStatus: "CAPTURED",
+        message: "Payment has already been captured.",
+      };
+    }
+
     const isValidSignature = this.provider.verifySignature(
       dto.razorpayOrderId,
       dto.razorpayPaymentId,
@@ -178,22 +238,19 @@ export class PaymentService {
       );
     }
 
-    // Mark Payment CAPTURED
-    await this.paymentRepository.updateStatus(payment._id, "CAPTURED", {
+    await this.paymentRepository.updateStatus(payment._id, "AUTHORIZED", {
       providerPaymentId: dto.razorpayPaymentId,
     });
 
-    // Update Order payment and order status
-    order.paymentStatus = "SUCCESS";
-    order.orderStatus = "CONFIRMED";
+    order.paymentStatus = "PROCESSING";
     await order.save();
 
     return {
       success: true,
       paymentId: payment._id.toString(),
       orderId: order._id.toString(),
-      paymentStatus: "CAPTURED",
-      message: "Payment verified and order confirmed successfully.",
+      paymentStatus: "AUTHORIZED",
+      message: "Payment signature verified. Awaiting Razorpay webhook confirmation.",
     };
   }
 
@@ -232,7 +289,17 @@ export class PaymentService {
     signature: string,
     eventPayload: { event?: string; payload?: Record<string, unknown> },
   ): Promise<{ processed: boolean; message: string }> {
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET ?? "rzp_test_webhook_secret";
+    const webhookSecret = env.razorpayWebhookSecret;
+
+    if (!webhookSecret) {
+      throw new AppError(
+        "Razorpay webhook secret is not configured.",
+        HTTP_STATUS.BAD_REQUEST,
+        [],
+        true,
+        APP_ERROR_CODES.PAYMENT_GATEWAY_ERROR,
+      );
+    }
 
     const isValidWebhook = this.provider.verifyWebhookSignature(
       rawBody,
@@ -251,30 +318,67 @@ export class PaymentService {
     }
 
     const event = eventPayload.event;
-    if (event === "payment.captured" || event === "order.paid") {
-      const payloadData = eventPayload.payload as
-        | { payment?: { entity?: { order_id?: string; id?: string } } }
-        | undefined;
-      const paymentEntity = payloadData?.payment?.entity;
-      const providerOrderId = paymentEntity?.order_id;
-      const providerPaymentId = paymentEntity?.id;
+    const paymentEntity = this.getPaymentEntity(eventPayload);
 
-      if (providerOrderId) {
+    if (event === "payment.captured") {
+      if (!paymentEntity?.order_id) {
+        return {
+          processed: true,
+          message: "Webhook ignored because payment order id was missing.",
+        };
+      }
+
+      const payment = await this.paymentRepository.findByProviderOrder(
+        paymentEntity.order_id,
+      );
+
+      if (!payment) {
+        return {
+          processed: true,
+          message: "Webhook ignored because payment record was not found.",
+        };
+      }
+
+      if (payment.paymentStatus === "CAPTURED") {
+        return {
+          processed: true,
+          message: "Webhook already processed.",
+        };
+      }
+
+      this.assertCapturedPaymentMatchesRecord(payment, paymentEntity);
+
+      await this.paymentRepository.updateStatus(payment._id, "CAPTURED", {
+        ...(paymentEntity.id ? { providerPaymentId: paymentEntity.id } : {}),
+        paymentMethod: "UPI",
+      });
+
+      const order = await OrderModel.findById(payment.orderId).exec();
+      if (order && order.paymentStatus !== "SUCCESS") {
+        order.paymentStatus = "SUCCESS";
+        if (order.orderStatus === "PENDING") {
+          order.orderStatus = "CONFIRMED";
+        }
+        await order.save();
+      }
+    }
+
+    if (event === "payment.failed") {
+      if (paymentEntity?.order_id) {
         const payment = await this.paymentRepository.findByProviderOrder(
-          providerOrderId,
+          paymentEntity.order_id,
         );
 
         if (payment && payment.paymentStatus !== "CAPTURED") {
-          await this.paymentRepository.updateStatus(payment._id, "CAPTURED", {
-            ...(providerPaymentId ? { providerPaymentId } : {}),
+          await this.paymentRepository.updateStatus(payment._id, "FAILED", {
+            ...(paymentEntity.id ? { providerPaymentId: paymentEntity.id } : {}),
+            failureReason:
+              paymentEntity.error_description ?? "Razorpay payment failed.",
           });
 
           const order = await OrderModel.findById(payment.orderId).exec();
           if (order && order.paymentStatus !== "SUCCESS") {
-            order.paymentStatus = "SUCCESS";
-            if (order.orderStatus === "PENDING") {
-              order.orderStatus = "CONFIRMED";
-            }
+            order.paymentStatus = "FAILED";
             await order.save();
           }
         }
@@ -285,6 +389,46 @@ export class PaymentService {
       processed: true,
       message: "Webhook event processed successfully.",
     };
+  }
+
+  private getPaymentEntity(eventPayload: {
+    payload?: Record<string, unknown>;
+  }): RazorpayPaymentWebhookEntity | undefined {
+    const payment = eventPayload.payload?.payment;
+
+    if (!payment || typeof payment !== "object") {
+      return undefined;
+    }
+
+    const entity = (payment as { entity?: unknown }).entity;
+
+    if (!entity || typeof entity !== "object") {
+      return undefined;
+    }
+
+    return entity as RazorpayPaymentWebhookEntity;
+  }
+
+  private assertCapturedPaymentMatchesRecord(
+    payment: HydratedDocument<Payment>,
+    paymentEntity: RazorpayPaymentWebhookEntity,
+  ): void {
+    const expectedAmount = Math.round(payment.amount * 100);
+
+    if (
+      paymentEntity.amount !== expectedAmount ||
+      paymentEntity.currency !== payment.currency ||
+      paymentEntity.method !== "upi" ||
+      paymentEntity.status !== "captured"
+    ) {
+      throw new AppError(
+        "Razorpay payment details do not match the internal payment record.",
+        HTTP_STATUS.BAD_REQUEST,
+        [],
+        true,
+        APP_ERROR_CODES.PAYMENT_GATEWAY_ERROR,
+      );
+    }
   }
 
   private toResponse(payment: HydratedDocument<Payment>): PaymentDetailsResponse {

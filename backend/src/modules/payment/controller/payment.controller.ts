@@ -6,6 +6,10 @@ import type { AuthenticatedRequest } from "../../auth/index.js";
 import type { CreatePaymentDto, VerifyPaymentDto } from "../dto/index.js";
 import type { PaymentService } from "../service/index.js";
 
+interface RazorpayWebhookRequest extends Request {
+  rawBody?: Buffer;
+}
+
 export class PaymentController {
   public constructor(private readonly paymentService: PaymentService) {}
 
@@ -23,7 +27,7 @@ export class PaymentController {
     return sendSuccess(response, {
       statusCode: HTTP_STATUS.CREATED,
       message: "Payment order created successfully.",
-      data: result,
+      data: { payment: result },
     });
   };
 
@@ -40,7 +44,7 @@ export class PaymentController {
 
     return sendSuccess(response, {
       message: "Payment verified successfully.",
-      data: result,
+      data: { payment: result },
     });
   };
 
@@ -67,11 +71,13 @@ export class PaymentController {
     request: Request,
     response: Response,
   ): Promise<Response> => {
+    const webhookRequest = request as RazorpayWebhookRequest;
     const signature = request.headers["x-razorpay-signature"];
     const rawBody =
-      typeof request.body === "string"
+      webhookRequest.rawBody?.toString("utf8") ??
+      (typeof request.body === "string"
         ? request.body
-        : JSON.stringify(request.body);
+        : JSON.stringify(request.body));
 
     const result = await this.paymentService.handleWebhook(
       rawBody,
