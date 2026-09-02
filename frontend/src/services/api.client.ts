@@ -10,10 +10,39 @@ export const apiClient = axios.create({
   },
 });
 
+const GUEST_SESSION_KEY = "theonlinebakery_guest_session_id";
+
+export const getOrCreateGuestSessionId = (): string => {
+  try {
+    let sid = localStorage.getItem(GUEST_SESSION_KEY);
+    if (!sid) {
+      sid = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      localStorage.setItem(GUEST_SESSION_KEY, sid);
+    }
+    return sid;
+  } catch (_err) {
+    return `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  }
+};
+
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     config.headers.set("x-request-id", requestId);
+    config.headers.set("x-session-id", getOrCreateGuestSessionId());
+
+    try {
+      const activeRaw = localStorage.getItem("theonlinebakery_active_location") || localStorage.getItem("theonlinebakery_current_location");
+      if (activeRaw) {
+        const loc = JSON.parse(activeRaw);
+        if (loc?.villageId) config.headers.set("x-village-id", loc.villageId);
+        if (loc?.district) config.headers.set("x-district-name", loc.district);
+        if (loc?.villageName) config.headers.set("x-village-name", loc.villageName);
+      }
+    } catch (_err) {
+      // Ignore
+    }
+
     return config;
   },
   (error: AxiosError) => Promise.reject(error),

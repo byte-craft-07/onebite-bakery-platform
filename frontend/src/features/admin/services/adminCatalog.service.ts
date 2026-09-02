@@ -18,13 +18,47 @@ export interface CreateProductPayload {
   categoryId?: string;
   occasionIds?: string[];
   mainImage?: string;
+  thumbnailUrl?: string;
   images?: string[];
+  imageUrls?: string[];
   stockQuantity?: number;
 }
 
 export const adminCatalogService = {
   getProducts: async () => {
-    return catalogService.searchProducts({});
+    try {
+      const response = await apiClient.get<{
+        success: boolean;
+        data: { products: any[] };
+      }>("/products/admin");
+      if (response.data?.data?.products) {
+        return response.data.data.products.map((p) => ({
+          id: p.id || p._id,
+          name: p.name,
+          slug: p.slug,
+          description: p.description,
+          productType: p.productType || "NORMAL",
+          price: p.price,
+          compareAtPrice: p.compareAtPrice,
+          sku: p.sku || `SKU-${p.id}`,
+          isEggless: p.isEggless ?? true,
+          isAvailable: p.isAvailable ?? true,
+          stockQuantity: p.stockQuantity ?? 50,
+          mainImage:
+            p.thumbnailUrl ||
+            p.mainImage ||
+            (p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls[0] : undefined) ||
+            "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=200&q=80",
+        }));
+      }
+    } catch (_err) {
+      // Fallback to public catalog search
+    }
+    const res = await catalogService.searchProducts({ limit: 50 });
+    return res.products.map((p) => ({
+      ...p,
+      stockQuantity: (p as any).stockQuantity ?? 50,
+    }));
   },
 
   createProduct: async (payload: CreateProductPayload) => {
@@ -43,6 +77,30 @@ export const adminCatalogService = {
     return response.data.data.product;
   },
 
+  updateInventory: async (id: string, stockQuantity: number) => {
+    const response = await apiClient.patch<{
+      success: boolean;
+      data: { inventory: any };
+    }>(`/products/${id}/inventory`, { stockQuantity });
+    return response.data.data.inventory;
+  },
+
+  updateAvailability: async (id: string, isAvailable: boolean) => {
+    const response = await apiClient.patch<{
+      success: boolean;
+      data: { inventory: any };
+    }>(`/products/${id}/availability`, { isAvailable });
+    return response.data.data.inventory;
+  },
+
+  updatePricing: async (id: string, price: number) => {
+    const response = await apiClient.patch<{
+      success: boolean;
+      data: { inventory: any };
+    }>(`/products/${id}/pricing`, { price });
+    return response.data.data.inventory;
+  },
+
   deleteProduct: async (id: string) => {
     const response = await apiClient.delete<{ success: boolean }>(`/products/${id}`);
     return response.data;
@@ -53,15 +111,14 @@ export const adminCatalogService = {
       const response = await apiClient.get<{
         success: boolean;
         data: { categories: any[] };
-      }>("/categories");
-      return response.data.data.categories;
+      }>("/categories/admin");
+      if (response.data?.data?.categories) {
+        return response.data.data.categories;
+      }
     } catch (_err) {
-      return [
-        { id: "cat-1", name: "Artisanal Cakes", slug: "artisanal-cakes", description: "Freshly baked celebration cakes", itemCount: 24, isActive: true },
-        { id: "cat-2", name: "Pastries & Tarts", slug: "pastries-tarts", description: "French pastries and fruit tarts", itemCount: 18, isActive: true },
-        { id: "cat-3", name: "Fresh Breads", slug: "fresh-breads", description: "Sourdough breads and brioche", itemCount: 12, isActive: true },
-      ];
+      // Fallback
     }
+    return catalogService.getCategories();
   },
 
   createCategory: async (payload: { name: string; slug: string; description?: string; image?: string }) => {
@@ -72,25 +129,60 @@ export const adminCatalogService = {
     return response.data.data.category;
   },
 
+  updateCategory: async (id: string, payload: Partial<{ name: string; slug: string; description: string; isActive: boolean }>) => {
+    const response = await apiClient.patch<{
+      success: boolean;
+      data: { category: any };
+    }>(`/categories/${id}`, payload);
+    return response.data.data.category;
+  },
+
+  deleteCategory: async (id: string) => {
+    const response = await apiClient.delete<{ success: boolean }>(`/categories/${id}`);
+    return response.data;
+  },
+
   getOccasions: async () => {
     try {
       const response = await apiClient.get<{
         success: boolean;
         data: { occasions: any[] };
-      }>("/occasions");
-      return response.data.data.occasions;
+      }>("/occasions/admin");
+      if (response.data?.data?.occasions) {
+        return response.data.data.occasions;
+      }
     } catch (_err) {
-      return [
-        { id: "occ-1", name: "Birthdays", slug: "birthdays", tagline: "Celebrate special milestones with custom tiered cakes.", isActive: true },
-        { id: "occ-2", name: "Anniversaries", slug: "anniversaries", tagline: "Romantic red velvet and Belgian chocolate treats.", isActive: true },
-        { id: "occ-3", name: "Weddings", slug: "weddings", tagline: "Elegant multi-tier custom centerpiece creations.", isActive: true },
-      ];
+      // Fallback
     }
+    return catalogService.getOccasions();
   },
 
-  createOccasion: async (payload: { name: string; slug: string; tagline?: string; image?: string }) => {
-    void payload;
-    throw new Error("Occasion owner API is not available yet.");
+  createOccasion: async (payload: { name: string; slug?: string; description?: string; bannerImage?: string; tagline?: string }) => {
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { occasion: any };
+    }>("/occasions", {
+      name: payload.name,
+      slug: payload.slug || payload.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+      description: payload.description || payload.tagline || `${payload.name} celebration cakes and desserts`,
+      bannerImage: payload.bannerImage || "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=800&q=80",
+      seoTitle: payload.name,
+      seoDescription: payload.description || `${payload.name} cakes`,
+    });
+    return response.data.data.occasion;
+  },
+
+  updateOccasion: async (id: string, payload: Partial<{ name: string; slug: string; tagline: string; description: string; bannerImage: string; isActive: boolean }>) => {
+    const response = await apiClient.patch<{
+      success: boolean;
+      data: { occasion: any };
+    }>(`/occasions/${id}`, payload);
+    return response.data.data.occasion;
+  },
+
+  deleteOccasion: async (id: string) => {
+    const response = await apiClient.delete<{ success: boolean }>(`/occasions/${id}`);
+    return response.data;
   },
 
   uploadMedia: async (file: File, entityType = "PRODUCT"): Promise<string> => {

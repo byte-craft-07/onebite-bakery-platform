@@ -171,3 +171,32 @@ notificationRouter.post(
   validateRequest({ params: notificationIdParamSchema }),
   asyncHandler(notificationController.retryNotification),
 );
+
+const broadcastSchema = z.object({
+  title: z.string().trim().min(2),
+  message: z.string().trim().min(2),
+  targetRole: z.string().optional(),
+});
+
+notificationRouter.post(
+  "/broadcast",
+  requireAuth,
+  requireRoles(["admin"]),
+  validateRequest({ body: broadcastSchema }),
+  asyncHandler(async (req, res) => {
+    const { title, message } = req.body as z.infer<typeof broadcastSchema>;
+    const notification = await notificationService.send({
+      recipient: "ALL_CUSTOMERS",
+      type: "ADMIN_NOTIFICATION",
+      template: "broadcast",
+      payload: { title, message },
+      provider: "EMAIL",
+    });
+
+    res.json({
+      success: true,
+      message: `Broadcast notification "${title}" dispatched successfully.`,
+      data: { notification },
+    });
+  }),
+);

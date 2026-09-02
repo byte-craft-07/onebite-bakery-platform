@@ -88,8 +88,8 @@ describe("Admin Operations Dashboard & Full Modules Tests", () => {
       </AuthProvider>
     );
 
-    expect(screen.getByText("Bakery Store & Delivery Configuration")).toBeDefined();
-    expect(screen.getByText("Save Store Configuration")).toBeDefined();
+    expect(screen.getByText(/Standard Delivery Fee/i)).toBeDefined();
+    expect(screen.getByText(/Store Business Name/i)).toBeDefined();
   });
 
   it("renders AdminHealthLogsPage system health & audit log viewer", () => {

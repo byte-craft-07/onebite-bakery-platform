@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an improvement for OneBite Bakery Platform
+about: Suggest an improvement for The Online Bakery Platform
 title: "feat: "
 labels: enhancement
 assignees: ""

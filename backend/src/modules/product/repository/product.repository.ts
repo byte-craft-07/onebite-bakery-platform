@@ -27,13 +27,22 @@ export class ProductRepository extends BaseRepository<Product> {
   }
 
   public async findActiveBySlug(
-    slug: string,
+    slugOrId: string,
   ): Promise<Product | null> {
-    return ProductModel.findOne({
-      slug,
-      isActive: true,
-      isDeleted: false,
-    })
+    const isObjectId = /^[a-f\d]{24}$/i.test(slugOrId);
+    const filter: FilterQuery<Product> = isObjectId
+      ? {
+          $or: [{ slug: slugOrId }, { _id: slugOrId }],
+          isActive: true,
+          isDeleted: false,
+        }
+      : {
+          slug: slugOrId,
+          isActive: true,
+          isDeleted: false,
+        };
+
+    return ProductModel.findOne(filter)
       .select("-costPrice -deletedAt -deletedBy -__v")
       .lean<Product>()
       .exec();
@@ -87,6 +96,16 @@ export class ProductRepository extends BaseRepository<Product> {
       }
     }
 
+    const searchQuery = (query as Record<string, unknown>).q || (query as Record<string, unknown>).search;
+    if (searchQuery && typeof searchQuery === "string" && searchQuery.trim()) {
+      const qClean = searchQuery.trim();
+      filter.$or = [
+        { name: { $regex: qClean, $options: "i" } },
+        { description: { $regex: qClean, $options: "i" } },
+        { slug: { $regex: qClean, $options: "i" } },
+      ];
+    }
+
     const sortOption = this.resolveSortOption(query.sort);
 
     const [items, total] = await Promise.all([
@@ -121,7 +140,7 @@ export class ProductRepository extends BaseRepository<Product> {
 
   public async findAdminList(): Promise<Array<HydratedDocument<Product>>> {
     return ProductModel.find({ isDeleted: false })
-      .sort({ displayOrder: 1, name: 1 })
+      .sort({ createdAt: -1 })
       .exec();
   }
 

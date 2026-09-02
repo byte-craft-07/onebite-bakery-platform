@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart } from "lucide-react";
+import { ArrowLeft, Heart } from "lucide-react";
 
 import { ProductCard } from "@/components/cards/ProductCard";
 import { Button } from "@/components/ui/Button";
@@ -12,12 +12,28 @@ export const FavoritesPage: React.FC = () => {
   const [favorites, setFavorites] = useState<ProductItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  const loadFavorites = (showLoader = false) => {
+    if (showLoader) setIsLoading(true);
     favoritesService
       .getFavorites()
       .then(setFavorites)
       .catch(() => setFavorites([]))
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        if (showLoader) setIsLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    loadFavorites(true);
+
+    const handleFavUpdated = () => {
+      loadFavorites(false);
+    };
+
+    window.addEventListener("theonlinebakery_favorites_updated", handleFavUpdated);
+    return () => {
+      window.removeEventListener("theonlinebakery_favorites_updated", handleFavUpdated);
+    };
   }, []);
 
   if (isLoading) {
@@ -50,10 +66,20 @@ export const FavoritesPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 pb-16 max-w-5xl mx-auto">
-      <div className="flex items-center gap-3 border-b border-[#E8E2D9] pb-4">
+    <div className="space-y-6 pb-16 max-w-5xl mx-auto">
+      <Link
+        to="/customer/dashboard"
+        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7A6E65] hover:text-[#596B58] transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span>Back to Account Hub</span>
+      </Link>
+
+      <div className="flex items-center gap-3 border-b border-[#E5DEC9] pb-4">
         <Heart className="h-6 w-6 text-[#C0392B] fill-current" />
-        <h1 className="text-3xl font-extrabold text-[#2C1E16]">Your Favorite Items ({favorites.length})</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">
+          Your Favorite Items ({favorites.length})
+        </h1>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -36,22 +36,35 @@ export const createApp = (): Application => {
   );
   app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
   app.use(cors(corsOptions));
+
+  // High performance static caching headers for uploaded images and media
+  app.use(
+    "/uploads",
+    express.static(path.join(process.cwd(), "uploads"), {
+      maxAge: "7d",
+      etag: true,
+      lastModified: true,
+      immutable: true,
+      setHeaders: (res) => {
+        res.setHeader("Cache-Control", "public, max-age=604800, immutable");
+      },
+    }),
+  );
+
   app.use(rateLimit(globalRateLimitOptions));
   app.use(cookieParser());
   app.use(
     express.json({
-      limit: env.jsonBodyLimit,
+      limit: env.jsonBodyLimit || "50mb",
       verify: (request: RawBodyRequest, _response, buffer) => {
         request.rawBody = Buffer.from(buffer);
       },
     }),
   );
-  app.use(express.urlencoded({ extended: true, limit: env.jsonBodyLimit }));
+  app.use(express.urlencoded({ extended: true, limit: env.jsonBodyLimit || "50mb" }));
   app.use(mongoSanitize);
   app.use(hpp());
   app.use(compression());
-
-  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
   app.use(env.apiPrefix, apiRoutes);
   app.use(notFoundHandler);

@@ -9,9 +9,11 @@ import type { CustomCakeConfig } from "../../cart/model/index.js";
 import {
   DELIVERY_METHODS,
   ORDER_STATUSES,
+  PAYMENT_METHODS,
   PAYMENT_STATUSES,
   type DeliveryMethod,
   type OrderStatus,
+  type PaymentMethod,
   type PaymentStatus,
 } from "../constants/index.js";
 
@@ -46,6 +48,26 @@ export interface OrderAddressSnapshot {
   landmark?: string;
 }
 
+export interface OrderLocationSnapshot {
+  villageId?: Types.ObjectId;
+  villageName: string;
+  district: string;
+  pincode: string;
+}
+
+export interface OrderBranchSnapshot {
+  branchId: Types.ObjectId;
+  name: string;
+  code: string;
+  type: "MAIN" | "FRANCHISE";
+}
+
+export interface OrderDeliveryAgentSnapshot {
+  agentId: Types.ObjectId;
+  name: string;
+  phone?: string;
+}
+
 export interface OrderPricingSnapshot {
   subtotal: number;
   tax: number;
@@ -61,23 +83,34 @@ export interface Order extends TimestampedDocument {
   orderNumber: string;
   userId?: Types.ObjectId;
   customerId: Types.ObjectId;
+  branchId?: Types.ObjectId;
+  deliveryAgentId?: Types.ObjectId;
   addressId?: Types.ObjectId;
   items: OrderItemSnapshot[];
   addressSnapshot?: OrderAddressSnapshot;
+  locationSnapshot?: OrderLocationSnapshot;
+  branchSnapshot?: OrderBranchSnapshot;
+  deliveryAgentSnapshot?: OrderDeliveryAgentSnapshot;
   pricingSnapshot: OrderPricingSnapshot;
   subtotal: number;
   deliveryCharge: number;
   totalAmount: number;
   deliveryMethod: DeliveryMethod;
+  paymentMethod?: PaymentMethod;
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
   notes?: string;
+  deliveryTimingType?: "INSTANT" | "SCHEDULED";
+  deliveryTimePreference?: string;
   estimatedReadyTime?: Date;
   scheduledDate?: Date;
   scheduledTimeSlot?: string;
   cancellationReason?: string;
   cancelledBy?: Types.ObjectId;
   cancelledAt?: Date;
+  deliveryStartedAt?: Date;
+  deliveredAt?: Date;
+  deliveryCompletedBy?: Types.ObjectId;
 }
 
 const customCakeConfigSchema = new Schema<CustomCakeConfig>(
@@ -142,6 +175,35 @@ const orderAddressSnapshotSchema = new Schema<OrderAddressSnapshot>(
   { _id: false },
 );
 
+const orderLocationSnapshotSchema = new Schema<OrderLocationSnapshot>(
+  {
+    villageId: { type: Schema.Types.ObjectId, ref: "Village", default: undefined },
+    villageName: { type: String, required: true, trim: true },
+    district: { type: String, required: true, trim: true },
+    pincode: { type: String, required: true, trim: true },
+  },
+  { _id: false },
+);
+
+const orderBranchSnapshotSchema = new Schema<OrderBranchSnapshot>(
+  {
+    branchId: { type: Schema.Types.ObjectId, ref: "Branch", required: true },
+    name: { type: String, required: true, trim: true },
+    code: { type: String, required: true, trim: true },
+    type: { type: String, enum: ["MAIN", "FRANCHISE"], required: true },
+  },
+  { _id: false },
+);
+
+const orderDeliveryAgentSnapshotSchema = new Schema<OrderDeliveryAgentSnapshot>(
+  {
+    agentId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    name: { type: String, required: true, trim: true },
+    phone: { type: String, trim: true, default: undefined },
+  },
+  { _id: false },
+);
+
 const orderPricingSnapshotSchema = new Schema<OrderPricingSnapshot>(
   {
     subtotal: { type: Number, required: true, min: 0 },
@@ -160,7 +222,6 @@ const orderSchema = new Schema<Order>(
     orderNumber: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       maxlength: 50,
     },
@@ -174,6 +235,16 @@ const orderSchema = new Schema<Order>(
       ref: "User",
       required: true,
     },
+    branchId: {
+      type: Schema.Types.ObjectId,
+      ref: "Branch",
+      default: undefined,
+    },
+    deliveryAgentId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: undefined,
+    },
     addressId: {
       type: Schema.Types.ObjectId,
       ref: "Address",
@@ -185,6 +256,18 @@ const orderSchema = new Schema<Order>(
     },
     addressSnapshot: {
       type: orderAddressSnapshotSchema,
+      default: undefined,
+    },
+    locationSnapshot: {
+      type: orderLocationSnapshotSchema,
+      default: undefined,
+    },
+    branchSnapshot: {
+      type: orderBranchSnapshotSchema,
+      default: undefined,
+    },
+    deliveryAgentSnapshot: {
+      type: orderDeliveryAgentSnapshotSchema,
       default: undefined,
     },
     pricingSnapshot: {
@@ -212,6 +295,11 @@ const orderSchema = new Schema<Order>(
       required: true,
       enum: DELIVERY_METHODS,
     },
+    paymentMethod: {
+      type: String,
+      enum: PAYMENT_METHODS,
+      default: "UPI",
+    },
     orderStatus: {
       type: String,
       required: true,
@@ -228,6 +316,17 @@ const orderSchema = new Schema<Order>(
       type: String,
       trim: true,
       maxlength: 500,
+      default: undefined,
+    },
+    deliveryTimingType: {
+      type: String,
+      enum: ["INSTANT", "SCHEDULED"],
+      default: "INSTANT",
+    },
+    deliveryTimePreference: {
+      type: String,
+      trim: true,
+      maxlength: 200,
       default: undefined,
     },
     estimatedReadyTime: {
@@ -259,8 +358,27 @@ const orderSchema = new Schema<Order>(
       type: Date,
       default: undefined,
     },
+    deliveryStartedAt: {
+      type: Date,
+      default: undefined,
+    },
+    deliveredAt: {
+      type: Date,
+      default: undefined,
+    },
+    deliveryCompletedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: undefined,
+    },
   },
   baseSchemaOptions,
+);
+
+// Named indexes
+orderSchema.index(
+  { deliveryAgentId: 1, orderStatus: 1 },
+  { sparse: true },
 );
 
 // Named indexes
@@ -282,6 +400,11 @@ orderSchema.index(
 orderSchema.index(
   { createdAt: -1 },
   { name: INDEX_NAMES.ORDER_CREATED_AT },
+);
+
+orderSchema.index(
+  { branchId: 1 },
+  { sparse: true },
 );
 
 export const OrderModel = model<Order>(

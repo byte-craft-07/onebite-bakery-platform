@@ -7,9 +7,10 @@ import { AuthProvider } from "@/contexts/auth.context";
 import { CustomerAuthContainer } from "@/pages/auth/CustomerAuthContainer";
 import { SessionExpiredPage, UnauthorizedPage } from "@/pages/auth/StatusPages";
 import { authService } from "@/services/auth.service";
+import { UserAvatar, getAvatarFromEmailOrName } from "@/components/common/UserAvatar";
 
 describe("Customer Authentication & Account Service Tests", () => {
-  it("renders CustomerAuthContainer with phone input form initially", () => {
+  it("renders CustomerAuthContainer with login options initially", () => {
     render(
       <AuthProvider>
         <MemoryRouter>
@@ -18,9 +19,9 @@ describe("Customer Authentication & Account Service Tests", () => {
       </AuthProvider>,
     );
 
-    expect(screen.getByText("Welcome to OneBite")).toBeDefined();
-    expect(screen.getByLabelText("Mobile Number")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Send Verification OTP" })).toBeDefined();
+    expect(screen.getByText("Log in or sign up")).toBeDefined();
+    expect(screen.getByText("Continue with Google")).toBeDefined();
+    expect(screen.getByText("Continue with phone")).toBeDefined();
   });
 
   it("renders StatusPages (Unauthorized and Session Expired)", () => {
@@ -41,5 +42,28 @@ describe("Customer Authentication & Account Service Tests", () => {
     expect(typeof authService.getCurrentUser).toBe("function");
     expect(typeof authService.logout).toBe("function");
     expect(typeof authService.logoutAll).toBe("function");
+  });
+
+  it("renders UserAvatar with user details and email avatar fallback", () => {
+    const avatarUrl = getAvatarFromEmailOrName("John Doe", "john@example.com");
+    expect(avatarUrl).toContain("ui-avatars.com");
+    expect(avatarUrl).toContain("John");
+
+    const { container } = render(
+      <UserAvatar
+        user={{
+          id: "usr-123",
+          name: "John Doe",
+          email: "john@example.com",
+          role: "customer",
+          profileImage: "https://example.com/avatar.jpg",
+        }}
+        size="lg"
+      />,
+    );
+
+    const img = container.querySelector("img");
+    expect(img).toBeDefined();
+    expect(img?.getAttribute("src")).toBe("https://example.com/avatar.jpg");
   });
 });

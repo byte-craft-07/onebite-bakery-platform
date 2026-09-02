@@ -3,15 +3,15 @@ import { Outlet } from "react-router-dom";
 
 export const AdminLayout: React.FC = () => {
   return (
-    <div className="min-h-screen flex bg-[#F9F6F0] text-[#2C1E16]">
-      <aside className="w-64 border-r border-[#E8E2D9] bg-[#FFFFFF] p-6 hidden md:block">
-        <h2 className="text-lg font-bold text-[#E67E22] mb-6">OneBite Admin</h2>
+    <div className="min-h-screen flex bg-[#FFF8EC] text-[#3B302B]">
+      <aside className="w-64 border-r border-[#E5DEC9] bg-[#FFFFFF] p-6 hidden md:block">
+        <h2 className="text-lg font-bold text-[#596B58] mb-6">The Online Bakery Admin</h2>
         <nav className="space-y-3 font-medium text-sm">
-          <a href="/admin" className="block px-3 py-2 rounded-md hover:bg-[#FFFBF5] hover:text-[#E67E22]">Dashboard</a>
-          <a href="/admin/products" className="block px-3 py-2 rounded-md hover:bg-[#FFFBF5] hover:text-[#E67E22]">Products</a>
-          <a href="/admin/orders" className="block px-3 py-2 rounded-md hover:bg-[#FFFBF5] hover:text-[#E67E22]">Orders</a>
-          <a href="/admin/customers" className="block px-3 py-2 rounded-md hover:bg-[#FFFBF5] hover:text-[#E67E22]">Customers</a>
-          <a href="/admin/platform" className="block px-3 py-2 rounded-md hover:bg-[#FFFBF5] hover:text-[#E67E22]">Platform Operations</a>
+          <a href="/admin" className="block px-3 py-2 rounded-md hover:bg-[#FFF8EC] hover:text-[#596B58]">Dashboard</a>
+          <a href="/admin/products" className="block px-3 py-2 rounded-md hover:bg-[#FFF8EC] hover:text-[#596B58]">Products</a>
+          <a href="/admin/orders" className="block px-3 py-2 rounded-md hover:bg-[#FFF8EC] hover:text-[#596B58]">Orders</a>
+          <a href="/admin/customers" className="block px-3 py-2 rounded-md hover:bg-[#FFF8EC] hover:text-[#596B58]">Customers</a>
+          <a href="/admin/platform" className="block px-3 py-2 rounded-md hover:bg-[#FFF8EC] hover:text-[#596B58]">Platform Operations</a>
         </nav>
       </aside>
 

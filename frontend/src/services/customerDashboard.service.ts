@@ -5,9 +5,9 @@ import { favoritesService } from "./favorites.service";
 import { orderService, type OrderDetails } from "./order.service";
 import { reviewService } from "./review.service";
 
-const CELEBRATION_KEY = "onebite_local_celebrations";
-const TICKETS_KEY = "onebite_local_tickets";
-const NOTIFS_KEY = "onebite_local_customer_notifs";
+const CELEBRATION_KEY = "theonlinebakery_local_celebrations";
+const TICKETS_KEY = "theonlinebakery_local_tickets";
+const NOTIFS_KEY = "theonlinebakery_local_customer_notifs";
 
 export interface CelebrationItem {
   id: string;
@@ -122,24 +122,7 @@ export const customerDashboardService = {
     } catch (_e) {
       // Fallback
     }
-    return [
-      {
-        id: "cel-1",
-        title: "Ajay's Birthday Celebration",
-        type: "Birthday",
-        date: "2026-08-15",
-        reminderEnabled: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "cel-2",
-        title: "Parents' 25th Anniversary",
-        type: "Anniversary",
-        date: "2026-11-20",
-        reminderEnabled: true,
-        createdAt: new Date().toISOString(),
-      },
-    ];
+    return [];
   },
 
   addCelebration: (item: Omit<CelebrationItem, "id" | "createdAt">): CelebrationItem => {
@@ -167,16 +150,7 @@ export const customerDashboardService = {
     } catch (_e) {
       // Fallback
     }
-    return [
-      {
-        id: "tkt-101",
-        subject: "Eggless Custom Tier Cake Consultation",
-        category: "Custom Cake Inquiry",
-        message: "Requesting eggless chocolate ganache 3-tier custom cake for wedding reception.",
-        status: "RESOLVED",
-        createdAt: "2026-07-28T10:00:00Z",
-      },
-    ];
+    return [];
   },
 
   createSupportTicket: (ticket: { subject: string; category: string; message: string }): SupportTicket => {
@@ -199,24 +173,7 @@ export const customerDashboardService = {
     } catch (_e) {
       // Fallback
     }
-    return [
-      {
-        id: "not-1",
-        title: "Order #OB-98210 Dispatched",
-        message: "Your Belgian Dark Chocolate Truffle Cake is out for temperature-controlled delivery.",
-        type: "ORDER_UPDATE",
-        createdAt: new Date().toISOString(),
-        isRead: false,
-      },
-      {
-        id: "not-2",
-        title: "20% OFF Weekend Bakery Coupon",
-        message: "Use code BDAY20 on your next artisanal cake order.",
-        type: "PROMO",
-        createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-        isRead: false,
-      },
-    ];
+    return [];
   },
 
   markNotificationRead: (id: string): void => {

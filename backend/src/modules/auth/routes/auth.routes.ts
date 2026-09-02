@@ -9,7 +9,7 @@ import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { UserRepository } from "../../user/index.js";
 import { requireAuth } from "../middlewares/index.js";
 import { AuthController } from "../controller/index.js";
-import { ConsoleOtpProvider } from "../providers/index.js";
+import { ConsoleOtpProvider, Msg91OtpProvider } from "../providers/index.js";
 import {
   OtpRepository,
   RefreshTokenRepository,
@@ -21,14 +21,16 @@ import {
   OTP_RATE_LIMITS,
   OTP_RESPONSE_MESSAGES,
 } from "../constants/index.js";
-import { sendOtpSchema, verifyOtpSchema } from "../validators/index.js";
+import { sendOtpSchema, verifyOtpSchema, loginWithPasswordSchema } from "../validators/index.js";
 
 export const authRouter = Router();
 
 const otpRepository = new OtpRepository();
 const refreshTokenRepository = new RefreshTokenRepository();
 const userRepository = new UserRepository();
-const otpProvider = new ConsoleOtpProvider();
+const otpProvider = env.msg91AuthKey
+  ? new Msg91OtpProvider()
+  : new ConsoleOtpProvider();
 const otpService = new OtpService(otpRepository, otpProvider);
 const authService = new AuthService(
   otpService,
@@ -107,6 +109,30 @@ authRouter.post(
   verifyOtpRateLimiter,
   validateRequest({ body: verifyOtpSchema }),
   asyncHandler(authController.verifyOtp),
+);
+
+authRouter.post(
+  "/login-password",
+  verifyOtpRateLimiter,
+  validateRequest({ body: loginWithPasswordSchema }),
+  asyncHandler(authController.loginWithPassword),
+);
+
+authRouter.post(
+  "/login",
+  verifyOtpRateLimiter,
+  validateRequest({ body: loginWithPasswordSchema }),
+  asyncHandler(authController.loginWithPassword),
+);
+
+authRouter.get(
+  "/google",
+  asyncHandler(authController.googleRedirect),
+);
+
+authRouter.get(
+  "/google/callback",
+  asyncHandler(authController.googleCallback),
 );
 
 authRouter.post(

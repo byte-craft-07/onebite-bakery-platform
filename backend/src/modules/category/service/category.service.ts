@@ -29,8 +29,17 @@ export class CategoryService {
     );
     const slug = await this.createUniqueSlug(dto.slug ?? dto.name);
 
+    const defaultImg = dto.image || "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=800&q=80";
+    const defaultDesc = dto.description || `${dto.name} category from The Online Bakery.`;
+
     const category = await this.categoryRepository.create({
-      ...this.toWritePayload(dto),
+      ...this.toWritePayload({
+        ...dto,
+        description: defaultDesc,
+        image: defaultImg,
+        seoTitle: dto.seoTitle || dto.name,
+        seoDescription: dto.seoDescription || defaultDesc,
+      }),
       slug,
       parentCategory,
       createdBy: context.userId ? toObjectId(context.userId) : undefined,

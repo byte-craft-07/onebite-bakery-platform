@@ -2,9 +2,8 @@ import { z } from "zod";
 
 import { PAYMENT_PROVIDERS } from "../constants/index.js";
 
-const objectIdSchema = z
-  .string()
-  .regex(/^[a-f\d]{24}$/i, "Invalid object id.");
+const objectIdSchema = z.string().trim().min(1, "Invalid id.");
+
 
 export const paymentIdParamSchema = z.object({
   id: objectIdSchema,

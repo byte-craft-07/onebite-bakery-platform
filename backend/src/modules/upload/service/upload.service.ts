@@ -79,6 +79,7 @@ export class UploadService {
     this.validateExtension(rawExt);
     this.validateMimeType(rawFile.mimetype);
     this.validateFileSize(rawFile.size);
+    this.validateFileContent(rawFile.buffer, rawExt, rawFile.mimetype);
 
     let storageFile: StorageFile = {
       originalName,
@@ -208,6 +209,38 @@ export class UploadService {
         true,
         APP_ERROR_CODES.MEDIA_FILE_TOO_LARGE,
       );
+    }
+  }
+
+  public validateFileContent(buffer: Buffer, extension: string, mimeType: string): void {
+    const isSvg =
+      extension.toLowerCase() === "svg" || mimeType.toLowerCase() === "image/svg+xml";
+
+    if (isSvg) {
+      const content = buffer.toString("utf-8");
+      // Check for dangerous HTML/SVG tags and script execution vectors
+      const dangerousPatterns = [
+        /<script\b/i,
+        /javascript\s*:/i,
+        /on\w+\s*=/i, // e.g. onload, onerror, onclick
+        /<foreignObject\b/i,
+        /<iframe\b/i,
+        /<embed\b/i,
+        /<object\b/i,
+        /data\s*:\s*text\/html/i,
+      ];
+
+      for (const pattern of dangerousPatterns) {
+        if (pattern.test(content)) {
+          throw new AppError(
+            "Uploaded SVG contains prohibited executable scripts or active elements.",
+            HTTP_STATUS.UNPROCESSABLE_ENTITY,
+            [],
+            true,
+            APP_ERROR_CODES.MEDIA_INVALID_MIME,
+          );
+        }
+      }
     }
   }
 

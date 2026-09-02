@@ -15,6 +15,7 @@ import {
 } from "../model/index.js";
 import type { CartRepository } from "../repository/index.js";
 import type { CartItemResponse, CartResponse } from "../types/index.js";
+import { couponService } from "../../coupon/index.js";
 
 export class CartService {
   public constructor(private readonly cartRepository: CartRepository) {}
@@ -97,7 +98,7 @@ export class CartService {
 
     if (!product || !product.isActive || !product.isAvailable) {
       throw new AppError(
-        "Product is currently unavailable or inactive.",
+        "Product is currently unavailable for your selected location.",
         HTTP_STATUS.UNPROCESSABLE_ENTITY,
         [],
         true,
@@ -105,17 +106,42 @@ export class CartService {
       );
     }
 
-    if (product.trackInventory && !product.allowBackorder) {
-      if (product.stockQuantity < dto.quantity) {
-        throw new AppError(
-          `Insufficient stock. Available quantity: ${product.stockQuantity}.`,
-          HTTP_STATUS.UNPROCESSABLE_ENTITY,
-          [],
-          true,
-          APP_ERROR_CODES.CART_INSUFFICIENT_STOCK,
-        );
+    if (customerId) {
+      try {
+        const { UserModel } = await import("../../user/model/user.model.js");
+        if (UserModel.db?.readyState === 1) {
+          const userDoc = await UserModel.findById(toObjectId(customerId)).exec();
+          if (userDoc?.currentLocation?.villageId) {
+            const { BranchService } = await import("../../branch/service/branch.service.js");
+            const { BranchRepository } = await import("../../branch/repository/branch.repository.js");
+            const { BranchProductModel } = await import("../../branch/model/branch-product.model.js");
+
+            const branchService = new BranchService(new BranchRepository());
+            const branchDoc = await branchService.resolveBranchForVillage(userDoc.currentLocation.villageId);
+
+            if (branchDoc) {
+              const branchProduct = await BranchProductModel.findOne({
+                branchId: branchDoc._id,
+                productId: product._id,
+              }).exec();
+
+              if (branchProduct && !branchProduct.isAvailable) {
+                throw new AppError(
+                  "Product is currently unavailable for your selected location.",
+                  HTTP_STATUS.UNPROCESSABLE_ENTITY,
+                  [],
+                  true,
+                  APP_ERROR_CODES.CART_PRODUCT_UNAVAILABLE,
+                );
+              }
+            }
+          }
+        }
+      } catch (err) {
+        if (err instanceof AppError) throw err;
       }
     }
+
 
     const customization = dto.customization ?? dto.customCakeConfig;
 
@@ -360,11 +386,11 @@ export class CartService {
     }
 
     throw new AppError(
-      "Session ID or authentication is required for cart access.",
+      "Cart access requires a customerId or sessionId.",
       HTTP_STATUS.BAD_REQUEST,
       [],
       true,
-      APP_ERROR_CODES.CART_SESSION_ID_REQUIRED,
+      APP_ERROR_CODES.VALIDATION_ERROR,
     );
   }
 
@@ -444,6 +470,26 @@ export class CartService {
     );
     cart.subtotal = subtotal;
 
+    // Evaluate coupon code if present
+    if (cart.couponCode) {
+      try {
+        const couponRes = await couponService.validateAndCalculateDiscount(
+          cart.couponCode,
+          subtotal,
+        );
+        cart.couponDiscount = couponRes.discountAmount;
+        cart.estimatedDiscount = couponRes.discountAmount;
+      } catch (_err) {
+        // If minimum subtotal not met or coupon expired, reset applied coupon
+        cart.couponCode = undefined;
+        cart.couponDiscount = 0;
+        cart.estimatedDiscount = 0;
+      }
+    } else {
+      cart.couponDiscount = 0;
+      cart.estimatedDiscount = 0;
+    }
+
     // Delivery rules from store settings
     const settings = await SettingsModel.findOne({ singletonKey: "default" })
       .lean()
@@ -467,8 +513,7 @@ export class CartService {
     }
 
     cart.grandTotal =
-      cart.subtotal -
-      cart.estimatedDiscount +
+      Math.max(0, cart.subtotal - cart.estimatedDiscount) +
       cart.estimatedTax +
       cart.estimatedDeliveryCharge;
   }
@@ -488,6 +533,63 @@ export class CartService {
       config1.messageOnCake === config2.messageOnCake &&
       config1.specialInstructions === config2.specialInstructions
     );
+  }
+
+  public async applyCoupon(
+    customerId?: string,
+    sessionId?: string,
+    code?: string,
+  ): Promise<CartResponse> {
+    if (!code) {
+      throw new AppError(
+        "Coupon code is required.",
+        HTTP_STATUS.BAD_REQUEST,
+        [],
+        true,
+        APP_ERROR_CODES.VALIDATION_ERROR,
+      );
+    }
+
+    const cart = await this.getOrCreateCartDocument(customerId, sessionId);
+    await this.recalculateCart(cart);
+
+    if (cart.items.length === 0) {
+      throw new AppError(
+        "Cannot apply coupon to an empty cart.",
+        HTTP_STATUS.BAD_REQUEST,
+        [],
+        true,
+        APP_ERROR_CODES.ORDER_CART_EMPTY,
+      );
+    }
+
+    // Validate coupon and throw if invalid
+    const discountRes = await couponService.validateAndCalculateDiscount(
+      code,
+      cart.subtotal,
+    );
+
+    cart.couponCode = discountRes.code;
+    cart.couponDiscount = discountRes.discountAmount;
+    cart.estimatedDiscount = discountRes.discountAmount;
+    await this.recalculateCart(cart);
+    await cart.save();
+
+    return this.toResponse(cart);
+  }
+
+  public async removeCoupon(
+    customerId?: string,
+    sessionId?: string,
+  ): Promise<CartResponse> {
+    const cart = await this.getOrCreateCartDocument(customerId, sessionId);
+    cart.couponCode = undefined;
+    cart.couponDiscount = 0;
+    cart.estimatedDiscount = 0;
+    await this.recalculateCart(cart);
+    await cart.save();
+
+    return this.toResponse(cart);
   }
 
   private toResponse(cart: HydratedDocument<Cart>): CartResponse {
@@ -520,6 +622,8 @@ export class CartService {
       homeDeliveryAvailable: cart.homeDeliveryAvailable,
       pickupAvailable: cart.pickupAvailable,
       appliedOffers: cart.appliedOffers,
+      ...(cart.couponCode ? { couponCode: cart.couponCode } : {}),
+      couponDiscount: cart.couponDiscount ?? 0,
       createdAt: cart.createdAt,
       updatedAt: cart.updatedAt,
     };

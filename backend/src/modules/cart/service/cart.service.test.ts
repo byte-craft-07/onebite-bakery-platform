@@ -22,8 +22,8 @@ const createMockProduct = (overrides: Partial<Product> = {}): Product =>
     price: 500,
     costPrice: 300,
     taxCategory: "STANDARD_5",
-    imageUrls: ["https://cdn.onebite.test/chocolate.webp"],
-    thumbnailUrl: "https://cdn.onebite.test/chocolate-thumb.webp",
+    imageUrls: ["https://cdn.theonlinebakery.test/chocolate.webp"],
+    thumbnailUrl: "https://cdn.theonlinebakery.test/chocolate-thumb.webp",
     stockQuantity: 10,
     lowStockThreshold: 2,
     trackInventory: true,
@@ -329,7 +329,7 @@ describe("CartService", () => {
         productId: productId.toString(),
         quantity: 1,
       }),
-    ).rejects.toBeInstanceOf(AppError);
+    ).rejects.toThrow("Product is currently unavailable for your selected location.");
   });
 
   it("rejects addition of unavailable products", async () => {
@@ -344,7 +344,7 @@ describe("CartService", () => {
         productId: productId.toString(),
         quantity: 1,
       }),
-    ).rejects.toBeInstanceOf(AppError);
+    ).rejects.toThrow("Product is currently unavailable for your selected location.");
   });
 
   it("rejects addition when quantity is invalid (less than or equal to 0)", async () => {

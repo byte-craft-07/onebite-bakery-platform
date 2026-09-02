@@ -2,7 +2,7 @@
 
 ## Vision
 
-OneBite Bakery is a Celebration Commerce Platform.
+The Online Bakery is a Celebration Commerce Platform.
 
 Customers should be able to purchase everything required for a celebration from one place.
 

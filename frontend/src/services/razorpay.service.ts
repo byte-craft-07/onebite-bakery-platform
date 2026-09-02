@@ -196,13 +196,13 @@ export const razorpayService = {
       key: razorpayOrder.keyId || configuredRazorpayKeyId || "",
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency || "INR",
-      name: "OneBite Bakery Platform",
+      name: "The Online Bakery Platform",
       description: `UPI payment for order #${options.payment.orderId.slice(-6).toUpperCase()}`,
       image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=150&q=80",
       order_id: validOrderId,
       prefill: {
-        name: options.customerName || "OneBite Customer",
-        email: options.customerEmail || "ajaykterha@gmail.com",
+        name: options.customerName || "The Online Bakery Customer",
+        email: options.customerEmail || "theonlinebakery07@gmail.com",
         contact: options.customerPhone || "7897671632",
       },
       readonly: {
@@ -211,7 +211,7 @@ export const razorpayService = {
         name: true,
       },
       theme: {
-        color: "#E67E22",
+        color: "#596B58",
       },
       config: {
         display: {

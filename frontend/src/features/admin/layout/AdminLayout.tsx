@@ -9,7 +9,7 @@ export const AdminLayout: React.FC = () => {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#FFFBF5] text-[#2C1E16] flex">
+    <div className="min-h-screen bg-[#FFF8EC] text-[#3B302B] flex">
       {/* Sidebar */}
       <Sidebar isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} />
 
@@ -21,7 +21,6 @@ export const AdminLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
-      <GlobalTooltip />
     </div>
   );
 };

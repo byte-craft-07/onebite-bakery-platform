@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a problem in OneBite Bakery Platform
+about: Report a problem in The Online Bakery Platform
 title: "fix: "
 labels: bug
 assignees: ""

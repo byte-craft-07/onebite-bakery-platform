@@ -1,1 +1,1 @@
-export { sendOtpSchema, verifyOtpSchema } from "./otp.validators.js";
+export { sendOtpSchema, verifyOtpSchema, loginWithPasswordSchema } from "./otp.validators.js";

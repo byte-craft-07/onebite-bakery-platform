@@ -42,6 +42,23 @@ export class CheckoutService {
     const warnings: string[] = [];
     const itemSummaries: CheckoutItemSummary[] = [];
 
+    let customerBranchId: string | undefined;
+    try {
+      const { UserModel } = await import("../../user/model/user.model.js");
+      if (UserModel.db?.readyState === 1) {
+        const userDoc = await UserModel.findById(customerObjId).exec();
+        if (userDoc?.currentLocation?.villageId) {
+          const { BranchService } = await import("../../branch/service/branch.service.js");
+          const { BranchRepository } = await import("../../branch/repository/branch.repository.js");
+          const branchService = new BranchService(new BranchRepository());
+          const branchDoc = await branchService.resolveBranchForVillage(userDoc.currentLocation.villageId);
+          if (branchDoc) customerBranchId = branchDoc._id.toString();
+        }
+      }
+    } catch (_err) {
+      // Fallback
+    }
+
     for (const item of cart.items) {
       const product = await ProductModel.findOne({
         _id: item.productId,
@@ -64,9 +81,28 @@ export class CheckoutService {
         continue;
       }
 
-      if (!product.isAvailable) {
+      let isBranchAvailable = product.isAvailable;
+      if (customerBranchId) {
+        try {
+          const { BranchProductModel } = await import("../../branch/model/branch-product.model.js");
+          const branchOverride = await BranchProductModel.findOne({
+            branchId: toObjectId(customerBranchId),
+            productId: product._id,
+          }).exec();
+
+          if (branchOverride) {
+            if (!branchOverride.isAvailable) {
+              isBranchAvailable = false;
+            }
+          }
+        } catch (_err) {
+          // Fallback
+        }
+      }
+
+      if (!isBranchAvailable) {
         validationErrors.push(
-          `Product '${product.name}' is currently unavailable.`,
+          `Product '${product.name}' is currently unavailable for your selected location.`,
         );
       }
 
@@ -85,7 +121,7 @@ export class CheckoutService {
         quantity: item.quantity,
         unitPriceSnapshot: item.unitPriceSnapshot ?? item.unitPrice,
         totalPrice: item.unitPrice * item.quantity,
-        isAvailable: product.isAvailable,
+        isAvailable: isBranchAvailable,
       });
     }
 
@@ -97,6 +133,12 @@ export class CheckoutService {
       settings?.delivery?.minimumHomeDeliveryAmount ?? 300;
     const isDeliveryEnabled = settings?.isDeliveryEnabled ?? true;
     const isPickupEnabled = settings?.isPickupEnabled ?? true;
+
+    if (!isDeliveryEnabled && !isPickupEnabled) {
+      validationErrors.push(
+        "The Online Bakery is currently offline and not accepting new orders. Please check back during business hours.",
+      );
+    }
 
     const subtotal = cart.items.reduce(
       (sum, item) => sum + item.unitPrice * item.quantity,
@@ -118,6 +160,8 @@ export class CheckoutService {
     }
 
     let selectedAddress: Record<string, unknown> | undefined;
+    let villageDeliveryCharge: number | undefined;
+    let villageFreeThreshold: number | undefined;
 
     if (query.addressId) {
       const addressDoc = await AddressModel.findOne({
@@ -140,14 +184,111 @@ export class CheckoutService {
           pincode: addressDoc.pincode,
           landmark: addressDoc.landmark,
         };
+
+        // Resolve village specific delivery charge
+        try {
+          const { VillageModel } = await import("../../village/model/village.model.js");
+          if (VillageModel.db?.readyState === 1) {
+            let villageDoc: any = null;
+
+            if (query.villageId) {
+              villageDoc = await VillageModel.findById(toObjectId(query.villageId)).exec();
+            }
+
+            if (!villageDoc && query.villageName) {
+              villageDoc = await VillageModel.findOne({ name: new RegExp(`^${query.villageName.trim()}$`, "i"), isActive: true }).exec();
+            }
+
+            if (!villageDoc && addressDoc) {
+              villageDoc =
+                (addressDoc.city ? await VillageModel.findOne({ name: new RegExp(`^${addressDoc.city.trim()}$`, "i"), isActive: true }).exec() : null) ||
+                (addressDoc.address ? await VillageModel.findOne({ name: new RegExp(addressDoc.address.trim(), "i"), isActive: true }).exec() : null);
+            }
+
+            if (!villageDoc && customerObjId) {
+              const { UserModel } = await import("../../user/model/user.model.js");
+              const userDoc = await UserModel.findById(customerObjId).exec();
+              if (userDoc?.currentLocation?.villageId) {
+                villageDoc = await VillageModel.findById(toObjectId(userDoc.currentLocation.villageId)).exec();
+              } else if (userDoc?.currentLocation?.villageName) {
+                villageDoc = await VillageModel.findOne({ name: new RegExp(`^${userDoc.currentLocation.villageName.trim()}$`, "i"), isActive: true }).exec();
+              }
+            }
+
+            if (villageDoc) {
+              if (villageDoc.deliveryCharge !== undefined && villageDoc.deliveryCharge !== null) {
+                villageDeliveryCharge = villageDoc.deliveryCharge;
+              }
+              if (villageDoc.freeDeliveryThreshold !== undefined && villageDoc.freeDeliveryThreshold !== null) {
+                villageFreeThreshold = villageDoc.freeDeliveryThreshold;
+              }
+            }
+          }
+        } catch (_err) {
+          // Fallback
+        }
+      }
+    } else {
+      // No addressId passed in query; resolve from query.villageId, query.villageName or customer location
+      try {
+        const { VillageModel } = await import("../../village/model/village.model.js");
+        if (VillageModel.db?.readyState === 1) {
+          let villageDoc: any = null;
+          if (query.villageId) {
+            villageDoc = await VillageModel.findById(toObjectId(query.villageId)).exec();
+          }
+          if (!villageDoc && query.villageName) {
+            villageDoc = await VillageModel.findOne({ name: new RegExp(`^${query.villageName.trim()}$`, "i"), isActive: true }).exec();
+          }
+          if (!villageDoc && customerObjId) {
+            const { UserModel } = await import("../../user/model/user.model.js");
+            const userDoc = await UserModel.findById(customerObjId).exec();
+            if (userDoc?.currentLocation?.villageId) {
+              villageDoc = await VillageModel.findById(toObjectId(userDoc.currentLocation.villageId)).exec();
+            } else if (userDoc?.currentLocation?.villageName) {
+              villageDoc = await VillageModel.findOne({ name: new RegExp(`^${userDoc.currentLocation.villageName.trim()}$`, "i"), isActive: true }).exec();
+            }
+          }
+
+          if (villageDoc) {
+            if (villageDoc.deliveryCharge !== undefined && villageDoc.deliveryCharge !== null) {
+              villageDeliveryCharge = villageDoc.deliveryCharge;
+            }
+            if (villageDoc.freeDeliveryThreshold !== undefined && villageDoc.freeDeliveryThreshold !== null) {
+              villageFreeThreshold = villageDoc.freeDeliveryThreshold;
+            }
+          }
+        }
+      } catch (_err) {
+        // Fallback
       }
     }
+
+    const discountAmount = cart.estimatedDiscount ?? cart.couponDiscount ?? 0;
+    const freeDeliveryThreshold = villageFreeThreshold ?? (settings?.freeDeliveryThreshold ?? 799);
+    const standardDeliveryCharge = villageDeliveryCharge ?? (settings?.deliveryCharge ?? 49);
+    const deliveryFee =
+      query.deliveryMethod === "STORE_PICKUP"
+        ? 0
+        : subtotal >= freeDeliveryThreshold
+        ? 0
+        : standardDeliveryCharge;
+
+    const taxAmount = 0;
+    const totalAmount = Math.max(0, Math.round((subtotal - discountAmount + deliveryFee) * 100) / 100);
 
     return {
       cartId: cart._id.toString(),
       items: itemSummaries,
       subtotal,
       totalItems: cart.items.reduce((sum, item) => sum + item.quantity, 0),
+      pricing: {
+        subtotal,
+        deliveryFee,
+        taxAmount: 0,
+        discountAmount,
+        totalAmount,
+      },
       eligibleDeliveryMethods,
       homeDeliveryEligible,
       pickupEligible,

@@ -66,11 +66,11 @@ export const AdminReportsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <AdminCard className="space-y-3">
-          <div className="flex items-center justify-between text-xs font-bold uppercase text-[#6E5D4F]">
+          <div className="flex items-center justify-between text-xs font-bold uppercase text-[#7A6E65]">
             <span>Monthly GST Tax Ledger</span>
-            <FileText className="h-5 w-5 text-[#E67E22]" />
+            <FileText className="h-5 w-5 text-[#596B58]" />
           </div>
-          <p className="text-xs text-[#6E5D4F]">Detailed breakdown of 5% GST tax collected on all online orders.</p>
+          <p className="text-xs text-[#7A6E65]">Detailed breakdown of 5% GST tax collected on all online orders.</p>
           <Button size="sm" className="w-full" onClick={() => handleDownload("Monthly GST Tax Ledger.pdf")}>
             <Download className="h-4 w-4 mr-1.5" />
             <span>Export Tax PDF</span>
@@ -78,11 +78,11 @@ export const AdminReportsPage: React.FC = () => {
         </AdminCard>
 
         <AdminCard className="space-y-3">
-          <div className="flex items-center justify-between text-xs font-bold uppercase text-[#6E5D4F]">
+          <div className="flex items-center justify-between text-xs font-bold uppercase text-[#7A6E65]">
             <span>Inventory Stock Report</span>
             <FileSpreadsheet className="h-5 w-5 text-green-600" />
           </div>
-          <p className="text-xs text-[#6E5D4F]">Real-time stock quantities, low-stock warnings, and SKU counts.</p>
+          <p className="text-xs text-[#7A6E65]">Real-time stock quantities, low-stock warnings, and SKU counts.</p>
           <Button size="sm" variant="outline" className="w-full" onClick={() => handleDownload("Inventory Stock Report.xlsx")}>
             <Download className="h-4 w-4 mr-1.5" />
             <span>Export Excel Log</span>
@@ -90,11 +90,11 @@ export const AdminReportsPage: React.FC = () => {
         </AdminCard>
 
         <AdminCard className="space-y-3">
-          <div className="flex items-center justify-between text-xs font-bold uppercase text-[#6E5D4F]">
+          <div className="flex items-center justify-between text-xs font-bold uppercase text-[#7A6E65]">
             <span>Completed Orders CSV</span>
             <TrendingUp className="h-5 w-5 text-blue-600" />
           </div>
-          <p className="text-xs text-[#6E5D4F]">Full dispatch orders history with customer phone and amounts.</p>
+          <p className="text-xs text-[#7A6E65]">Full dispatch orders history with customer phone and amounts.</p>
           <Button size="sm" variant="outline" className="w-full" onClick={() => handleDownload("Orders History.csv")}>
             <Download className="h-4 w-4 mr-1.5" />
             <span>Export Orders CSV</span>
@@ -103,11 +103,11 @@ export const AdminReportsPage: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-[#2C1E16]">Generated Reports Archives</h3>
+        <h3 className="text-lg font-bold text-[#3B302B]">Generated Reports Archives</h3>
         <AdminTable headers={["Report Document Name", "Category Tag", "File Format", "Date Generated", "File Size", "Download"]}>
           {REPORTS_LIST.map((rep) => (
-            <tr key={rep.id} className="hover:bg-[#F9F6F0]/50 transition-colors">
-              <td className="px-4 py-3 font-bold text-[#2C1E16]">{rep.name}</td>
+            <tr key={rep.id} className="hover:bg-[#FFF8EC]/50 transition-colors">
+              <td className="px-4 py-3 font-bold text-[#3B302B]">{rep.name}</td>
               <td className="px-4 py-3">
                 <Badge variant="primary">{rep.category}</Badge>
               </td>
@@ -117,7 +117,7 @@ export const AdminReportsPage: React.FC = () => {
               <td className="px-4 py-3">
                 <button
                   onClick={() => handleDownload(rep.name)}
-                  className="flex items-center gap-1 px-3 py-1 rounded-lg bg-[#FFF3E6] text-[#E67E22] font-bold text-xs hover:bg-[#E67E22] hover:text-white transition-colors cursor-pointer"
+                  className="flex items-center gap-1 px-3 py-1 rounded-lg bg-[#FFF8EC] text-[#596B58] font-bold text-xs hover:bg-[#596B58] hover:text-white transition-colors cursor-pointer"
                 >
                   <Download className="h-3.5 w-3.5" />
                   <span>Download</span>

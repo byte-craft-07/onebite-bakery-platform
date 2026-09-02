@@ -72,4 +72,56 @@ export class OccasionController {
       data: result,
     });
   };
+
+  public listAdmin = async (
+    _request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const occasions = await this.occasionService.listAdminOccasions();
+    return sendSuccess(response, {
+      message: "Admin occasions fetched successfully.",
+      data: { occasions },
+    });
+  };
+
+  public create = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const occasion = await this.occasionService.createOccasion(request.body);
+    return sendSuccess(response, {
+      message: "Occasion created successfully.",
+      data: { occasion },
+    });
+  };
+
+  public update = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const id = request.params.id;
+    if (typeof id !== "string") {
+      throw new Error("Validated id parameter is missing.");
+    }
+    const occasion = await this.occasionService.updateOccasion(id, request.body);
+    return sendSuccess(response, {
+      message: "Occasion updated successfully.",
+      data: { occasion },
+    });
+  };
+
+  public softDelete = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const id = request.params.id;
+    if (typeof id !== "string") {
+      throw new Error("Validated id parameter is missing.");
+    }
+    const occasion = await this.occasionService.softDeleteOccasion(id);
+    return sendSuccess(response, {
+      message: "Occasion deleted successfully.",
+      data: { occasion },
+    });
+  };
 }

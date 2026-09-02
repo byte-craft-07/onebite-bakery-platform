@@ -19,7 +19,7 @@ const createMockNotificationDocument = (
     type: "ORDER_CREATED",
     provider: "EMAIL",
     template: "order-created",
-    subject: "OneBite Order Received - OB20260001",
+    subject: "The Online Bakery Order Received - OB20260001",
     recipient: "jane@example.com",
     status: "SENT",
     payload: { customerName: "Jane", orderNumber: "OB20260001", amount: 500 },

@@ -10,7 +10,7 @@ export const Card: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-[#E8E2D9] bg-white p-6 shadow-[0_4px_16px_rgba(44,30,22,0.08)] transition-all hover:shadow-[0_12px_32px_rgba(44,30,22,0.12)]",
+        "rounded-2xl border border-[#E5DEC9] bg-white p-6 shadow-[0_2px_12px_rgba(59,48,43,0.05)] transition-all hover:shadow-[0_8px_24px_rgba(59,48,43,0.09)]",
         className,
       )}
       {...props}
@@ -22,15 +22,19 @@ export const Card: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
 
 export const Badge: React.FC<{
   children: React.ReactNode;
-  variant?: "success" | "warning" | "danger" | "neutral" | "primary";
+  variant?: "success" | "warning" | "danger" | "neutral" | "primary" | "bestseller" | "new" | "premium" | "customizable";
   className?: string;
 }> = ({ children, variant = "primary", className }) => {
   const variantStyles = {
-    primary: "bg-[#FFF3E6] text-[#E67E22] border-[#E67E22]/30",
-    success: "bg-green-50 text-green-700 border-green-200",
-    warning: "bg-amber-50 text-amber-700 border-amber-200",
+    primary: "bg-[#596B58] text-[#FFF8EC] border-[#596B58]",
+    bestseller: "bg-[#596B58] text-[#FFF8EC] border-[#596B58]",
+    new: "bg-[#A8B89A] text-[#3B302B] border-[#A8B89A]",
+    premium: "bg-[#D8BE91] text-[#3B302B] border-[#D8BE91]",
+    customizable: "bg-[#FFF8EC] text-[#596B58] border-[#596B58]",
+    success: "bg-emerald-50 text-emerald-800 border-emerald-200",
+    warning: "bg-amber-50 text-amber-800 border-amber-200",
     danger: "bg-red-50 text-red-700 border-red-200",
-    neutral: "bg-gray-100 text-gray-700 border-gray-200",
+    neutral: "bg-[#F7F2E7] text-[#3B302B] border-[#E5DEC9]",
   };
 
   return (
@@ -50,7 +54,7 @@ export const Skeleton: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ class
   return (
     <div
       className={cn(
-        "animate-pulse rounded-md bg-[#E8E2D9]/60",
+        "animate-pulse rounded-md bg-[#E5DEC9]/60",
         className,
       )}
       {...props}
@@ -68,12 +72,12 @@ export const Modal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-2xl border border-[#E8E2D9] max-w-lg w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 my-8 max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#E8E2D9] shrink-0">
-          {title ? <h3 className="text-xl font-bold text-[#2C1E16]">{title}</h3> : <div />}
+      <div className="bg-white rounded-2xl border border-[#E5DEC9] max-w-lg w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 my-8 max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#E5DEC9] shrink-0">
+          {title ? <h3 className="text-xl font-bold text-[#3B302B]">{title}</h3> : <div />}
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 text-2xl font-bold p-1 leading-none cursor-pointer"
+            className="text-gray-400 hover:text-[#3B302B] text-2xl font-bold p-1 leading-none cursor-pointer"
           >
             &times;
           </button>
@@ -94,12 +98,12 @@ export const Drawer: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs">
-      <div className="bg-white h-full max-w-md w-full p-6 border-l border-[#E8E2D9] shadow-2xl flex flex-col animate-in slide-in-from-right">
+      <div className="bg-white h-full max-w-md w-full p-6 border-l border-[#E5DEC9] shadow-2xl flex flex-col animate-in slide-in-from-right">
         <div className="flex justify-between items-center mb-6">
-          {title ? <h3 className="text-xl font-bold text-[#2C1E16]">{title}</h3> : <div />}
+          {title ? <h3 className="text-xl font-bold text-[#3B302B]">{title}</h3> : <div />}
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+            className="text-gray-400 hover:text-[#3B302B] text-2xl font-bold"
           >
             &times;
           </button>
@@ -116,9 +120,9 @@ export const EmptyState: React.FC<{
   action?: React.ReactNode;
 }> = ({ title, description, action }) => {
   return (
-    <div className="text-center p-12 border-2 border-dashed border-[#E8E2D9] rounded-2xl bg-[#FFFBF5]">
-      <h3 className="text-lg font-bold text-[#2C1E16] mb-1">{title}</h3>
-      {description ? <p className="text-sm text-[#6E5D4F] mb-4">{description}</p> : null}
+    <div className="text-center p-12 border-2 border-dashed border-[#E5DEC9] rounded-2xl bg-[#FFF8EC]">
+      <h3 className="text-lg font-bold text-[#3B302B] mb-1">{title}</h3>
+      {description ? <p className="text-sm text-[#7A6E65] mb-4">{description}</p> : null}
       {action}
     </div>
   );
@@ -134,7 +138,7 @@ export const ErrorState: React.FC<{
       {onRetry ? (
         <button
           onClick={onRetry}
-          className="px-4 py-2 bg-red-600 text-white font-medium text-sm rounded-lg hover:bg-red-700 transition-colors"
+          className="px-4 py-2 bg-red-600 text-white font-medium text-sm rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
         >
           Try Again
         </button>

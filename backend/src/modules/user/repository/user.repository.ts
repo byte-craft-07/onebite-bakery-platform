@@ -17,14 +17,61 @@ export class UserRepository extends BaseRepository<User> {
   public async findByEmail(
     email: string,
   ): Promise<HydratedDocument<User> | null> {
-    return UserModel.findOne({ email }).exec();
+    return UserModel.findOne({ email: email.toLowerCase() }).exec();
+  }
+
+  public async findByGoogleId(
+    googleId: string,
+  ): Promise<HydratedDocument<User> | null> {
+    return UserModel.findOne({ googleId }).exec();
+  }
+
+  public async createCustomerFromGoogle(payload: {
+    googleId: string;
+    email: string;
+    name: string;
+    profileImage?: string;
+  }): Promise<HydratedDocument<User>> {
+    return this.create({
+      name: payload.name,
+      email: payload.email.toLowerCase(),
+      googleId: payload.googleId,
+      profileImage: payload.profileImage,
+      authProviders: ["google"],
+      role: "customer",
+      isVerified: true,
+      status: "active",
+      lastLogin: new Date(),
+    });
+  }
+
+  public async linkGoogleAccount(
+    userId: User["_id"],
+    googleId: string,
+    profileImage?: string,
+  ): Promise<HydratedDocument<User> | null> {
+    return UserModel.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          googleId,
+          ...(profileImage ? { profileImage } : {}),
+          isVerified: true,
+          lastLogin: new Date(),
+        },
+        $addToSet: {
+          authProviders: "google",
+        },
+      },
+      { new: true, runValidators: true },
+    ).exec();
   }
 
   public async createCustomerFromPhone(
     phone: string,
   ): Promise<HydratedDocument<User>> {
     return this.create({
-      name: "OneBite Customer",
+      name: "The Online Bakery Customer",
       phone,
       role: "customer",
       isVerified: true,
@@ -37,9 +84,9 @@ export class UserRepository extends BaseRepository<User> {
     phone: string,
   ): Promise<HydratedDocument<User>> {
     return this.create({
-      name: "Development Admin",
+      name: "Ajay Prajapati",
       phone,
-      email: "admin@onebite.local",
+      email: "theonlinebakery07@gmail.com",
       role: "admin",
       isVerified: true,
       status: "active",

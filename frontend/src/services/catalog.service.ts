@@ -1,4 +1,5 @@
 import { apiClient } from "./api.client";
+import { authService } from "./auth.service";
 import { MOCK_CATEGORIES, MOCK_OCCASIONS, MOCK_PRODUCTS } from "@/data/mockData";
 
 export interface ProductItem {
@@ -22,6 +23,7 @@ export interface ProductItem {
   mainImage?: string;
   rating?: number;
   reviewCount?: number;
+  stockQuantity?: number;
 }
 
 export interface CategoryItem {
@@ -76,6 +78,7 @@ const fallbackProducts: ProductItem[] = MOCK_PRODUCTS.map((p) => ({
   isAvailable: true,
   isBestseller: p.isBestseller,
   mainImage: p.image,
+  images: p.images && p.images.length > 0 ? p.images : [p.image],
   rating: p.rating,
   reviewCount: p.reviewCount,
   categoryId: {
@@ -87,20 +90,82 @@ const fallbackProducts: ProductItem[] = MOCK_PRODUCTS.map((p) => ({
 
 export const catalogService = {
   searchProducts: async (params: SearchProductsQueryParams = {}): Promise<PaginatedProductsResponse> => {
+    const storedLocation = authService.getStoredLocation();
+    const villageId = storedLocation?.villageId;
+    const villageName = storedLocation?.villageName;
+    const district = storedLocation?.district;
+
     try {
       const response = await apiClient.get<{
         success: boolean;
-        data: PaginatedProductsResponse;
-      }>("/search/products", { params });
+        data: {
+          products?: any[];
+          items?: any[];
+          pagination?: any;
+        };
+      }>("/products", {
+        params: {
+          ...params,
+          ...(villageId ? { villageId } : {}),
+          ...(villageName ? { villageName } : {}),
+          ...(district ? { district } : {}),
+          ...(villageName || district ? { location: `${villageName || ""}, ${district || ""}` } : {}),
+        },
+      });
 
-      if (response.data?.data?.products && response.data.data.products.length > 0) {
-        return response.data.data;
+      const rawProducts = response.data?.data?.products || response.data?.data?.items || [];
+      if (Array.isArray(rawProducts) && rawProducts.length > 0) {
+        const branchTitle = villageName ? `${villageName} (${district || ""})` : district;
+        const mappedProducts = rawProducts.map((p: any) => {
+          const mainImg =
+            p.thumbnailUrl ||
+            p.mainImage ||
+            (p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls[0] : undefined) ||
+            "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
+
+          const allImgs =
+            Array.isArray(p.imageUrls) && p.imageUrls.length > 0
+              ? p.imageUrls
+              : Array.isArray(p.images) && p.images.length > 0
+              ? p.images
+              : [mainImg];
+
+          return {
+            ...p,
+            id: p.id || p._id,
+            locationBranchName: p.branchSnapshot?.name || (branchTitle ? `${branchTitle} Branch` : undefined),
+            rating: p.rating ?? 4.9,
+            reviewCount: p.reviewCount ?? 62,
+            isEggless: p.isEggless ?? true,
+            isBestseller: p.isBestseller ?? p.isFeatured ?? true,
+            compareAtPrice: p.compareAtPrice ?? (p.price ? Math.round(p.price * 1.12) : undefined),
+            mainImage: mainImg,
+            images: allImgs,
+          };
+        });
+        return {
+          products: mappedProducts,
+          pagination: response.data?.data?.pagination || {
+            total: mappedProducts.length,
+            page: 1,
+            limit: 12,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
+        };
       }
     } catch (_err) {
       // Fallback to local catalog items
     }
 
     let list = [...fallbackProducts];
+
+    // Main Branch default catalog: All products are available at standard prices for all villages
+    list = list.map((item) => ({
+      ...item,
+      isAvailable: true,
+    }));
 
     // 1. Text Search Query Filter
     if (params.q) {
@@ -127,6 +192,26 @@ export const catalogService = {
           catLower.includes(pSlug) ||
           pName.includes(catLower)
         );
+      });
+    }
+
+    // 2.5 Occasion Filter
+    if (params.occasion && params.occasion !== "all") {
+      const occLower = params.occasion.toLowerCase().trim();
+      list = list.filter((p) => {
+        const occs = p.occasionIds || [];
+        const matchesOccList = occs.some(
+          (o) => o.slug.toLowerCase().includes(occLower) || o.name.toLowerCase().includes(occLower)
+        );
+        if (matchesOccList) return true;
+
+        const combinedText = `${p.name} ${p.description || ""} ${(p.categoryId?.name || "")}`.toLowerCase();
+        if (occLower.includes("birth")) return combinedText.includes("cake") || combinedText.includes("chocolate") || combinedText.includes("birth");
+        if (occLower.includes("anniv")) return combinedText.includes("velvet") || combinedText.includes("truffle") || combinedText.includes("anniv");
+        if (occLower.includes("wed")) return combinedText.includes("cake") || combinedText.includes("tart") || combinedText.includes("wed");
+        if (occLower.includes("other") || occLower.includes("fest")) return true;
+
+        return combinedText.includes(occLower);
       });
     }
 
@@ -193,12 +278,31 @@ export const catalogService = {
     };
   },
 
-  getProductBySlug: async (slug: string): Promise<ProductItem> => {
+  getProductById: async (id: string): Promise<ProductItem | null> => {
     try {
       const response = await apiClient.get<{
         success: boolean;
         data: { product: ProductItem };
-      }>(`/products/${slug}`);
+      }>(`/products/id/${id}`);
+      return response.data.data.product;
+    } catch (_err) {
+      const found = fallbackProducts.find((p) => p.id === id);
+      return found || null;
+    }
+  },
+
+  getProductBySlug: async (slug: string): Promise<ProductItem> => {
+    try {
+      const storedLocation = authService.getStoredLocation();
+      const villageId = storedLocation?.villageId;
+      const response = await apiClient.get<{
+        success: boolean;
+        data: { product: ProductItem };
+      }>(`/products/${slug}`, {
+        params: {
+          ...(villageId ? { villageId } : {}),
+        },
+      });
       return response.data.data.product;
     } catch (_err) {
       const found = fallbackProducts.find((p) => p.slug === slug);
@@ -230,6 +334,17 @@ export const catalogService = {
         itemCount: c.itemCount,
       }));
     }
+
+    // Deduplicate categories by slug and name
+    const seenCatKeys = new Set<string>();
+    categories = categories.filter((cat) => {
+      const key = (cat.slug || cat.name || cat.id || "").toLowerCase().trim();
+      if (!key || seenCatKeys.has(key)) {
+        return false;
+      }
+      seenCatKeys.add(key);
+      return true;
+    });
 
     // Compute real dynamic product count for each category
     try {
@@ -264,24 +379,38 @@ export const catalogService = {
   },
 
   getOccasions: async (): Promise<OccasionItem[]> => {
+    let occasions: OccasionItem[] = [];
     try {
       const response = await apiClient.get<{
         success: boolean;
         data: { occasions: OccasionItem[] };
       }>("/occasions");
       if (response.data?.data?.occasions && response.data.data.occasions.length > 0) {
-        return response.data.data.occasions;
+        occasions = response.data.data.occasions;
       }
     } catch (_err) {
       // Fallback
     }
 
-    return MOCK_OCCASIONS.map((o) => ({
-      id: o.id,
-      name: o.name,
-      slug: o.slug,
-      image: o.image,
-      tagline: o.tagline,
-    }));
+    if (occasions.length === 0) {
+      occasions = MOCK_OCCASIONS.map((o) => ({
+        id: o.id,
+        name: o.name,
+        slug: o.slug,
+        image: o.image,
+        tagline: o.tagline,
+      }));
+    }
+
+    // Deduplicate occasions by slug and name
+    const seenOccKeys = new Set<string>();
+    return occasions.filter((occ) => {
+      const key = (occ.slug || occ.name || occ.id || "").toLowerCase().trim();
+      if (!key || seenOccKeys.has(key)) {
+        return false;
+      }
+      seenOccKeys.add(key);
+      return true;
+    });
   },
 };

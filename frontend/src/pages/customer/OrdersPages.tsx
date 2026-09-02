@@ -1,12 +1,30 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Download, MessageSquare, RefreshCw, Star } from "lucide-react";
+import {
+  ArrowLeft,
+  Building,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Download,
+  ExternalLink,
+  MapPin,
+  MessageSquare,
+  Navigation,
+  RefreshCw,
+  Star,
+  Zap,
+} from "lucide-react";
+import { getStoreGoogleMapsUrl } from "@/components/shopping/CheckoutComponents";
 
 import { Badge, Card, EmptyState, Skeleton } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
 import { orderService, type OrderDetails } from "@/services/order.service";
 import { cartService } from "@/services/cart.service";
 import { reviewService } from "@/services/review.service";
+import { RatingModal } from "@/components/review/RatingModal";
+import { PerOrderRatingModal } from "@/components/review/PerOrderRatingModal";
+import { FlipkartOrderTracker } from "@/components/shopping/FlipkartOrderTracker";
 
 export const OrderReviewForm: React.FC<{ orderId: string; productName?: string }> = ({ orderId, productName }) => {
   const [rating, setRating] = useState(5);
@@ -45,16 +63,16 @@ export const OrderReviewForm: React.FC<{ orderId: string; productName?: string }
   }
 
   return (
-    <Card className="space-y-4 bg-[#FFF3E6]/40 border-[#E67E22]/30">
+    <Card className="space-y-4 bg-[#FFF8EC]/40 border-[#596B58]/30">
       <div className="flex items-center gap-2">
         <Star className="h-5 w-5 text-amber-500 fill-current" />
-        <h3 className="text-lg font-bold text-[#2C1E16]">Rate Your Order & Write a Review</h3>
+        <h3 className="text-lg font-bold text-[#3B302B]">Rate Your Order & Write a Review</h3>
       </div>
-      <p className="text-xs text-[#6E5D4F]">How was your cake quality, taste, and delivery service? Share your feedback with other customers!</p>
+      <p className="text-xs text-[#7A6E65]">How was your cake quality, taste, and delivery service? Share your feedback with other customers!</p>
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-[#2C1E16]">Your Rating:</span>
+          <span className="text-xs font-bold text-[#3B302B]">Your Rating:</span>
           <div className="flex text-amber-500 cursor-pointer">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
@@ -71,7 +89,7 @@ export const OrderReviewForm: React.FC<{ orderId: string; productName?: string }
           placeholder="Describe your cake taste, packaging quality, and delivery speed..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          className="w-full p-3 rounded-xl border border-[#E8E2D9] text-xs outline-none focus:border-[#E67E22] bg-white"
+          className="w-full p-3 rounded-xl border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58] bg-white"
           required
         />
 
@@ -87,6 +105,7 @@ export const OrdersHistoryPage: React.FC = () => {
   const [orders, setOrders] = useState<OrderDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
+  const [ratingOrder, setRatingOrder] = useState<OrderDetails | null>(null);
 
   useEffect(() => {
     orderService
@@ -140,16 +159,41 @@ export const OrdersHistoryPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 pb-16 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-extrabold text-[#2C1E16]">Your Order History</h1>
+    <div className="space-y-6 pb-16 max-w-4xl mx-auto">
+      <Link
+        to="/customer/dashboard"
+        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7A6E65] hover:text-[#596B58] transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span>Back to Account Hub</span>
+      </Link>
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">Your Order History</h1>
+        <p className="text-xs text-[#7A6E65]">
+          Rate past delivered orders to help other customers find top treats!
+        </p>
+      </div>
 
       <div className="space-y-4">
         {orders.map((ord) => (
-          <Card key={ord.id} className="space-y-4 border-[#E8E2D9]">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#E8E2D9] pb-3 gap-2">
+          <Card key={ord.id} className="space-y-4 border-[#E5DEC9]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#E5DEC9] pb-3 gap-2">
               <div>
-                <p className="text-xs font-bold text-[#2C1E16]">Order #{ord.orderNumber}</p>
-                <p className="text-xs text-[#6E5D4F]">{new Date(ord.createdAt).toLocaleDateString()}</p>
+                <p className="text-xs font-bold text-[#3B302B]">Order #{ord.orderNumber}</p>
+                <p className="text-xs text-[#7A6E65]">
+                  {new Date(ord.createdAt).toLocaleDateString()}
+                  {ord.locationSnapshot ? (
+                    <span className="ml-2 font-semibold text-[#596B58]">
+                      📍 {ord.locationSnapshot.villageName}, {ord.locationSnapshot.district}
+                    </span>
+                  ) : null}
+                </p>
+                {ord.deliveryTimePreference ? (
+                  <p className="text-[11px] font-semibold text-[#596B58] mt-0.5">
+                    {ord.deliveryTimePreference}
+                  </p>
+                ) : null}
               </div>
 
               <div className="flex items-center gap-2">
@@ -162,19 +206,51 @@ export const OrdersHistoryPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              {ord.items.map((item) => (
-                <div key={item.id} className="flex justify-between text-xs text-[#6E5D4F]">
-                  <span>{item.name} x {item.quantity}</span>
-                  <span className="font-bold text-[#2C1E16]">₹{item.itemTotal}</span>
-                </div>
-              ))}
+            <div className="space-y-3 py-1">
+              {ord.items.map((item, idx) => {
+                const itemImg = (item as any)?.image || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=400&q=80";
+                return (
+                  <div key={item.id || idx} className="flex items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl overflow-hidden bg-[#FFF8EC] border border-[#E5DEC9] shrink-0 shadow-2xs">
+                        <img
+                          src={itemImg}
+                          alt={item.name}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=400&q=80";
+                          }}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="font-bold text-sm text-[#3B302B]">{item.name}</p>
+                        <p className="text-[11px] text-[#7A6E65]">
+                          Qty: <strong>{item.quantity}</strong> • Unit: ₹{item.unitPrice || Math.round(item.itemTotal / (item.quantity || 1))}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="font-extrabold text-sm text-[#3B302B] shrink-0">₹{item.itemTotal}</span>
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="pt-3 border-t border-[#E8E2D9] flex flex-wrap items-center justify-between gap-3">
-              <span className="text-sm font-extrabold text-[#2C1E16]">Total: ₹{ord.totalAmount}</span>
+            <div className="pt-3 border-t border-[#E5DEC9] flex flex-wrap items-center justify-between gap-3">
+              <span className="text-sm font-extrabold text-[#3B302B]">Total: ₹{ord.totalAmount}</span>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {ord.orderStatus === "DELIVERED" || ord.orderStatus === "CANCELLED" ? (
+                  <button
+                    type="button"
+                    onClick={() => setRatingOrder(ord)}
+                    className="px-3 py-1.5 rounded-xl border border-[#596B58]/40 bg-[#FFF8EC] hover:bg-[#F7F2E7] text-[#596B58] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <Star className="h-3.5 w-3.5 fill-current text-amber-500" />
+                    <span>Rate Products & Quality</span>
+                  </button>
+                ) : null}
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -194,6 +270,12 @@ export const OrdersHistoryPage: React.FC = () => {
           </Card>
         ))}
       </div>
+
+      <PerOrderRatingModal
+        isOpen={Boolean(ratingOrder)}
+        onClose={() => setRatingOrder(null)}
+        order={ratingOrder}
+      />
     </div>
   );
 };
@@ -203,6 +285,9 @@ export const OrderDetailsPage: React.FC = () => {
 
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOrderRatingModalOpen, setIsOrderRatingModalOpen] = useState(false);
+  const [focusedItemIndex, setFocusedItemIndex] = useState<number | undefined>(undefined);
+  const [, setRatingVersion] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -212,6 +297,13 @@ export const OrderDetailsPage: React.FC = () => {
         .catch(() => setOrder(null))
         .finally(() => setIsLoading(false));
     }
+
+    const handleOrderRated = () => {
+      setRatingVersion((v) => v + 1);
+    };
+
+    window.addEventListener("theonlinebakery_order_rated", handleOrderRated);
+    return () => window.removeEventListener("theonlinebakery_order_rated", handleOrderRated);
   }, [id]);
 
   const handleExportPDF = () => {
@@ -219,7 +311,7 @@ export const OrderDetailsPage: React.FC = () => {
   };
 
   const handleWhatsAppSupport = () => {
-    const text = encodeURIComponent(`Hi OneBite Bakery! I need support regarding my Order #${order?.orderNumber || id}.`);
+    const text = encodeURIComponent(`Hi The Online Bakery! I need support regarding my Order #${order?.orderNumber || id}.`);
     window.open(`https://wa.me/919876543210?text=${text}`, "_blank");
   };
 
@@ -235,7 +327,7 @@ export const OrderDetailsPage: React.FC = () => {
   if (!order) {
     return (
       <div className="text-center py-16 space-y-4">
-        <h2 className="text-2xl font-bold text-[#2C1E16]">Order Details Not Found</h2>
+        <h2 className="text-2xl font-bold text-[#3B302B]">Order Details Not Found</h2>
         <Link to="/customer/orders">
           <Button variant="outline">Return to Order History</Button>
         </Link>
@@ -251,91 +343,129 @@ export const OrderDetailsPage: React.FC = () => {
     { label: "Delivered", status: "DELIVERED", isPassed: order.orderStatus === "DELIVERED" },
   ];
 
+  const ratedItemsMap = reviewService.getOrderRatingsMap(order.id);
+
   return (
     <div className="space-y-8 pb-16 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between">
-        <Link to="/customer/orders" className="inline-flex items-center gap-2 text-sm font-semibold text-[#6E5D4F] hover:text-[#E67E22]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <Link to="/customer/orders" className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58]">
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Order History</span>
         </Link>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportPDF} className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportPDF} className="flex items-center gap-1.5 flex-1 sm:flex-initial justify-center">
             <Download className="h-3.5 w-3.5" />
             <span>Download Invoice PDF</span>
           </Button>
 
-          <Button variant="outline" size="sm" onClick={handleWhatsAppSupport} className="flex items-center gap-1.5 border-green-600 text-green-700 hover:bg-green-50">
+          <Button variant="outline" size="sm" onClick={handleWhatsAppSupport} className="flex items-center gap-1.5 border-green-600 text-green-700 hover:bg-green-50 flex-1 sm:flex-initial justify-center">
             <MessageSquare className="h-3.5 w-3.5 text-green-600" />
             <span>WhatsApp Support</span>
           </Button>
         </div>
       </div>
 
-      <div className="flex items-center justify-between border-b border-[#E8E2D9] pb-4">
+      <div className="flex items-center justify-between border-b border-[#E5DEC9] pb-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-[#2C1E16]">Order #{order.orderNumber}</h1>
-          <p className="text-xs text-[#6E5D4F]">Placed on {new Date(order.createdAt).toLocaleString()}</p>
+          <h1 className="text-3xl font-extrabold text-[#3B302B]">Order #{order.orderNumber}</h1>
+          <p className="text-xs text-[#7A6E65]">Placed on {new Date(order.createdAt).toLocaleString()}</p>
         </div>
         <Badge variant={order.orderStatus === "DELIVERED" ? "success" : "primary"}>
           {order.orderStatus}
         </Badge>
       </div>
 
-      {/* Order Status Timeline */}
-      <Card className="space-y-4 bg-[#FFFBF5]">
-        <h3 className="text-sm font-bold text-[#2C1E16]">Live Order Tracking Timeline</h3>
-        <div className="flex items-center justify-between relative pt-2">
-          {timelineSteps.map((step, idx) => (
-            <div key={idx} className="flex flex-col items-center gap-1.5 flex-1 z-10">
-              <div
-                className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                  step.isPassed ? "bg-[#E67E22] text-white" : "bg-gray-200 text-gray-400"
-                }`}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="p-4 space-y-2 bg-[#FFF8EC]">
+          <div className="flex items-center gap-2 font-bold text-xs text-[#3B302B]">
+            <Clock className="h-4 w-4 text-[#596B58]" />
+            <span>Delivery Timing Preference</span>
+          </div>
+          <p className="font-extrabold text-sm text-[#3B302B]">
+            {order.deliveryTimePreference || (order.deliveryTimingType === "INSTANT" ? "⚡ Instant Delivery (Within 30-45 mins)" : "📅 Scheduled Delivery")}
+          </p>
+          <p className="text-[11px] text-[#7A6E65]">
+            Method: <strong>{order.fulfillmentType === "HOME_DELIVERY" ? "Home Doorstep Delivery" : "Store Counter Pickup"}</strong>
+          </p>
+        </Card>
+
+        <Card className="p-4 space-y-2 bg-[#FFF8EC]">
+          <div className="flex items-center gap-2 font-bold text-xs text-[#3B302B]">
+            {order.fulfillmentType === "STORE_PICKUP" ? (
+              <>
+                <Building className="h-4 w-4 text-[#596B58]" />
+                <span>Store Pickup Location</span>
+              </>
+            ) : (
+              <>
+                <MapPin className="h-4 w-4 text-[#596B58]" />
+                <span>Delivery Destination</span>
+              </>
+            )}
+          </div>
+          {order.fulfillmentType === "STORE_PICKUP" ? (
+            <div className="space-y-1.5 pt-0.5">
+              <p className="text-xs font-bold text-[#3B302B]">The Online Bakery Store</p>
+              <p className="text-xs text-[#7A6E65]">The Online Bakery, N 80°14, terha 25°49'43.3, 54.7"E, hamirpur, Uttar Pradesh 210502</p>
+              <a
+                href={getStoreGoogleMapsUrl("The Online Bakery terha hamirpur Uttar Pradesh 210502")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#596B58] hover:text-[#495948] underline pt-1"
               >
-                {idx + 1}
-              </div>
-              <span className={`text-[11px] text-center font-medium ${step.isPassed ? "text-[#2C1E16]" : "text-gray-400"}`}>
-                {step.label}
-              </span>
+                <Navigation className="h-3.5 w-3.5" />
+                <span>Open in Google Maps & Get Directions</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
-          ))}
+          ) : order.deliveryAddress || order.addressSnapshot ? (
+            <p className="text-xs text-[#7A6E65]">
+              {(order.deliveryAddress || order.addressSnapshot)?.street}, {(order.deliveryAddress || order.addressSnapshot)?.city} - {(order.deliveryAddress || order.addressSnapshot)?.pincode}
+            </p>
+          ) : order.locationSnapshot ? (
+            <p className="text-xs text-[#7A6E65]">
+              {order.locationSnapshot.villageName}, {order.locationSnapshot.district} ({order.locationSnapshot.pincode})
+            </p>
+          ) : (
+            <div className="space-y-1">
+              <p className="text-xs text-[#7A6E65]">The Online Bakery Store Counter</p>
+              <a
+                href={getStoreGoogleMapsUrl("The Online Bakery terha hamirpur Uttar Pradesh 210502")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#596B58] hover:text-[#495948] underline"
+              >
+                <Navigation className="h-3.5 w-3.5" />
+                <span>View Google Map Address</span>
+              </a>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* Flipkart-Style Order Tracking Card */}
+      <Card className="p-5 sm:p-6 space-y-4 bg-[#FFF8EC] border-[#E5DEC9]">
+        <div className="flex items-center justify-between border-b border-[#E5DEC9] pb-3">
+          <h3 className="text-sm font-bold text-[#3B302B]">Live Order Tracking</h3>
+          <span className="text-xs text-[#7A6E65]">Status: <strong className="text-[#596B58]">{order.orderStatus}</strong></span>
         </div>
+        <FlipkartOrderTracker
+          order={order}
+          isRated={Object.keys(ratedItemsMap).length > 0}
+          onRateClick={() => {
+            setFocusedItemIndex(undefined);
+            setIsOrderRatingModalOpen(true);
+          }}
+        />
       </Card>
 
-      {/* Order Items Breakdown */}
-      <Card className="space-y-4">
-        <h3 className="text-lg font-bold text-[#2C1E16] border-b border-[#E8E2D9] pb-2">Order Items & Invoice Summary</h3>
-        <div className="space-y-3">
-          {order.items.map((item) => (
-            <div key={item.id} className="flex justify-between items-center text-sm border-b border-[#E8E2D9] pb-2">
-              <div>
-                <p className="font-bold text-[#2C1E16]">{item.name}</p>
-                <p className="text-xs text-[#6E5D4F]">Quantity: {item.quantity}</p>
-              </div>
-              <span className="font-extrabold text-[#2C1E16]">₹{item.itemTotal}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="pt-2 text-xs space-y-1.5 text-[#6E5D4F]">
-          <div className="flex justify-between">
-            <span>Subtotal</span>
-            <span>₹{order.subtotal}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Delivery Charge</span>
-            <span>₹{order.deliveryFee}</span>
-          </div>
-          <div className="flex justify-between font-bold text-[#2C1E16] text-sm pt-2 border-t">
-            <span>Total Amount Paid</span>
-            <span className="text-[#E67E22]">₹{order.totalAmount}</span>
-          </div>
-        </div>
-      </Card>
-
-      {/* Customer Order Review Form */}
-      <OrderReviewForm orderId={order.id} productName={order.items[0]?.name} />
+      <PerOrderRatingModal
+        isOpen={isOrderRatingModalOpen}
+        onClose={() => setIsOrderRatingModalOpen(false)}
+        order={order}
+        focusedItemIndex={focusedItemIndex}
+      />
     </div>
   );
 };

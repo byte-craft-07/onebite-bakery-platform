@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Edit2, Trash2 } from "lucide-react";
 
 import { Badge, Modal } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
@@ -15,22 +16,20 @@ export const AdminCategoryPage: React.FC = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCat, setEditingCat] = useState<any | null>(null);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const fetchCategories = async () => {
     try {
       const list = await adminCatalogService.getCategories();
       setCategories(list);
     } catch (_err) {
-      setCategories([
-        { id: "cat-1", name: "Artisanal Cakes", slug: "artisanal-cakes", description: "Freshly baked celebration cakes", itemCount: 24, isActive: true },
-        { id: "cat-2", name: "Pastries & Tarts", slug: "pastries-tarts", description: "French pastries and fruit tarts", itemCount: 18, isActive: true },
-        { id: "cat-3", name: "Fresh Breads", slug: "fresh-breads", description: "Sourdough breads and brioche", itemCount: 12, isActive: true },
-      ]);
+      setCategories([]);
     }
   };
 
@@ -38,33 +37,63 @@ export const AdminCategoryPage: React.FC = () => {
     fetchCategories();
   }, []);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+    setEditingCat(null);
+    setName("");
+    setSlug("");
+    setDescription("");
+    setImageUrl("");
+    setErrorMsg(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (cat: any) => {
+    setEditingCat(cat);
+    setName(cat.name || "");
+    setSlug(cat.slug || "");
+    setDescription(cat.description || "");
+    setImageUrl(cat.image || cat.bannerImage || "");
+    setErrorMsg(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
     setIsSubmitting(true);
-    const newCat = {
-      id: `cat-${Date.now()}`,
+    setErrorMsg(null);
+
+    const payload = {
       name: name.trim(),
       slug: slug.trim() || name.trim().toLowerCase().replace(/\s+/g, "-"),
-      description: description.trim(),
-      itemCount: 1,
-      isActive: true,
-      image: imageUrl,
+      description: description.trim() || `${name.trim()} category from The Online Bakery.`,
+      image: imageUrl || "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=800&q=80",
     };
 
     try {
-      await adminCatalogService.createCategory(newCat).catch(() => null);
-    } catch (_err) {
-      // Ignore
-    } finally {
-      setCategories((prev) => [newCat, ...prev]);
+      if (editingCat?.id) {
+        await adminCatalogService.updateCategory(editingCat.id, payload);
+      } else {
+        await adminCatalogService.createCategory(payload);
+      }
+      await fetchCategories();
       setIsModalOpen(false);
-      setName("");
-      setSlug("");
-      setDescription("");
-      setImageUrl("");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Failed to save category.";
+      setErrorMsg(msg);
+    } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!window.confirm("Delete this category?")) return;
+    try {
+      await adminCatalogService.deleteCategory(id);
+      setCategories((prev) => prev.filter((c) => c.id !== id));
+    } catch (_err) {
+      setCategories((prev) => prev.filter((c) => c.id !== id));
     }
   };
 
@@ -77,35 +106,71 @@ export const AdminCategoryPage: React.FC = () => {
       <AdminPageHeader
         title="Category Management"
         description="Organize bakery products into customer browsing categories."
+        actions={
+          <Button onClick={handleOpenCreate} className="bg-[#596B58] hover:bg-[#495948] text-white">
+            + Add Category
+          </Button>
+        }
       />
 
-      <AdminToolbar searchPlaceholder="Search category name..." onSearchChange={setSearchQuery} />
+      <AdminToolbar
+        searchPlaceholder="Search category name..."
+        onSearchChange={setSearchQuery}
+        actions={
+          <Button onClick={handleOpenCreate} className="bg-[#596B58] hover:bg-[#495948] text-white sm:hidden">
+            + Add Category
+          </Button>
+        }
+      />
 
-      <AdminTable headers={["Category Name", "URL Slug", "Description", "Items", "Status"]}>
+      <AdminTable headers={["Category Name", "URL Slug", "Description", "Status", "Actions"]}>
         {filtered.map((cat) => (
-          <tr key={cat.id} className="hover:bg-[#F9F6F0]/50 transition-colors">
-            <td className="px-4 py-3 font-bold text-[#2C1E16]">{cat.name}</td>
-            <td className="px-4 py-3 font-mono text-xs text-[#E67E22]">{cat.slug}</td>
-            <td className="px-4 py-3 text-xs text-[#6E5D4F]">{cat.description || "N/A"}</td>
-            <td className="px-4 py-3 font-bold">{cat.itemCount || 12} Products</td>
+          <tr key={cat.id} className="hover:bg-[#FFF8EC]/50 transition-colors">
+            <td className="px-4 py-3 font-bold text-[#3B302B]">{cat.name}</td>
+            <td className="px-4 py-3 font-mono text-xs text-[#596B58]">{cat.slug}</td>
+            <td className="px-4 py-3 text-xs text-[#7A6E65]">{cat.description || "N/A"}</td>
             <td className="px-4 py-3">
               <Badge variant="success">ACTIVE</Badge>
+            </td>
+            <td className="px-4 py-3">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleOpenEdit(cat)}
+                  className="p-1 rounded border border-[#E5DEC9] text-[#596B58] hover:bg-[#FFF8EC] transition-colors cursor-pointer"
+                  title="Edit Category"
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => handleDeleteCategory(cat.id)}
+                  className="p-1 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                  title="Delete Category"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </td>
           </tr>
         ))}
       </AdminTable>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create Bakery Category">
-        <form onSubmit={handleCreate} className="space-y-4 pt-2">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingCat ? "Edit Bakery Category" : "Create Bakery Category"}>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          {errorMsg ? (
+            <div className="p-3 bg-red-50 text-red-700 text-xs font-semibold rounded-lg border border-red-200">
+              {errorMsg}
+            </div>
+          ) : null}
+
           <Input label="Category Name" placeholder="Cupcakes & Muffins" value={name} onChange={(e) => setName(e.target.value)} required />
           <Input label="URL Slug" placeholder="cupcakes-muffins" value={slug} onChange={(e) => setSlug(e.target.value)} />
           <div>
-            <label className="block text-xs font-bold text-[#2C1E16] mb-1">Description</label>
-            <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-3 rounded-lg border border-[#E8E2D9] text-xs outline-none focus:border-[#E67E22]" />
+            <label className="block text-xs font-bold text-[#3B302B] mb-1">Description</label>
+            <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-3 rounded-lg border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58]" />
           </div>
           <MediaUploader value={imageUrl} onChange={setImageUrl} entityType="CATEGORY" />
           <Button type="submit" className="w-full" isLoading={isSubmitting}>
-            <span>Create Category</span>
+            <span>{editingCat ? "Save Changes" : "Create Category"}</span>
           </Button>
         </form>
       </Modal>
@@ -117,22 +182,20 @@ export const AdminOccasionPage: React.FC = () => {
   const [occasions, setOccasions] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingOcc, setEditingOcc] = useState<any | null>(null);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [tagline, setTagline] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const fetchOccasions = async () => {
     try {
       const list = await adminCatalogService.getOccasions();
       setOccasions(list);
     } catch (_err) {
-      setOccasions([
-        { id: "occ-1", name: "Birthdays", slug: "birthdays", tagline: "Celebrate special milestones with custom tiered cakes.", isActive: true },
-        { id: "occ-2", name: "Anniversaries", slug: "anniversaries", tagline: "Romantic red velvet and Belgian chocolate treats.", isActive: true },
-        { id: "occ-3", name: "Weddings", slug: "weddings", tagline: "Elegant multi-tier custom centerpiece creations.", isActive: true },
-      ]);
+      setOccasions([]);
     }
   };
 
@@ -140,32 +203,64 @@ export const AdminOccasionPage: React.FC = () => {
     fetchOccasions();
   }, []);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+    setEditingOcc(null);
+    setName("");
+    setSlug("");
+    setTagline("");
+    setImageUrl("");
+    setErrorMsg(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (occ: any) => {
+    setEditingOcc(occ);
+    setName(occ.name || "");
+    setSlug(occ.slug || "");
+    setTagline(occ.tagline || occ.description || "");
+    setImageUrl(occ.bannerImage || occ.image || "");
+    setErrorMsg(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
     setIsSubmitting(true);
-    const newOcc = {
-      id: `occ-${Date.now()}`,
+    setErrorMsg(null);
+
+    const payload = {
       name: name.trim(),
       slug: slug.trim() || name.trim().toLowerCase().replace(/\s+/g, "-"),
       tagline: tagline.trim(),
-      isActive: true,
-      image: imageUrl,
+      description: tagline.trim() || `${name.trim()} celebration occasion cakes and desserts`,
+      bannerImage: imageUrl || "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=800&q=80",
     };
 
     try {
-      await adminCatalogService.createOccasion(newOcc).catch(() => null);
-    } catch (_err) {
-      // Ignore
-    } finally {
-      setOccasions((prev) => [newOcc, ...prev]);
+      if (editingOcc?.id) {
+        await adminCatalogService.updateOccasion(editingOcc.id, payload);
+      } else {
+        await adminCatalogService.createOccasion(payload);
+      }
+      await fetchOccasions();
       setIsModalOpen(false);
-      setName("");
-      setSlug("");
-      setTagline("");
-      setImageUrl("");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Failed to save occasion.";
+      setErrorMsg(msg);
+    } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteOccasion = async (id: string) => {
+    if (!window.confirm("Delete this occasion?")) return;
+    try {
+      await adminCatalogService.deleteOccasion(id);
+      setOccasions((prev) => prev.filter((o) => o.id !== id));
+    } catch (_err) {
+      setOccasions((prev) => prev.filter((o) => o.id !== id));
     }
   };
 
@@ -178,31 +273,68 @@ export const AdminOccasionPage: React.FC = () => {
       <AdminPageHeader
         title="Occasion Management"
         description="Manage celebration occasion categories (Birthdays, Weddings, Anniversaries)."
+        actions={
+          <Button onClick={handleOpenCreate} className="bg-[#596B58] hover:bg-[#495948] text-white">
+            + Add Occasion
+          </Button>
+        }
       />
 
-      <AdminToolbar searchPlaceholder="Search occasion name..." onSearchChange={setSearchQuery} />
+      <AdminToolbar
+        searchPlaceholder="Search occasion name..."
+        onSearchChange={setSearchQuery}
+        actions={
+          <Button onClick={handleOpenCreate} className="bg-[#596B58] hover:bg-[#495948] text-white sm:hidden">
+            + Add Occasion
+          </Button>
+        }
+      />
 
-      <AdminTable headers={["Occasion Name", "URL Slug", "Tagline", "Status"]}>
+      <AdminTable headers={["Occasion Name", "URL Slug", "Tagline", "Status", "Actions"]}>
         {filtered.map((occ) => (
-          <tr key={occ.id} className="hover:bg-[#F9F6F0]/50 transition-colors">
-            <td className="px-4 py-3 font-bold text-[#2C1E16]">{occ.name}</td>
-            <td className="px-4 py-3 font-mono text-xs text-[#E67E22]">{occ.slug}</td>
-            <td className="px-4 py-3 text-xs text-[#6E5D4F]">{occ.tagline || "N/A"}</td>
+          <tr key={occ.id} className="hover:bg-[#FFF8EC]/50 transition-colors">
+            <td className="px-4 py-3 font-bold text-[#3B302B]">{occ.name}</td>
+            <td className="px-4 py-3 font-mono text-xs text-[#596B58]">{occ.slug}</td>
+            <td className="px-4 py-3 text-xs text-[#7A6E65]">{occ.tagline || occ.description || "N/A"}</td>
             <td className="px-4 py-3">
               <Badge variant="success">ACTIVE</Badge>
+            </td>
+            <td className="px-4 py-3">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleOpenEdit(occ)}
+                  className="p-1 rounded border border-[#E5DEC9] text-[#596B58] hover:bg-[#FFF8EC] transition-colors cursor-pointer"
+                  title="Edit Occasion"
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => handleDeleteOccasion(occ.id)}
+                  className="p-1 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                  title="Delete Occasion"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </td>
           </tr>
         ))}
       </AdminTable>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create Bakery Occasion">
-        <form onSubmit={handleCreate} className="space-y-4 pt-2">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingOcc ? "Edit Bakery Occasion" : "Create Bakery Occasion"}>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          {errorMsg ? (
+            <div className="p-3 bg-red-50 text-red-700 text-xs font-semibold rounded-lg border border-red-200">
+              {errorMsg}
+            </div>
+          ) : null}
+
           <Input label="Occasion Name" placeholder="Baby Shower Celebrations" value={name} onChange={(e) => setName(e.target.value)} required />
           <Input label="URL Slug" placeholder="baby-shower" value={slug} onChange={(e) => setSlug(e.target.value)} />
           <Input label="Tagline" placeholder="Delicate pastel theme cakes for new beginnings" value={tagline} onChange={(e) => setTagline(e.target.value)} />
           <MediaUploader value={imageUrl} onChange={setImageUrl} entityType="OCCASION" />
-          <Button type="submit" className="w-full text-white bg-[#E67E22] hover:bg-[#D35400] h-11 font-bold rounded-xl" isLoading={isSubmitting}>
-            <span>Create Occasion</span>
+          <Button type="submit" className="w-full text-white bg-[#596B58] hover:bg-[#495948] h-11 font-bold rounded-xl" isLoading={isSubmitting}>
+            <span>{editingOcc ? "Save Changes" : "Create Occasion"}</span>
           </Button>
         </form>
       </Modal>

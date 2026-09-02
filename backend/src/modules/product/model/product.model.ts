@@ -96,7 +96,7 @@ const productSchema = new Schema<Product>(
       type: String,
       required: true,
       trim: true,
-      minlength: 5,
+      minlength: 1,
       maxlength: 2000,
     },
     shortDescription: {
@@ -162,13 +162,12 @@ const productSchema = new Schema<Product>(
       type: String,
       required: true,
       trim: true,
-      maxlength: 500,
     },
     stockQuantity: {
       type: Number,
       required: true,
       min: 0,
-      default: 0,
+      default: 100,
     },
     lowStockThreshold: {
       type: Number,
@@ -260,14 +259,14 @@ const productSchema = new Schema<Product>(
       type: String,
       required: true,
       trim: true,
-      minlength: 2,
+      minlength: 1,
       maxlength: 70,
     },
     seoDescription: {
       type: String,
       required: true,
       trim: true,
-      minlength: 5,
+      minlength: 1,
       maxlength: 160,
     },
     seoKeywords: {

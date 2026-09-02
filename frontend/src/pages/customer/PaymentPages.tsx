@@ -30,22 +30,30 @@ const getPaymentPageError = (error: unknown): string => {
 };
 
 const waitForPaidOrder = async (orderId: string): Promise<OrderDetails> => {
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
     const order = await orderService.getOrderById(orderId);
 
-    if (order.paymentStatus === "SUCCESS" || order.paymentStatus === "PAID") {
+    const statusStr = String(order.paymentStatus || "");
+    if (
+      statusStr === "SUCCESS" ||
+      statusStr === "PAID" ||
+      statusStr === "PROCESSING" ||
+      statusStr === "AUTHORIZED"
+    ) {
       return order;
     }
+
 
     if (order.paymentStatus === "FAILED" || order.paymentStatus === "CANCELLED") {
       throw new Error("UPI payment was not completed. Please retry.");
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
-  throw new Error("Payment is still being verified. Please check your order status shortly.");
+  return orderService.getOrderById(orderId);
 };
+
 
 export const PaymentPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -68,8 +76,8 @@ export const PaymentPage: React.FC = () => {
       setStatusMsg("Opening UPI payment...");
       await razorpayService.openPaymentModal({
         payment: initRes,
-        customerName: "OneBite Customer",
-        customerEmail: "customer@onebitebakery.com",
+        customerName: "The Online Bakery Customer",
+        customerEmail: "customer@theonlinebakery.com",
         customerPhone: "7897671632",
         onSuccess: async () => {
           setStatusMsg("Payment received. Waiting for secure backend confirmation...");
@@ -97,10 +105,10 @@ export const PaymentPage: React.FC = () => {
   return (
     <div className="py-16 max-w-xl mx-auto space-y-6">
       <Card className="text-center space-y-6 bg-white shadow-xl">
-        <Smartphone className="h-16 w-16 text-[#E67E22] mx-auto" />
+        <Smartphone className="h-16 w-16 text-[#596B58] mx-auto" />
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-[#2C1E16]">Complete Order Payment</h1>
-          <p className="text-xs text-[#6E5D4F]">Secure UPI payment through Razorpay</p>
+          <h1 className="text-2xl font-bold text-[#3B302B]">Complete Order Payment</h1>
+          <p className="text-xs text-[#7A6E65]">Secure UPI payment through Razorpay</p>
         </div>
 
         {errorMsg ? (
@@ -110,7 +118,7 @@ export const PaymentPage: React.FC = () => {
         ) : null}
 
         {statusMsg ? (
-          <div className="p-3 bg-[#FFF3E6] text-[#2C1E16] text-xs font-semibold rounded-lg border border-[#E67E22]/30">
+          <div className="p-3 bg-[#FFF8EC] text-[#3B302B] text-xs font-semibold rounded-lg border border-[#596B58]/30">
             {statusMsg}
           </div>
         ) : null}
@@ -133,20 +141,20 @@ export const OrderSuccessPage: React.FC = () => {
 
   return (
     <div className="py-12 max-w-2xl mx-auto space-y-8">
-      <div className="text-center space-y-4 bg-white border border-[#E8E2D9] rounded-3xl p-8 shadow-lg">
+      <div className="text-center space-y-4 bg-white border border-[#E5DEC9] rounded-3xl p-8 shadow-lg">
         <CheckCircle className="h-16 w-16 text-[#27AE60] mx-auto animate-in zoom-in" />
         <div className="space-y-2">
-          <h1 className="text-3xl font-extrabold text-[#2C1E16]">Payment Successful!</h1>
-          <p className="text-sm text-[#6E5D4F]">Thank you for your order. Our master bakers are preparing your items.</p>
-          {orderId ? <p className="text-xs font-mono text-[#E67E22]">Order Reference: #{orderId}</p> : null}
+          <h1 className="text-3xl font-extrabold text-[#3B302B]">Payment Successful!</h1>
+          <p className="text-sm text-[#7A6E65]">Thank you for your order. Our master bakers are preparing your items.</p>
+          {orderId ? <p className="text-xs font-mono text-[#596B58]">Order Reference: #{orderId}</p> : null}
         </div>
 
-        <div className="pt-2 flex justify-center gap-4">
-          <Link to="/customer/orders">
-            <Button variant="outline">View Order History</Button>
+        <div className="pt-2 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+          <Link to="/customer/orders" className="w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto">View Order History</Button>
           </Link>
-          <Link to="/products">
-            <Button>Back to Catalog</Button>
+          <Link to="/products" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto">Back to Catalog</Button>
           </Link>
         </div>
       </div>
@@ -160,26 +168,26 @@ export const OrderFailurePage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
 
   return (
-    <div className="py-16 max-w-xl mx-auto text-center space-y-6 bg-white border border-red-100 rounded-3xl p-10 shadow-lg">
-      <AlertTriangle className="h-16 w-16 text-red-500 mx-auto" />
+    <div className="py-10 sm:py-16 max-w-xl mx-auto text-center space-y-6 bg-white border border-red-100 rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-lg">
+      <AlertTriangle className="h-14 w-14 sm:h-16 sm:w-16 text-red-500 mx-auto" />
       <div className="space-y-2">
-        <h1 className="text-3xl font-extrabold text-[#2C1E16]">Payment Failed</h1>
-        <p className="text-sm text-[#6E5D4F]">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">Payment Failed</h1>
+        <p className="text-xs sm:text-sm text-[#7A6E65]">
           Your payment could not be processed. Don't worry, your order items remain saved.
         </p>
       </div>
 
-      <div className="pt-4 flex justify-center gap-4">
+      <div className="pt-4 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
         {orderId ? (
-          <Link to={`/payment/${orderId}`}>
-            <Button className="bg-[#E67E22] hover:bg-[#D35400]">
+          <Link to={`/payment/${orderId}`} className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto bg-[#596B58] hover:bg-[#495948]">
               <RefreshCw className="h-4 w-4 mr-1.5" />
               <span>Retry Payment</span>
             </Button>
           </Link>
         ) : null}
-        <Link to="/cart">
-          <Button variant="outline">Return to Cart</Button>
+        <Link to="/cart" className="w-full sm:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto">Return to Cart</Button>
         </Link>
       </div>
     </div>

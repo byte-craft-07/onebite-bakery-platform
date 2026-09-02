@@ -32,6 +32,8 @@ export interface CartResponse {
   homeDeliveryAvailable: boolean;
   pickupAvailable: boolean;
   appliedOffers: string[];
+  couponCode?: string;
+  couponDiscount?: number;
   createdAt: Date;
   updatedAt: Date;
 }

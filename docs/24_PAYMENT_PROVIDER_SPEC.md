@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the implementation contract for all payment providers used in the OneBite Bakery Platform.
+This document defines the implementation contract for all payment providers used in the The Online Bakery Platform.
 
 It standardizes how payment providers integrate with the Payment module while keeping the business logic provider-independent.
 

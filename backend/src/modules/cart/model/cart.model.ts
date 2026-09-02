@@ -53,6 +53,8 @@ export interface Cart extends TimestampedDocument {
   homeDeliveryAvailable: boolean;
   pickupAvailable: boolean;
   appliedOffers: string[];
+  couponCode?: string;
+  couponDiscount?: number;
 }
 
 const customCakeConfigSchema = new Schema<CustomCakeConfig>(
@@ -225,6 +227,17 @@ const cartSchema = new Schema<Cart>(
       type: [String],
       required: true,
       default: [],
+    },
+    couponCode: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: undefined,
+    },
+    couponDiscount: {
+      type: Number,
+      min: 0,
+      default: 0,
     },
   },
   baseSchemaOptions,

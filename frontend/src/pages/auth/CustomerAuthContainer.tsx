@@ -1,82 +1,147 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ShieldCheck, UserCheck } from "lucide-react";
+import { Phone, X } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/FormControls";
 import { useAuth } from "@/contexts/auth.context";
 import { authService } from "@/services/auth.service";
 import { googleAuthService } from "@/services/googleAuth.service";
-
-const phoneSchema = z.object({
-  phone: z.string().trim().regex(/^[6-9]\d{9}$/, "Please enter a valid 10-digit Indian mobile number."),
-});
-
-type PhoneFormData = z.infer<typeof phoneSchema>;
+import { getAvatarFromEmailOrName } from "@/components/common/UserAvatar";
 
 const otpSchema = z.object({
-  code: z.string().trim().length(6, "Verification OTP code must be 6 digits."),
+  code: z
+    .string()
+    .trim()
+    .length(6, "Verification OTP code must be 6 digits."),
 });
 
 type OtpFormData = z.infer<typeof otpSchema>;
 
 export const CustomerAuthContainer: React.FC = () => {
-  const [step, setStep] = useState<"phone" | "otp">("phone");
+  const [step, setStep] = useState<"initial" | "phone" | "otp" | "password">("initial");
+  const [emailOrPhone, setEmailOrPhone] = useState("");
   const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [apiError, setApiError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
 
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { login, refreshSession } = useAuth();
 
   useEffect(() => {
     googleAuthService.loadGoogleScript().catch(() => null);
-  }, []);
 
-  const phoneForm = useForm<PhoneFormData>({
-    resolver: zodResolver(phoneSchema),
-  });
+    const redirectParam = searchParams.get("redirect");
+    if (redirectParam) {
+      sessionStorage.setItem("theonlinebakery_auth_redirect", redirectParam);
+    }
+
+    const errorParam = searchParams.get("error");
+    if (errorParam === "google_cancelled") {
+      setApiError("Google authentication was cancelled.");
+    } else if (errorParam === "google_failed") {
+      setApiError("Google Sign-In failed. Please try mobile OTP login.");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const otpForm = useForm<OtpFormData>({
     resolver: zodResolver(otpSchema),
   });
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = () => {
     setIsGoogleLoading(true);
     setApiError(null);
-    try {
-      const res = await googleAuthService.loginWithGoogleToken("simulated-google-id-token");
-      login(res.user as any);
-      navigate("/customer/dashboard", { replace: true });
-    } catch (_err) {
-      setApiError("Google Sign-In failed. Please try mobile OTP login.");
-    } finally {
-      setIsGoogleLoading(false);
-    }
+    googleAuthService.redirectToGoogleOAuth();
   };
 
-  const handleSendOtp = async (data: PhoneFormData) => {
+  const startCooldown = (seconds = 30) => {
+    setCooldown(seconds);
+  };
+
+  const sendOtpForPhone = async (phoneNumber: string) => {
     setApiError(null);
     setIsSubmitting(true);
     try {
-      await authService.sendOtp({ phone: data.phone, purpose: "login" });
-      setPhone(data.phone);
+      await authService.sendOtp({ phone: phoneNumber, purpose: "login" });
+      setPhone(phoneNumber);
       if (import.meta.env.DEV) {
         otpForm.setValue("code", "123456");
       }
       setStep("otp");
+      startCooldown(30);
     } catch (err: any) {
       if (import.meta.env.DEV) {
-        setPhone(data.phone);
+        setPhone(phoneNumber);
         otpForm.setValue("code", "123456");
         setStep("otp");
+        startCooldown(30);
       } else {
-        setApiError(err?.response?.data?.error?.message || "Failed to send OTP code. Please try again.");
+        setApiError(
+          err?.response?.data?.message ||
+            err?.response?.data?.error?.message ||
+            "Failed to send OTP code. Please try again.",
+        );
       }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleContinueInitial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanInput = emailOrPhone.trim();
+    if (!cleanInput) {
+      setApiError("Please enter your email or 10-digit mobile number.");
+      return;
+    }
+
+    setApiError(null);
+
+    // If input is purely digits or 10 digits -> treat as Phone OTP login
+    const digitsOnly = cleanInput.replace(/\D/g, "");
+    if (/^[6-9]\d{9}$/.test(digitsOnly) || digitsOnly.length === 10) {
+      await sendOtpForPhone(digitsOnly);
+      return;
+    }
+
+    // If input contains @ or letters -> treat as Admin / Password login
+    if (cleanInput.includes("@") || /[a-zA-Z]/.test(cleanInput)) {
+      setStep("password");
+      return;
+    }
+
+    setApiError("Please enter a valid 10-digit Indian phone number or email address.");
+  };
+
+  const handleResendOtp = async () => {
+    if (cooldown > 0 || !phone) return;
+    setApiError(null);
+    setIsSubmitting(true);
+    try {
+      await authService.sendOtp({ phone, purpose: "login" });
+      if (import.meta.env.DEV) {
+        otpForm.setValue("code", "123456");
+      }
+      startCooldown(30);
+    } catch (err: any) {
+      setApiError(
+        err?.response?.data?.message ||
+          err?.response?.data?.error?.message ||
+          "Failed to resend OTP. Please wait before retrying.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -86,68 +151,156 @@ export const CustomerAuthContainer: React.FC = () => {
     setApiError(null);
     setIsSubmitting(true);
     try {
-      const res = await authService.verifyOtp({ phone, code: data.code, purpose: "login" });
-      login(res.data.user);
+      const res = await authService.verifyOtp({
+        phone,
+        code: data.code,
+        purpose: "login",
+      });
+      const userWithAvatar = {
+        ...res.data.user,
+        profileImage:
+          res.data.user.profileImage ||
+          (res.data.user.email || res.data.user.name
+            ? getAvatarFromEmailOrName(res.data.user.name, res.data.user.email)
+            : undefined),
+      };
+      localStorage.setItem("theonlinebakery_open_location_after_login", "true");
+      login(userWithAvatar);
+
+      const rawRedirect = searchParams.get("redirect") || sessionStorage.getItem("theonlinebakery_auth_redirect");
+      const redirectUrl = rawRedirect ? (rawRedirect.startsWith("%") ? decodeURIComponent(rawRedirect) : rawRedirect) : "/checkout";
+      sessionStorage.removeItem("theonlinebakery_auth_redirect");
+
       if (res.data.user.role === "admin") {
         navigate("/admin/dashboard", { replace: true });
+      } else if (res.data.user.role === "branch_admin") {
+        navigate("/admin/branch/dashboard", { replace: true });
+      } else if (res.data.user.role === "delivery_agent") {
+        navigate("/agent/dashboard", { replace: true });
       } else {
-        navigate("/customer/dashboard", { replace: true });
+        navigate(redirectUrl, { replace: true });
       }
     } catch (err: any) {
-      setApiError(err?.response?.data?.error?.message || "Invalid or expired OTP code.");
+      setApiError(
+        err?.response?.data?.message ||
+          err?.response?.data?.error?.message ||
+          "Invalid or expired OTP code.",
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleQuickDevAdmin = () => {
-    phoneForm.setValue("phone", "9999999999");
-    otpForm.setValue("code", "123456");
-    setPhone("9999999999");
-    setStep("otp");
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailOrPhone.trim() || !password) {
+      setApiError("Please enter email/phone and password.");
+      return;
+    }
+    setIsSubmitting(true);
+    setApiError(null);
+    try {
+      const user = await authService.loginWithPassword(emailOrPhone.trim(), password);
+      const userWithAvatar = {
+        ...user,
+        profileImage:
+          user.profileImage ||
+          (user.email || user.name
+            ? getAvatarFromEmailOrName(user.name, user.email)
+            : undefined),
+      };
+      localStorage.setItem("theonlinebakery_open_location_after_login", "true");
+      login(userWithAvatar);
+
+      const rawRedirect = searchParams.get("redirect") || sessionStorage.getItem("theonlinebakery_auth_redirect");
+      const redirectUrl = rawRedirect ? (rawRedirect.startsWith("%") ? decodeURIComponent(rawRedirect) : rawRedirect) : "/checkout";
+      sessionStorage.removeItem("theonlinebakery_auth_redirect");
+
+      if (user.role === "admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } else if (user.role === "branch_admin") {
+        navigate("/admin/branch/dashboard", { replace: true });
+      } else if (user.role === "delivery_agent") {
+        navigate("/agent/dashboard", { replace: true });
+      } else {
+        navigate(redirectUrl, { replace: true });
+      }
+    } catch (err: any) {
+      setApiError(
+        err?.response?.data?.message ||
+          err?.response?.data?.error?.message ||
+          "Invalid login credentials.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+
+  const formatMaskedPhone = (num: string) => {
+    if (!num || num.length < 10) return num;
+    return `+91 ${num.slice(0, 5)} ${"*".repeat(5)}`;
   };
 
   return (
-    <div className="space-y-6">
-      {/* Dev Mode Admin Shortcut Banner */}
-      <div className="p-3 bg-[#FFF3E6] border border-[#E67E22]/30 rounded-xl text-center space-y-1.5">
-        <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#E67E22]">
-          <UserCheck className="h-4 w-4" />
-          <span>Development Mode Quick Access</span>
+    <div className="w-full bg-[#212121] border border-[#333333] rounded-2xl sm:rounded-3xl p-4 sm:p-8 text-white shadow-2xl relative">
+      {/* Header with Title and Close button */}
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            {step === "otp"
+              ? "Enter OTP Code"
+              : step === "phone"
+              ? "Continue with phone"
+              : step === "password"
+              ? "Staff & Admin Login"
+              : "Log in or sign up"}
+          </h1>
+          <p className="text-xs sm:text-sm text-[#B4B4B4] mt-1.5 leading-relaxed">
+            {step === "otp"
+              ? `Verification code sent to ${formatMaskedPhone(phone)}`
+              : step === "phone"
+              ? "Enter your mobile number to receive a 6-digit verification code."
+              : step === "password"
+              ? "Sign in with your Email/Phone and Password configured by Main Admin."
+              : "Order fresh artisanal cakes, pastries & manage your orders."}
+          </p>
         </div>
-        <p className="text-[11px] text-[#6E5D4F]">
-          Any Phone (e.g. <code className="font-bold text-[#2C1E16]">9876543210</code>) or Admin <code className="font-bold text-[#2C1E16]">9999999999</code> &bull; OTP: <code className="font-bold text-[#2C1E16]">123456</code>
-        </p>
+
         <button
           type="button"
-          onClick={handleQuickDevAdmin}
-          className="text-[11px] font-bold text-[#E67E22] underline hover:text-[#D35400] cursor-pointer"
+          onClick={() => {
+            if (step !== "initial") {
+              setStep("initial");
+              setApiError(null);
+            } else {
+              navigate("/");
+            }
+          }}
+          className="p-1.5 rounded-full text-[#8E8E8E] hover:text-white hover:bg-[#2F2F2F] transition-colors cursor-pointer shrink-0"
+          aria-label="Close"
         >
-          Auto-fill Admin Credentials
+          <X className="h-5 w-5" />
         </button>
       </div>
 
-      {step === "phone" ? (
-        <form onSubmit={phoneForm.handleSubmit(handleSendOtp)} className="space-y-4">
-          <div className="text-center space-y-1">
-            <h2 className="text-xl font-bold text-[#2C1E16]">Welcome to OneBite</h2>
-            <p className="text-xs text-[#6E5D4F]">Sign in using your Google Account or mobile OTP.</p>
-          </div>
+      {apiError ? (
+        <div className="mb-5 p-3.5 bg-red-950/50 border border-red-800/80 text-red-300 text-xs font-semibold rounded-2xl">
+          {apiError}
+        </div>
+      ) : null}
 
-          {apiError ? (
-            <div className="p-3 bg-red-50 text-red-700 text-xs font-semibold rounded-lg border border-red-200">
-              {apiError}
-            </div>
-          ) : null}
-
-          {/* Continue with Google Button */}
+      {/* Step 1: Initial Login Screen */}
+      {step === "initial" ? (
+        <div className="space-y-3.5">
+          {/* Continue with Google */}
           <button
             type="button"
             onClick={handleGoogleLogin}
             disabled={isGoogleLoading}
-            className="w-full h-11 px-4 rounded-xl border border-[#E8E2D9] bg-white text-[#2C1E16] text-xs font-bold flex items-center justify-center gap-3 shadow-xs hover:bg-[#FFFBF5] hover:border-[#E67E22] transition-colors cursor-pointer disabled:opacity-50"
+            className="w-full h-12 rounded-full bg-[#2F2F2F] hover:bg-[#383838] border border-[#3E3E3E] text-white text-sm font-semibold flex items-center justify-center gap-3 transition-colors cursor-pointer disabled:opacity-50"
           >
-            <svg className="h-4 w-4" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -168,77 +321,192 @@ export const CustomerAuthContainer: React.FC = () => {
             <span>{isGoogleLoading ? "Connecting to Google..." : "Continue with Google"}</span>
           </button>
 
-          <div className="relative my-4">
+          {/* Continue with Phone */}
+          <button
+            type="button"
+            onClick={() => {
+              setStep("phone");
+              setApiError(null);
+            }}
+            className="w-full h-12 rounded-full bg-[#2F2F2F] hover:bg-[#383838] border border-[#3E3E3E] text-white text-sm font-semibold flex items-center justify-center gap-3 transition-colors cursor-pointer"
+          >
+            <Phone className="h-4 w-4 text-white shrink-0" />
+            <span>Continue with phone</span>
+          </button>
+
+          {/* OR Divider */}
+          <div className="relative py-2">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[#E8E2D9]"></div>
+              <div className="w-full border-t border-[#3E3E3E]"></div>
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-[#FFFBF5] px-3 text-[#9C8C7E] font-medium">or login via Mobile OTP</span>
+              <span className="bg-[#212121] px-3 text-[#8E8E8E] font-semibold tracking-wider">OR</span>
             </div>
           </div>
 
-          <Input
-            label="Mobile Number"
-            placeholder="9876543210"
-            {...phoneForm.register("phone")}
-            error={phoneForm.formState.errors.phone?.message}
-          />
+          {/* Email / Phone Input and Continue Form */}
+          <form onSubmit={handleContinueInitial} className="space-y-3.5">
+            <input
+              id="auth-login-input"
+              type="text"
+              value={emailOrPhone}
+              onChange={(e) => setEmailOrPhone(e.target.value)}
+              placeholder="Enter your email or phone number"
+              className="w-full h-12 px-5 rounded-full bg-[#2F2F2F] border border-[#3E3E3E] text-white placeholder-[#8E8E8E] text-sm focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+            />
 
-          <Button type="submit" className="w-full" isLoading={isSubmitting}>
-            <span>Send Verification OTP</span>
-          </Button>
+            <button
+              type="submit"
+              disabled={isSubmitting || !emailOrPhone.trim()}
+              className="w-full h-12 rounded-full bg-white hover:bg-[#E5E5E5] text-black text-sm font-bold flex items-center justify-center transition-all cursor-pointer shadow-md disabled:opacity-50"
+            >
+              <span>{isSubmitting ? "Processing..." : "Continue"}</span>
+            </button>
+          </form>
+        </div>
+      ) : null}
 
-          <p className="text-[11px] text-gray-400 text-center flex items-center justify-center gap-1">
-            <ShieldCheck className="h-3.5 w-3.5 text-[#27AE60]" />
-            <span>Secure Google OAuth & 1-step OTP login.</span>
-          </p>
+      {/* Step: Dedicated Phone Login */}
+      {step === "phone" ? (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const clean = phone.replace(/\D/g, "");
+            if (clean.length === 10) {
+              sendOtpForPhone(clean);
+            } else {
+              setApiError("Please enter a valid 10-digit mobile number.");
+            }
+          }}
+          className="space-y-4 animate-in fade-in"
+        >
+          <div className="flex items-center gap-2">
+            <div className="h-12 px-4 rounded-full bg-[#2F2F2F] border border-[#3E3E3E] text-white flex items-center justify-center font-bold text-sm shrink-0">
+              🇮🇳 +91
+            </div>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Enter 10-digit number"
+              maxLength={10}
+              className="flex-1 h-12 px-5 rounded-full bg-[#2F2F2F] border border-[#3E3E3E] text-white placeholder-[#8E8E8E] text-sm focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all font-medium"
+              autoFocus
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting || phone.replace(/\D/g, "").length < 10}
+            className="w-full h-12 rounded-full bg-white hover:bg-[#E5E5E5] text-black text-sm font-bold flex items-center justify-center transition-all cursor-pointer shadow-md disabled:opacity-50"
+          >
+            <span>{isSubmitting ? "Sending OTP..." : "Send Verification Code"}</span>
+          </button>
+
+          <div className="text-center pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                setStep("initial");
+                setApiError(null);
+              }}
+              className="text-xs text-[#B4B4B4] hover:text-white underline cursor-pointer"
+            >
+              &larr; Back to all login options
+            </button>
+          </div>
         </form>
-      ) : (
-        <form onSubmit={otpForm.handleSubmit(handleVerifyOtp)} className="space-y-4 animate-in fade-in">
-          <div className="text-center space-y-1">
-            <h2 className="text-xl font-bold text-[#2C1E16]">Verify OTP Code</h2>
-            <p className="text-xs text-[#6E5D4F]">
-              Enter the 6-digit code sent to <strong className="text-[#2C1E16]">+91 {phone}</strong>
-            </p>
-          </div>
+      ) : null}
 
-          {apiError ? (
-            <div className="p-3 bg-red-50 text-red-700 text-xs font-semibold rounded-lg border border-red-200">
-              {apiError}
-            </div>
+      {/* Step 2: OTP Verification Screen */}
+      {step === "otp" ? (
+        <form onSubmit={otpForm.handleSubmit(handleVerifyOtp)} className="space-y-4 animate-in fade-in">
+          <input
+            type="text"
+            maxLength={6}
+            placeholder="123456"
+            {...otpForm.register("code")}
+            className="w-full h-12 px-5 rounded-full bg-[#2F2F2F] border border-[#3E3E3E] text-white placeholder-[#8E8E8E] text-center tracking-[0.3em] font-bold text-lg focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+          />
+          {otpForm.formState.errors.code?.message ? (
+            <p className="text-xs text-red-400 text-center">{otpForm.formState.errors.code.message}</p>
           ) : null}
 
-          <Input
-            label="6-Digit Verification Code"
-            placeholder="123456"
-            maxLength={6}
-            {...otpForm.register("code")}
-            error={otpForm.formState.errors.code?.message}
-          />
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full h-12 rounded-full bg-white hover:bg-[#E5E5E5] text-black text-sm font-bold flex items-center justify-center transition-all cursor-pointer shadow-md disabled:opacity-50"
+          >
+            <span>{isSubmitting ? "Verifying..." : "Verify & Continue"}</span>
+          </button>
 
-          <Button type="submit" className="w-full" isLoading={isSubmitting}>
-            <span>Verify & Proceed</span>
-          </Button>
-
-          <div className="flex justify-between items-center text-xs pt-2">
+          <div className="flex justify-between items-center text-xs pt-1 px-1">
             <button
               type="button"
-              onClick={() => setStep("phone")}
-              className="text-[#6E5D4F] hover:underline"
+              onClick={() => {
+                setStep("initial");
+                setApiError(null);
+              }}
+              className="text-[#B4B4B4] hover:text-white underline cursor-pointer"
             >
-              Change Phone Number
+              &larr; Change Phone
             </button>
 
             <button
               type="button"
-              onClick={() => handleSendOtp({ phone })}
-              className="text-[#E67E22] font-semibold hover:underline cursor-pointer"
+              disabled={cooldown > 0 || isSubmitting}
+              onClick={handleResendOtp}
+              className="text-[#596B58] font-semibold hover:underline cursor-pointer disabled:opacity-50 disabled:no-underline"
             >
-              Resend OTP
+              {cooldown > 0 ? `Resend OTP in ${cooldown}s` : "Resend OTP"}
             </button>
           </div>
         </form>
-      )}
+      ) : null}
+
+      {/* Step 3: Branch Admin / Staff Password Screen */}
+      {step === "password" ? (
+        <form onSubmit={handlePasswordLogin} className="space-y-3.5 animate-in fade-in">
+          <input
+            type="text"
+            value={emailOrPhone}
+            onChange={(e) => setEmailOrPhone(e.target.value)}
+            placeholder="Email or Phone Number"
+            className="w-full h-12 px-5 rounded-full bg-[#2F2F2F] border border-[#3E3E3E] text-white placeholder-[#8E8E8E] text-sm focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+            required
+          />
+
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter password"
+            className="w-full h-12 px-5 rounded-full bg-[#2F2F2F] border border-[#3E3E3E] text-white placeholder-[#8E8E8E] text-sm focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+            required
+          />
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full h-12 rounded-full bg-white hover:bg-[#E5E5E5] text-black text-sm font-bold flex items-center justify-center transition-all cursor-pointer shadow-md disabled:opacity-50"
+          >
+            <span>{isSubmitting ? "Logging in..." : "Log In as Branch Admin"}</span>
+          </button>
+
+          <div className="text-center pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                setStep("initial");
+                setApiError(null);
+              }}
+              className="text-xs text-[#B4B4B4] hover:text-white underline cursor-pointer"
+            >
+              &larr; Back to Customer Login
+            </button>
+          </div>
+        </form>
+      ) : null}
     </div>
   );
 };

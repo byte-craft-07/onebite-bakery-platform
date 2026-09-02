@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 
+import { env } from "../../../config/env.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
 import { AppError } from "../../../shared/errors/app-error.js";
@@ -56,6 +57,26 @@ export class AuthController {
     });
   };
 
+  public loginWithPassword = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const result = await this.authService.authenticateWithPassword(
+      request.body as { identifier: string; password: string },
+      createRequestContext(request),
+    );
+
+    setAuthCookies(response, result.tokens);
+
+    return sendSuccess(response, {
+      message: AUTH_RESPONSE_MESSAGES.AUTHENTICATED,
+      data: {
+        user: result.user,
+        tokens: result.tokens,
+      },
+    });
+  };
+
   public googleAuth = async (
     request: Request,
     response: Response,
@@ -71,6 +92,46 @@ export class AuthController {
       message: AUTH_RESPONSE_MESSAGES.AUTHENTICATED,
       data: { user: result.user, tokens: result.tokens },
     });
+  };
+
+  public googleRedirect = async (
+    _request: Request,
+    response: Response,
+  ): Promise<void> => {
+    const redirectUrl = this.authService.getGoogleAuthUrl();
+    response.redirect(redirectUrl);
+  };
+
+  public googleCallback = async (
+    request: Request,
+    response: Response,
+  ): Promise<void> => {
+    const code = request.query.code as string | undefined;
+    const error = request.query.error as string | undefined;
+
+    const frontendUrl = env.corsOrigins[0] || "http://localhost:5173";
+
+    if (error || !code) {
+      response.redirect(`${frontendUrl}/customer/auth?error=google_cancelled`);
+      return;
+    }
+
+    try {
+      const result = await this.authService.authenticateWithGoogle(
+        { code },
+        createRequestContext(request),
+      );
+
+      setAuthCookies(response, result.tokens);
+
+      const targetPath =
+        result.user.role === "admin"
+          ? "/admin/dashboard"
+          : "/customer/dashboard";
+      response.redirect(`${frontendUrl}${targetPath}`);
+    } catch {
+      response.redirect(`${frontendUrl}/customer/auth?error=google_failed`);
+    }
   };
 
   public me = async (

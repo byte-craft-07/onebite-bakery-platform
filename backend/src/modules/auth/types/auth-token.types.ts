@@ -7,16 +7,27 @@ export type AuthTokenType =
 export interface AuthTokenPayload {
   sub: string;
   role: UserRole;
+  branchId?: string;
   type: AuthTokenType;
   deviceId?: string;
+}
+
+export interface AuthenticatedUserLocation {
+  villageId: string;
+  villageName: string;
+  district: string;
+  pincode: string;
 }
 
 export interface AuthenticatedUser {
   id: string;
   name: string;
-  phone: string;
+  phone?: string;
   email?: string;
   role: UserRole;
+  branchId?: string;
+  currentLocation?: AuthenticatedUserLocation;
+  profileImage?: string;
   isVerified: boolean;
 }
 

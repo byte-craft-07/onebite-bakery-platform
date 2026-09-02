@@ -18,4 +18,12 @@ export const ROUTES = {
   SETTINGS: "/settings",
   UPLOAD: "/upload",
   USER: "/users",
+  VILLAGE: "/villages",
+  COUPONS: "/coupons",
+  BRANCH: "/branches",
+  DELIVERY_AGENT: "/delivery-agent",
+  CUSTOM_CAKE: "/custom-cake",
+  COMBOS: "/combos",
+  BANNER: "/banners",
 } as const;
+

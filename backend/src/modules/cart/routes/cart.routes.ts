@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { requireAuth, requireRoles } from "../../auth/index.js";
+import { optionalAuth, requireAuth, requireRoles } from "../../auth/index.js";
 import { validateRequest } from "../../../shared/middlewares/validate-request.middleware.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { CartController } from "../controller/index.js";
@@ -15,6 +15,8 @@ import {
 } from "../validators/index.js";
 
 export const cartRouter = Router();
+
+cartRouter.use(optionalAuth);
 
 const cartRepository = new CartRepository();
 const cartService = new CartService(cartRepository);
@@ -52,6 +54,9 @@ cartRouter.post(
   validateRequest({ body: mergeCartSchema }),
   asyncHandler(cartController.mergeCart),
 );
+
+cartRouter.post("/coupon", asyncHandler(cartController.applyCoupon));
+cartRouter.delete("/coupon", asyncHandler(cartController.removeCoupon));
 
 cartRouter.get(
   "/admin/customer/:customerId",

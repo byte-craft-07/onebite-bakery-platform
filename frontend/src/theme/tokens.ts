@@ -1,16 +1,41 @@
 export const DESIGN_TOKENS = {
   colors: {
-    background: "#FFFBF5",
+    // Official Brand Palette
+    cream: "#FFF8EC",
+    pistachio: "#A8B89A",
+    sage: "#596B58",
+    cocoa: "#3B302B",
+    champagne: "#D8BE91",
+
+    // Semantic tokens
+    background: "#FFF8EC",
+    backgroundSecondary: "#FAF3E6",
     surface: "#FFFFFF",
-    surfaceMuted: "#F9F6F0",
-    primary: "#E67E22",
-    primaryHover: "#D35400",
-    secondary: "#2C1E16",
-    accentRose: "#C0392B",
-    success: "#27AE60",
-    warning: "#F39C12",
-    danger: "#E74C3C",
-    border: "#E8E2D9",
+    surfaceMuted: "#F7F2E7",
+    surfaceElevated: "#FFFFFF",
+
+    textPrimary: "#3B302B",
+    textSecondary: "#596B58",
+    textMuted: "#7A6E65",
+    textInverse: "#FFF8EC",
+
+    brandPrimary: "#A8B89A",
+    brandSecondary: "#596B58",
+    brandAccent: "#D8BE91",
+
+    border: "#E5DEC9",
+    borderSubtle: "#F0EAD6",
+
+    buttonPrimary: "#596B58",
+    buttonPrimaryHover: "#495948",
+    buttonSecondary: "#FFF8EC",
+    buttonSecondaryHover: "#A8B89A",
+
+    // Functional tokens
+    success: "#2E7D32",
+    warning: "#D97706",
+    danger: "#DC2626",
+    info: "#0284C7",
   },
   borderRadius: {
     sm: "6px",
@@ -19,8 +44,11 @@ export const DESIGN_TOKENS = {
     full: "9999px",
   },
   shadows: {
-    card: "0 4px 16px rgba(44, 30, 22, 0.08)",
-    hover: "0 12px 32px rgba(44, 30, 22, 0.12)",
-    modal: "0 24px 48px rgba(44, 30, 22, 0.18)",
+    card: "0 2px 12px rgba(59, 48, 43, 0.05)",
+    hover: "0 8px 24px rgba(59, 48, 43, 0.09)",
+    modal: "0 20px 40px rgba(59, 48, 43, 0.15)",
   },
 } as const;
+
+export type DesignTokens = typeof DESIGN_TOKENS;
+

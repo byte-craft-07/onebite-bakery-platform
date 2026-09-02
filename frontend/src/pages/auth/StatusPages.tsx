@@ -8,8 +8,8 @@ export const UnauthorizedPage: React.FC = () => {
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6 space-y-4">
       <ShieldX className="h-16 w-16 text-red-500" />
-      <h1 className="text-3xl font-extrabold text-[#2C1E16]">403 - Access Denied</h1>
-      <p className="text-sm text-[#6E5D4F] max-w-md">
+      <h1 className="text-3xl font-extrabold text-[#3B302B]">403 - Access Denied</h1>
+      <p className="text-sm text-[#7A6E65] max-w-md">
         You do not have permission to access this page. Administrative privileges are required.
       </p>
       <Link to="/">
@@ -22,9 +22,9 @@ export const UnauthorizedPage: React.FC = () => {
 export const SessionExpiredPage: React.FC = () => {
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6 space-y-4">
-      <ShieldAlert className="h-16 w-16 text-[#E67E22]" />
-      <h1 className="text-3xl font-extrabold text-[#2C1E16]">Session Expired</h1>
-      <p className="text-sm text-[#6E5D4F] max-w-md">
+      <ShieldAlert className="h-16 w-16 text-[#596B58]" />
+      <h1 className="text-3xl font-extrabold text-[#3B302B]">Session Expired</h1>
+      <p className="text-sm text-[#7A6E65] max-w-md">
         Your login session has expired for security reasons. Please log in again using OTP.
       </p>
       <Link to="/auth/login">

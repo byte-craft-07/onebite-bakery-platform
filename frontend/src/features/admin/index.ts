@@ -12,6 +12,16 @@ export * from "./pages/AdminHealthLogsPage";
 export * from "./pages/AdminMediaPage";
 export * from "./pages/AdminPlaceholderPages";
 export * from "./pages/AdminReportsPage";
+export * from "./pages/AdminVillagesPage";
+export * from "./pages/AdminCouponsPage";
+export * from "./pages/AdminCustomCakePage";
+export * from "./pages/AdminCombosPage";
+export * from "./pages/AdminBannersPage";
+export * from "./pages/AdminAdminsPage";
 export * from "./services/adminCatalog.service";
+
 export * from "./services/adminOperations.service";
+export * from "./services/adminCoupons.service";
+export * from "./services/adminBanner.service";
 export * from "./types";
+

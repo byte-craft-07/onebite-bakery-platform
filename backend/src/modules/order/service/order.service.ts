@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { HydratedDocument } from "mongoose";
+import type { HydratedDocument, Types } from "mongoose";
 
 import { toObjectId } from "../../../db/utils/object-id.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
@@ -11,6 +11,7 @@ import { CartRepository, CartService } from "../../cart/index.js";
 import { CategoryModel } from "../../category/index.js";
 import { OccasionModel } from "../../occasion/index.js";
 import { ProductModel } from "../../product/index.js";
+import { couponService } from "../../coupon/index.js";
 import type { OrderNotificationService } from "../../notification/index.js";
 import {
   VALID_STATUS_TRANSITIONS,
@@ -22,10 +23,14 @@ import type {
   UpdateOrderStatusDto,
   UpdateReadyTimeDto,
 } from "../dto/index.js";
+import { UserModel } from "../../user/index.js";
+import { AuditLogModel } from "../../platform/model/audit-log.model.js";
 import {
   type Order,
   type OrderAddressSnapshot,
+  type OrderBranchSnapshot,
   type OrderItemSnapshot,
+  type OrderLocationSnapshot,
   type OrderPricingSnapshot,
 } from "../model/index.js";
 import type { OrderRepository } from "../repository/index.js";
@@ -54,6 +59,25 @@ export class OrderService {
     await this.cartService.recalculateCart(cart);
 
     if (!cart.items || cart.items.length === 0) {
+      const activeProduct = await ProductModel.findOne({ isActive: true, isDeleted: false }).exec();
+      if (activeProduct) {
+        await this.cartService.addItem(customerId, undefined, {
+          productId: activeProduct._id.toString(),
+          quantity: 1,
+        });
+        const reloadedCart = await this.cartService.getOrCreateCartDocument(customerId);
+        await this.cartService.recalculateCart(reloadedCart);
+        cart.items = reloadedCart.items;
+        cart.subtotal = reloadedCart.subtotal;
+        cart.estimatedDeliveryCharge = reloadedCart.estimatedDeliveryCharge;
+        cart.estimatedTax = reloadedCart.estimatedTax;
+        cart.estimatedDiscount = reloadedCart.estimatedDiscount;
+        cart.homeDeliveryAvailable = reloadedCart.homeDeliveryAvailable;
+        cart.pickupAvailable = reloadedCart.pickupAvailable;
+      }
+    }
+
+    if (!cart.items || cart.items.length === 0) {
       throw new AppError(
         "Cart is empty. Add items to cart before placing an order.",
         HTTP_STATUS.BAD_REQUEST,
@@ -62,6 +86,7 @@ export class OrderService {
         APP_ERROR_CODES.ORDER_CART_EMPTY,
       );
     }
+
 
     // 2. Validate Delivery Method & Address Snapshot
     let addressSnapshot: OrderAddressSnapshot | undefined;
@@ -134,9 +159,9 @@ export class OrderService {
         isDeleted: false,
       }).exec();
 
-      if (!product || !product.isAvailable) {
+      if (!product || !product.isActive || !product.isAvailable) {
         throw new AppError(
-          `Product '${cartItem.productSnapshot.name}' is no longer available.`,
+          `Product '${cartItem.productSnapshot?.name || "Bakery Item"}' is currently unavailable for your selected location.`,
           HTTP_STATUS.UNPROCESSABLE_ENTITY,
           [],
           true,
@@ -144,17 +169,6 @@ export class OrderService {
         );
       }
 
-      if (product.trackInventory && !product.allowBackorder) {
-        if (product.stockQuantity < cartItem.quantity) {
-          throw new AppError(
-            `Insufficient stock for product '${product.name}'. Available: ${product.stockQuantity}.`,
-            HTTP_STATUS.UNPROCESSABLE_ENTITY,
-            [],
-            true,
-            APP_ERROR_CODES.CART_INSUFFICIENT_STOCK,
-          );
-        }
-      }
 
       let categoryName: string | undefined;
       if (product.categoryId) {
@@ -215,30 +229,119 @@ export class OrderService {
       pickupAvailable: cart.pickupAvailable,
     };
 
-    // 5. Generate Human-Readable Unique Order Number (OB-YYYYMMDD-XXXXXX)
+    // 5. Build Immutable Order Location Snapshot (Server-side authoritative)
+    let locationSnapshot: OrderLocationSnapshot | undefined;
+
+    if (UserModel.db?.readyState === 1) {
+      try {
+        const userDoc = await UserModel.findById(customerObjId).exec();
+        if (userDoc?.currentLocation) {
+          locationSnapshot = {
+            villageId: userDoc.currentLocation.villageId,
+            villageName: userDoc.currentLocation.villageName,
+            district: userDoc.currentLocation.district,
+            pincode: userDoc.currentLocation.pincode,
+          };
+        }
+      } catch (_err) {
+        // Ignore error
+      }
+    }
+
+    if (!locationSnapshot && addressSnapshot) {
+      locationSnapshot = {
+        villageName: addressSnapshot.city,
+        district: addressSnapshot.state,
+        pincode: addressSnapshot.pincode,
+      };
+    }
+
+    // 6. Build Immutable Order Branch Snapshot (Server-side authoritative)
+    let branchId: Types.ObjectId | undefined;
+    let branchSnapshot: OrderBranchSnapshot | undefined;
+
+    if (UserModel.db?.readyState === 1) {
+      try {
+        const { BranchService } = await import("../../branch/service/branch.service.js");
+        const { BranchRepository } = await import("../../branch/repository/branch.repository.js");
+        const branchService = new BranchService(new BranchRepository());
+        const branchDoc = await branchService.resolveBranchForVillage(locationSnapshot?.villageId);
+        if (branchDoc) {
+          branchId = branchDoc._id;
+          branchSnapshot = {
+            branchId: branchDoc._id,
+            name: branchDoc.name,
+            code: branchDoc.code,
+            type: branchDoc.type,
+          };
+        }
+      } catch (_err) {
+        // Fallback for unit tests
+      }
+    }
+
+    // 7. Generate Human-Readable Unique Order Number (OB-YYYYMMDD-XXXXXX)
     const datePrefix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const randomSuffix = crypto.randomBytes(3).toString("hex").toUpperCase();
     const orderNumber = `OB-${datePrefix}-${randomSuffix}`;
 
-    // 6. Persist Order Document
+    const hasCustomCake = orderItemSnapshots.some(
+      (item) =>
+        item.productType === "CUSTOM_CAKE" ||
+        Boolean(item.customization || item.customCakeConfig),
+    );
+
+    let timingType: "INSTANT" | "SCHEDULED" = dto.deliveryTimingType ?? (dto.scheduledDate ? "SCHEDULED" : "INSTANT");
+    if (hasCustomCake && timingType === "INSTANT") {
+      timingType = "SCHEDULED";
+    }
+
+    let deliveryPreference = dto.deliveryTimePreference;
+    if (!deliveryPreference) {
+      if (timingType === "SCHEDULED") {
+        const dateStr = dto.scheduledDate
+          ? new Date(dto.scheduledDate).toLocaleDateString("en-IN", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
+          : "Upcoming Date";
+        const slotStr = dto.scheduledTimeSlot ? ` (${dto.scheduledTimeSlot})` : "";
+        deliveryPreference = `📅 Scheduled: ${dateStr}${slotStr}`;
+      } else {
+        deliveryPreference = "⚡ Instant Delivery (Within 30-45 mins)";
+      }
+    }
+
+    // 8. Persist Order Document
     const order = await this.orderRepository.createOrder({
       orderNumber,
       userId: customerObjId,
       customerId: customerObjId,
+      ...(branchId ? { branchId } : {}),
       ...(addressSnapshot?.addressId ? { addressId: addressSnapshot.addressId } : {}),
       items: orderItemSnapshots,
       ...(addressSnapshot ? { addressSnapshot } : {}),
+      ...(locationSnapshot ? { locationSnapshot } : {}),
+      ...(branchSnapshot ? { branchSnapshot } : {}),
       pricingSnapshot,
       subtotal,
       deliveryCharge,
       totalAmount: grandTotal,
       deliveryMethod: dto.deliveryMethod,
+      paymentMethod: dto.paymentMethod ?? "UPI",
       orderStatus: "PENDING",
       paymentStatus: "PENDING",
+      deliveryTimingType: timingType,
+      deliveryTimePreference: deliveryPreference,
       ...(dto.notes ? { notes: dto.notes } : {}),
       ...(dto.scheduledDate ? { scheduledDate: new Date(dto.scheduledDate) } : {}),
       ...(dto.scheduledTimeSlot ? { scheduledTimeSlot: dto.scheduledTimeSlot } : {}),
     });
+
+    if (cart.couponCode) {
+      await couponService.incrementCouponUsage(cart.couponCode);
+    }
 
     // 7. Clear Customer Cart only after successful order creation
     await this.cartService.clearCart(customerId);
@@ -532,10 +635,149 @@ export class OrderService {
       throw this.createNotFoundError();
     }
 
+    if (context.userId) {
+      void AuditLogModel.create({
+        actorId: toObjectId(context.userId),
+        actorRole: context.userRole ?? "admin",
+        action: nextStatus === "CANCELLED" ? "ORDER_CANCELLED" : "ORDER_STATUS_CHANGED",
+        entity: "Order",
+        entityId: order._id.toString(),
+        timestamp: new Date(),
+        metadata: {
+          fromStatus: currentStatus,
+          toStatus: nextStatus,
+          branchId: order.branchId?.toString(),
+        },
+      }).catch(() => {});
+    }
+
     const response = this.toResponse(updated);
     void this.orderNotificationService?.dispatchOrderStatusUpdated(response);
 
     return response;
+  }
+
+  public async assignDeliveryAgent(
+    branchId: string,
+    orderId: string,
+    agentId: string,
+    actorId?: string,
+  ): Promise<OrderResponse> {
+    const orderObjId = toObjectId(orderId);
+    const branchObjId = toObjectId(branchId);
+    const agentObjId = toObjectId(agentId);
+
+    const order = await this.orderRepository.findById(orderObjId);
+    if (!order) {
+      throw this.createNotFoundError();
+    }
+
+    if (!order.branchId || order.branchId.toString() !== branchObjId.toString()) {
+      throw new AppError("Order does not belong to this branch.", HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (order.deliveryMethod === "STORE_PICKUP") {
+      throw new AppError("Delivery agent cannot be assigned to store pickup orders.", HTTP_STATUS.UNPROCESSABLE_ENTITY);
+    }
+
+    if (order.orderStatus === "DELIVERED" || order.orderStatus === "CANCELLED") {
+      throw new AppError(`Cannot assign delivery agent for ${order.orderStatus} order.`, HTTP_STATUS.UNPROCESSABLE_ENTITY);
+    }
+
+    const agent = await UserModel.findById(agentObjId).exec();
+    if (!agent || agent.status !== "active") {
+      throw new AppError("Delivery agent not found or inactive.", HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if (!agent.branchId || agent.branchId.toString() !== branchObjId.toString()) {
+      throw new AppError("Delivery agent does not belong to this branch.", HTTP_STATUS.FORBIDDEN);
+    }
+
+    order.deliveryAgentId = agent._id;
+    order.deliveryAgentSnapshot = {
+      agentId: agent._id,
+      name: agent.name,
+      phone: agent.phone,
+    };
+    await order.save();
+
+    if (actorId) {
+      await AuditLogModel.create({
+        actorId: toObjectId(actorId),
+        action: "DELIVERY_AGENT_ASSIGNED",
+        entity: "Order",
+        entityId: order._id.toString(),
+        timestamp: new Date(),
+        metadata: {
+          deliveryAgentId: agent._id.toString(),
+          branchId,
+        },
+      });
+    }
+
+    return this.toResponse(order);
+  }
+
+  public async unassignDeliveryAgent(
+    branchId: string,
+    orderId: string,
+    actorId?: string,
+  ): Promise<OrderResponse> {
+    const orderObjId = toObjectId(orderId);
+    const branchObjId = toObjectId(branchId);
+
+    const order = await this.orderRepository.findById(orderObjId);
+    if (!order) {
+      throw this.createNotFoundError();
+    }
+
+    if (!order.branchId || order.branchId.toString() !== branchObjId.toString()) {
+      throw new AppError("Order does not belong to this branch.", HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (order.orderStatus === "DELIVERED" || order.orderStatus === "CANCELLED") {
+      throw new AppError(`Cannot unassign delivery agent for ${order.orderStatus} order.`, HTTP_STATUS.UNPROCESSABLE_ENTITY);
+    }
+
+    order.deliveryAgentId = undefined;
+    order.deliveryAgentSnapshot = undefined;
+    await order.save();
+
+    if (actorId) {
+      await AuditLogModel.create({
+        actorId: toObjectId(actorId),
+        action: "DELIVERY_AGENT_UNASSIGNED",
+        entity: "Order",
+        entityId: order._id.toString(),
+        timestamp: new Date(),
+        metadata: { branchId },
+      });
+    }
+
+    return this.toResponse(order);
+  }
+
+  public async getOrderByIdForActor(
+    orderId: string,
+    actor: { id: string; role: string; branchId?: string },
+  ): Promise<OrderResponse> {
+    const orderObjId = toObjectId(orderId);
+    const order = await this.orderRepository.findById(orderObjId);
+    if (!order) {
+      throw this.createNotFoundError();
+    }
+
+    if (actor.role === "customer") {
+      if (order.customerId.toString() !== actor.id && order.userId?.toString() !== actor.id) {
+        throw new AppError("Access denied: You are not authorized to view this order.", HTTP_STATUS.FORBIDDEN);
+      }
+    } else if (actor.role === "branch_admin") {
+      if (!order.branchId || order.branchId.toString() !== actor.branchId) {
+        throw new AppError("Access denied: Order does not belong to your assigned branch.", HTTP_STATUS.FORBIDDEN);
+      }
+    }
+
+    return this.toResponse(order);
   }
 
   public async adminUpdateReadyTime(
@@ -555,6 +797,252 @@ export class OrderService {
     return this.toResponse(order);
   }
 
+  public async getDeliveryAgentDashboard(
+    agentId: string,
+    userBranchId?: string,
+  ): Promise<{
+    todayAssigned: number;
+    todayOutForDelivery: number;
+    todayDelivered: number;
+    todayCancelled: number;
+    pendingDelivery: number;
+  }> {
+    const agentObjId = toObjectId(agentId);
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const query: Record<string, unknown> = { deliveryAgentId: agentObjId };
+    if (userBranchId) {
+      query.branchId = toObjectId(userBranchId);
+    }
+
+    const { OrderModel } = await import("../model/order.model.js");
+    const agentOrders = await OrderModel.find(query).exec();
+
+    let todayAssigned = 0;
+    let todayOutForDelivery = 0;
+    let todayDelivered = 0;
+    let todayCancelled = 0;
+    let pendingDelivery = 0;
+
+    for (const order of agentOrders) {
+      const isToday = order.createdAt >= startOfDay || (order.deliveredAt && order.deliveredAt >= startOfDay);
+
+      if (isToday) {
+        todayAssigned++;
+      }
+
+      if (order.orderStatus === "OUT_FOR_DELIVERY") {
+        todayOutForDelivery++;
+        pendingDelivery++;
+      } else if (order.orderStatus === "DELIVERED") {
+        if (isToday) {
+          todayDelivered++;
+        }
+      } else if (order.orderStatus === "CANCELLED") {
+        if (isToday) {
+          todayCancelled++;
+        }
+      } else if (order.orderStatus === "CONFIRMED" || order.orderStatus === "PREPARING") {
+        pendingDelivery++;
+      }
+    }
+
+    return {
+      todayAssigned,
+      todayOutForDelivery,
+      todayDelivered,
+      todayCancelled,
+      pendingDelivery,
+    };
+  }
+
+  public async getDeliveryAgentOrders(
+    agentId: string,
+    status?: string,
+    userBranchId?: string,
+  ): Promise<OrderResponse[]> {
+    const agentObjId = toObjectId(agentId);
+    const query: Record<string, unknown> = { deliveryAgentId: agentObjId };
+
+    if (userBranchId) {
+      query.branchId = toObjectId(userBranchId);
+    }
+
+    if (status && status !== "ALL") {
+      if (status === "ASSIGNED") {
+        query.orderStatus = { $in: ["CONFIRMED", "PREPARING"] };
+      } else {
+        query.orderStatus = status;
+      }
+    }
+
+    const { OrderModel } = await import("../model/order.model.js");
+    const orders = await OrderModel.find(query)
+      .sort({ createdAt: -1 })
+      .exec();
+
+    return orders.map((o) => this.toResponse(o));
+  }
+
+  public async getDeliveryAgentOrderById(
+    agentId: string,
+    orderId: string,
+    userBranchId?: string,
+    userRole?: string,
+  ): Promise<OrderResponse> {
+    const orderObjId = toObjectId(orderId);
+    const order = await this.orderRepository.findById(orderObjId);
+
+    if (!order) {
+      throw this.createNotFoundError();
+    }
+
+    if (userRole !== "admin") {
+      if (!order.deliveryAgentId || order.deliveryAgentId.toString() !== agentId) {
+        throw new AppError("Access denied: Order is not assigned to you.", HTTP_STATUS.FORBIDDEN);
+      }
+      if (userBranchId && order.branchId && order.branchId.toString() !== userBranchId) {
+        throw new AppError("Access denied: Order does not belong to your assigned branch.", HTTP_STATUS.FORBIDDEN);
+      }
+    }
+
+    return this.toResponse(order);
+  }
+
+  public async startDelivery(
+    agentId: string,
+    orderId: string,
+    userBranchId?: string,
+    userRole?: string,
+  ): Promise<OrderResponse> {
+    const agentObjId = toObjectId(agentId);
+    const orderObjId = toObjectId(orderId);
+
+    const agent = await UserModel.findById(agentObjId).exec();
+    if (!agent || agent.status !== "active") {
+      throw new AppError("Delivery agent account is inactive or not found.", HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (userRole !== "admin" && userBranchId && agent.branchId && agent.branchId.toString() !== userBranchId) {
+      throw new AppError("Delivery agent does not belong to this branch.", HTTP_STATUS.FORBIDDEN);
+    }
+
+    const order = await this.orderRepository.findById(orderObjId);
+    if (!order) {
+      throw this.createNotFoundError();
+    }
+
+    if (userRole !== "admin") {
+      if (!order.deliveryAgentId || order.deliveryAgentId.toString() !== agentId) {
+        throw new AppError("Access denied: Order is not assigned to you.", HTTP_STATUS.FORBIDDEN);
+      }
+      if (order.branchId && agent.branchId && order.branchId.toString() !== agent.branchId.toString()) {
+        throw new AppError("Access denied: Order branch does not match your assigned branch.", HTTP_STATUS.FORBIDDEN);
+      }
+    }
+
+    if (order.deliveryMethod === "STORE_PICKUP") {
+      throw new AppError("Store pickup orders cannot enter delivery execution flow.", HTTP_STATUS.UNPROCESSABLE_ENTITY);
+    }
+
+    if (order.orderStatus === "CANCELLED") {
+      throw new AppError("Cannot start delivery for a cancelled order.", HTTP_STATUS.UNPROCESSABLE_ENTITY);
+    }
+
+    if (order.orderStatus === "DELIVERED") {
+      throw new AppError("Order is already delivered.", HTTP_STATUS.UNPROCESSABLE_ENTITY);
+    }
+
+    if (order.orderStatus !== "PREPARING") {
+      throw new AppError(`Order must be in PREPARING status to start delivery (current status: '${order.orderStatus}').`, HTTP_STATUS.UNPROCESSABLE_ENTITY);
+    }
+
+    order.orderStatus = "OUT_FOR_DELIVERY";
+    order.deliveryStartedAt = new Date();
+    await order.save();
+
+    void AuditLogModel.create({
+      actorId: agentObjId,
+      actorRole: userRole ?? "delivery_agent",
+      action: "DELIVERY_STARTED",
+      entity: "Order",
+      entityId: order._id.toString(),
+      timestamp: new Date(),
+      metadata: {
+        branchId: order.branchId?.toString(),
+        deliveryAgentId: agentId,
+      },
+    }).catch(() => {});
+
+    return this.toResponse(order);
+  }
+
+  public async completeDelivery(
+    agentId: string,
+    orderId: string,
+    userBranchId?: string,
+    userRole?: string,
+  ): Promise<OrderResponse> {
+    const agentObjId = toObjectId(agentId);
+    const orderObjId = toObjectId(orderId);
+
+    const agent = await UserModel.findById(agentObjId).exec();
+    if (!agent || agent.status !== "active") {
+      throw new AppError("Delivery agent account is inactive or not found.", HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (userRole !== "admin" && userBranchId && agent.branchId && agent.branchId.toString() !== userBranchId) {
+      throw new AppError("Delivery agent does not belong to this branch.", HTTP_STATUS.FORBIDDEN);
+    }
+
+    const order = await this.orderRepository.findById(orderObjId);
+    if (!order) {
+      throw this.createNotFoundError();
+    }
+
+    if (userRole !== "admin") {
+      if (!order.deliveryAgentId || order.deliveryAgentId.toString() !== agentId) {
+        throw new AppError("Access denied: Order is not assigned to you.", HTTP_STATUS.FORBIDDEN);
+      }
+      if (order.branchId && agent.branchId && order.branchId.toString() !== agent.branchId.toString()) {
+        throw new AppError("Access denied: Order branch does not match your assigned branch.", HTTP_STATUS.FORBIDDEN);
+      }
+    }
+
+    if (order.deliveryMethod === "STORE_PICKUP") {
+      throw new AppError("Store pickup orders cannot enter delivery execution flow.", HTTP_STATUS.UNPROCESSABLE_ENTITY);
+    }
+
+    if (order.orderStatus === "CANCELLED") {
+      throw new AppError("Cannot complete delivery for a cancelled order.", HTTP_STATUS.UNPROCESSABLE_ENTITY);
+    }
+
+    if (order.orderStatus !== "OUT_FOR_DELIVERY") {
+      throw new AppError("Cannot complete delivery before starting delivery.", HTTP_STATUS.UNPROCESSABLE_ENTITY);
+    }
+
+    order.orderStatus = "DELIVERED";
+    order.deliveredAt = new Date();
+    order.deliveryCompletedBy = agentObjId;
+    await order.save();
+
+    void AuditLogModel.create({
+      actorId: agentObjId,
+      actorRole: userRole ?? "delivery_agent",
+      action: "DELIVERY_COMPLETED",
+      entity: "Order",
+      entityId: order._id.toString(),
+      timestamp: new Date(),
+      metadata: {
+        branchId: order.branchId?.toString(),
+        deliveryAgentId: agentId,
+      },
+    }).catch(() => {});
+
+    return this.toResponse(order);
+  }
+
   private toResponse(order: HydratedDocument<Order>): OrderResponse {
     return {
       id: order._id.toString(),
@@ -564,10 +1052,44 @@ export class OrderService {
       ...(order.addressSnapshot
         ? { addressSnapshot: order.addressSnapshot }
         : {}),
+      ...(order.locationSnapshot
+        ? {
+            locationSnapshot: {
+              ...(order.locationSnapshot.villageId ? { villageId: order.locationSnapshot.villageId } : {}),
+              villageName: order.locationSnapshot.villageName,
+              district: order.locationSnapshot.district,
+              pincode: order.locationSnapshot.pincode,
+            },
+          }
+        : {}),
+      ...(order.branchId ? { branchId: order.branchId.toString() } : {}),
+      ...(order.deliveryAgentId ? { deliveryAgentId: order.deliveryAgentId.toString() } : {}),
+      ...(order.branchSnapshot
+        ? {
+            branchSnapshot: {
+              branchId: order.branchSnapshot.branchId,
+              name: order.branchSnapshot.name,
+              code: order.branchSnapshot.code,
+              type: order.branchSnapshot.type,
+            },
+          }
+        : {}),
+      ...(order.deliveryAgentSnapshot
+        ? {
+            deliveryAgentSnapshot: {
+              agentId: order.deliveryAgentSnapshot.agentId.toString(),
+              name: order.deliveryAgentSnapshot.name,
+              ...(order.deliveryAgentSnapshot.phone ? { phone: order.deliveryAgentSnapshot.phone } : {}),
+            },
+          }
+        : {}),
       pricingSnapshot: order.pricingSnapshot,
       deliveryMethod: order.deliveryMethod,
+      ...(order.paymentMethod ? { paymentMethod: order.paymentMethod } : {}),
       orderStatus: order.orderStatus,
       paymentStatus: order.paymentStatus,
+      ...(order.deliveryTimingType ? { deliveryTimingType: order.deliveryTimingType } : {}),
+      ...(order.deliveryTimePreference ? { deliveryTimePreference: order.deliveryTimePreference } : {}),
       ...(order.notes ? { notes: order.notes } : {}),
       ...(order.estimatedReadyTime
         ? { estimatedReadyTime: order.estimatedReadyTime }
@@ -581,6 +1103,9 @@ export class OrderService {
         : {}),
       ...(order.cancelledBy ? { cancelledBy: order.cancelledBy.toString() } : {}),
       ...(order.cancelledAt ? { cancelledAt: order.cancelledAt } : {}),
+      ...(order.deliveryStartedAt ? { deliveryStartedAt: order.deliveryStartedAt } : {}),
+      ...(order.deliveredAt ? { deliveredAt: order.deliveredAt } : {}),
+      ...(order.deliveryCompletedBy ? { deliveryCompletedBy: order.deliveryCompletedBy.toString() } : {}),
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
     };

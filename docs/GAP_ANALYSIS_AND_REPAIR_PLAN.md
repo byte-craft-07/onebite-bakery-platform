@@ -1,7 +1,7 @@
-# GAP ANALYSIS AND REPAIR PLAN — OneBite Bakery Platform
+# GAP ANALYSIS AND REPAIR PLAN — The Online Bakery Platform
 
 Date: 2026-08-01  
-Target System: OneBite Bakery Platform (`backend/` & `frontend/`)  
+Target System: The Online Bakery Platform (`backend/` & `frontend/`)  
 
 ---
 

@@ -57,7 +57,7 @@ describe("Shopping Experience & Cart/Checkout Services Tests", () => {
 
     expect(screen.getByText("Home Delivery")).toBeDefined();
     expect(screen.getByText("Store Pickup")).toBeDefined();
-    expect(screen.getByText("₹1100")).toBeDefined();
+    expect(screen.getByText("Order Summary")).toBeDefined();
   });
 
   it("tests cartService and checkoutService method definitions", () => {

@@ -1,10 +1,9 @@
 import { z } from "zod";
 
-import { DELIVERY_METHODS, ORDER_STATUSES } from "../constants/index.js";
+import { DELIVERY_METHODS, ORDER_STATUSES, PAYMENT_METHODS } from "../constants/index.js";
 
-const objectIdSchema = z
-  .string()
-  .regex(/^[a-f\d]{24}$/i, "Invalid object id.");
+const objectIdSchema = z.string().trim().min(1, "Invalid id.");
+
 
 export const orderIdParamSchema = z.object({
   id: objectIdSchema,
@@ -23,10 +22,13 @@ export const addressPayloadSchema = z.object({
 export const createOrderSchema = z
   .object({
     deliveryMethod: z.enum(DELIVERY_METHODS),
+    paymentMethod: z.enum(PAYMENT_METHODS).optional().default("UPI"),
     addressId: objectIdSchema.optional(),
     address: addressPayloadSchema.optional(),
     notes: z.string().trim().max(500).optional(),
-    scheduledDate: z.string().datetime().optional(),
+    deliveryTimingType: z.enum(["INSTANT", "SCHEDULED"]).optional().default("INSTANT"),
+    deliveryTimePreference: z.string().trim().max(200).optional(),
+    scheduledDate: z.string().trim().optional(),
     scheduledTimeSlot: z.string().trim().max(100).optional(),
   })
   .refine(

@@ -24,7 +24,7 @@ describe("Frontend Component Library & Providers", () => {
     render(<Button variant="primary">Order Fresh Cake</Button>);
     const button = screen.getByRole("button", { name: "Order Fresh Cake" });
     expect(button).toBeDefined();
-    expect(button.className).toContain("bg-[#E67E22]");
+    expect(button.className).toContain("bg-[#596B58]");
   });
 
   it("renders Button in loading state with spinner", () => {
@@ -64,8 +64,11 @@ describe("Frontend Component Library & Providers", () => {
   });
 
   it("verifies design tokens values", () => {
-    expect(DESIGN_TOKENS.colors.primary).toBe("#E67E22");
-    expect(DESIGN_TOKENS.colors.background).toBe("#FFFBF5");
+    expect(DESIGN_TOKENS.colors.cream).toBe("#FFF8EC");
+    expect(DESIGN_TOKENS.colors.pistachio).toBe("#A8B89A");
+    expect(DESIGN_TOKENS.colors.sage).toBe("#596B58");
+    expect(DESIGN_TOKENS.colors.cocoa).toBe("#3B302B");
+    expect(DESIGN_TOKENS.colors.champagne).toBe("#D8BE91");
   });
 
   it("renders inside AppProvider wrapper without throwing", () => {

@@ -20,7 +20,15 @@ import {
   settingsRouter,
   uploadRouter,
   userRouter,
+  villageRouter,
+  couponRouter,
+  branchRouter,
+  customCakeRouter,
+  comboRouter,
+  bannerRouter,
 } from "./modules/index.js";
+
+import { deliveryAgentRouter } from "./modules/delivery/routes/delivery-agent.routes.js";
 import { ROUTES } from "./shared/constants/routes.js";
 
 export const apiRoutes = Router();
@@ -28,6 +36,7 @@ export const apiRoutes = Router();
 apiRoutes.use(ROUTES.AUTH, authRouter);
 apiRoutes.use(ROUTES.USER, userRouter);
 apiRoutes.use(ROUTES.ADDRESS, addressRouter);
+apiRoutes.use(ROUTES.VILLAGE, villageRouter);
 apiRoutes.use(ROUTES.PRODUCT, productRouter);
 apiRoutes.use(ROUTES.CATEGORY, categoryRouter);
 apiRoutes.use(ROUTES.OCCASION, occasionRouter);
@@ -36,6 +45,7 @@ apiRoutes.use(ROUTES.NOTIFICATION, notificationRouter);
 apiRoutes.use(ROUTES.CART, cartRouter);
 apiRoutes.use(ROUTES.CHECKOUT, checkoutRouter);
 apiRoutes.use(ROUTES.ORDER, orderRouter);
+apiRoutes.use("/admin/orders", orderRouter);
 apiRoutes.use(ROUTES.PAYMENT, paymentRouter);
 apiRoutes.use(ROUTES.PLATFORM, platformRouter);
 apiRoutes.use(ROUTES.REVIEW, reviewRouter);
@@ -44,3 +54,11 @@ apiRoutes.use(ROUTES.SETTINGS, settingsRouter);
 apiRoutes.use(ROUTES.UPLOAD, uploadRouter);
 apiRoutes.use(ROUTES.SEARCH, searchRouter);
 apiRoutes.use(ROUTES.HEALTH, platformHealthRouter);
+apiRoutes.use(ROUTES.COUPONS, couponRouter);
+apiRoutes.use(ROUTES.BRANCH, branchRouter);
+apiRoutes.use(ROUTES.DELIVERY_AGENT, deliveryAgentRouter);
+apiRoutes.use(ROUTES.CUSTOM_CAKE, customCakeRouter);
+apiRoutes.use(ROUTES.COMBOS, comboRouter);
+apiRoutes.use(ROUTES.BANNER, bannerRouter);
+
+

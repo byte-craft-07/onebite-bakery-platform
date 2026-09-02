@@ -126,6 +126,33 @@ export class CartController {
     });
   };
 
+  public applyCoupon = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const { customerId, sessionId } = this.extractCartIdentifiers(request);
+    const code = request.body?.code;
+    const cart = await this.cartService.applyCoupon(customerId, sessionId, code);
+
+    return sendSuccess(response, {
+      message: "Coupon applied successfully.",
+      data: { cart },
+    });
+  };
+
+  public removeCoupon = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const { customerId, sessionId } = this.extractCartIdentifiers(request);
+    const cart = await this.cartService.removeCoupon(customerId, sessionId);
+
+    return sendSuccess(response, {
+      message: "Coupon removed successfully.",
+      data: { cart },
+    });
+  };
+
   private extractCartIdentifiers(request: Request): {
     customerId?: string;
     sessionId?: string;

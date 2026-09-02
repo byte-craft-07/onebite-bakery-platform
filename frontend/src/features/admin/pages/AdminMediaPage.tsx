@@ -91,8 +91,8 @@ export const AdminMediaPage: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((asset) => (
-          <div key={asset.id} className="rounded-2xl border border-[#E8E2D9] bg-white p-4 space-y-3 shadow-xs hover:shadow-md transition-shadow">
-            <div className="relative aspect-4/3 rounded-xl overflow-hidden bg-[#F9F6F0] border border-[#E8E2D9] group">
+          <div key={asset.id} className="rounded-2xl border border-[#E5DEC9] bg-white p-4 space-y-3 shadow-xs hover:shadow-md transition-shadow">
+            <div className="relative aspect-4/3 rounded-xl overflow-hidden bg-[#FFF8EC] border border-[#E5DEC9] group">
               <img
                 src={asset.url}
                 alt={asset.filename}
@@ -116,7 +116,7 @@ export const AdminMediaPage: React.FC = () => {
                 <Badge variant="primary">{asset.entityType}</Badge>
                 <span className="text-[10px] text-gray-400">{asset.size}</span>
               </div>
-              <p className="text-xs font-bold text-[#2C1E16] truncate">{asset.filename}</p>
+              <p className="text-xs font-bold text-[#3B302B] truncate">{asset.filename}</p>
               <p className="text-[10px] text-gray-400 font-mono truncate">{asset.url}</p>
             </div>
           </div>

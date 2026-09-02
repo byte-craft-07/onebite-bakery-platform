@@ -1,4 +1,4 @@
-import type { DeliveryMethod, OrderStatus } from "../constants/index.js";
+import type { DeliveryMethod, OrderStatus, PaymentMethod } from "../constants/index.js";
 
 export interface AddressPayloadDto {
   fullName: string;
@@ -12,9 +12,12 @@ export interface AddressPayloadDto {
 
 export interface CreateOrderDto {
   deliveryMethod: DeliveryMethod;
+  paymentMethod?: PaymentMethod;
   addressId?: string;
   address?: AddressPayloadDto;
   notes?: string;
+  deliveryTimingType?: "INSTANT" | "SCHEDULED";
+  deliveryTimePreference?: string;
   scheduledDate?: string;
   scheduledTimeSlot?: string;
 }
@@ -37,4 +40,5 @@ export interface ListOrdersFilterDto {
   limit?: number;
   status?: OrderStatus;
   customerId?: string;
+  branchId?: string;
 }

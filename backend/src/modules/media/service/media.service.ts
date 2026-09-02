@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import path from "node:path";
 import type { HydratedDocument } from "mongoose";
+import sharp from "sharp";
 
 import { toObjectId } from "../../../db/utils/object-id.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
@@ -46,16 +47,37 @@ export class MediaService {
     this.validateUploadAuthorization(dto.entityType, userRole);
     this.validateFileFormatAndSize(file, dto.entityType);
 
-    const ext = path.extname(file.originalname).toLowerCase();
+    let ext = path.extname(file.originalname).toLowerCase();
+    let bufferToSave = file.buffer;
+    let mimeTypeToSave = file.mimetype;
+    let sizeToSave = file.size;
+
+    // Automatically convert non-SVG images to optimized WebP
+    if (ext !== ".svg" && file.mimetype !== "image/svg+xml") {
+      try {
+        const optimized = await sharp(file.buffer, { failOn: "none" })
+          .resize({ width: 2048, height: 2048, fit: "inside", withoutEnlargement: true })
+          .webp({ quality: 82, effort: 4 })
+          .toBuffer();
+
+        bufferToSave = optimized;
+        mimeTypeToSave = "image/webp";
+        sizeToSave = optimized.length;
+        ext = ".webp";
+      } catch (_err) {
+        // Fallback to original buffer if sharp fails on unusual formats
+      }
+    }
+
     const folder = this.getFolderForEntityType(dto.entityType);
     const datePrefix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const randomSuffix = crypto.randomBytes(4).toString("hex");
     const filename = `${dto.entityType.toLowerCase()}_${datePrefix}_${randomSuffix}${ext}`;
 
     const saveResult = await this.storageProvider.save(
-      file.buffer,
+      bufferToSave,
       filename,
-      file.mimetype,
+      mimeTypeToSave,
       folder,
     );
 
@@ -64,9 +86,9 @@ export class MediaService {
     const mediaDoc = await this.mediaRepository.create({
       filename,
       originalName: file.originalname,
-      mimeType: file.mimetype,
+      mimeType: mimeTypeToSave,
       extension: ext,
-      size: file.size,
+      size: sizeToSave,
       storageProvider: "LOCAL",
       storagePath: saveResult.storagePath,
       publicUrl: saveResult.publicUrl,

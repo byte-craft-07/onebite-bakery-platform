@@ -12,32 +12,48 @@ export const CartItemCard: React.FC<{
   const imageUrl = item.productId.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
 
   return (
-    <div className="flex items-center justify-between gap-4 p-4 border border-[#E8E2D9] rounded-2xl bg-white shadow-xs">
-      <div className="flex items-center gap-4">
-        <div className="h-16 w-16 rounded-xl overflow-hidden bg-[#F9F6F0] shrink-0 border border-[#E8E2D9]">
-          <img src={imageUrl} alt={item.productId.name} className="h-full w-full object-cover" />
+    <div className="p-3.5 sm:p-4 border border-[#E5DEC9] rounded-2xl bg-white shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+      {/* Product info & mobile remove button */}
+      <div className="flex items-center justify-between sm:justify-start gap-3 sm:gap-4 flex-1 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl overflow-hidden bg-[#FFF8EC] shrink-0 border border-[#E5DEC9]">
+            <img src={imageUrl} alt={item.productId.name} className="h-full w-full object-cover" />
+          </div>
+          <div className="space-y-0.5 min-w-0">
+            <Link to={`/products/${item.productId.slug}`} className="text-xs sm:text-sm font-bold text-[#3B302B] hover:text-[#596B58] transition-colors line-clamp-1">
+              {item.productId.name}
+            </Link>
+            <p className="text-[11px] sm:text-xs text-[#7A6E65]">₹{item.unitPrice} each</p>
+          </div>
         </div>
-        <div className="space-y-1">
-          <Link to={`/products/${item.productId.slug}`} className="text-sm font-bold text-[#2C1E16] hover:text-[#E67E22] transition-colors line-clamp-1">
-            {item.productId.name}
-          </Link>
-          <p className="text-xs text-[#6E5D4F]">₹{item.unitPrice} each</p>
-        </div>
+
+        {/* Mobile-only trash icon button on top right */}
+        <button
+          type="button"
+          onClick={() => onRemove(item.id)}
+          className="sm:hidden text-[#7A6E65] hover:text-red-500 transition-colors p-2 shrink-0 cursor-pointer"
+          aria-label="Remove Item"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
       </div>
 
-      <div className="flex items-center gap-6">
-        <div className="flex items-center border border-[#E8E2D9] rounded-lg bg-white">
+      {/* Quantity stepper, Total price & desktop remove button */}
+      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E5DEC9]/60">
+        <div className="flex items-center border border-[#E5DEC9] rounded-xl bg-white">
           <button
+            type="button"
             onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-            className="p-1.5 text-gray-500 hover:bg-[#F9F6F0] rounded-l-lg"
+            className="p-1.5 px-2.5 text-[#3B302B] hover:bg-[#FFF8EC] rounded-l-xl cursor-pointer active:scale-95"
             aria-label="Decrease Quantity"
           >
             <Minus className="h-3.5 w-3.5" />
           </button>
-          <span className="px-3 text-xs font-bold">{item.quantity}</span>
+          <span className="px-3 text-xs font-bold text-[#3B302B]">{item.quantity}</span>
           <button
+            type="button"
             onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-            className="p-1.5 text-gray-500 hover:bg-[#F9F6F0] rounded-r-lg"
+            className="p-1.5 px-2.5 text-[#3B302B] hover:bg-[#FFF8EC] rounded-r-xl cursor-pointer active:scale-95"
             aria-label="Increase Quantity"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -45,12 +61,14 @@ export const CartItemCard: React.FC<{
         </div>
 
         <div className="text-right">
-          <p className="text-sm font-extrabold text-[#2C1E16]">₹{item.itemTotal}</p>
+          <p className="text-sm font-extrabold text-[#3B302B]">₹{item.itemTotal}</p>
         </div>
 
+        {/* Desktop-only trash button */}
         <button
+          type="button"
           onClick={() => onRemove(item.id)}
-          className="text-gray-400 hover:text-red-500 transition-colors p-1"
+          className="hidden sm:block text-[#7A6E65] hover:text-red-500 transition-colors p-1 cursor-pointer"
           aria-label="Remove Item"
         >
           <Trash2 className="h-4 w-4" />

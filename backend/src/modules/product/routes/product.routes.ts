@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import { requireAuth, requireRoles } from "../../auth/index.js";
+import { cacheResponse, invalidateCache } from "../../../shared/middlewares/cache.middleware.js";
 import { validateRequest } from "../../../shared/middlewares/validate-request.middleware.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { ProductController } from "../controller/index.js";
@@ -29,30 +30,42 @@ const ownerOnly = [requireAuth, requireRoles(["admin"])] as const;
 productRouter.get(
   "/",
   validateRequest({ query: publicProductQuerySchema }),
+  cacheResponse({ ttlSeconds: 300, tags: ["products"] }),
+  asyncHandler(productController.listPublicCatalog),
+);
+
+productRouter.get(
+  "/search/products",
+  validateRequest({ query: publicProductQuerySchema }),
+  cacheResponse({ ttlSeconds: 120, tags: ["products"] }),
   asyncHandler(productController.listPublicCatalog),
 );
 
 productRouter.get(
   "/featured",
   validateRequest({ query: publicProductQuerySchema }),
+  cacheResponse({ ttlSeconds: 300, tags: ["products"] }),
   asyncHandler(productController.listFeatured),
 );
 
 productRouter.get(
   "/trending",
   validateRequest({ query: publicProductQuerySchema }),
+  cacheResponse({ ttlSeconds: 300, tags: ["products"] }),
   asyncHandler(productController.listTrending),
 );
 
 productRouter.get(
   "/recommended",
   validateRequest({ query: publicProductQuerySchema }),
+  cacheResponse({ ttlSeconds: 300, tags: ["products"] }),
   asyncHandler(productController.listRecommended),
 );
 
 productRouter.get(
   "/seasonal",
   validateRequest({ query: publicProductQuerySchema }),
+  cacheResponse({ ttlSeconds: 300, tags: ["products"] }),
   asyncHandler(productController.listSeasonal),
 );
 
@@ -80,6 +93,7 @@ productRouter.post(
   "/",
   ...ownerOnly,
   validateRequest({ body: createProductSchema }),
+  invalidateCache(["products", "categories"]),
   asyncHandler(productController.create),
 );
 
@@ -87,6 +101,7 @@ productRouter.patch(
   "/:id",
   ...ownerOnly,
   validateRequest({ params: productIdParamSchema, body: updateProductSchema }),
+  invalidateCache(["products", "categories"]),
   asyncHandler(productController.update),
 );
 
@@ -94,6 +109,7 @@ productRouter.patch(
   "/:id/pricing",
   ...ownerOnly,
   validateRequest({ params: productIdParamSchema, body: updatePricingSchema }),
+  invalidateCache(["products"]),
   asyncHandler(productController.updatePricing),
 );
 
@@ -101,6 +117,7 @@ productRouter.patch(
   "/:id/inventory",
   ...ownerOnly,
   validateRequest({ params: productIdParamSchema, body: updateInventorySchema }),
+  invalidateCache(["products"]),
   asyncHandler(productController.updateInventory),
 );
 
@@ -111,6 +128,7 @@ productRouter.patch(
     params: productIdParamSchema,
     body: updateAvailabilitySchema,
   }),
+  invalidateCache(["products"]),
   asyncHandler(productController.updateAvailability),
 );
 
@@ -118,6 +136,7 @@ productRouter.delete(
   "/:id",
   ...ownerOnly,
   validateRequest({ params: productIdParamSchema }),
+  invalidateCache(["products", "categories"]),
   asyncHandler(productController.softDelete),
 );
 
@@ -125,11 +144,13 @@ productRouter.patch(
   "/:id/restore",
   ...ownerOnly,
   validateRequest({ params: productIdParamSchema }),
+  invalidateCache(["products", "categories"]),
   asyncHandler(productController.restore),
 );
 
 productRouter.get(
   "/:slug",
   validateRequest({ params: productSlugParamSchema }),
+  cacheResponse({ ttlSeconds: 300, tags: ["products"] }),
   asyncHandler(productController.getPublicBySlug),
 );

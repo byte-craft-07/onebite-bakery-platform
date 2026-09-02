@@ -17,10 +17,13 @@ const addressIdParamSchema = z.object({
 
 const addressPayloadSchema = z.object({
   name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().optional(),
   phone: z.string().trim().regex(/^[0-9]{10,15}$/),
+  district: z.string().trim().min(2).max(120).optional(),
+  village: z.string().trim().min(2).max(120).optional(),
   street: z.string().trim().min(5).max(500),
-  city: z.string().trim().min(2).max(100),
-  state: z.string().trim().min(2).max(100),
+  city: z.string().trim().min(2).max(100).optional().default("City"),
+  state: z.string().trim().min(2).max(100).optional().default("State"),
   pincode: z.string().trim().regex(/^[0-9]{4,10}$/),
   landmark: z.string().trim().max(200).optional(),
   addressType: z.enum(["HOME", "WORK", "OTHER"]).optional(),
@@ -35,7 +38,10 @@ const updateAddressPayloadSchema = addressPayloadSchema.partial().refine(
 type AddressResponse = {
   id: string;
   name: string;
+  email?: string;
   phone: string;
+  district?: string;
+  village?: string;
   street: string;
   city: string;
   state: string;
@@ -48,10 +54,13 @@ type AddressResponse = {
 const toAddressResponse = (address: Address): AddressResponse => ({
   id: address._id.toString(),
   name: address.fullName,
+  email: address.email,
   phone: address.phone,
+  district: address.district,
+  village: address.village,
   street: address.address,
-  city: address.city,
-  state: address.state,
+  city: address.city || "City",
+  state: address.state || "State",
   pincode: address.pincode,
   ...(address.landmark ? { landmark: address.landmark } : {}),
   addressType: "HOME",
@@ -120,10 +129,13 @@ addressRouter.post(
     const address = await AddressModel.create({
       userId,
       fullName: payload.name,
+      email: payload.email,
       phone: payload.phone,
+      district: payload.district,
+      village: payload.village,
       address: payload.street,
-      city: payload.city,
-      state: payload.state,
+      city: payload.city || "City",
+      state: payload.state || "State",
       pincode: payload.pincode,
       landmark: payload.landmark,
       isDefault,
@@ -157,7 +169,10 @@ addressRouter.put(
       {
         $set: {
           ...(payload.name ? { fullName: payload.name } : {}),
+          ...(payload.email !== undefined ? { email: payload.email } : {}),
           ...(payload.phone ? { phone: payload.phone } : {}),
+          ...(payload.district !== undefined ? { district: payload.district } : {}),
+          ...(payload.village !== undefined ? { village: payload.village } : {}),
           ...(payload.street ? { address: payload.street } : {}),
           ...(payload.city ? { city: payload.city } : {}),
           ...(payload.state ? { state: payload.state } : {}),

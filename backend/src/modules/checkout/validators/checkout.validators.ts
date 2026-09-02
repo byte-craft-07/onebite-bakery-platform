@@ -2,9 +2,8 @@ import { z } from "zod";
 
 import { DELIVERY_METHODS } from "../../order/constants/index.js";
 
-const objectIdSchema = z
-  .string()
-  .regex(/^[a-f\d]{24}$/i, "Invalid object id.");
+const objectIdSchema = z.string().trim().min(1, "Invalid id.");
+
 
 export const addressPayloadSchema = z.object({
   fullName: z.string().trim().min(2).max(100),
@@ -19,6 +18,8 @@ export const addressPayloadSchema = z.object({
 export const checkoutPreviewQuerySchema = z.object({
   deliveryMethod: z.enum(DELIVERY_METHODS).optional(),
   addressId: objectIdSchema.optional(),
+  villageId: objectIdSchema.optional(),
+  villageName: z.string().optional(),
 });
 
 export const validateCheckoutSchema = z

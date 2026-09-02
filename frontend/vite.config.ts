@@ -17,11 +17,44 @@ export default defineConfig({
         target: "http://localhost:5000",
         changeOrigin: true,
       },
+      "/uploads": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+      },
     },
   },
   resolve: {
     alias: {
       "@": path.resolve(dirname, "./src"),
+    },
+  },
+  build: {
+    target: "esnext",
+    cssCodeSplit: true,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("react") || id.includes("react-dom") || id.includes("react-router-dom")) {
+              return "vendor-react";
+            }
+            if (id.includes("@tanstack/react-query") || id.includes("axios")) {
+              return "vendor-network";
+            }
+            if (id.includes("framer-motion")) {
+              return "vendor-framer";
+            }
+            if (id.includes("lucide-react")) {
+              return "vendor-icons";
+            }
+            if (id.includes("zod") || id.includes("react-hook-form")) {
+              return "vendor-forms";
+            }
+            return "vendor-core";
+          }
+        },
+      },
     },
   },
   test: {

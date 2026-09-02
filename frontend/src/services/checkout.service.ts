@@ -3,6 +3,20 @@ import { cartService } from "./cart.service";
 
 const isDevelopment = import.meta.env.DEV;
 
+export interface DirectOrderItem {
+  productId: string;
+  name: string;
+  slug?: string;
+  price: number;
+  quantity: number;
+  mainImage?: string;
+  customization?: {
+    message?: string;
+    eggless?: boolean;
+  };
+  itemTotal: number;
+}
+
 export interface CheckoutPreviewResponse {
   fulfillmentType: "HOME_DELIVERY" | "STORE_PICKUP";
   items: Array<{
@@ -31,37 +45,135 @@ export interface ValidateCheckoutPayload {
 }
 
 export const checkoutService = {
-  getCheckoutPreview: async (fulfillmentType: "HOME_DELIVERY" | "STORE_PICKUP" = "HOME_DELIVERY"): Promise<CheckoutPreviewResponse> => {
+  getCheckoutPreview: async (
+    fulfillmentType: "HOME_DELIVERY" | "STORE_PICKUP" = "HOME_DELIVERY",
+    addressId?: string,
+    villageName?: string,
+    directItem?: DirectOrderItem | null,
+  ): Promise<CheckoutPreviewResponse> => {
+    const cart = await cartService.getCart();
+
+    // Resolve villageName if not provided
+    if (!villageName) {
+      try {
+        const { authService } = await import("./auth.service");
+        const loc = authService.getStoredLocation();
+        if (loc?.villageName) {
+          villageName = loc.villageName;
+        }
+      } catch (_err) {
+        // Fallback
+      }
+    }
+
+    let backendPreview: CheckoutPreviewResponse | null = null;
     try {
       const response = await apiClient.get<{
         success: boolean;
         data: { checkout: CheckoutPreviewResponse };
-      }>("/checkout", { params: { fulfillmentType } });
+      }>("/checkout", {
+        params: {
+          deliveryMethod: fulfillmentType,
+          addressId,
+          villageName,
+        },
+      });
       if (response.data?.data?.checkout && response.data.data.checkout.pricing?.subtotal > 0) {
-        return response.data.data.checkout;
+        backendPreview = response.data.data.checkout;
       }
     } catch {
-      if (!isDevelopment) {
-        throw new Error("Unable to load checkout preview.");
+      // Ignore API failure in local dev
+    }
+
+    let items: CheckoutPreviewResponse["items"] = [];
+    let subtotal = 0;
+    let discountAmount = 0;
+
+    if (directItem) {
+      items = [
+        {
+          productId: directItem.productId,
+          name: directItem.name,
+          quantity: directItem.quantity,
+          unitPrice: directItem.price,
+          itemTotal: directItem.itemTotal,
+        },
+      ];
+      subtotal = directItem.itemTotal;
+      discountAmount = 0;
+    } else {
+      items = backendPreview?.items || cart.items.map((i) => ({
+        productId: i.productId.id,
+        name: i.productId.name,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+        itemTotal: i.itemTotal,
+      }));
+
+      subtotal = backendPreview?.pricing?.subtotal || cart.subtotal || items.reduce((sum, item) => sum + item.itemTotal, 0) || 0;
+      discountAmount = Math.round((cart.discountAmount || cart.couponDiscount || backendPreview?.pricing?.discountAmount || 0) * 100) / 100;
+    }
+
+    let storeSettings = {
+      minOrderValue: 299,
+      freeDeliveryThreshold: 799,
+      standardDeliveryCharge: 49,
+      taxRatePercent: 5,
+      isTaxEnabled: true,
+    };
+
+    try {
+      const { adminOperationsService } = await import("@/features/admin/services/adminOperations.service");
+      const fetched = await adminOperationsService.getSettings();
+      if (fetched) {
+        storeSettings = {
+          minOrderValue: fetched.minOrderValue ?? 299,
+          freeDeliveryThreshold: fetched.freeDeliveryThreshold ?? 799,
+          standardDeliveryCharge: fetched.standardDeliveryCharge ?? 49,
+          taxRatePercent: fetched.taxRatePercent ?? 5,
+          isTaxEnabled: fetched.isTaxEnabled ?? true,
+        };
+      }
+    } catch (_err) {
+      // Use fallback
+    }
+
+    // Try finding village specific delivery charge
+    let villageDeliveryCharge: number | undefined;
+    let villageFreeThreshold: number | undefined;
+
+    if (villageName) {
+      try {
+        const { villageService } = await import("./village.service");
+        const villages = await villageService.getVillages();
+        const matched = villages.find((v) => v.name.toLowerCase() === villageName.toLowerCase());
+        if (matched) {
+          if (matched.deliveryCharge !== undefined) villageDeliveryCharge = matched.deliveryCharge;
+          if (matched.freeDeliveryThreshold !== undefined) villageFreeThreshold = matched.freeDeliveryThreshold;
+        }
+      } catch (_err) {
+        // Fallback
       }
     }
 
-    const cart = await cartService.getCart();
-    const items = cart.items.map((i) => ({
-      productId: i.productId.id,
-      name: i.productId.name,
-      quantity: i.quantity,
-      unitPrice: i.unitPrice,
-      itemTotal: i.itemTotal,
-    }));
+    const minDeliveryAmount = storeSettings.minOrderValue;
+    const freeDeliveryThreshold = villageFreeThreshold ?? storeSettings.freeDeliveryThreshold;
+    const standardFee =
+      villageDeliveryCharge !== undefined
+        ? villageDeliveryCharge
+        : (backendPreview?.pricing?.deliveryFee !== undefined
+        ? backendPreview.pricing.deliveryFee
+        : storeSettings.standardDeliveryCharge);
 
-    const subtotal = cart.subtotal || items.reduce((sum, item) => sum + item.itemTotal, 0) || 649;
-    const minDeliveryAmount = 299;
-    const freeDeliveryThreshold = 799;
-    const standardFee = 49;
-    const deliveryFee = fulfillmentType === "STORE_PICKUP" ? 0 : subtotal >= freeDeliveryThreshold ? 0 : standardFee;
-    const taxAmount = Math.round(subtotal * 0.05);
-    const totalAmount = subtotal + deliveryFee + taxAmount;
+    const deliveryFee =
+      fulfillmentType === "STORE_PICKUP"
+        ? 0
+        : subtotal >= freeDeliveryThreshold
+        ? 0
+        : standardFee;
+
+    const taxAmount = 0;
+    const totalAmount = Math.max(0, Math.round((subtotal - discountAmount + deliveryFee) * 100) / 100);
 
     return {
       fulfillmentType,
@@ -69,8 +181,8 @@ export const checkoutService = {
       pricing: {
         subtotal,
         deliveryFee,
-        taxAmount,
-        discountAmount: 0,
+        taxAmount: 0,
+        discountAmount,
         totalAmount,
       },
       deliveryThreshold: {
@@ -96,38 +208,106 @@ export const checkoutService = {
     }
   },
 
-  createOrder: async (payload: { fulfillmentType: "HOME_DELIVERY" | "STORE_PICKUP"; addressId?: string; customerNotes?: string }) => {
+  createOrder: async (payload: {
+    fulfillmentType: "HOME_DELIVERY" | "STORE_PICKUP";
+    paymentMethod?: "UPI" | "COD";
+    addressId?: string;
+    customerNotes?: string;
+    deliveryTimingType?: "INSTANT" | "SCHEDULED";
+    deliveryTimePreference?: string;
+    scheduledDate?: string;
+    scheduledTimeSlot?: string;
+    directItem?: DirectOrderItem | null;
+  }) => {
+    let originalLocalCartJson: string | null = null;
     try {
-      const response = await apiClient.post<{
-        success: boolean;
-        data: { order: { id: string; orderNumber: string; totalAmount: number; orderStatus: string; paymentStatus?: string } };
-      }>("/orders", {
-        deliveryMethod: payload.fulfillmentType,
-        ...(payload.addressId ? { addressId: payload.addressId } : {}),
-        ...(payload.customerNotes ? { notes: payload.customerNotes } : {}),
-      });
-      if (response.data?.data?.order) {
-        await cartService.clearCart();
-        window.dispatchEvent(new Event("onebite_cart_updated"));
-        return response.data.data.order;
+      if (payload.directItem) {
+        // Save current cart backup so cart items are NOT lost
+        originalLocalCartJson = localStorage.getItem("theonlinebakery_local_cart");
+        // Temporarily prepare cart for this direct order
+        const tempCart = {
+          id: "temp_direct_cart",
+          items: [
+            {
+              id: "direct_item_1",
+              productId: {
+                id: payload.directItem.productId,
+                name: payload.directItem.name,
+                slug: payload.directItem.slug || "",
+                price: payload.directItem.price,
+                mainImage: payload.directItem.mainImage,
+                isAvailable: true,
+              },
+              quantity: payload.directItem.quantity,
+              unitPrice: payload.directItem.price,
+              itemTotal: payload.directItem.itemTotal,
+              customization: payload.directItem.customization,
+            },
+          ],
+          subtotal: payload.directItem.itemTotal,
+          itemCount: payload.directItem.quantity,
+        };
+        localStorage.setItem("theonlinebakery_local_cart", JSON.stringify(tempCart));
+
+        try {
+          await apiClient.post("/cart/items", {
+            productId: payload.directItem.productId,
+            quantity: payload.directItem.quantity,
+          });
+        } catch (_e) {
+          // Ignore
+        }
+      } else {
+        const localCart = await cartService.getCart();
+        if (localCart.items && localCart.items.length > 0) {
+          for (const item of localCart.items) {
+            try {
+              await apiClient.post("/cart/items", {
+                productId: item.productId.id,
+                quantity: item.quantity,
+              });
+            } catch (_e) {
+              // Ignore single item sync failure
+            }
+          }
+        }
       }
-    } catch {
-      if (!isDevelopment) {
-        throw new Error("Unable to create order.");
-      }
+    } catch (_err) {
+      // Continue to create order
     }
 
-    const preview = await checkoutService.getCheckoutPreview(payload.fulfillmentType);
-    const newOrder = {
-      id: `ord-${Date.now()}`,
-      orderNumber: `OB-${Math.floor(10000 + Math.random() * 90000)}`,
-      totalAmount: preview.pricing.totalAmount,
-      orderStatus: "CONFIRMED",
-      paymentStatus: "PENDING",
-    };
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { order: { id: string; orderNumber: string; totalAmount: number; orderStatus: string; paymentStatus?: string; paymentMethod?: "UPI" | "COD"; deliveryTimingType?: string; deliveryTimePreference?: string; scheduledDate?: string; scheduledTimeSlot?: string } };
+    }>("/orders", {
+      deliveryMethod: payload.fulfillmentType,
+      paymentMethod: payload.paymentMethod ?? "UPI",
+      ...(payload.addressId ? { addressId: payload.addressId } : {}),
+      ...(payload.customerNotes ? { notes: payload.customerNotes } : {}),
+      ...(payload.deliveryTimingType ? { deliveryTimingType: payload.deliveryTimingType } : {}),
+      ...(payload.deliveryTimePreference ? { deliveryTimePreference: payload.deliveryTimePreference } : {}),
+      ...(payload.scheduledDate ? { scheduledDate: payload.scheduledDate } : {}),
+      ...(payload.scheduledTimeSlot ? { scheduledTimeSlot: payload.scheduledTimeSlot } : {}),
+    });
 
-    await cartService.clearCart();
-    window.dispatchEvent(new Event("onebite_cart_updated"));
-    return newOrder;
+    if (response.data?.data?.order) {
+      if (payload.directItem) {
+        // RESTORE original cart so cart items remain safe!
+        if (originalLocalCartJson) {
+          localStorage.setItem("theonlinebakery_local_cart", originalLocalCartJson);
+        } else {
+          localStorage.removeItem("theonlinebakery_local_cart");
+        }
+        sessionStorage.removeItem("theonlinebakery_direct_order_item");
+        window.dispatchEvent(new Event("theonlinebakery_cart_updated"));
+      } else {
+        await cartService.clearCart();
+        window.dispatchEvent(new Event("theonlinebakery_cart_updated"));
+      }
+      return response.data.data.order;
+    }
+
+    throw new Error("Order creation failed on server.");
   },
+
 };

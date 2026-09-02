@@ -49,7 +49,7 @@ export const AdminHealthLogsPage: React.FC = () => {
 
       {/* Audit Logs Table */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-[#2C1E16]">Recent Administrator Audit Logs</h3>
+        <h3 className="text-lg font-bold text-[#3B302B]">Recent Administrator Audit Logs</h3>
         <AdminTable headers={["Timestamp", "Action", "Entity", "User ID", "Status"]}>
           {auditLogs.length > 0 ? (
             auditLogs.map((log, idx) => (
@@ -67,7 +67,7 @@ export const AdminHealthLogsPage: React.FC = () => {
             ))
           ) : (
             <tr>
-              <td className="px-4 py-3 text-xs text-[#6E5D4F]" colSpan={5}>
+              <td className="px-4 py-3 text-xs text-[#7A6E65]" colSpan={5}>
                 Audit log repository active. Logging all administrative actions.
               </td>
             </tr>

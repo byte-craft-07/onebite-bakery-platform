@@ -34,8 +34,8 @@ const createMockProduct = (overrides: Partial<Product> = {}): Product =>
     price: 500,
     costPrice: 300,
     taxCategory: "STANDARD_5",
-    imageUrls: ["https://cdn.onebite.test/chocolate.webp"],
-    thumbnailUrl: "https://cdn.onebite.test/chocolate-thumb.webp",
+    imageUrls: ["https://cdn.theonlinebakery.test/chocolate.webp"],
+    thumbnailUrl: "https://cdn.theonlinebakery.test/chocolate-thumb.webp",
     stockQuantity: 10,
     lowStockThreshold: 2,
     trackInventory: true,
@@ -272,6 +272,30 @@ describe("OrderService", () => {
     expect(order.addressSnapshot?.city).toBe("Mumbai");
     expect(orderRepository.createOrder).toHaveBeenCalledOnce();
     expect(cartService.clearCart).toHaveBeenCalledWith(customerId);
+  });
+
+  it("creates a Cash on Delivery (COD) order successfully", async () => {
+    const { service, orderRepository } = createService();
+
+    const order = await service.createOrder(
+      customerId,
+      {
+        deliveryMethod: "HOME_DELIVERY",
+        paymentMethod: "COD",
+        addressId: addressId.toString(),
+      },
+      context,
+    );
+
+    expect(order.deliveryMethod).toBe("HOME_DELIVERY");
+    expect(order.paymentMethod).toBe("COD");
+    expect(order.orderStatus).toBe("PENDING");
+    expect(order.paymentStatus).toBe("PENDING");
+    expect(orderRepository.createOrder).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paymentMethod: "COD",
+      }),
+    );
   });
 
   it("creates a store pickup order without requiring delivery address", async () => {

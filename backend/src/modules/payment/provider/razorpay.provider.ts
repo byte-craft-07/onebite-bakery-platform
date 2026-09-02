@@ -122,7 +122,14 @@ export class RazorpayProvider implements IPaymentProvider {
         .update(payload)
         .digest("hex");
 
-      return expectedSignature === signature;
+      const expectedBuffer = Buffer.from(expectedSignature, "utf-8");
+      const signatureBuffer = Buffer.from(signature, "utf-8");
+
+      if (expectedBuffer.length !== signatureBuffer.length) {
+        return false;
+      }
+
+      return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
     } catch (_err) {
       return false;
     }
@@ -143,7 +150,14 @@ export class RazorpayProvider implements IPaymentProvider {
         .update(rawBody)
         .digest("hex");
 
-      return expectedSignature === signature;
+      const expectedBuffer = Buffer.from(expectedSignature, "utf-8");
+      const signatureBuffer = Buffer.from(signature, "utf-8");
+
+      if (expectedBuffer.length !== signatureBuffer.length) {
+        return false;
+      }
+
+      return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
     } catch (_err) {
       return false;
     }

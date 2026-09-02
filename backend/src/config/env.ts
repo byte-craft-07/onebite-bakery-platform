@@ -14,6 +14,7 @@ const environment = {
   MONGODB_URI: process.env.MONGODB_URI ?? process.env.MONGO_URI,
   RAZORPAY_KEY_SECRET:
     process.env.RAZORPAY_KEY_SECRET ?? process.env.RAZORPAY_SECRET,
+  OTP_HASH_SECRET: process.env.OTP_HASH_SECRET ?? process.env.JWT_SECRET,
 };
 
 const envSchema = z.object({
@@ -29,9 +30,9 @@ const envSchema = z.object({
   CLIENT_URL: z.string().url().optional(),
   ADMIN_URL: z.string().url().optional(),
   CORS_ORIGINS: z.string().optional(),
-  JSON_BODY_LIMIT: z.string().default("1mb"),
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
-  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
+  JSON_BODY_LIMIT: z.string().default("50mb"),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60000),
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10000),
   LOG_LEVEL: z.string().default("info"),
   OTP_HASH_SECRET: z.string().min(32).optional(),
   JWT_SECRET: z.string().min(32).optional(),
@@ -47,12 +48,18 @@ const envSchema = z.object({
   WHATSAPP_API_VERSION: z.string().min(1).default("v20.0"),
   WHATSAPP_DEFAULT_TEMPLATE: z.string().min(1).default("hello_world"),
   WHATSAPP_DEFAULT_LANGUAGE: z.string().min(1).default("en_US"),
+  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+  GOOGLE_CALLBACK_URL: z.string().optional(),
+  MSG91_AUTH_KEY: z.string().min(1).optional(),
+  MSG91_TEMPLATE_ID: z.string().min(1).optional(),
+  MSG91_SENDER_ID: z.string().min(1).optional(),
   ACCESS_TOKEN_EXPIRES: z.string().default("15m"),
   REFRESH_TOKEN_EXPIRES: z.string().default("30d"),
   REQUIRE_DATABASE_CONNECTION: z
     .enum(["true", "false"])
-    .default("false")
-    .transform((value) => value === "true"),
+    .optional()
+    .transform((value) => (value ? value === "true" : process.env.NODE_ENV === "production")),
 });
 
 const parsedEnv = envSchema.safeParse(environment);
@@ -137,10 +144,16 @@ export const env = {
   resendFromEmail:
     parsedEnv.data.RESEND_FROM_EMAIL ??
     parsedEnv.data.SENDER_EMAIL ??
-    "orders@onebitebakery.in",
+    "theonlinebakery07@gmail.com",
   whatsappApiToken: parsedEnv.data.WHATSAPP_API_TOKEN,
   whatsappPhoneNumberId: parsedEnv.data.WHATSAPP_PHONE_NUMBER_ID,
   whatsappApiVersion: parsedEnv.data.WHATSAPP_API_VERSION,
   whatsappDefaultTemplate: parsedEnv.data.WHATSAPP_DEFAULT_TEMPLATE,
   whatsappDefaultLanguage: parsedEnv.data.WHATSAPP_DEFAULT_LANGUAGE,
+  googleClientId: parsedEnv.data.GOOGLE_CLIENT_ID,
+  googleClientSecret: parsedEnv.data.GOOGLE_CLIENT_SECRET,
+  googleCallbackUrl: parsedEnv.data.GOOGLE_CALLBACK_URL,
+  msg91AuthKey: parsedEnv.data.MSG91_AUTH_KEY,
+  msg91TemplateId: parsedEnv.data.MSG91_TEMPLATE_ID,
+  msg91SenderId: parsedEnv.data.MSG91_SENDER_ID,
 } as const;

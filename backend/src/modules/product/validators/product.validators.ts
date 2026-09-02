@@ -12,7 +12,7 @@ const slugSchema = z
   .toLowerCase()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be URL safe.");
 
-const imageUrlSchema = z.string().trim().min(1).max(500);
+const imageUrlSchema = z.string().trim().min(1);
 const comboItemSchema = z.object({
   productId: objectIdSchema,
   quantity: z.number().int().positive(),
@@ -37,11 +37,11 @@ const booleanQuerySchema = z
   });
 
 const productSchemaBase = z.object({
-  name: z.string().trim().min(2).max(160),
+  name: z.string().trim().min(1).max(160),
   slug: slugSchema.optional(),
   shortDescription: z.string().trim().min(1).max(300).optional(),
-  description: z.string().trim().min(5).max(2000),
-  categoryId: objectIdSchema,
+  description: z.string().trim().min(1).max(2000).optional().default("Freshly baked artisanal delight from The Online Bakery."),
+  categoryId: objectIdSchema.optional(),
   occasionIds: z.array(objectIdSchema).default([]),
   productType: z.enum(PRODUCT_TYPES).default("NORMAL"),
   comboItems: z.array(comboItemSchema).default([]),
@@ -50,13 +50,14 @@ const productSchemaBase = z.object({
   costPrice: z.number().min(0).optional(),
   taxCategory: z.string().trim().min(1).max(80).optional(),
   imageUrls: z.array(imageUrlSchema).max(20).default([]),
-  thumbnailUrl: imageUrlSchema,
-  stockQuantity: z.number().int().min(0).default(0),
+  thumbnailUrl: imageUrlSchema.optional().default("https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80"),
+  stockQuantity: z.number().int().min(0).default(50),
   lowStockThreshold: z.number().int().min(0).default(5),
   trackInventory: z.boolean().default(true),
   allowBackorder: z.boolean().default(false),
   stockStatus: z.enum(STOCK_STATUSES).optional(),
   isAvailable: z.boolean().default(true),
+  isEggless: z.boolean().default(true),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),
   isTrending: z.boolean().default(false),
@@ -67,8 +68,8 @@ const productSchemaBase = z.object({
   availableFrom: z.coerce.date().optional(),
   availableUntil: z.coerce.date().optional(),
   displayOrder: z.number().int().min(0).default(0),
-  seoTitle: z.string().trim().min(2).max(70),
-  seoDescription: z.string().trim().min(5).max(160),
+  seoTitle: z.string().trim().min(1).max(70).optional(),
+  seoDescription: z.string().trim().min(1).max(160).optional(),
   seoKeywords: seoKeywordsSchema,
 });
 
@@ -76,11 +77,8 @@ const compareAtPriceRule = (data: {
   price?: number;
   compareAtPrice?: number;
 }): boolean => {
-  return (
-    typeof data.price !== "number" ||
-    typeof data.compareAtPrice === "undefined" ||
-    data.compareAtPrice >= data.price
-  );
+  if (!data.compareAtPrice || !data.price) return true;
+  return data.compareAtPrice >= data.price;
 };
 
 const availabilityDateRule = (data: {
@@ -179,7 +177,14 @@ export const publicProductQuerySchema = z
     isTrending: booleanQuerySchema,
     isSeasonal: booleanQuerySchema,
     isRecommended: booleanQuerySchema,
+    villageId: z.string().trim().optional(),
+    villageName: z.string().trim().optional(),
+    location: z.string().trim().optional(),
+    district: z.string().trim().optional(),
+    q: z.string().trim().optional(),
+    search: z.string().trim().optional(),
   })
+  .passthrough()
   .refine(
     (data) =>
       typeof data.minPrice !== "number" ||

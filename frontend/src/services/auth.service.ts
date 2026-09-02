@@ -12,15 +12,26 @@ export interface VerifyOtpPayload {
   purpose?: "login" | "verify_phone";
 }
 
+export interface CustomerLocationResponse {
+  villageId: string;
+  villageName: string;
+  district: string;
+  pincode: string;
+}
+
 export interface UserProfileResponse {
   id: string;
-  phone: string;
+  phone?: string;
   name?: string;
   email?: string;
-  role: "customer" | "admin";
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  role: "customer" | "admin" | "branch_admin" | "delivery_agent";
+  branchId?: string;
+  currentLocation?: CustomerLocationResponse;
+  profileImage?: string;
+  isActive?: boolean;
+  isVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const normalizeAuthPhone = (phone: string): string =>
@@ -53,13 +64,16 @@ export const authService = {
       return response.data;
     } catch (err: any) {
       if (import.meta.env.DEV) {
-        const isDevAdmin = payload.phone === "9999999999";
+        const isDevAdmin = payload.phone === "7897671632" || payload.phone === "9999999999";
+        const email = isDevAdmin ? "theonlinebakery07@gmail.com" : "customer@theonlinebakery.com";
+        const name = isDevAdmin ? "Ajay Prajapati" : "Bakery Customer";
         const devUser: UserProfileResponse = {
           id: isDevAdmin ? "dev-admin-id" : `usr-${Date.now()}`,
           phone: payload.phone,
-          name: isDevAdmin ? "Development Admin" : "Bakery Customer",
-          email: isDevAdmin ? "admin@onebitebakery.com" : "customer@onebitebakery.com",
+          name,
+          email,
           role: isDevAdmin ? "admin" : "customer",
+          profileImage: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=E67E22&color=ffffff&bold=true&size=256`,
           isActive: true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -73,23 +87,62 @@ export const authService = {
     }
   },
 
+  loginWithPassword: async (identifier: string, password: string): Promise<UserProfileResponse> => {
+    try {
+      const response = await apiClient.post<{
+        success: boolean;
+        data: { user: UserProfileResponse };
+      }>("/auth/login-password", {
+        identifier: identifier.trim(),
+        password,
+      });
+      return response.data.data.user;
+    } catch (err: any) {
+      if (import.meta.env.DEV) {
+        const isDevAdmin =
+          identifier.toLowerCase().includes("admin") ||
+          identifier === "7897671632" ||
+          identifier === "9999999999" ||
+          identifier.toLowerCase() === "theonlinebakery07@gmail.com";
+        const email = identifier.includes("@") ? identifier : (isDevAdmin ? "theonlinebakery07@gmail.com" : "customer@theonlinebakery.com");
+        const name = isDevAdmin ? "Ajay Prajapati" : (identifier.includes("@") ? identifier.split("@")[0] : "Branch Admin");
+        const devUser: UserProfileResponse = {
+          id: isDevAdmin ? "dev-admin-id" : `usr-${Date.now()}`,
+          phone: identifier.includes("@") ? "7897671632" : identifier,
+          name,
+          email,
+          role: isDevAdmin ? "admin" : (identifier.includes("@") ? "customer" : "branch_admin"),
+          profileImage: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=E67E22&color=ffffff&bold=true&size=256`,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        return devUser;
+      }
+      throw err;
+    }
+  },
+
   getCurrentUser: async () => {
     try {
       const response = await apiClient.get<{
         success: boolean;
         data: { user: UserProfileResponse };
       }>("/auth/me");
-      return response.data.data.user;
-    } catch (err: any) {
-      if (import.meta.env.DEV) {
-        const storedUser = localStorage.getItem("onebite_user");
-        if (storedUser) {
-          return JSON.parse(storedUser) as UserProfileResponse;
+      return response.data?.data?.user || null;
+    } catch (err) {
+      const stored = localStorage.getItem("theonlinebakery_user");
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          // ignore
         }
       }
       throw err;
     }
   },
+
 
   getBackendCurrentUser: async () => {
     const response = await apiClient.get<{
@@ -155,6 +208,67 @@ export const authService = {
       return response.data;
     } catch (_err) {
       return { success: true };
+    }
+  },
+
+  updateLocation: async (payload: { villageId: string; district: string }) => {
+    try {
+      const response = await apiClient.patch<{
+        success: boolean;
+        message?: string;
+        data: { currentLocation: CustomerLocationResponse };
+      }>("/users/location", payload);
+      const loc = response.data.data.currentLocation;
+      if (loc) {
+        localStorage.setItem("theonlinebakery_current_location", JSON.stringify(loc));
+        localStorage.setItem("theonlinebakery_active_location", JSON.stringify(loc));
+        return loc;
+      }
+    } catch (_err) {
+      // Graceful fallback for offline / unauthenticated session
+    }
+
+    const { villageService } = await import("./village.service");
+    const villages = await villageService.getVillages(payload.district);
+    const matched = villages.find((v) => v.id === payload.villageId);
+    const fallbackLoc: CustomerLocationResponse = {
+      villageId: payload.villageId,
+      villageName: matched ? matched.name : "Selected Village",
+      district: payload.district,
+      pincode: matched ? matched.pincode : "781001",
+    };
+    localStorage.setItem("theonlinebakery_current_location", JSON.stringify(fallbackLoc));
+    localStorage.setItem("theonlinebakery_active_location", JSON.stringify(fallbackLoc));
+    return fallbackLoc;
+  },
+
+  getLocation: async () => {
+    const response = await apiClient.get<{
+      success: boolean;
+      data: { currentLocation: CustomerLocationResponse | null };
+    }>("/users/location");
+    const loc = response.data.data.currentLocation;
+    if (loc) {
+      localStorage.setItem("theonlinebakery_current_location", JSON.stringify(loc));
+      localStorage.setItem("theonlinebakery_active_location", JSON.stringify(loc));
+    }
+    return loc;
+  },
+
+  getStoredLocation: (): CustomerLocationResponse | null => {
+    try {
+      const activeRaw = localStorage.getItem("theonlinebakery_active_location");
+      if (activeRaw) return JSON.parse(activeRaw);
+      const currentRaw = localStorage.getItem("theonlinebakery_current_location");
+      if (currentRaw) return JSON.parse(currentRaw);
+      const userRaw = localStorage.getItem("theonlinebakery_user");
+      if (userRaw) {
+        const u = JSON.parse(userRaw);
+        if (u?.currentLocation) return u.currentLocation;
+      }
+      return null;
+    } catch (_err) {
+      return null;
     }
   },
 };

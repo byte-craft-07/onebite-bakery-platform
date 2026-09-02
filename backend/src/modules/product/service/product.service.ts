@@ -38,13 +38,19 @@ export class ProductService {
     dto: CreateProductDto,
     context: RequestContext,
   ): Promise<ProductResponse> {
-    const categoryId = toObjectId(dto.categoryId);
-    const occasionIds = dto.occasionIds.map((occasionId) =>
+    const categoryId = dto.categoryId
+      ? toObjectId(dto.categoryId)
+      : toObjectId("64e000000000000000000001");
+    const occasionIds = (dto.occasionIds || []).map((occasionId) =>
       toObjectId(occasionId),
     );
 
-    await this.ensureCategoryExists(categoryId);
-    await this.ensureOccasionsExist(occasionIds);
+    if (dto.categoryId) {
+      await this.ensureCategoryExists(categoryId);
+    }
+    if (occasionIds.length > 0) {
+      await this.ensureOccasionsExist(occasionIds);
+    }
 
     const comboItems = await this.validateComboItems(
       dto.productType,
@@ -68,8 +74,16 @@ export class ProductService {
       explicitStockStatus: dto.stockStatus,
     });
 
+    const mainImg = dto.thumbnailUrl || (dto as unknown as Record<string, string>).mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
+
     const product = await this.productRepository.create({
       ...this.toWritePayload(dto),
+      name: dto.name,
+      description: dto.description || "Freshly baked artisanal delight from The Online Bakery.",
+      thumbnailUrl: mainImg,
+      imageUrls: dto.imageUrls && dto.imageUrls.length > 0 ? dto.imageUrls : [mainImg],
+      seoTitle: dto.seoTitle || dto.name,
+      seoDescription: dto.seoDescription || (dto.description ? dto.description.slice(0, 150) : `${dto.name} from The Online Bakery`),
       slug,
       categoryId,
       occasionIds,
@@ -153,6 +167,15 @@ export class ProductService {
         trackInventory,
         allowBackorder,
         stockStatus,
+      };
+    }
+
+    const newMainImg = dto.thumbnailUrl || (dto as unknown as Record<string, string>).mainImage;
+    if (newMainImg) {
+      update.$set = {
+        ...update.$set,
+        thumbnailUrl: newMainImg,
+        imageUrls: [newMainImg],
       };
     }
 
@@ -284,10 +307,76 @@ export class ProductService {
       occasionOverride = occasion._id;
     }
 
+    let disabledProductIds: Types.ObjectId[] = [];
+    const branchOverridesMap = new Map<string, any>();
+    let resolvedBranchDoc: any = null;
+
+    const rawLocationQuery =
+      (query as Record<string, unknown>).villageId ||
+      (query as Record<string, unknown>).villageName ||
+      (query as Record<string, unknown>).location ||
+      (query as Record<string, unknown>).district;
+
+    if (rawLocationQuery && typeof rawLocationQuery === "string") {
+      try {
+        const { BranchService } = await import("../../branch/service/branch.service.js");
+        const { BranchRepository } = await import("../../branch/repository/branch.repository.js");
+        const { BranchProductModel } = await import("../../branch/model/branch-product.model.js");
+
+        const branchService = new BranchService(new BranchRepository());
+        const branchDoc = await branchService.resolveBranchForVillage(rawLocationQuery);
+
+        if (branchDoc) {
+          resolvedBranchDoc = branchDoc;
+          const isMainBranch = branchDoc.type === "MAIN" || branchDoc.code === "CD-01";
+
+          if (!isMainBranch) {
+            const queryChain: any = BranchProductModel.find({
+              branchId: branchDoc._id,
+              isAvailable: false,
+            });
+
+            let disabledQuery = typeof queryChain.select === "function" ? queryChain.select("productId") : queryChain;
+            if (typeof disabledQuery.lean === "function") {
+              disabledQuery = disabledQuery.lean();
+            }
+            const disabledOverrides = await disabledQuery.exec();
+
+            if (Array.isArray(disabledOverrides)) {
+              for (const ov of disabledOverrides) {
+                branchOverridesMap.set(ov.productId.toString(), ov);
+                disabledProductIds.push(ov.productId);
+              }
+            }
+
+            try {
+              const activeChain: any = BranchProductModel.find({
+                branchId: branchDoc._id,
+                isAvailable: true,
+              });
+              let activeQuery = typeof activeChain.select === "function" ? activeChain.select("productId isAvailable stockQuantity price") : activeChain;
+              if (typeof activeQuery.lean === "function") activeQuery = activeQuery.lean();
+              const activeOverrides = await activeQuery.exec();
+              if (Array.isArray(activeOverrides)) {
+                for (const ov of activeOverrides) {
+                  branchOverridesMap.set(ov.productId.toString(), ov);
+                }
+              }
+            } catch (_e) {
+              // Ignore
+            }
+          }
+        }
+      } catch (_err) {
+        // Fallback safely
+      }
+    }
+
     const mergedOverrides = {
       ...filterOverrides,
       ...(categoryOverride ? { categoryId: categoryOverride } : {}),
       ...(occasionOverride ? { occasionIds: occasionOverride } : {}),
+      ...(disabledProductIds.length > 0 ? { _id: { $nin: disabledProductIds } } : {}),
     };
 
     const result = await this.productRepository.findPublicCatalog(
@@ -295,8 +384,36 @@ export class ProductService {
       mergedOverrides,
     );
 
+    const products = result.items
+      .filter((item) => {
+        const ov = branchOverridesMap.get(item._id.toString());
+        if (ov && ov.isAvailable === false) return false;
+        return true;
+      })
+      .map((item) => {
+        const response = this.toResponse(item);
+        const ov = branchOverridesMap.get(item._id.toString());
+        if (ov) {
+          if (typeof ov.isAvailable === "boolean") response.isAvailable = ov.isAvailable;
+          if (typeof ov.stockQuantity === "number") response.stockQuantity = ov.stockQuantity;
+          if (typeof (ov as any).price === "number") response.price = (ov as any).price;
+        } else {
+          response.isAvailable = true;
+        }
+        if (resolvedBranchDoc) {
+          (response as any).branchSnapshot = {
+            branchId: resolvedBranchDoc._id.toString(),
+            name: resolvedBranchDoc.name,
+            code: resolvedBranchDoc.code,
+            city: resolvedBranchDoc.address?.city,
+          };
+          (response as any).locationBranchName = resolvedBranchDoc.name;
+        }
+        return response;
+      });
+
     return {
-      products: result.items.map((item) => this.toResponse(item)),
+      products,
       pagination: result.pagination,
     };
   }
@@ -381,14 +498,52 @@ export class ProductService {
     };
   }
 
-  public async getPublicProductBySlug(slug: string): Promise<ProductResponse> {
+  public async getPublicProductBySlug(
+    slug: string,
+    villageId?: string,
+  ): Promise<ProductResponse> {
     const product = await this.productRepository.findActiveBySlug(slug);
 
     if (!product) {
       throw this.createNotFoundError();
     }
 
-    return this.toResponse(product);
+    const response = this.toResponse(product);
+
+    if (villageId) {
+      try {
+        const { BranchService } = await import("../../branch/service/branch.service.js");
+        const { BranchRepository } = await import("../../branch/repository/branch.repository.js");
+        const { BranchProductModel } = await import("../../branch/model/branch-product.model.js");
+
+        const branchService = new BranchService(new BranchRepository());
+        const branchDoc = await branchService.resolveBranchForVillage(villageId);
+
+        if (branchDoc) {
+          (response as any).branchSnapshot = {
+            branchId: branchDoc._id.toString(),
+            name: branchDoc.name,
+            code: branchDoc.code,
+            city: branchDoc.address?.city,
+          };
+          (response as any).locationBranchName = branchDoc.name;
+
+          const override = await BranchProductModel.findOne({
+            branchId: branchDoc._id,
+            productId: product._id,
+          }).exec();
+
+          if (override) {
+            if (typeof override.isAvailable === "boolean") response.isAvailable = override.isAvailable;
+            if (typeof override.stockQuantity === "number") response.stockQuantity = override.stockQuantity;
+          }
+        }
+      } catch (_err) {
+        // Fallback safely
+      }
+    }
+
+    return response;
   }
 
   private async getExistingProduct(

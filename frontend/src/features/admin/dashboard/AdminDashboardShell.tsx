@@ -21,13 +21,13 @@ export const AdminDashboardShell: React.FC = () => {
     try {
       setIsLoading(true);
       const [prodsRes, ordersList, customersList, logs] = await Promise.all([
-        adminCatalogService.getProducts().catch(() => ({ products: [] })),
+        adminCatalogService.getProducts().catch(() => []),
         adminOperationsService.getAllOrders().catch(() => []),
         adminOperationsService.getCustomers().catch(() => []),
         adminOperationsService.getAuditLogs().catch(() => []),
       ]);
 
-      setProductCount(prodsRes?.products?.length || 18);
+      setProductCount(Array.isArray(prodsRes) ? prodsRes.length : 0);
       setOrders(ordersList);
       setCustomerCount(customersList?.length || 3);
       setAuditLogs(logs.slice(0, 5));
@@ -57,7 +57,7 @@ export const AdminDashboardShell: React.FC = () => {
           value={isLoading ? "..." : `${productCount}`}
           change="Active in Catalog"
           isPositive={true}
-          icon={<Package className="h-5 w-5 text-[#E67E22]" />}
+          icon={<Package className="h-5 w-5 text-[#596B58]" />}
         />
         <AdminStatCard
           title="Total Orders"
@@ -85,15 +85,15 @@ export const AdminDashboardShell: React.FC = () => {
       {/* Recent Orders & Quick Activity Feed Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-lg font-bold text-[#2C1E16]">Recent Orders Activity</h3>
+          <h3 className="text-lg font-bold text-[#3B302B]">Recent Orders Activity</h3>
           <AdminTable headers={["Order #", "Customer Phone", "Fulfillment", "Total Amount", "Order Status"]}>
             {recentOrders.length > 0 ? (
               recentOrders.map((ord) => (
-                <tr key={ord.id} className="hover:bg-[#F9F6F0]/50 transition-colors">
-                  <td className="px-4 py-3 font-mono font-bold text-[#2C1E16]">#{ord.orderNumber}</td>
+                <tr key={ord.id} className="hover:bg-[#FFF8EC]/50 transition-colors">
+                  <td className="px-4 py-3 font-mono font-bold text-[#3B302B]">#{ord.orderNumber}</td>
                   <td className="px-4 py-3 text-xs">{ord.customerPhone || "9876543210"}</td>
                   <td className="px-4 py-3 text-xs font-semibold">{ord.fulfillmentType === "STORE_PICKUP" ? "Store Pickup" : "Home Delivery"}</td>
-                  <td className="px-4 py-3 font-extrabold text-[#2C1E16]">₹{ord.totalAmount}</td>
+                  <td className="px-4 py-3 font-extrabold text-[#3B302B]">₹{ord.totalAmount}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -111,7 +111,7 @@ export const AdminDashboardShell: React.FC = () => {
               ))
             ) : (
               <tr>
-                <td className="px-4 py-3 text-xs text-[#6E5D4F]" colSpan={5}>
+                <td className="px-4 py-3 text-xs text-[#7A6E65]" colSpan={5}>
                   No orders placed yet. Products ready in catalog.
                 </td>
               </tr>
@@ -120,18 +120,18 @@ export const AdminDashboardShell: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-bold text-[#2C1E16]">Real-time Audit Feed</h3>
+          <h3 className="text-lg font-bold text-[#3B302B]">Real-time Audit Feed</h3>
           <AdminCard className="space-y-3">
             {auditLogs.length > 0 ? (
-              <div className="text-xs space-y-2 text-[#6E5D4F]">
+              <div className="text-xs space-y-2 text-[#7A6E65]">
                 {auditLogs.map((log, idx) => (
-                  <p key={idx} className="border-b border-[#E8E2D9] pb-2 last:border-0">
-                    &bull; <strong className="text-[#2C1E16]">{log.action}:</strong> {log.entityType} ({new Date(log.createdAt).toLocaleTimeString()})
+                  <p key={idx} className="border-b border-[#E5DEC9] pb-2 last:border-0">
+                    &bull; <strong className="text-[#3B302B]">{log.action}:</strong> {log.entityType} ({new Date(log.createdAt).toLocaleTimeString()})
                   </p>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-[#6E5D4F]">System audit engine active.</p>
+              <p className="text-xs text-[#7A6E65]">System audit engine active.</p>
             )}
           </AdminCard>
         </div>

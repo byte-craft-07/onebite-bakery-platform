@@ -1,5 +1,7 @@
 export const INDEX_NAMES = {
   USER_PHONE_UNIQUE: "users_phone_unique",
+  USER_GOOGLE_ID_UNIQUE: "users_google_id_unique",
+  USER_EMAIL: "users_email",
   USER_ROLE_STATUS: "users_role_status",
   ADDRESS_USER: "addresses_user",
   ADDRESS_LOCATION: "addresses_location_2dsphere",
@@ -40,4 +42,15 @@ export const INDEX_NAMES = {
   ORDER_STATUS: "orders_status",
   ORDER_CREATED_AT: "orders_created_at",
   SETTINGS_SINGLETON: "settings_singleton_unique",
+  BRANCH_CODE_UNIQUE: "branches_code_unique",
+  BRANCH_TYPE_STATUS: "branches_type_status",
+  BRANCH_MANAGER: "branches_manager",
+  VILLAGE_BRANCH: "villages_branch",
+  USER_BRANCH: "users_branch",
+  USER_CURRENT_LOCATION: "users_current_location",
+  BRANCH_PRODUCT_UNIQUE: "branch_products_unique",
+  BRANCH_PRODUCT_BRANCH: "branch_products_branch",
+  BRANCH_PRODUCT_PRODUCT: "branch_products_product",
+  BANNER_DISPLAY_ORDER: "banners_display_order",
+  BANNER_ACTIVE: "banners_active",
 } as const;

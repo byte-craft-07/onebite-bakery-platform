@@ -22,6 +22,7 @@ import {
   generateOtp,
   isOtpCooldownActive,
   maskPhone,
+  normalizeIndianPhone,
 } from "../utils/index.js";
 
 export class OtpService {
@@ -34,10 +35,11 @@ export class OtpService {
     dto: SendOtpDto,
     context: RequestContext,
   ): Promise<SendOtpResult> {
+    const normalizedPhone = normalizeIndianPhone(dto.phone);
     const now = new Date();
     const existingChallenge =
       await this.otpRepository.findLatestActiveChallenge(
-        dto.phone,
+        normalizedPhone,
         dto.purpose,
         now,
       );
@@ -99,7 +101,7 @@ export class OtpService {
           userAgent: context.userAgent,
         })
       : await this.otpRepository.createChallenge({
-          phone: dto.phone,
+          phone: normalizedPhone,
           purpose: dto.purpose,
           otpHash,
           expiresAt,
@@ -113,7 +115,7 @@ export class OtpService {
     }
 
     await this.otpProvider.sendOtp({
-      phone: dto.phone,
+      phone: normalizedPhone,
       purpose: dto.purpose,
       otp,
       expiresAt,
@@ -121,7 +123,7 @@ export class OtpService {
 
     logger.info(
       {
-        phone: maskPhone(dto.phone),
+        phone: maskPhone(normalizedPhone),
         purpose: dto.purpose,
         requestId: context.requestId,
       },
@@ -138,6 +140,8 @@ export class OtpService {
     dto: VerifyOtpDto,
     context: RequestContext,
   ): Promise<VerifyOtpResult> {
+    const normalizedPhone = normalizeIndianPhone(dto.phone);
+
     if (
       env.nodeEnv !== "production" &&
       process.env.VITEST !== "true" &&
@@ -145,7 +149,7 @@ export class OtpService {
     ) {
       logger.info(
         {
-          phone: maskPhone(dto.phone),
+          phone: maskPhone(normalizedPhone),
           purpose: dto.purpose,
           requestId: context.requestId,
         },
@@ -156,7 +160,7 @@ export class OtpService {
     }
 
     const challenge = await this.otpRepository.findLatestActiveChallenge(
-      dto.phone,
+      normalizedPhone,
       dto.purpose,
     );
 

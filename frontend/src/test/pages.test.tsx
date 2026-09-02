@@ -44,7 +44,7 @@ describe("Product Discovery Components & Catalog Service Tests", () => {
       </AuthProvider>,
     );
 
-    expect(screen.getAllByText("OneBite")[0]).toBeDefined();
+    expect(screen.getAllByText("The Online Bakery")[0]).toBeDefined();
     expect(screen.getByText("Quick Links")).toBeDefined();
   });
 
@@ -73,9 +73,9 @@ describe("Product Discovery Components & Catalog Service Tests", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Freshly Baked Every Morning")).toBeDefined();
     expect(screen.getByText("Browse Categories")).toBeDefined();
-    expect(screen.getByText("Bestselling Products")).toBeDefined();
+    expect(screen.getByText("All Bakery & Party Products")).toBeDefined();
+    expect(screen.getByText("Special Celebration Combos")).toBeDefined();
   });
 
   it("renders ProductsListingPage and ProductDetailsPage", () => {

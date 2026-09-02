@@ -4,11 +4,11 @@
 
 Project
 
-OneBite Bakery Platform
+The Online Bakery Platform
 
 Brand
 
-OneBite Bakery
+The Online Bakery
 
 Tagline
 
@@ -20,7 +20,7 @@ Version
 
 Purpose
 
-This document defines the official technology stack for the OneBite Bakery Platform.
+This document defines the official technology stack for the The Online Bakery Platform.
 
 Every developer and AI agent must follow this stack unless a documented architectural decision approves a change.
 

@@ -4,11 +4,11 @@
 
 Project
 
-OneBite Bakery Platform
+The Online Bakery Platform
 
 Brand
 
-OneBite Bakery
+The Online Bakery
 
 Tagline
 
@@ -20,7 +20,7 @@ Version
 
 Purpose
 
-This document defines the security standards for the OneBite Bakery Platform.
+This document defines the security standards for the The Online Bakery Platform.
 
 Every feature must follow these rules before deployment.
 

@@ -29,9 +29,9 @@ export interface AdminAuditLog {
   ipAddress: string;
 }
 
-const LOCAL_SESSIONS_KEY = "onebite_user_active_sessions";
-const LOCAL_SEC_EVENTS_KEY = "onebite_user_security_events";
-const LOCAL_AUDIT_LOGS_KEY = "onebite_admin_audit_logs";
+const LOCAL_SESSIONS_KEY = "theonlinebakery_user_active_sessions";
+const LOCAL_SEC_EVENTS_KEY = "theonlinebakery_user_security_events";
+const LOCAL_AUDIT_LOGS_KEY = "theonlinebakery_admin_audit_logs";
 
 const INITIAL_SESSIONS: UserSession[] = [
   {
@@ -45,7 +45,7 @@ const INITIAL_SESSIONS: UserSession[] = [
   },
   {
     id: "sess-mobile-1",
-    deviceName: "OneBite Mobile App (Android 14)",
+    deviceName: "The Online Bakery Mobile App (Android 14)",
     deviceType: "MOBILE",
     browser: "Chrome Mobile 121.0",
     ipAddress: "103.24.12.92 (New Delhi, India)",

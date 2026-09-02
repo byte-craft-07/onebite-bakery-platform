@@ -33,6 +33,7 @@ const orderService = new OrderService(
 );
 const orderController = new OrderController(orderService);
 const ownerOnly = [requireAuth, requireRoles(["admin"])] as const;
+const staffOrAdmin = [requireAuth, requireRoles(["admin", "branch_admin"])] as const;
 
 orderRouter.post(
   "/",
@@ -45,28 +46,35 @@ orderRouter.get("/", requireAuth, asyncHandler(orderController.listCustomerOrder
 
 orderRouter.get(
   "/admin/orders",
-  ...ownerOnly,
+  ...staffOrAdmin,
   validateRequest({ query: listOrdersQuerySchema }),
   asyncHandler(orderController.adminListOrders),
 );
 
 orderRouter.get(
   "/admin/orders/:id",
-  ...ownerOnly,
+  ...staffOrAdmin,
   validateRequest({ params: orderIdParamSchema }),
   asyncHandler(orderController.adminGetOrder),
 );
 
 orderRouter.patch(
   "/admin/orders/:id/status",
-  ...ownerOnly,
+  ...staffOrAdmin,
+  validateRequest({ params: orderIdParamSchema, body: updateOrderStatusSchema }),
+  asyncHandler(orderController.adminUpdateStatus),
+);
+
+orderRouter.patch(
+  "/:id/status",
+  ...staffOrAdmin,
   validateRequest({ params: orderIdParamSchema, body: updateOrderStatusSchema }),
   asyncHandler(orderController.adminUpdateStatus),
 );
 
 orderRouter.patch(
   "/admin/orders/:id/ready-time",
-  ...ownerOnly,
+  ...staffOrAdmin,
   validateRequest({ params: orderIdParamSchema, body: updateReadyTimeSchema }),
   asyncHandler(orderController.adminUpdateReadyTime),
 );

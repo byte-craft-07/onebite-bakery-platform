@@ -4,29 +4,45 @@ import {
   BarChart3,
   Bell,
   Box,
+  Building2,
+  Cake,
   FileSpreadsheet,
   FileText,
+  Gift,
   Home,
   Image as ImageIcon,
+  Layers,
   LayoutDashboard,
   LogOut,
+  MapPin,
   Package,
   Settings,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
+  Tag,
+  UserCheck,
   Users,
   X,
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/auth.context";
 
-const navSections = [
+const centralAdminNavSections = [
   { id: "dashboard", label: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
+  { id: "admins", label: "Admin Team & Access", path: "/admin/team", icon: UserCheck },
+  { id: "banners", label: "Hero Posters & Banners", path: "/admin/banners", icon: ImageIcon },
+  { id: "branches", label: "Branch Management", path: "/admin/branches", icon: Building2 },
+  { id: "branch-matrix", label: "Branch Product Matrix", path: "/admin/branch-matrix", icon: Layers },
   { id: "catalog", label: "Catalog & Products", path: "/admin/catalog", icon: Package },
+  { id: "combos", label: "Celebration Combos", path: "/admin/combos", icon: Gift },
+  { id: "custom-cakes", label: "Custom Cake Studio", path: "/admin/custom-cakes", icon: Cake },
   { id: "categories", label: "Categories", path: "/admin/categories", icon: Box },
+
   { id: "occasions", label: "Occasions", path: "/admin/occasions", icon: Sparkles },
-  { id: "orders", label: "Order Management", path: "/admin/orders", icon: ShoppingBag },
+  { id: "coupons", label: "Promo & Coupons", path: "/admin/coupons", icon: Tag },
+  { id: "villages", label: "Villages Management", path: "/admin/villages", icon: MapPin },
+  { id: "orders", label: "Global Orders", path: "/admin/orders", icon: ShoppingBag },
   { id: "customers", label: "Customer Accounts", path: "/admin/customers", icon: Users },
   { id: "payments", label: "Payments & Financials", path: "/admin/payments", icon: Box },
   { id: "notifications", label: "Notification Center", path: "/admin/notifications", icon: Bell },
@@ -38,9 +54,26 @@ const navSections = [
   { id: "logs", label: "Activity Logs", path: "/admin/logs", icon: FileText },
 ];
 
+const branchAdminNavSections = [
+  { id: "branch-dash", label: "My Branch Dashboard", path: "/admin/branch/dashboard", icon: LayoutDashboard },
+  { id: "branch-products", label: "My Branch Inventory", path: "/admin/branch/products", icon: Package },
+  { id: "branch-orders", label: "My Branch Orders", path: "/admin/branch/orders", icon: ShoppingBag },
+];
+
+const deliveryAgentNavSections = [
+  { id: "agent-dash", label: "Delivery Dashboard", path: "/agent/dashboard", icon: LayoutDashboard },
+  { id: "agent-orders", label: "My Deliveries", path: "/agent/dashboard", icon: ShoppingBag },
+];
+
 export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ isOpen = false, onClose }) => {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const navSections =
+    user?.role === "delivery_agent"
+      ? deliveryAgentNavSections
+      : user?.role === "branch_admin"
+      ? branchAdminNavSections
+      : centralAdminNavSections;
 
   return (
     <>
@@ -54,15 +87,22 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
       ) : null}
 
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-[#2C1E16] text-[#FFFBF5] p-5 sm:p-6 flex flex-col justify-between transition-transform duration-300 shadow-2xl lg:shadow-none ${
+        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-[#3B302B] text-[#FFF8EC] p-5 sm:p-6 flex flex-col justify-between transition-transform duration-300 shadow-2xl lg:shadow-none ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         <div className="space-y-6 overflow-y-auto pr-1">
           {/* Header Logo */}
           <div className="flex items-center justify-between">
-            <Link to="/" title="Go to Home Page Storefront" className="flex items-center gap-2 group">
-              <span className="text-xl font-extrabold text-[#E67E22] tracking-tight group-hover:text-amber-400 transition-colors">OneBite</span>
+            <Link to="/" title="Go to Home Page Storefront" className="flex items-center gap-2.5 group">
+              <div className="h-8 w-8 rounded-full overflow-hidden bg-white p-0.5 shadow-xs ring-1 ring-white/30 shrink-0">
+                <img
+                  src="/logo.svg"
+                  alt="The Online Bakery"
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </div>
+              <span className="text-xl font-extrabold text-[#596B58] tracking-tight group-hover:text-amber-400 transition-colors">The Online Bakery</span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/10 text-white uppercase">
                 Admin
               </span>
@@ -86,8 +126,8 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
                   onClick={onClose}
                   className={`flex items-center gap-3 px-3 py-2 rounded-xl font-medium transition-colors ${
                     isActive
-                      ? "bg-[#E67E22] text-white font-bold shadow-sm"
-                      : "text-[#E8E2D9]/70 hover:bg-white/10 hover:text-white"
+                      ? "bg-[#596B58] text-white font-bold shadow-sm"
+                      : "text-[#E5DEC9]/70 hover:bg-white/10 hover:text-white"
                   }`}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
@@ -103,7 +143,7 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
           <Link
             to="/"
             onClick={onClose}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#E67E22] hover:bg-[#D35400] text-xs font-bold text-white transition-colors shadow-sm cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#596B58] hover:bg-[#495948] text-xs font-bold text-white transition-colors shadow-sm cursor-pointer"
           >
             <Home className="h-4 w-4" />
             <span>Go to Home Page</span>
@@ -120,8 +160,8 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
             <span>Exit Admin</span>
           </button>
 
-          <p className="text-[10px] text-center text-[#E8E2D9]/50">
-            OneBite Platform Engine &bull; v1.0.0
+          <p className="text-[10px] text-center text-[#E5DEC9]/50">
+            The Online Bakery Platform Engine &bull; v1.0.0
           </p>
         </div>
       </aside>

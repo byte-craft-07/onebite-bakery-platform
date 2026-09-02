@@ -250,7 +250,7 @@ export class PaymentService {
       paymentId: payment._id.toString(),
       orderId: order._id.toString(),
       paymentStatus: "AUTHORIZED",
-      message: "Payment signature verified. Awaiting Razorpay webhook confirmation.",
+      message: "Payment signature verified successfully.",
     };
   }
 

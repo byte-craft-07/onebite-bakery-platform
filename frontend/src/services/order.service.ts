@@ -28,6 +28,7 @@ export interface OrderDetails {
     | "CANCELLED"
     | "REFUNDED";
   paymentStatus: "PENDING" | "PROCESSING" | "SUCCESS" | "PAID" | "FAILED" | "CANCELLED" | "REFUNDED";
+  paymentMethod?: "UPI" | "COD";
   fulfillmentType: "HOME_DELIVERY" | "STORE_PICKUP";
   items: OrderItemDetails[];
   subtotal: number;
@@ -35,7 +36,28 @@ export interface OrderDetails {
   taxAmount: number;
   discountAmount: number;
   totalAmount: number;
+  deliveryTimingType?: "INSTANT" | "SCHEDULED";
+  deliveryTimePreference?: string;
+  scheduledDate?: string;
+  scheduledTimeSlot?: string;
+  customerName?: string;
+  customerPhone?: string;
   createdAt: string;
+  locationSnapshot?: {
+    villageId?: string;
+    villageName: string;
+    district: string;
+    pincode: string;
+  };
+  addressSnapshot?: {
+    fullName?: string;
+    phone?: string;
+    street?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    landmark?: string;
+  };
   deliveryAddress?: {
     street: string;
     city: string;
@@ -63,6 +85,7 @@ interface BackendOrder {
   orderNumber: string;
   orderStatus: OrderDetails["orderStatus"];
   paymentStatus: OrderDetails["paymentStatus"];
+  paymentMethod?: "UPI" | "COD";
   deliveryMethod?: OrderDetails["fulfillmentType"];
   fulfillmentType?: OrderDetails["fulfillmentType"];
   items?: BackendOrderItem[];
@@ -72,6 +95,12 @@ interface BackendOrder {
   totalAmount?: number;
   taxAmount?: number;
   discountAmount?: number;
+  deliveryTimingType?: "INSTANT" | "SCHEDULED";
+  deliveryTimePreference?: string;
+  scheduledDate?: string;
+  scheduledTimeSlot?: string;
+  customerName?: string;
+  customerPhone?: string;
   pricingSnapshot?: {
     subtotal?: number;
     tax?: number;
@@ -80,16 +109,20 @@ interface BackendOrder {
     grandTotal?: number;
   };
   createdAt?: string;
+  locationSnapshot?: OrderDetails["locationSnapshot"];
   addressSnapshot?: {
+    fullName?: string;
+    phone?: string;
     street?: string;
     city?: string;
     state?: string;
     pincode?: string;
+    landmark?: string;
   };
   deliveryAddress?: OrderDetails["deliveryAddress"];
 }
 
-const LOCAL_ORDERS_KEY = "onebite_customer_orders_list";
+const LOCAL_ORDERS_KEY = "theonlinebakery_customer_orders_list";
 
 const mockOrders: OrderDetails[] = [
   {
@@ -185,6 +218,7 @@ const toOrderDetails = (order: BackendOrder): OrderDetails => {
     orderNumber: order.orderNumber,
     orderStatus: order.orderStatus,
     paymentStatus: order.paymentStatus,
+    paymentMethod: order.paymentMethod ?? "UPI",
     fulfillmentType: order.fulfillmentType ?? order.deliveryMethod ?? "HOME_DELIVERY",
     items: (order.items ?? []).map((item, index) => {
       const unitPrice = item.unitPrice ?? item.unitPriceSnapshot ?? 0;
@@ -193,7 +227,7 @@ const toOrderDetails = (order: BackendOrder): OrderDetails => {
       return {
         id: item.id ?? item._id ?? `${order.id}-${index}`,
         productId: item.productId ?? "",
-        name: item.name ?? item.productName ?? item.productNameSnapshot ?? "OneBite item",
+        name: item.name ?? item.productName ?? item.productNameSnapshot ?? "The Online Bakery item",
         unitPrice,
         quantity: item.quantity,
         itemTotal,
@@ -204,7 +238,15 @@ const toOrderDetails = (order: BackendOrder): OrderDetails => {
     taxAmount,
     discountAmount,
     totalAmount,
+    deliveryTimingType: order.deliveryTimingType ?? (order.scheduledDate ? "SCHEDULED" : "INSTANT"),
+    deliveryTimePreference: order.deliveryTimePreference ?? (order.scheduledDate ? `📅 Scheduled: ${order.scheduledDate} ${order.scheduledTimeSlot || ""}` : "⚡ Instant Delivery (Within 30-45 mins)"),
+    scheduledDate: order.scheduledDate,
+    scheduledTimeSlot: order.scheduledTimeSlot,
+    customerName: order.customerName || order.addressSnapshot?.fullName,
+    customerPhone: order.customerPhone || order.addressSnapshot?.phone,
     createdAt: order.createdAt ?? new Date().toISOString(),
+    ...(order.locationSnapshot ? { locationSnapshot: order.locationSnapshot } : {}),
+    ...(order.addressSnapshot ? { addressSnapshot: order.addressSnapshot } : {}),
     deliveryAddress: toDeliveryAddress(order.deliveryAddress ?? order.addressSnapshot),
   };
 };
@@ -220,6 +262,15 @@ export const orderService = {
         orderNumber: order.orderNumber,
         totalAmount: order.totalAmount,
         fulfillmentType: order.fulfillmentType,
+        customerName: order.customerName || order.addressSnapshot?.fullName,
+        customerPhone: order.customerPhone || order.addressSnapshot?.phone,
+        deliveryTimingType: order.deliveryTimingType,
+        deliveryTimePreference: order.deliveryTimePreference,
+        scheduledDate: order.scheduledDate,
+        scheduledTimeSlot: order.scheduledTimeSlot,
+        addressSnapshot: order.addressSnapshot,
+        locationSnapshot: order.locationSnapshot,
+        items: order.items,
       });
     } catch (_e) {
       // Ignore
@@ -233,7 +284,7 @@ export const orderService = {
     } catch (_e) {
       // Ignore
     }
-    return mockOrders;
+    return [];
   },
 
   getCustomerOrders: async (): Promise<OrderDetails[]> => {
@@ -242,13 +293,13 @@ export const orderService = {
         success: boolean;
         data: { orders: BackendOrder[] };
       }>("/orders");
-      if (response.data?.data?.orders && response.data.data.orders.length > 0) {
+      if (response.data?.data?.orders) {
         return response.data.data.orders.map(toOrderDetails);
       }
     } catch (_err) {
-      // Fallback to local customer orders
+      return orderService.getLocalOrders();
     }
-    return orderService.getLocalOrders();
+    return [];
   },
 
   getOrderById: async (id: string): Promise<OrderDetails> => {

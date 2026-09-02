@@ -55,6 +55,21 @@ export const AdminCustomersPage: React.FC = () => {
       (c.email && c.email.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  const handleToggleStatus = async (usr: AdminCustomerSummary) => {
+    try {
+      const updated = await adminOperationsService.toggleCustomerStatus(usr.id, usr.status);
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === usr.id ? { ...c, status: updated.status } : c))
+      );
+    } catch (_err) {
+      setCustomers((prev) =>
+        prev.map((c) =>
+          c.id === usr.id ? { ...c, status: c.status === "active" ? "blocked" : "active" } : c
+        )
+      );
+    }
+  };
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
@@ -72,10 +87,10 @@ export const AdminCustomersPage: React.FC = () => {
           <AdminTableSkeleton columns={6} rows={4} />
         ) : filtered.length > 0 ? (
           filtered.map((usr) => (
-            <tr key={usr.id} className="hover:bg-[#F9F6F0]/50 transition-colors">
-              <td className="px-4 py-3 font-bold text-[#2C1E16]">{usr.name}</td>
-              <td className="px-4 py-3 font-mono text-xs">{usr.phone}</td>
-              <td className="px-4 py-3 text-xs text-[#6E5D4F]">{usr.email || "N/A"}</td>
+            <tr key={usr.id} className="hover:bg-[#FFF8EC]/50 transition-colors">
+              <td className="px-4 py-3 font-bold text-[#3B302B]">{usr.name}</td>
+              <td className="px-4 py-3 font-mono text-xs">{usr.phone || "Google Sign-In"}</td>
+              <td className="px-4 py-3 text-xs text-[#7A6E65]">{usr.email || "N/A"}</td>
               <td className="px-4 py-3">
                 <Badge variant={usr.role === "admin" ? "primary" : "neutral"}>
                   {usr.role.toUpperCase()}
@@ -87,15 +102,26 @@ export const AdminCustomersPage: React.FC = () => {
                 </Badge>
               </td>
               <td className="px-4 py-3">
-                <span className="text-xs text-gray-400 font-medium">
-                  {usr.role === "admin" ? "Protected System Admin" : "Read only"}
-                </span>
+                {usr.role !== "admin" ? (
+                  <button
+                    onClick={() => handleToggleStatus(usr)}
+                    className={`text-xs font-bold px-3 py-1 rounded-lg border transition-colors cursor-pointer ${
+                      usr.status === "active"
+                        ? "border-red-300 text-red-600 hover:bg-red-50"
+                        : "border-green-300 text-green-700 hover:bg-green-50"
+                    }`}
+                  >
+                    {usr.status === "active" ? "Block Account" : "Unblock Account"}
+                  </button>
+                ) : (
+                  <span className="text-xs text-gray-400 font-medium">Protected Admin</span>
+                )}
               </td>
             </tr>
           ))
         ) : (
           <tr>
-            <td colSpan={6} className="text-center py-8 text-xs text-[#6E5D4F]">
+            <td colSpan={6} className="text-center py-8 text-xs text-[#7A6E65]">
               No customer records found.
             </td>
           </tr>
@@ -141,11 +167,11 @@ export const AdminPaymentsPage: React.FC = () => {
           <AdminTableSkeleton columns={6} rows={4} />
         ) : filtered.length > 0 ? (
           filtered.map((pay) => (
-            <tr key={pay.id} className="hover:bg-[#F9F6F0]/50 transition-colors">
-              <td className="px-4 py-3 font-mono text-xs font-bold text-[#E67E22]">{pay.paymentId}</td>
-              <td className="px-4 py-3 font-mono font-bold text-[#2C1E16]">#{pay.orderNumber}</td>
-              <td className="px-4 py-3 font-extrabold text-[#2C1E16]">₹{pay.amount}</td>
-              <td className="px-4 py-3 font-medium text-xs text-[#6E5D4F]">{pay.method}</td>
+            <tr key={pay.id} className="hover:bg-[#FFF8EC]/50 transition-colors">
+              <td className="px-4 py-3 font-mono text-xs font-bold text-[#596B58]">{pay.paymentId}</td>
+              <td className="px-4 py-3 font-mono font-bold text-[#3B302B]">#{pay.orderNumber}</td>
+              <td className="px-4 py-3 font-extrabold text-[#3B302B]">₹{pay.amount}</td>
+              <td className="px-4 py-3 font-medium text-xs text-[#7A6E65]">{pay.method}</td>
               <td className="px-4 py-3">
                 <Badge variant={pay.status === "PAID" ? "success" : "warning"}>
                   {pay.status}
@@ -158,7 +184,7 @@ export const AdminPaymentsPage: React.FC = () => {
           ))
         ) : (
           <tr>
-            <td colSpan={6} className="text-center py-8 text-xs text-[#6E5D4F]">
+            <td colSpan={6} className="text-center py-8 text-xs text-[#7A6E65]">
               No payment transactions recorded yet.
             </td>
           </tr>
@@ -236,11 +262,11 @@ export const AdminNotificationsPage: React.FC = () => {
           <AdminTableSkeleton columns={5} rows={4} />
         ) : notifications.length > 0 ? (
           notifications.map((notif, idx) => (
-            <tr key={idx} className="hover:bg-[#F9F6F0]/50 transition-colors">
+            <tr key={idx} className="hover:bg-[#FFF8EC]/50 transition-colors">
               <td className="px-4 py-3 text-xs text-gray-400">{new Date(notif.createdAt).toLocaleString()}</td>
               <td className="px-4 py-3 font-medium text-xs">{notif.recipient}</td>
-              <td className="px-4 py-3 font-mono text-xs text-[#E67E22]">{notif.type}</td>
-              <td className="px-4 py-3 font-bold text-[#2C1E16]">{notif.title}</td>
+              <td className="px-4 py-3 font-mono text-xs text-[#596B58]">{notif.type}</td>
+              <td className="px-4 py-3 font-bold text-[#3B302B]">{notif.title}</td>
               <td className="px-4 py-3">
                 <Badge variant="success">{notif.status || "DELIVERED"}</Badge>
               </td>
@@ -248,7 +274,7 @@ export const AdminNotificationsPage: React.FC = () => {
           ))
         ) : (
           <tr>
-            <td colSpan={5} className="text-center py-8 text-xs text-[#6E5D4F]">
+            <td colSpan={5} className="text-center py-8 text-xs text-[#7A6E65]">
               No system notifications yet.
             </td>
           </tr>
@@ -266,13 +292,13 @@ export const AdminNotificationsPage: React.FC = () => {
           />
 
           <div>
-            <label className="block text-xs font-bold text-[#2C1E16] mb-1">Broadcast Content Message</label>
+            <label className="block text-xs font-bold text-[#3B302B] mb-1">Broadcast Content Message</label>
             <textarea
               rows={4}
               placeholder="Enjoy 20% OFF on all Belgian Truffle cakes this Saturday..."
               value={broadcastMsg}
               onChange={(e) => setBroadcastMsg(e.target.value)}
-              className="w-full p-3 rounded-lg border border-[#E8E2D9] text-xs outline-none focus:border-[#E67E22]"
+              className="w-full p-3 rounded-lg border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58]"
               required
             />
           </div>
@@ -313,7 +339,7 @@ export const AdminAnalyticsPage: React.FC = () => {
           value={metrics ? `${metrics.totalOrders}` : "312"}
           change="System Orders"
           isPositive={true}
-          icon={<TrendingUp className="h-5 w-5 text-[#E67E22]" />}
+          icon={<TrendingUp className="h-5 w-5 text-[#596B58]" />}
         />
         <AdminStatCard
           title="Active Customers"
@@ -339,12 +365,12 @@ export const AdminAnalyticsPage: React.FC = () => {
               { name: "Classic Red Velvet Cream Cheese", orders: 98, revenue: "₹68,502" },
               { name: "Fresh Blueberry Cheesecake Tart", orders: 64, revenue: "₹22,336" },
             ].map((prod, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-[#FFFBF5] border border-[#E8E2D9]">
+              <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-[#FFF8EC] border border-[#E5DEC9]">
                 <div>
-                  <h4 className="text-xs font-bold text-[#2C1E16]">{prod.name}</h4>
+                  <h4 className="text-xs font-bold text-[#3B302B]">{prod.name}</h4>
                   <p className="text-[11px] text-gray-400">{prod.orders} Orders Completed</p>
                 </div>
-                <span className="font-extrabold text-xs text-[#E67E22]">{prod.revenue}</span>
+                <span className="font-extrabold text-xs text-[#596B58]">{prod.revenue}</span>
               </div>
             ))}
           </div>
@@ -353,16 +379,16 @@ export const AdminAnalyticsPage: React.FC = () => {
         <AdminCard title="Category Revenue Share">
           <div className="space-y-4 pt-2">
             {[
-              { category: "Artisanal Cakes", share: "62%", color: "bg-[#E67E22]" },
+              { category: "Artisanal Cakes", share: "62%", color: "bg-[#596B58]" },
               { category: "Pastries & Tarts", share: "24%", color: "bg-amber-500" },
               { category: "Fresh Breads", share: "14%", color: "bg-amber-700" },
             ].map((cat, idx) => (
               <div key={idx} className="space-y-1.5">
-                <div className="flex justify-between text-xs font-bold text-[#2C1E16]">
+                <div className="flex justify-between text-xs font-bold text-[#3B302B]">
                   <span>{cat.category}</span>
                   <span>{cat.share}</span>
                 </div>
-                <div className="h-2 w-full rounded-full bg-[#E8E2D9] overflow-hidden">
+                <div className="h-2 w-full rounded-full bg-[#E5DEC9] overflow-hidden">
                   <div className={`h-full ${cat.color}`} style={{ width: cat.share }} />
                 </div>
               </div>
@@ -376,13 +402,15 @@ export const AdminAnalyticsPage: React.FC = () => {
 
 export const AdminSettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<StoreSettingsPayload>({
-    storeName: "OneBite Artisanal Bakery",
-    phone: "+91 9876543210",
-    email: "orders@onebite.local",
+    storeName: "The Online Bakery",
+    phone: "+91 7897671632",
+    email: "theonlinebakery07@gmail.com",
     gstin: "07AAAAA0000A1Z5",
     minOrderValue: 299,
     freeDeliveryThreshold: 799,
     standardDeliveryCharge: 49,
+    taxRatePercent: 5,
+    isTaxEnabled: true,
     isOrderAcceptanceActive: true,
   });
 
@@ -390,7 +418,22 @@ export const AdminSettingsPage: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    adminOperationsService.getSettings().then(setSettings);
+    adminOperationsService.getSettings().then((res) => {
+      if (res) {
+        setSettings({
+          storeName: res.storeName || "The Online Bakery",
+          phone: res.phone || "+91 7897671632",
+          email: res.email || "theonlinebakery07@gmail.com",
+          gstin: res.gstin || "07AAAAA0000A1Z5",
+          minOrderValue: res.minOrderValue ?? 299,
+          freeDeliveryThreshold: res.freeDeliveryThreshold ?? 799,
+          standardDeliveryCharge: res.standardDeliveryCharge ?? 49,
+          taxRatePercent: res.taxRatePercent ?? 5,
+          isTaxEnabled: res.isTaxEnabled ?? true,
+          isOrderAcceptanceActive: res.isOrderAcceptanceActive ?? true,
+        });
+      }
+    });
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -400,9 +443,9 @@ export const AdminSettingsPage: React.FC = () => {
     try {
       const updated = await adminOperationsService.updateSettings(settings);
       setSettings(updated);
-      setSuccessMsg("Bakery store & delivery configuration saved successfully!");
+      setSuccessMsg("Delivery charges, tax rates & store configuration saved successfully!");
     } catch (_err) {
-      setSuccessMsg("Settings updated.");
+      setSuccessMsg("Settings updated successfully!");
     } finally {
       setIsSaving(false);
     }
@@ -411,18 +454,58 @@ export const AdminSettingsPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl">
       <AdminPageHeader
-        title="Bakery Store & Delivery Configuration"
-        description="Manage business profile details, GSTIN tax credentials, and delivery fee thresholds."
+        title="Delivery Fee & Tax Rate Management"
+        description="Configure dynamic delivery charges, free delivery thresholds, and GST tax calculation for customer checkouts."
       />
 
       {successMsg ? (
-        <div className="p-3 bg-green-50 text-green-800 text-xs font-bold rounded-xl border border-green-200">
-          {successMsg}
+        <div className="p-3.5 bg-green-50 text-green-800 text-xs font-bold rounded-xl border border-green-200 shadow-xs flex items-center gap-2">
+          <span>✅</span>
+          <span>{successMsg}</span>
         </div>
       ) : null}
 
       <form onSubmit={handleSave} className="space-y-6">
-        <AdminCard title="Bakery Store Profile">
+        {/* Delivery Charges Section */}
+        <AdminCard title="🚚 Delivery Charges & Thresholds">
+          <p className="text-xs text-[#7A6E65] mb-4">
+            These values directly control the <strong>Delivery Fee</strong> shown to customers at checkout.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input
+              label="Standard Delivery Fee (₹) *"
+              type="number"
+              min={0}
+              value={settings.standardDeliveryCharge}
+              onChange={(e) => setSettings({ ...settings, standardDeliveryCharge: Number(e.target.value) })}
+              required
+            />
+            <Input
+              label="Free Delivery Above Order Value (₹) *"
+              type="number"
+              min={0}
+              value={settings.freeDeliveryThreshold}
+              onChange={(e) => setSettings({ ...settings, freeDeliveryThreshold: Number(e.target.value) })}
+              required
+            />
+            <Input
+              label="Minimum Order Value for Delivery (₹) *"
+              type="number"
+              min={0}
+              value={settings.minOrderValue}
+              onChange={(e) => setSettings({ ...settings, minOrderValue: Number(e.target.value) })}
+              required
+            />
+          </div>
+          <div className="mt-3 p-3 bg-[#FFF8EC] border border-[#E5DEC9] rounded-xl text-xs text-[#7A6E65] space-y-1">
+            <p>
+              💡 <strong>Rule:</strong> Orders below ₹{settings.freeDeliveryThreshold} will be charged <strong>₹{settings.standardDeliveryCharge}</strong>. Orders ₹{settings.freeDeliveryThreshold} or above get <strong>FREE Delivery (₹0)</strong>.
+            </p>
+          </div>
+        </AdminCard>
+
+        {/* Store Profile Details */}
+        <AdminCard title="🏪 Bakery Store Profile">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             <Input
               label="Store Business Name"
@@ -447,34 +530,12 @@ export const AdminSettingsPage: React.FC = () => {
           </div>
         </AdminCard>
 
-        <AdminCard title="Delivery Fee & Order Thresholds">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-            <Input
-              label="Minimum Order Value (₹)"
-              type="number"
-              value={settings.minOrderValue}
-              onChange={(e) => setSettings({ ...settings, minOrderValue: Number(e.target.value) })}
-            />
-            <Input
-              label="Free Delivery Threshold (₹)"
-              type="number"
-              value={settings.freeDeliveryThreshold}
-              onChange={(e) => setSettings({ ...settings, freeDeliveryThreshold: Number(e.target.value) })}
-            />
-            <Input
-              label="Standard Delivery Charge (₹)"
-              type="number"
-              value={settings.standardDeliveryCharge}
-              onChange={(e) => setSettings({ ...settings, standardDeliveryCharge: Number(e.target.value) })}
-            />
-          </div>
-        </AdminCard>
-
-        <AdminCard title="Store Status & Order Acceptance">
+        {/* Store Status */}
+        <AdminCard title="⚡ Store Status & Order Acceptance">
           <div className="flex items-center justify-between pt-2">
             <div>
-              <h4 className="text-sm font-bold text-[#2C1E16]">Online Order Acceptance</h4>
-              <p className="text-xs text-[#6E5D4F]">When toggled off, customers cannot place new online delivery orders.</p>
+              <h4 className="text-sm font-bold text-[#3B302B]">Online Order Acceptance</h4>
+              <p className="text-xs text-[#7A6E65]">When toggled off, customers cannot place new online delivery orders.</p>
             </div>
 
             <button
@@ -491,8 +552,8 @@ export const AdminSettingsPage: React.FC = () => {
           </div>
         </AdminCard>
 
-        <Button type="submit" className="w-full" isLoading={isSaving}>
-          <span>Save Store Configuration</span>
+        <Button type="submit" className="w-full h-12 text-sm font-bold shadow-md" isLoading={isSaving}>
+          <span>Save Changes & Update Pricing</span>
         </Button>
       </form>
     </div>

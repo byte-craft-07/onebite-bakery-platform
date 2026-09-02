@@ -1,15 +1,43 @@
 @import "tailwindcss";
 
+@theme {
+  --color-cream: #FFF8EC;
+  --color-pistachio: #A8B89A;
+  --color-sage: #596B58;
+  --color-cocoa: #3B302B;
+  --color-champagne: #D8BE91;
+
+  --color-bg-primary: #FFF8EC;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F7F2E7;
+  --color-text-primary: #3B302B;
+  --color-text-secondary: #596B58;
+  --color-text-muted: #7A6E65;
+  --color-border-color: #E5DEC9;
+  --color-brand-primary: #A8B89A;
+  --color-brand-secondary: #596B58;
+  --color-brand-accent: #D8BE91;
+}
+
 @layer base {
   :root {
-    --bg-primary: #FFFBF5;
+    --bg-primary: #FFF8EC;
     --surface: #FFFFFF;
-    --surface-muted: #F9F6F0;
-    --text-primary: #2C1E16;
-    --text-secondary: #6E5D4F;
-    --primary-amber: #E67E22;
-    --primary-hover: #D35400;
-    --border-color: #E8E2D9;
+    --surface-muted: #F7F2E7;
+    --text-primary: #3B302B;
+    --text-secondary: #596B58;
+    --text-muted: #7A6E65;
+    --border-color: #E5DEC9;
+    --color-cream: #FFF8EC;
+    --color-pistachio: #A8B89A;
+    --color-sage: #596B58;
+    --color-cocoa: #3B302B;
+    --color-champagne: #D8BE91;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
@@ -19,5 +47,128 @@
     margin: 0;
     padding: 0;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  /* Prevent horizontal scrollbars on mobile viewport */
+  #root {
+    overflow-x: clip;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 }
+
+/* Global Custom Form Controls & Select Option Styling */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23596B58' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 1.1rem;
+  padding-right: 2.5rem !important;
+  cursor: pointer;
+  accent-color: #596B58;
+}
+
+select option {
+  background-color: #ffffff !important;
+  color: #3B302B !important;
+  padding: 10px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+select option:checked,
+select option:hover,
+select option:focus {
+  background-color: #FFF8EC !important;
+  color: #596B58 !important;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+select,
+textarea {
+  border-radius: 0.75rem;
+  border-color: #E5DEC9;
+  color: #3B302B;
+  transition: all 0.2s ease-in-out;
+  font-size: 16px;
+}
+
+@media (min-width: 640px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 14px;
+  }
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #596B58 !important;
+  box-shadow: 0 0 0 3px rgba(89, 107, 88, 0.2) !important;
+  outline: none;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes marqueeScroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee-scroll {
+  display: flex !important;
+  width: max-content !important;
+  animation: marqueeScroll 24s linear infinite !important;
+  will-change: transform;
+}
+
+.animate-marquee-scroll:hover {
+  animation-play-state: paused !important;
+}
+
+.font-bakery-display {
+  font-family: 'Great Vibes', 'Parisienne', 'Alex Brush', 'Dancing Script', cursive;
+  font-weight: 400;
+}
+
+.font-bakery-script {
+  font-family: 'Great Vibes', cursive;
+}
+
+.font-bakery-retro {
+  font-family: 'Berkshire Swash', cursive, serif;
+}
+
+.font-bakery-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+

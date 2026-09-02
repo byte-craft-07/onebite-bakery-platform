@@ -20,7 +20,7 @@ const createMockAuditLogDoc = (
   const log = {
     _id: new Types.ObjectId(),
     actorId: new Types.ObjectId(adminId),
-    actorEmail: "admin@onebite.test",
+    actorEmail: "admin@theonlinebakery.test",
     action: "PRODUCT_UPDATE",
     entity: "PRODUCT",
     entityId: "prod_123",
@@ -145,7 +145,7 @@ describe("PlatformService, Jobs & Scheduler Foundation", () => {
 
     const log = await service.logAudit({
       actorId: adminId,
-      actorEmail: "admin@onebite.test",
+      actorEmail: "admin@theonlinebakery.test",
       action: "PRODUCT_UPDATE",
       entity: "PRODUCT",
       entityId: "prod_123",

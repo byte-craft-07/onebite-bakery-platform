@@ -1,6 +1,13 @@
 export { AuthController } from "./controller/index.js";
 export type { SendOtpDto, VerifyOtpDto } from "./dto/index.js";
-export { requireAuth, requireRoles } from "./middlewares/index.js";
+export {
+  requireAuth,
+  optionalAuth,
+  requireRoles,
+  requireCentralAdmin,
+  requireBranchAdmin,
+  requireBranchScope,
+} from "./middlewares/index.js";
 export { OtpModel, RefreshTokenModel } from "./model/index.js";
 export type { Otp, OtpPurpose, RefreshToken } from "./model/index.js";
 export { ConsoleOtpProvider } from "./providers/index.js";

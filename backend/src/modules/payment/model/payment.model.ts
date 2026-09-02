@@ -104,5 +104,5 @@ paymentSchema.index(
 export const PaymentModel = model<Payment>(
   "Payment",
   paymentSchema,
-  COLLECTION_NAMES.MEDIA ? "payments" : "payments",
+  COLLECTION_NAMES.PAYMENTS,
 );

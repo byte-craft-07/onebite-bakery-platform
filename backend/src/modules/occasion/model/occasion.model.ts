@@ -39,14 +39,13 @@ const occasionSchema = new Schema<Occasion>(
       type: String,
       required: true,
       trim: true,
-      minlength: 5,
+      minlength: 1,
       maxlength: 1000,
     },
     bannerImage: {
       type: String,
       required: true,
       trim: true,
-      maxlength: 500,
     },
     icon: {
       type: String,
@@ -69,14 +68,14 @@ const occasionSchema = new Schema<Occasion>(
       type: String,
       required: true,
       trim: true,
-      minlength: 2,
+      minlength: 1,
       maxlength: 70,
     },
     seoDescription: {
       type: String,
       required: true,
       trim: true,
-      minlength: 5,
+      minlength: 1,
       maxlength: 160,
     },
     seoKeywords: {

@@ -8,11 +8,12 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-[#E67E22] text-white hover:bg-[#D35400] focus:ring-[#E67E22]",
-        secondary: "bg-[#2C1E16] text-white hover:bg-[#1E1713] focus:ring-[#2C1E16]",
-        outline: "border border-[#E8E2D9] bg-transparent text-[#2C1E16] hover:bg-[#F9F6F0]",
-        ghost: "bg-transparent hover:bg-[#F9F6F0] text-[#2C1E16]",
-        danger: "bg-[#E74C3C] text-white hover:bg-[#C0392B] focus:ring-[#E74C3C]",
+        primary: "bg-[#596B58] text-[#FFF8EC] hover:bg-[#495948] focus:ring-[#596B58] shadow-xs",
+        secondary: "border border-[#596B58] bg-transparent text-[#596B58] hover:bg-[#A8B89A] hover:text-[#3B302B] hover:border-[#A8B89A] focus:ring-[#596B58]",
+        outline: "border border-[#E5DEC9] bg-transparent text-[#3B302B] hover:bg-[#F7F2E7] focus:ring-[#596B58]",
+        ghost: "bg-transparent hover:bg-[#A8B89A]/20 text-[#3B302B] focus:ring-[#596B58]",
+        champagne: "bg-[#D8BE91] text-[#3B302B] hover:bg-[#CBB081] focus:ring-[#D8BE91] shadow-xs font-semibold",
+        danger: "bg-[#DC2626] text-white hover:bg-[#B91C1C] focus:ring-[#DC2626]",
       },
       size: {
         sm: "h-9 px-3 text-sm",

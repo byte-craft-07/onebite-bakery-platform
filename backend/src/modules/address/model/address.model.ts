@@ -13,7 +13,10 @@ export interface Address extends TimestampedDocument {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
   fullName: string;
+  email?: string;
   phone: string;
+  district?: string;
+  village?: string;
   address: string;
   landmark?: string;
   city: string;
@@ -37,11 +40,29 @@ const addressSchema = new Schema<Address>(
       minlength: 2,
       maxlength: 120,
     },
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      default: undefined,
+    },
     phone: {
       type: String,
       required: true,
       trim: true,
       match: [/^[0-9]{10,15}$/, "Phone number must be 10 to 15 digits."],
+    },
+    district: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: undefined,
+    },
+    village: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: undefined,
     },
     address: {
       type: String,

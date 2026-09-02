@@ -11,11 +11,20 @@ export interface CheckoutItemSummary {
   isAvailable: boolean;
 }
 
+export interface CheckoutPricingSummary {
+  subtotal: number;
+  deliveryFee: number;
+  taxAmount: number;
+  discountAmount: number;
+  totalAmount: number;
+}
+
 export interface CheckoutSummaryResponse {
   cartId: string;
   items: CheckoutItemSummary[];
   subtotal: number;
   totalItems: number;
+  pricing: CheckoutPricingSummary;
   eligibleDeliveryMethods: DeliveryMethod[];
   homeDeliveryEligible: boolean;
   pickupEligible: boolean;

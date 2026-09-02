@@ -53,9 +53,9 @@ export const AdminSecurityPage: React.FC = () => {
         <AdminCard className="space-y-2">
           <div className="flex items-center justify-between text-xs font-bold text-gray-500 uppercase tracking-wider">
             <span>Failed Login Attempts (24h)</span>
-            <UserX className="h-5 w-5 text-[#E67E22]" />
+            <UserX className="h-5 w-5 text-[#596B58]" />
           </div>
-          <p className="text-2xl font-extrabold text-[#2C1E16]">0 Failed</p>
+          <p className="text-2xl font-extrabold text-[#3B302B]">0 Failed</p>
           <p className="text-[11px] text-gray-400">Brute-Force Rate Limiting Active</p>
         </AdminCard>
 
@@ -79,15 +79,15 @@ export const AdminSecurityPage: React.FC = () => {
       </div>
 
       {/* Module Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-[#E8E2D9] pb-4">
+      <div className="flex flex-wrap items-center gap-2 border-b border-[#E5DEC9] pb-4">
         {["ALL", "PRODUCTS", "ORDERS", "CUSTOMERS", "PAYMENTS", "SETTINGS"].map((mod) => (
           <button
             key={mod}
             onClick={() => setSelectedModule(mod)}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
               selectedModule === mod
-                ? "bg-[#E67E22] text-white shadow-xs"
-                : "bg-white border border-[#E8E2D9] text-[#2C1E16] hover:bg-[#F9F6F0]"
+                ? "bg-[#596B58] text-white shadow-xs"
+                : "bg-white border border-[#E5DEC9] text-[#3B302B] hover:bg-[#FFF8EC]"
             }`}
           >
             {mod}
@@ -102,9 +102,9 @@ export const AdminSecurityPage: React.FC = () => {
 
       {/* Audit Logs Table */}
       <AdminCard className="p-0 overflow-hidden">
-        <div className="p-4 border-b border-[#E8E2D9] bg-[#FFFBF5] flex items-center justify-between">
-          <div className="flex items-center gap-2 font-extrabold text-sm text-[#2C1E16]">
-            <FileText className="h-4 w-4 text-[#E67E22]" />
+        <div className="p-4 border-b border-[#E5DEC9] bg-[#FFF8EC] flex items-center justify-between">
+          <div className="flex items-center gap-2 font-extrabold text-sm text-[#3B302B]">
+            <FileText className="h-4 w-4 text-[#596B58]" />
             <span>Admin Operation Audit Trail ({filteredLogs.length})</span>
           </div>
           <span className="text-xs text-gray-400">Immutable Cryptographic Audit Storage</span>
@@ -112,20 +112,20 @@ export const AdminSecurityPage: React.FC = () => {
 
         <AdminTable headers={["Timestamp", "Admin User", "Target Module", "Action Code", "Operation Details", "IP Address"]}>
           {filteredLogs.map((log) => (
-            <tr key={log.id} className="hover:bg-[#F9F6F0]/50 transition-colors text-xs">
+            <tr key={log.id} className="hover:bg-[#FFF8EC]/50 transition-colors text-xs">
               <td className="px-4 py-3 text-gray-500 font-mono">
                 {new Date(log.timestamp).toLocaleString()}
               </td>
-              <td className="px-4 py-3 font-bold text-[#2C1E16]">
+              <td className="px-4 py-3 font-bold text-[#3B302B]">
                 {log.adminName}
               </td>
               <td className="px-4 py-3">
                 <Badge variant="primary">{log.targetModule}</Badge>
               </td>
-              <td className="px-4 py-3 font-mono font-bold text-[#E67E22]">
+              <td className="px-4 py-3 font-mono font-bold text-[#596B58]">
                 {log.action}
               </td>
-              <td className="px-4 py-3 text-[#6E5D4F] max-w-xs truncate">
+              <td className="px-4 py-3 text-[#7A6E65] max-w-xs truncate">
                 {log.details}
               </td>
               <td className="px-4 py-3 font-mono text-gray-400">

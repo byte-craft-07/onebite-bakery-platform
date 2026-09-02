@@ -1,6 +1,8 @@
 import type { Request, Response } from "express";
 
+import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
+import { AppError } from "../../../shared/errors/app-error.js";
 import { sendSuccess } from "../../../shared/responses/api-response.js";
 import type { RequestContext } from "../../../shared/types/request-context.types.js";
 import { createRequestContext } from "../../../shared/utils/request-context.js";
@@ -115,9 +117,23 @@ export class OrderController {
     request: Request,
     response: Response,
   ): Promise<Response> => {
-    const result = await this.orderService.adminListOrders(
-      request.query as ListOrdersFilterDto,
-    );
+    const authenticatedRequest = request as Partial<AuthenticatedRequest>;
+    const query = { ...(request.query as ListOrdersFilterDto) };
+
+    if (authenticatedRequest.user?.role === "branch_admin") {
+      if (!authenticatedRequest.user.branchId) {
+        throw new AppError(
+          "User does not have an active branch administration scope.",
+          HTTP_STATUS.FORBIDDEN,
+          [],
+          true,
+          APP_ERROR_CODES.AUTHORIZATION_FAILED,
+        );
+      }
+      query.branchId = authenticatedRequest.user.branchId;
+    }
+
+    const result = await this.orderService.adminListOrders(query);
 
     return sendSuccess(response, {
       message: "All orders fetched successfully.",
@@ -129,8 +145,23 @@ export class OrderController {
     request: Request,
     response: Response,
   ): Promise<Response> => {
+    const authenticatedRequest = request as Partial<AuthenticatedRequest>;
     const orderId = this.getIdParam(request);
     const order = await this.orderService.adminGetOrderById(orderId);
+
+    if (authenticatedRequest.user?.role === "branch_admin") {
+      const userBranchId = authenticatedRequest.user.branchId;
+      const orderBranchId = order.branchSnapshot?.branchId || order.branchId;
+      if (!userBranchId || (orderBranchId && orderBranchId.toString() !== userBranchId.toString())) {
+        throw new AppError(
+          "Access denied: Order does not belong to your assigned branch.",
+          HTTP_STATUS.FORBIDDEN,
+          [],
+          true,
+          APP_ERROR_CODES.AUTHORIZATION_FAILED,
+        );
+      }
+    }
 
     return sendSuccess(response, {
       message: "Order details fetched successfully.",
@@ -142,7 +173,24 @@ export class OrderController {
     request: Request,
     response: Response,
   ): Promise<Response> => {
+    const authenticatedRequest = request as Partial<AuthenticatedRequest>;
     const orderId = this.getIdParam(request);
+
+    if (authenticatedRequest.user?.role === "branch_admin") {
+      const order = await this.orderService.adminGetOrderById(orderId);
+      const userBranchId = authenticatedRequest.user.branchId;
+      const orderBranchId = order.branchSnapshot?.branchId || order.branchId;
+      if (!userBranchId || (orderBranchId && orderBranchId.toString() !== userBranchId.toString())) {
+        throw new AppError(
+          "Access denied: You cannot modify orders from another branch.",
+          HTTP_STATUS.FORBIDDEN,
+          [],
+          true,
+          APP_ERROR_CODES.AUTHORIZATION_FAILED,
+        );
+      }
+    }
+
     const order = await this.orderService.adminUpdateOrderStatus(
       orderId,
       request.body as UpdateOrderStatusDto,
@@ -159,7 +207,24 @@ export class OrderController {
     request: Request,
     response: Response,
   ): Promise<Response> => {
+    const authenticatedRequest = request as Partial<AuthenticatedRequest>;
     const orderId = this.getIdParam(request);
+
+    if (authenticatedRequest.user?.role === "branch_admin") {
+      const order = await this.orderService.adminGetOrderById(orderId);
+      const userBranchId = authenticatedRequest.user.branchId;
+      const orderBranchId = order.branchSnapshot?.branchId || order.branchId;
+      if (!userBranchId || (orderBranchId && orderBranchId.toString() !== userBranchId.toString())) {
+        throw new AppError(
+          "Access denied: You cannot modify orders from another branch.",
+          HTTP_STATUS.FORBIDDEN,
+          [],
+          true,
+          APP_ERROR_CODES.AUTHORIZATION_FAILED,
+        );
+      }
+    }
+
     const order = await this.orderService.adminUpdateReadyTime(
       orderId,
       request.body as UpdateReadyTimeDto,

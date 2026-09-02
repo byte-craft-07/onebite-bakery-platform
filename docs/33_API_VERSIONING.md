@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the API versioning strategy for the OneBite Bakery Platform.
+This document defines the API versioning strategy for the The Online Bakery Platform.
 
 The goal is to evolve APIs without breaking existing clients while maintaining long-term stability and backward compatibility.
 

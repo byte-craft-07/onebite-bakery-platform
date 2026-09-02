@@ -38,7 +38,7 @@ export const CustomerSecurityPage: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-16 max-w-4xl mx-auto">
-      <Link to="/customer/dashboard" className="inline-flex items-center gap-2 text-sm font-semibold text-[#6E5D4F] hover:text-[#E67E22]">
+      <Link to="/customer/dashboard" className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58]">
         <ArrowLeft className="h-4 w-4" />
         <span>Return to Customer Dashboard</span>
       </Link>
@@ -48,8 +48,8 @@ export const CustomerSecurityPage: React.FC = () => {
           <ShieldCheck className="h-5 w-5" />
           <span>Account Security Center &bull; 100% Encrypted</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-[#2C1E16]">Account Security & Connected Devices</h1>
-        <p className="text-sm text-[#6E5D4F]">
+        <h1 className="text-3xl font-extrabold text-[#3B302B]">Account Security & Connected Devices</h1>
+        <p className="text-sm text-[#7A6E65]">
           Manage your active login sessions, connected Google accounts, and security event logs.
         </p>
       </div>
@@ -63,27 +63,27 @@ export const CustomerSecurityPage: React.FC = () => {
 
       {/* Account Identity Card */}
       <Card className="space-y-6">
-        <h3 className="text-lg font-bold text-[#2C1E16]">Primary Authentication Status</h3>
+        <h3 className="text-lg font-bold text-[#3B302B]">Primary Authentication Status</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-2xl bg-[#FFFBF5] border border-[#E8E2D9] space-y-2">
+          <div className="p-4 rounded-2xl bg-[#FFF8EC] border border-[#E5DEC9] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#6E5D4F]">Connected Google Account</span>
+              <span className="text-xs font-bold text-[#7A6E65]">Connected Google Account</span>
               <Badge variant="success">Verified</Badge>
             </div>
             <div className="flex items-center gap-3 pt-1">
-              <div className="h-10 w-10 rounded-full bg-[#E67E22]/10 flex items-center justify-center text-[#E67E22] font-bold">
+              <div className="h-10 w-10 rounded-full bg-[#596B58]/10 flex items-center justify-center text-[#596B58] font-bold">
                 G
               </div>
               <div>
-                <p className="text-sm font-bold text-[#2C1E16]">{user?.email || "customer.google@onebitebakery.in"}</p>
+                <p className="text-sm font-bold text-[#3B302B]">{user?.email || "customer.google@theonlinebakery.in"}</p>
                 <p className="text-xs text-gray-400">OAuth 2.0 Identity Services</p>
               </div>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#FFFBF5] border border-[#E8E2D9] space-y-2">
+          <div className="p-4 rounded-2xl bg-[#FFF8EC] border border-[#E5DEC9] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#6E5D4F]">Mobile Number Verification</span>
+              <span className="text-xs font-bold text-[#7A6E65]">Mobile Number Verification</span>
               <Badge variant="primary">Active OTP</Badge>
             </div>
             <div className="flex items-center gap-3 pt-1">
@@ -91,7 +91,7 @@ export const CustomerSecurityPage: React.FC = () => {
                 <UserCheck className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm font-bold text-[#2C1E16]">+91 {user?.phone || "9876543210"}</p>
+                <p className="text-sm font-bold text-[#3B302B]">+91 {user?.phone || "9876543210"}</p>
                 <p className="text-xs text-gray-400">1-Step OTP Verification</p>
               </div>
             </div>
@@ -103,8 +103,8 @@ export const CustomerSecurityPage: React.FC = () => {
       <Card className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h3 className="text-lg font-bold text-[#2C1E16]">Active Device Sessions ({sessions.length})</h3>
-            <p className="text-xs text-[#6E5D4F]">Devices currently authenticated to your OneBite account.</p>
+            <h3 className="text-lg font-bold text-[#3B302B]">Active Device Sessions ({sessions.length})</h3>
+            <p className="text-xs text-[#7A6E65]">Devices currently authenticated to your The Online Bakery account.</p>
           </div>
           {sessions.length > 1 ? (
             <Button size="sm" variant="outline" onClick={handleRevokeAllOther} className="border-red-300 text-red-600 hover:bg-red-50">
@@ -114,16 +114,16 @@ export const CustomerSecurityPage: React.FC = () => {
           ) : null}
         </div>
 
-        <div className="divide-y divide-[#E8E2D9]">
+        <div className="divide-y divide-[#E5DEC9]">
           {sessions.map((sess) => (
             <div key={sess.id} className="py-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-[#FFF3E6] text-[#E67E22]">
+                <div className="p-2.5 rounded-xl bg-[#FFF8EC] text-[#596B58]">
                   {sess.deviceType === "MOBILE" ? <Smartphone className="h-5 w-5" /> : <Laptop className="h-5 w-5" />}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-bold text-[#2C1E16]">{sess.deviceName}</h4>
+                    <h4 className="text-sm font-bold text-[#3B302B]">{sess.deviceName}</h4>
                     {sess.isCurrent ? <Badge variant="success">This Device</Badge> : null}
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5">
@@ -148,11 +148,11 @@ export const CustomerSecurityPage: React.FC = () => {
       {/* Recent Security Activity Logs */}
       <Card className="space-y-6">
         <div>
-          <h3 className="text-lg font-bold text-[#2C1E16]">Recent Security Events & Login History</h3>
-          <p className="text-xs text-[#6E5D4F]">Audit trail of recent account logins and authorization requests.</p>
+          <h3 className="text-lg font-bold text-[#3B302B]">Recent Security Events & Login History</h3>
+          <p className="text-xs text-[#7A6E65]">Audit trail of recent account logins and authorization requests.</p>
         </div>
 
-        <div className="divide-y divide-[#E8E2D9]">
+        <div className="divide-y divide-[#E5DEC9]">
           {securityEvents.map((evt) => (
             <div key={evt.id} className="py-3.5 flex items-center justify-between text-xs">
               <div className="flex items-center gap-3">
@@ -160,7 +160,7 @@ export const CustomerSecurityPage: React.FC = () => {
                   <KeyRound className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="font-bold text-[#2C1E16]">{evt.eventType.replace(/_/g, " ")}</p>
+                  <p className="font-bold text-[#3B302B]">{evt.eventType.replace(/_/g, " ")}</p>
                   <p className="text-gray-400">{evt.device} &bull; {evt.location}</p>
                 </div>
               </div>
@@ -177,7 +177,7 @@ export const CustomerSecurityPage: React.FC = () => {
       <div className="text-center pt-4">
         <Button onClick={logout} variant="outline" className="border-red-400 text-red-600 hover:bg-red-50">
           <LogOut className="h-4 w-4 mr-2" />
-          <span>Logout of OneBite Account Now</span>
+          <span>Logout of The Online Bakery Account Now</span>
         </Button>
       </div>
     </div>

@@ -17,6 +17,12 @@ export interface ProductResponse {
   imageUrls: string[];
   thumbnailUrl: string;
   stockStatus: StockStatus;
+  stockQuantity?: number;
+  branchSnapshot?: {
+    branchId: string;
+    name: string;
+    code: string;
+  };
   isAvailable: boolean;
   availableFrom?: Date;
   availableUntil?: Date;

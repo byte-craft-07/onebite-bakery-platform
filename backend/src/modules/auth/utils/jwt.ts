@@ -9,6 +9,7 @@ import { durationToMs, durationToSeconds } from "./token-expiry.js";
 interface TokenSubject {
   userId: string;
   role: AuthTokenPayload["role"];
+  branchId?: string;
   deviceId: string;
 }
 
@@ -20,12 +21,14 @@ export const generateAuthTokens = (subject: TokenSubject): AuthTokens => {
   const accessPayload: AuthTokenPayload = {
     sub: subject.userId,
     role: subject.role,
+    branchId: subject.branchId,
     type: AUTH_TOKEN_TYPES.ACCESS,
   };
 
   const refreshPayload: AuthTokenPayload = {
     sub: subject.userId,
     role: subject.role,
+    branchId: subject.branchId,
     type: AUTH_TOKEN_TYPES.REFRESH,
     deviceId: subject.deviceId,
   };
@@ -66,7 +69,10 @@ const parseAuthTokenPayload = (
   if (
     typeof payload === "string" ||
     typeof payload.sub !== "string" ||
-    (payload.role !== "customer" && payload.role !== "admin") ||
+    (payload.role !== "customer" &&
+      payload.role !== "admin" &&
+      payload.role !== "branch_admin" &&
+      payload.role !== "delivery_agent") ||
     payload.type !== expectedType
   ) {
     throw new Error("Invalid token payload.");
@@ -74,11 +80,14 @@ const parseAuthTokenPayload = (
 
   const deviceId =
     typeof payload.deviceId === "string" ? payload.deviceId : undefined;
+  const branchId =
+    typeof payload.branchId === "string" ? payload.branchId : undefined;
 
   return {
     sub: payload.sub,
     role: payload.role,
     type: payload.type,
+    ...(branchId ? { branchId } : {}),
     ...(deviceId ? { deviceId } : {}),
   };
 };

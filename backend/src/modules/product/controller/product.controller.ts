@@ -176,8 +176,21 @@ export class ProductController {
     request: Request,
     response: Response,
   ): Promise<Response> => {
+    const villageId = (request.query.villageId as string) || (request.headers["x-village-id"] as string) || undefined;
+    const district = (request.query.district as string) || (request.headers["x-district-name"] as string) || undefined;
+    const villageName = (request.query.villageName as string) || (request.headers["x-village-name"] as string) || undefined;
+    const location = (request.query.location as string) || undefined;
+
+    const mergedQuery = {
+      ...(request.query as PublicProductQueryDto),
+      ...(villageId ? { villageId } : {}),
+      ...(district ? { district } : {}),
+      ...(villageName ? { villageName } : {}),
+      ...(location ? { location } : {}),
+    };
+
     const result = await this.productService.queryPublicCatalog(
-      request.query as PublicProductQueryDto,
+      mergedQuery as PublicProductQueryDto,
     );
 
     return sendSuccess(response, {
@@ -246,8 +259,18 @@ export class ProductController {
     request: Request,
     response: Response,
   ): Promise<Response> => {
+    const villageId =
+      typeof request.query.villageId === "string"
+        ? request.query.villageId
+        : typeof request.headers["x-village-id"] === "string"
+        ? (request.headers["x-village-id"] as string)
+        : typeof request.query.location === "string"
+        ? request.query.location
+        : undefined;
+
     const product = await this.productService.getPublicProductBySlug(
       this.getParam(request, "slug"),
+      villageId,
     );
 
     return sendSuccess(response, {

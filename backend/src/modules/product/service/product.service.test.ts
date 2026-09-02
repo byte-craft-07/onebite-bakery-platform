@@ -36,8 +36,8 @@ const createProductDocument = (
     compareAtPrice: 599,
     costPrice: 300,
     taxCategory: "STANDARD_5",
-    imageUrls: ["https://cdn.onebite.test/chocolate-truffle.webp"],
-    thumbnailUrl: "https://cdn.onebite.test/chocolate-truffle-thumb.webp",
+    imageUrls: ["https://cdn.theonlinebakery.test/chocolate-truffle.webp"],
+    thumbnailUrl: "https://cdn.theonlinebakery.test/chocolate-truffle-thumb.webp",
     stockQuantity: 10,
     lowStockThreshold: 5,
     trackInventory: true,
@@ -53,7 +53,7 @@ const createProductDocument = (
     isSeasonal: false,
     displayOrder: 1,
     seoTitle: "Chocolate Truffle Cake",
-    seoDescription: "Order chocolate truffle cake from OneBite Bakery.",
+    seoDescription: "Order chocolate truffle cake from The Online Bakery.",
     seoKeywords: ["chocolate", "cake"],
     isDeleted: false,
     createdAt: now,
@@ -76,8 +76,8 @@ const createDto = (): CreateProductDto => ({
   compareAtPrice: 599,
   costPrice: 300,
   taxCategory: "STANDARD_5",
-  imageUrls: ["https://cdn.onebite.test/chocolate-truffle.webp"],
-  thumbnailUrl: "https://cdn.onebite.test/chocolate-truffle-thumb.webp",
+  imageUrls: ["https://cdn.theonlinebakery.test/chocolate-truffle.webp"],
+  thumbnailUrl: "https://cdn.theonlinebakery.test/chocolate-truffle-thumb.webp",
   stockQuantity: 10,
   lowStockThreshold: 5,
   trackInventory: true,
@@ -92,7 +92,7 @@ const createDto = (): CreateProductDto => ({
   pickupEligible: true,
   displayOrder: 1,
   seoTitle: "Chocolate Truffle Cake",
-  seoDescription: "Order chocolate truffle cake from OneBite Bakery.",
+  seoDescription: "Order chocolate truffle cake from The Online Bakery.",
   seoKeywords: ["chocolate", "cake"],
 });
 
@@ -408,4 +408,30 @@ describe("ProductService", () => {
       service.getPublicProductBySlug("non-existent-cake"),
     ).rejects.toBeInstanceOf(AppError);
   });
+
+  it("queries public catalog for Main branch without excluding products disabled in sub-branches", async () => {
+    const { VillageModel } = await import("../../village/model/village.model.js");
+    const { BranchModel } = await import("../../branch/model/branch.model.js");
+    vi.spyOn(VillageModel, "findOne").mockReturnValue({ exec: vi.fn().mockResolvedValue(null) } as any);
+    vi.spyOn(BranchModel, "findOne").mockReturnValue({
+      exec: vi.fn().mockResolvedValue({
+        _id: new Types.ObjectId(),
+        name: "Central Delhi HQ",
+        type: "MAIN",
+        code: "CD-01",
+        isActive: true,
+      }),
+    } as any);
+
+    const { service, repository } = createService();
+    const result = await service.queryPublicCatalog({
+      villageName: "Chandpur",
+      district: "North Delhi",
+    } as any);
+
+    expect(result.products).toHaveLength(1);
+    expect(result.products[0]?.isAvailable).toBe(true);
+    expect(repository.findPublicCatalog).toHaveBeenCalled();
+  });
 });
+

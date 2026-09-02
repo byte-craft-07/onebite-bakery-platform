@@ -4,11 +4,11 @@
 
 Project
 
-OneBite Bakery Platform
+The Online Bakery Platform
 
 Brand
 
-OneBite Bakery
+The Online Bakery
 
 Tagline
 
@@ -20,7 +20,7 @@ Version
 
 Purpose
 
-Make the OneBite Bakery Platform easy to discover through search engines, social media, maps, and AI-powered search.
+Make the The Online Bakery Platform easy to discover through search engines, social media, maps, and AI-powered search.
 
 SEO should be built into the platform from day one.
 

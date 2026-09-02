@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Info, Package, RefreshCw, Tag } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, CheckCircle2, Info, Package, RefreshCw, Tag } from "lucide-react";
 
 import { Badge, Card, EmptyState, Skeleton } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
@@ -29,7 +30,7 @@ interface CustomerNotification {
   isRead: boolean;
 }
 
-const READ_STORAGE_KEY = "onebite_read_notification_ids";
+const READ_STORAGE_KEY = "theonlinebakery_read_notification_ids";
 
 const getString = (
   payload: Record<string, unknown>,
@@ -70,7 +71,7 @@ const toCustomerNotification = (
   const title =
     getString(notification.payload, "title") ||
     notification.subject ||
-    "OneBite notification";
+    "The Online Bakery notification";
   const message =
     getString(notification.payload, "message") ||
     getString(notification.payload, "status") ||
@@ -157,12 +158,20 @@ export const CustomerNotificationsPage: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-16">
+      <Link
+        to="/customer/dashboard"
+        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7A6E65] hover:text-[#596B58] transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span>Back to Account Hub</span>
+      </Link>
+
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#2C1E16]">
+          <h1 className="text-2xl font-extrabold text-[#3B302B]">
             Account Notifications & Alerts
           </h1>
-          <p className="text-xs text-[#6E5D4F]">
+          <p className="text-xs text-[#7A6E65]">
             Live order updates, payment alerts, and account messages
           </p>
         </div>
@@ -177,8 +186,8 @@ export const CustomerNotificationsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-[#E8E2D9] bg-[#FFFBF5] px-4 py-3">
-        <span className="text-xs font-semibold text-[#6E5D4F]">
+      <div className="flex items-center justify-between rounded-xl border border-[#E5DEC9] bg-[#FFF8EC] px-4 py-3">
+        <span className="text-xs font-semibold text-[#7A6E65]">
           Unread notifications
         </span>
         <Badge variant={unreadCount > 0 ? "warning" : "success"}>
@@ -205,11 +214,11 @@ export const CustomerNotificationsPage: React.FC = () => {
               key={item.id}
               className={`flex items-start gap-4 p-5 transition-all ${
                 item.isRead
-                  ? "bg-white border-[#E8E2D9]"
-                  : "bg-[#FFFBF5] border-[#E67E22]/40 shadow-xs"
+                  ? "bg-white border-[#E5DEC9]"
+                  : "bg-[#FFF8EC] border-[#596B58]/40 shadow-xs"
               }`}
             >
-              <div className="p-2.5 rounded-xl bg-[#FFF3E6] text-[#E67E22] shrink-0">
+              <div className="p-2.5 rounded-xl bg-[#FFF8EC] text-[#596B58] shrink-0">
                 {item.type === "ORDER_UPDATE" ? (
                   <Package className="h-5 w-5" />
                 ) : item.type === "PROMO" ? (
@@ -221,12 +230,12 @@ export const CustomerNotificationsPage: React.FC = () => {
 
               <div className="flex-1 space-y-1">
                 <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-sm font-bold text-[#2C1E16]">{item.title}</h3>
+                  <h3 className="text-sm font-bold text-[#3B302B]">{item.title}</h3>
                   <span className="text-[11px] text-gray-400 whitespace-nowrap">
                     {item.timestamp}
                   </span>
                 </div>
-                <p className="text-xs text-[#6E5D4F]">{item.message}</p>
+                <p className="text-xs text-[#7A6E65]">{item.message}</p>
                 <div className="flex items-center gap-2 pt-1">
                   <Badge variant={item.status === "FAILED" ? "danger" : "success"}>
                     {item.status}
@@ -238,7 +247,7 @@ export const CustomerNotificationsPage: React.FC = () => {
               </div>
 
               {!item.isRead ? (
-                <span className="h-2 w-2 rounded-full bg-[#E67E22] shrink-0 mt-2" />
+                <span className="h-2 w-2 rounded-full bg-[#596B58] shrink-0 mt-2" />
               ) : (
                 <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-1" />
               )}

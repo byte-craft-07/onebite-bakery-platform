@@ -44,6 +44,9 @@ export interface Settings extends TimestampedDocument {
   storeTiming: StoreTiming;
   deliveryRadius: number;
   deliveryCharge: number;
+  freeDeliveryThreshold: number;
+  taxRatePercent: number;
+  isTaxEnabled: boolean;
   delivery: DeliverySettings;
   upiQr?: string;
   upiId?: string;
@@ -166,7 +169,25 @@ const settingsSchema = new Schema<Settings>(
       type: Number,
       required: true,
       min: 0,
-      default: 0,
+      default: 49,
+    },
+    freeDeliveryThreshold: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 799,
+    },
+    taxRatePercent: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 100,
+      default: 5,
+    },
+    isTaxEnabled: {
+      type: Boolean,
+      required: true,
+      default: true,
     },
     delivery: {
       type: deliverySettingsSchema,

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 
 import { requireAuth, requireRoles } from "../../auth/index.js";
+import { cacheResponse, invalidateCache } from "../../../shared/middlewares/cache.middleware.js";
 import { validateRequest } from "../../../shared/middlewares/validate-request.middleware.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { SettingsModel, type Settings } from "../model/index.js";
@@ -16,6 +17,8 @@ const settingPayloadSchema = z.object({
   minOrderValue: z.number().min(0).optional(),
   freeDeliveryThreshold: z.number().min(0).optional(),
   standardDeliveryCharge: z.number().min(0).optional(),
+  taxRatePercent: z.number().min(0).max(100).optional(),
+  isTaxEnabled: z.boolean().optional(),
   isOrderAcceptanceActive: z.boolean().optional(),
 });
 
@@ -40,13 +43,16 @@ const getOrCreateSettings = async (): Promise<Settings> => {
 
   return SettingsModel.create({
     singletonKey: "default",
-    bakeryName: "OneBite Bakery",
-    phone: "9876543210",
-    whatsapp: "9876543210",
-    address: "Block C, Main Market Road, Civil Lines, New Delhi - 110054",
+    bakeryName: "The Online Bakery",
+    phone: "7897671632",
+    whatsapp: "7897671632",
+    address: "The Online Bakery, N 80°14, terha 25°49'43.3, 54.7\"E, hamirpur, Uttar Pradesh 210502",
     storeTiming: defaultStoreTiming,
     deliveryRadius: 15,
     deliveryCharge: 49,
+    freeDeliveryThreshold: 799,
+    taxRatePercent: 5,
+    isTaxEnabled: true,
     delivery: {
       minimumHomeDeliveryAmount: 300,
       homeDeliveryEnabled: true,
@@ -65,22 +71,24 @@ const toSettingsResponse = (settings: Settings) => ({
   officialHindiTagline: "हर जश्न का पहला निवाला।",
   officialEnglishTagline: "Pure Joy in Every Single Bite",
   phone: `+91 ${settings.phone}`,
-  email: "orders@onebitebakery.in",
+  email: "theonlinebakery07@gmail.com",
   gstin: "07AAAAA0000A1Z5",
   fssaiLicNo: "10020011000123",
   address: settings.address,
   deliveryRadiusKm: settings.deliveryRadius,
   minOrderAmount: settings.delivery.minimumHomeDeliveryAmount,
   minOrderValue: settings.delivery.minimumHomeDeliveryAmount,
-  freeDeliveryThreshold: 799,
-  standardDeliveryCharge: settings.deliveryCharge,
-  taxRatePercent: 5,
+  freeDeliveryThreshold: settings.freeDeliveryThreshold ?? 799,
+  standardDeliveryCharge: settings.deliveryCharge ?? 49,
+  taxRatePercent: settings.taxRatePercent ?? 5,
+  isTaxEnabled: settings.isTaxEnabled ?? true,
   isOrderAcceptanceActive: settings.isDeliveryEnabled || settings.isPickupEnabled,
   delivery: settings.delivery,
 });
 
 settingsRouter.get(
   "/",
+  cacheResponse({ ttlSeconds: 900, tags: ["settings"] }),
   asyncHandler(async (_req, res) => {
     const settings = await getOrCreateSettings();
 
@@ -96,6 +104,7 @@ settingsRouter.put(
   requireAuth,
   requireRoles(["admin"]),
   validateRequest({ body: settingPayloadSchema }),
+  invalidateCache(["settings"]),
   asyncHandler(async (req, res) => {
     const current = await getOrCreateSettings();
     const payload = req.body as z.infer<typeof settingPayloadSchema>;
@@ -107,6 +116,9 @@ settingsRouter.put(
           bakeryName: payload.storeName ?? current.bakeryName,
           phone: payload.phone ? normalizePhone(payload.phone) : current.phone,
           deliveryCharge: payload.standardDeliveryCharge ?? current.deliveryCharge,
+          freeDeliveryThreshold: payload.freeDeliveryThreshold ?? current.freeDeliveryThreshold,
+          taxRatePercent: payload.taxRatePercent ?? current.taxRatePercent,
+          isTaxEnabled: payload.isTaxEnabled ?? current.isTaxEnabled,
           isDeliveryEnabled: payload.isOrderAcceptanceActive ?? current.isDeliveryEnabled,
           isPickupEnabled: payload.isOrderAcceptanceActive ?? current.isPickupEnabled,
           "delivery.minimumHomeDeliveryAmount":

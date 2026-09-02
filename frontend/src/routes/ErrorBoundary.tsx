@@ -4,12 +4,12 @@ import { Link } from "react-router-dom";
 export const NotFoundPage: React.FC = () => {
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
-      <h1 className="text-6xl font-extrabold text-[#E67E22] mb-4">404</h1>
+      <h1 className="text-6xl font-extrabold text-[#596B58] mb-4">404</h1>
       <h2 className="text-2xl font-bold mb-2">Page Not Found</h2>
-      <p className="text-[#6E5D4F] mb-6">The page you are looking for does not exist or has been moved.</p>
+      <p className="text-[#7A6E65] mb-6">The page you are looking for does not exist or has been moved.</p>
       <Link
         to="/"
-        className="px-6 py-3 bg-[#E67E22] text-white font-semibold rounded-lg hover:bg-[#D35400] transition-colors"
+        className="px-6 py-3 bg-[#596B58] text-white font-semibold rounded-lg hover:bg-[#495948] transition-colors"
       >
         Back to Home
       </Link>

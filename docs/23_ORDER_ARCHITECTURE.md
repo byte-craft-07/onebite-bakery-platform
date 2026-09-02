@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the Order Architecture for the OneBite Bakery Platform.
+This document defines the Order Architecture for the The Online Bakery Platform.
 
 The Order module is designed to be immutable, provider-independent, secure, and fully decoupled from payments, search engines, or external SDKs.
 

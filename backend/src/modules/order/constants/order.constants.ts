@@ -22,6 +22,10 @@ export const PAYMENT_STATUSES = [
 
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
+export const PAYMENT_METHODS = ["UPI", "COD"] as const;
+
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
 export const DELIVERY_METHODS = ["HOME_DELIVERY", "STORE_PICKUP"] as const;
 
 export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
@@ -29,7 +33,7 @@ export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
 export const VALID_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   PENDING: ["CONFIRMED", "CANCELLED"],
   CONFIRMED: ["PREPARING", "CANCELLED"],
-  PREPARING: ["READY", "READY_FOR_PICKUP", "CANCELLED"],
+  PREPARING: ["READY", "READY_FOR_PICKUP", "OUT_FOR_DELIVERY", "CANCELLED"],
   READY: ["OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"],
   READY_FOR_PICKUP: ["DELIVERED", "CANCELLED"],
   OUT_FOR_DELIVERY: ["DELIVERED", "CANCELLED"],

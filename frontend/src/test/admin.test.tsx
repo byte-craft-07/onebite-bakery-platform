@@ -40,7 +40,7 @@ describe("Admin Panel Foundation Tests", () => {
 
     expect(screen.getByText("Dashboard")).toBeDefined();
     expect(screen.getByText("Catalog & Products")).toBeDefined();
-    expect(screen.getByText("Order Management")).toBeDefined();
+    expect(screen.getByText("Global Orders")).toBeDefined();
   });
 
   it("renders AdminDashboardShell with stat widgets", () => {

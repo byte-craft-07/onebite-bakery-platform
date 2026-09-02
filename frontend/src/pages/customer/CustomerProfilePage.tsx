@@ -1,196 +1,277 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Building, Home, LayoutDashboard, LogOut, MapPin, Shield } from "lucide-react";
+import {
+  ArrowLeft,
+  Bell,
+  Camera,
+  CheckCircle2,
+  ChevronRight,
+  LayoutDashboard,
+  LogOut,
+  MapPin,
+  Package,
+  Shield,
+  ShieldCheck,
+  Sparkles,
+  User,
+} from "lucide-react";
 
-import { Badge, Card, Modal, Skeleton } from "@/components/ui/DisplayComponents";
+import { Badge, Card } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/FormControls";
+import { UserAvatar, getAvatarFromEmailOrName } from "@/components/common/UserAvatar";
 import { useAuth } from "@/contexts/auth.context";
-import { addressService, type Address } from "@/services/address.service";
-
-const addressSchema = z.object({
-  name: z.string().trim().min(2, "Name is required."),
-  phone: z.string().trim().regex(/^[6-9]\d{9}$/, "Valid 10-digit phone required."),
-  street: z.string().trim().min(5, "Full street address required."),
-  city: z.string().trim().min(2, "City required."),
-  state: z.string().trim().min(2, "State required."),
-  pincode: z.string().trim().regex(/^\d{6}$/, "Valid 6-digit pincode required."),
-  landmark: z.string().trim().optional(),
-  addressType: z.enum(["HOME", "WORK", "OTHER"]).optional(),
-  isDefault: z.boolean().optional(),
-});
-
-type AddressFormData = z.infer<typeof addressSchema>;
 
 export const CustomerProfilePage: React.FC = () => {
-  const { user, logout, logoutAll } = useAuth();
+  const { user, updateUser, logout, logoutAll } = useAuth();
 
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [addressError, setAddressError] = useState<string | null>(null);
+  const [name, setName] = useState(user?.name || "Bakery Customer");
+  const [email, setEmail] = useState(user?.email || "customer@theonlinebakery.local");
+  const [profileImage, setProfileImage] = useState(user?.profileImage || "");
+  const [isSaving, setIsSaving] = useState(false);
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
-  const addressForm = useForm<AddressFormData>({
-    resolver: zodResolver(addressSchema),
-    defaultValues: {
-      addressType: "HOME",
-    },
-  });
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
 
-  const fetchAddresses = async () => {
-    try {
-      setIsLoadingAddresses(true);
-      const list = await addressService.getAddresses();
-      setAddresses(list);
-    } catch (_err) {
-      setAddresses([]);
-    } finally {
-      setIsLoadingAddresses(false);
-    }
+    setIsSaving(true);
+    updateUser({
+      name: name.trim(),
+      email: email.trim(),
+      profileImage: profileImage.trim() || undefined,
+    });
+
+    setTimeout(() => {
+      setIsSaving(false);
+      setStatusMsg("Personal profile information updated successfully!");
+      setTimeout(() => setStatusMsg(null), 3000);
+    }, 400);
   };
 
-  useEffect(() => {
-    fetchAddresses();
-  }, []);
-
-  const handleAddAddress = async (data: AddressFormData) => {
-    setAddressError(null);
-    try {
-      await addressService.createAddress({
-        ...data,
-        addressType: data.addressType || "HOME",
-      });
-      setIsAddModalOpen(false);
-      addressForm.reset();
-      fetchAddresses();
-    } catch (err: any) {
-      setAddressError(err?.response?.data?.error?.message || "Failed to create address.");
-    }
+  const handleUseEmailAvatar = () => {
+    const generated = getAvatarFromEmailOrName(name, email);
+    setProfileImage(generated);
   };
 
   return (
-    <div className="space-y-10 pb-16 max-w-5xl mx-auto">
-      {/* Header Profile Card */}
-      <Card className="flex flex-col md:flex-row items-center justify-between gap-6 bg-gradient-to-r from-[#FFFBF5] to-[#FFF3E6] border-[#E8E2D9]">
-        <div className="flex items-center gap-4 text-center md:text-left">
-          <div className="h-16 w-16 rounded-full bg-[#E67E22] text-white flex items-center justify-center font-bold text-2xl shadow-md">
-            {user?.name?.[0]?.toUpperCase() || user?.phone?.[0] || "U"}
-          </div>
+    <div className="space-y-8 pb-16 max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="space-y-1">
+        <Link
+          to="/customer/dashboard"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7A6E65] hover:text-[#596B58] transition-colors mb-1"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to Account Hub</span>
+        </Link>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B] flex items-center gap-2">
+          <User className="h-6 w-6 text-[#596B58]" />
+          <span>Personal Profile & Details</span>
+        </h1>
+        <p className="text-xs text-[#7A6E65]">
+          Manage your personal information, avatar photo, and linked contact credentials
+        </p>
+      </div>
+
+      {statusMsg ? (
+        <div className="p-3.5 bg-green-50 text-green-800 text-xs font-bold rounded-2xl border border-green-200 flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+          <span>{statusMsg}</span>
+        </div>
+      ) : null}
+
+      {/* Profile Overview Card */}
+      <Card className="flex flex-col sm:flex-row items-center justify-between gap-6 bg-gradient-to-r from-[#FFF8EC] to-[#FFF8EC] border-[#E5DEC9]">
+        <div className="flex items-center gap-4 text-center sm:text-left">
+          <UserAvatar
+            user={{ name, email, profileImage }}
+            size="2xl"
+            className="border-2 border-[#596B58]/30 shadow-md shrink-0 ring-4 ring-white"
+          />
           <div>
-            <h1 className="text-2xl font-bold text-[#2C1E16]">{user?.name || "Customer Account"}</h1>
-            <p className="text-sm text-[#6E5D4F]">+91 {user?.phone}</p>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="primary">Account Status: Active</Badge>
-              <Badge variant="neutral">Role: {user?.role}</Badge>
+            <h2 className="text-xl font-extrabold text-[#3B302B]">{user?.name || "Customer"}</h2>
+            <p className="text-xs text-[#7A6E65] mt-0.5">
+              {user?.phone ? `+91 ${user.phone}` : user?.email || "Google Account"}
+            </p>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <Badge variant="success">Account: Active</Badge>
+              <Badge variant="primary">Role: {user?.role || "customer"}</Badge>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {user?.role === "admin" ? (
             <Link to="/admin/dashboard">
-              <Button className="bg-[#2C1E16] text-white hover:bg-[#1E1713] flex items-center gap-2 shadow-md">
-                <LayoutDashboard className="h-4 w-4 text-[#E67E22]" />
-                <span>Go to Admin Panel</span>
+              <Button size="sm" className="bg-[#3B302B] text-white hover:bg-[#1E1713] flex items-center gap-1.5 shadow-md">
+                <LayoutDashboard className="h-4 w-4 text-[#596B58]" />
+                <span>Admin Panel</span>
               </Button>
             </Link>
           ) : null}
 
           <Button variant="outline" size="sm" onClick={logout}>
-            <LogOut className="h-4 w-4 mr-1.5" />
+            <LogOut className="h-4 w-4 mr-1 text-gray-500" />
             <span>Logout</span>
           </Button>
 
           <Button variant="danger" size="sm" onClick={logoutAll}>
-            <Shield className="h-4 w-4 mr-1.5" />
+            <Shield className="h-4 w-4 mr-1" />
             <span>Logout All Devices</span>
           </Button>
         </div>
       </Card>
 
-      {/* Address Management Section */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-[#2C1E16]">Saved Delivery Addresses</h2>
-            <p className="text-xs text-[#6E5D4F]">Manage your delivery locations for fast checkout</p>
+      {/* Edit Profile Form */}
+      <form onSubmit={handleSaveProfile} className="space-y-6">
+        <Card className="space-y-6 border-[#E5DEC9]">
+          <div className="flex items-center gap-2 text-sm font-extrabold text-[#3B302B] border-b border-[#E5DEC9] pb-3">
+            <User className="h-4 w-4 text-[#596B58]" />
+            <span>Edit Personal Information</span>
           </div>
-        </div>
 
-        {isLoadingAddresses ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Skeleton className="h-32 w-full rounded-2xl" />
-            <Skeleton className="h-32 w-full rounded-2xl" />
-          </div>
-        ) : addresses.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {addresses.map((addr) => (
-              <Card key={addr.id} className="relative space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {addr.addressType === "HOME" ? <Home className="h-4 w-4 text-[#E67E22]" /> : <Building className="h-4 w-4 text-[#E67E22]" />}
-                    <span className="text-xs font-bold uppercase">{addr.addressType}</span>
-                    {addr.isDefault ? <Badge variant="success">Default</Badge> : null}
-                  </div>
-                </div>
-
-                <div className="text-xs text-[#6E5D4F] space-y-1">
-                  <p className="font-bold text-[#2C1E16]">{addr.name} ({addr.phone})</p>
-                  <p>{addr.street}, {addr.city}, {addr.state} - {addr.pincode}</p>
-                  {addr.landmark ? <p className="text-gray-400">Landmark: {addr.landmark}</p> : null}
-                </div>
-
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="text-center py-12 space-y-3 border-dashed">
-            <MapPin className="h-8 w-8 text-[#E67E22] mx-auto opacity-60" />
-            <p className="text-sm text-[#6E5D4F]">No saved delivery addresses found.</p>
-            <Button size="sm" variant="outline" onClick={() => setIsAddModalOpen(true)}>
-              Add Address
-            </Button>
-          </Card>
-        )}
-      </div>
-
-      {/* Add Address Modal */}
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Delivery Address">
-        <form onSubmit={addressForm.handleSubmit(handleAddAddress)} className="space-y-4 pt-2">
-          {addressError ? (
-            <div className="p-3 bg-red-50 text-red-700 text-xs font-semibold rounded-lg border border-red-200">
-              {addressError}
+          {/* Avatar controls */}
+          <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-2xl bg-[#FFF8EC] border border-[#E5DEC9]">
+            <UserAvatar
+              user={{ name, email, profileImage }}
+              size="xl"
+              className="border-2 border-[#596B58]/40 shadow-sm shrink-0"
+            />
+            <div className="space-y-1.5 text-center sm:text-left flex-1">
+              <h4 className="text-xs font-bold text-[#3B302B]">Profile Photo</h4>
+              <p className="text-[11px] text-[#7A6E65]">
+                Your photo is visible across your orders, reviews, and customer greeting.
+              </p>
+              <div className="flex flex-wrap items-center gap-2 pt-1 justify-center sm:justify-start">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleUseEmailAvatar}
+                  className="text-xs h-8"
+                >
+                  <Camera className="h-3.5 w-3.5 mr-1 text-[#596B58]" />
+                  <span>Generate Avatar from Email</span>
+                </Button>
+                {profileImage ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setProfileImage("")}
+                    className="text-xs h-8 text-red-600 hover:bg-red-50"
+                  >
+                    Reset
+                  </Button>
+                ) : null}
+              </div>
             </div>
-          ) : null}
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Recipient Name" placeholder="Jane Doe" {...addressForm.register("name")} error={addressForm.formState.errors.name?.message} />
-            <Input label="Recipient Phone" placeholder="9876543210" {...addressForm.register("phone")} error={addressForm.formState.errors.phone?.message} />
           </div>
 
-          <Input label="Street Address" placeholder="123 Bakery Lane, Apt 4B" {...addressForm.register("street")} error={addressForm.formState.errors.street?.message} />
-
-          <div className="grid grid-cols-3 gap-3">
-            <Input label="City" placeholder="New Delhi" {...addressForm.register("city")} error={addressForm.formState.errors.city?.message} />
-            <Input label="State" placeholder="Delhi" {...addressForm.register("state")} error={addressForm.formState.errors.state?.message} />
-            <Input label="Pincode" placeholder="110001" maxLength={6} {...addressForm.register("pincode")} error={addressForm.formState.errors.pincode?.message} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Full Name *"
+              placeholder="e.g. Ajay Kumar"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <Input
+              label="Email Address *"
+              type="email"
+              placeholder="customer@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
 
-          <div className="flex items-center justify-between pt-2">
-            <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
-              <input type="checkbox" {...addressForm.register("isDefault")} className="rounded border-gray-300 text-[#E67E22]" />
-              <span>Set as default delivery address</span>
-            </label>
+          <div className="space-y-1">
+            <Input
+              label="Custom Profile Image URL (Optional)"
+              type="url"
+              placeholder="https://images.unsplash.com/... or paste image URL"
+              value={profileImage}
+              onChange={(e) => setProfileImage(e.target.value)}
+            />
           </div>
 
-          <Button type="submit" className="w-full mt-4">
-            Save Address
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-[#3B302B]">Registered Mobile Number</label>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-700 font-mono">
+              <span>+91 {user?.phone || "9876543210"}</span>
+              <span className="text-[10px] text-green-700 font-bold bg-green-100 px-2 py-0.5 rounded-full ml-auto">
+                ✓ OTP Verified
+              </span>
+            </div>
+            <p className="text-[11px] text-[#7A6E65]">
+              Mobile number is your primary login credential.
+            </p>
+          </div>
+
+          <Button type="submit" className="w-full sm:w-auto h-10 px-6 shadow-sm" isLoading={isSaving}>
+            Save Profile Changes
           </Button>
-        </form>
-      </Modal>
+        </Card>
+      </form>
+
+      {/* Quick Navigation Cards to Related Sections (Clean & Single-Responsibility) */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-extrabold text-[#3B302B]">Related Account Settings</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Link to="/customer/addresses" className="block group">
+            <Card className="p-4 border-[#E5DEC9] group-hover:border-[#596B58] group-hover:shadow-sm transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-[#3B302B] group-hover:text-[#596B58]">
+                    Delivery Addresses
+                  </h4>
+                  <p className="text-[11px] text-[#7A6E65]">Manage saved locations</p>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-[#596B58] transition-colors" />
+            </Card>
+          </Link>
+
+          <Link to="/customer/settings" className="block group">
+            <Card className="p-4 border-[#E5DEC9] group-hover:border-[#596B58] group-hover:shadow-sm transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600">
+                  <Bell className="h-4 w-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-[#3B302B] group-hover:text-[#596B58]">
+                    Notifications
+                  </h4>
+                  <p className="text-[11px] text-[#7A6E65]">SMS & email alerts</p>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-[#596B58] transition-colors" />
+            </Card>
+          </Link>
+
+          <Link to="/customer/security" className="block group">
+            <Card className="p-4 border-[#E5DEC9] group-hover:border-[#596B58] group-hover:shadow-sm transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-green-50 text-green-700">
+                  <ShieldCheck className="h-4 w-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-[#3B302B] group-hover:text-[#596B58]">
+                    Security Center
+                  </h4>
+                  <p className="text-[11px] text-[#7A6E65]">Devices & sessions</p>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-[#596B58] transition-colors" />
+            </Card>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };

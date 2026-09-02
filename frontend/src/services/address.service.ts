@@ -3,7 +3,10 @@ import { apiClient } from "./api.client";
 export interface Address {
   id: string;
   name: string;
+  email?: string;
   phone: string;
+  district?: string;
+  village?: string;
   street: string;
   city: string;
   state: string;
@@ -15,17 +18,20 @@ export interface Address {
 
 export interface AddressPayload {
   name: string;
+  email?: string;
   phone: string;
+  district?: string;
+  village?: string;
   street: string;
-  city: string;
-  state: string;
+  city?: string;
+  state?: string;
   pincode: string;
   landmark?: string;
   addressType?: "HOME" | "WORK" | "OTHER";
   isDefault?: boolean;
 }
 
-const LOCAL_ADDRESSES_KEY = "onebite_local_addresses";
+const LOCAL_ADDRESSES_KEY = "theonlinebakery_local_addresses";
 
 const getLocalAddresses = (): Address[] => {
   try {
@@ -34,19 +40,7 @@ const getLocalAddresses = (): Address[] => {
   } catch (_err) {
     // Ignore
   }
-  return [
-    {
-      id: "addr-101",
-      name: "Ananya Sharma",
-      phone: "9876543210",
-      street: "Flat 402, Sunshine Heights, Connaught Place",
-      city: "New Delhi",
-      state: "Delhi",
-      pincode: "110001",
-      addressType: "HOME",
-      isDefault: true,
-    },
-  ];
+  return [];
 };
 
 const saveLocalAddresses = (list: Address[]) => {
@@ -68,9 +62,9 @@ export const addressService = {
         return response.data.data.addresses;
       }
     } catch (_err) {
-      // Fallback
+      return getLocalAddresses();
     }
-    return getLocalAddresses();
+    return [];
   },
 
   createAddress: async (payload: AddressPayload): Promise<Address> => {
@@ -90,10 +84,13 @@ export const addressService = {
     const newAddr: Address = {
       id: `addr-${Date.now()}`,
       name: payload.name,
+      email: payload.email,
       phone: payload.phone,
+      district: payload.district,
+      village: payload.village,
       street: payload.street,
-      city: payload.city,
-      state: payload.state,
+      city: payload.city || "City",
+      state: payload.state || "State",
       pincode: payload.pincode,
       landmark: payload.landmark,
       addressType: payload.addressType || "HOME",

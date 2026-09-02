@@ -13,19 +13,19 @@ export class TemplateRenderer {
     { subject: string; body: string }
   > = {
     otp: {
-      subject: "Your OneBite Bakery Verification Code",
+      subject: "Your The Online Bakery Verification Code",
       body: "<p>Hello {{customerName}},</p><p>Your verification code is <strong>{{otp}}</strong>. It is valid for 5 minutes.</p>",
     },
     "order-created": {
-      subject: "OneBite Order Received - {{orderNumber}}",
+      subject: "The Online Bakery Order Received - {{orderNumber}}",
       body: "<p>Hello {{customerName}},</p><p>Thank you for your order <strong>{{orderNumber}}</strong>! Subtotal: ₹{{amount}}. We are processing your request.</p>",
     },
     "order-confirmed": {
-      subject: "OneBite Order Confirmed - {{orderNumber}}",
+      subject: "The Online Bakery Order Confirmed - {{orderNumber}}",
       body: "<p>Hello {{customerName}},</p><p>Your order <strong>{{orderNumber}}</strong> has been confirmed! Estimated ready time: {{deliveryTime}}.</p>",
     },
     "order-status-updated": {
-      subject: "OneBite Order Update - {{orderNumber}}",
+      subject: "The Online Bakery Order Update - {{orderNumber}}",
       body: "<p>Hello {{customerName}},</p><p>Your order <strong>{{orderNumber}}</strong> is now <strong>{{status}}</strong>.</p>",
     },
     "payment-success": {
@@ -37,7 +37,7 @@ export class TemplateRenderer {
       body: "<p>Hello {{customerName}},</p><p>Your payment attempt for order <strong>{{orderNumber}}</strong> was not successful. Reason: {{failureReason}}.</p>",
     },
     "order-cancelled": {
-      subject: "OneBite Order Cancelled - {{orderNumber}}",
+      subject: "The Online Bakery Order Cancelled - {{orderNumber}}",
       body: "<p>Hello {{customerName}},</p><p>Your order <strong>{{orderNumber}}</strong> has been cancelled. Reason: {{cancellationReason}}.</p>",
     },
     "custom-cake-update": {
@@ -45,16 +45,16 @@ export class TemplateRenderer {
       body: "<p>Hello {{customerName}},</p><p>There is an update regarding your custom cake request for order <strong>{{orderNumber}}</strong>.</p>",
     },
     "admin-notification": {
-      subject: "OneBite System Notification: {{title}}",
+      subject: "The Online Bakery System Notification: {{title}}",
       body: "<p>System Alert: {{message}}</p>",
     },
     "admin-broadcast": {
-      subject: "OneBite Announcement: {{title}}",
+      subject: "The Online Bakery Announcement: {{title}}",
       body: "<p>Hello,</p><p>{{message}}</p>",
     },
     welcome: {
-      subject: "Welcome to OneBite Bakery",
-      body: "<p>Hello {{customerName}},</p><p>Welcome to OneBite Bakery. We are happy to have you here.</p>",
+      subject: "Welcome to The Online Bakery",
+      body: "<p>Hello {{customerName}},</p><p>Welcome to The Online Bakery. We are happy to have you here.</p>",
     },
   };
 

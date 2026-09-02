@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the versioning strategy for the OneBite Bakery Platform.
+This document defines the versioning strategy for the The Online Bakery Platform.
 
 The project follows Semantic Versioning (SemVer) to ensure predictable releases, backward compatibility, and clear communication of changes.
 

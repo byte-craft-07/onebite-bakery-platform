@@ -17,8 +17,28 @@ const getCookieValue = (cookies: unknown, name: string): string | undefined => {
   return typeof value === "string" ? value : undefined;
 };
 
+const extractTokenFromRequest = (request: {
+  cookies?: unknown;
+  headers?: Record<string, string | string[] | undefined>;
+}): string | undefined => {
+  const cookieToken = getCookieValue(request.cookies, AUTH_COOKIE_NAMES.ACCESS_TOKEN);
+  if (cookieToken) {
+    return cookieToken;
+  }
+
+  const authHeader = request.headers?.authorization;
+  if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
+    const headerToken = authHeader.slice(7).trim();
+    if (headerToken) {
+      return headerToken;
+    }
+  }
+
+  return undefined;
+};
+
 export const requireAuth: RequestHandler = (request, _response, next) => {
-  const token = getCookieValue(request.cookies, AUTH_COOKIE_NAMES.ACCESS_TOKEN);
+  const token = extractTokenFromRequest(request);
 
   if (!token) {
     return next(
@@ -44,6 +64,7 @@ export const requireAuth: RequestHandler = (request, _response, next) => {
       name: "",
       phone: "",
       role: payload.role,
+      branchId: payload.branchId,
       isVerified: true,
     };
     (request as AuthenticatedRequest).accessToken = token;
@@ -60,4 +81,32 @@ export const requireAuth: RequestHandler = (request, _response, next) => {
       ),
     );
   }
+};
+
+export const optionalAuth: RequestHandler = (request, _response, next) => {
+  const token = extractTokenFromRequest(request);
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const payload = verifyAccessToken(token);
+
+    if (payload.type === AUTH_TOKEN_TYPES.ACCESS) {
+      (request as AuthenticatedRequest).user = {
+        id: payload.sub,
+        name: "",
+        phone: "",
+        role: payload.role,
+        branchId: payload.branchId,
+        isVerified: true,
+      };
+      (request as AuthenticatedRequest).accessToken = token;
+    }
+  } catch {
+    // Ignore error for optional authentication and continue anonymously
+  }
+
+  return next();
 };

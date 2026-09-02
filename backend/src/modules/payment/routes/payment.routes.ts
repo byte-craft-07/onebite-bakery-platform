@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 
 import { env } from "../../../config/env.js";
-import { requireAuth, type AuthenticatedRequest } from "../../auth/index.js";
+import { requireAuth, requireRoles, type AuthenticatedRequest } from "../../auth/index.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
 import { AppError } from "../../../shared/errors/app-error.js";
@@ -10,6 +10,7 @@ import { validateRequest } from "../../../shared/middlewares/validate-request.mi
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { logger } from "../../../shared/utils/logger.js";
 import { PaymentController } from "../controller/index.js";
+import { PaymentModel } from "../model/index.js";
 import { PaymentRepository } from "../repository/index.js";
 import { PaymentService } from "../service/index.js";
 import {
@@ -25,15 +26,16 @@ const paymentService = new PaymentService(paymentRepository);
 const paymentController = new PaymentController(paymentService);
 
 const razorpayCreateOrderSchema = z.object({
-  orderId: z.string().regex(/^[a-f\d]{24}$/i, "Invalid order id."),
+  orderId: z.string().trim().min(1, "Invalid order id."),
 });
 
 const razorpayVerifySchema = z.object({
-  orderId: z.string().regex(/^[a-f\d]{24}$/i, "Invalid order id."),
+  orderId: z.string().trim().min(1, "Invalid order id."),
   razorpay_order_id: z.string().trim().min(5),
   razorpay_payment_id: z.string().trim().min(5),
   razorpay_signature: z.string().trim().min(10),
 });
+
 
 paymentRouter.post(
   "/create",
@@ -154,6 +156,35 @@ paymentRouter.get(
   requireAuth,
   validateRequest({ params: paymentIdParamSchema }),
   asyncHandler(paymentController.getPaymentDetails),
+);
+
+paymentRouter.get(
+  "/admin",
+  requireAuth,
+  requireRoles(["admin"]),
+  asyncHandler(async (_req, res) => {
+    const payments = await PaymentModel.find()
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .populate("orderId", "orderNumber")
+      .lean()
+      .exec();
+
+    const formatted = payments.map((p) => ({
+      id: p._id.toString(),
+      orderNumber: (p.orderId as unknown as { orderNumber?: string })?.orderNumber || "OB-ORDER",
+      paymentId: p.providerPaymentId || p.providerOrderId,
+      amount: p.amount,
+      method: p.paymentMethod || p.provider,
+      status: p.paymentStatus,
+      createdAt: p.createdAt.toISOString(),
+    }));
+
+    res.json({
+      success: true,
+      data: { payments: formatted },
+    });
+  }),
 );
 
 paymentRouter.post("/webhook", asyncHandler(paymentController.handleWebhook));

@@ -293,7 +293,7 @@ Category hierarchy rules:
 
 # Celebration Commerce Contract
 
-OneBite Bakery is a Celebration Commerce Platform.
+The Online Bakery is a Celebration Commerce Platform.
 
 Product architecture must support:
 

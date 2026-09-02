@@ -1,6 +1,6 @@
-# 🍰 OneBite Bakery Platform
+# 🍰 The Online Bakery Platform
 
-> **OneBite Bakery**
+> **The Online Bakery**
 >
 > **हर जश्न का पहला निवाला।**
 
@@ -22,7 +22,7 @@ Designed for seamless online ordering, custom cake requests, OTP authentication,
 
 ## Vision
 
-Provide the easiest OneBite Bakery ordering experience while giving the OneBite Bakery owner complete control over products, orders and customers.
+Provide the easiest The Online Bakery ordering experience while giving the The Online Bakery owner complete control over products, orders and customers.
 
 ## Tech Stack
 

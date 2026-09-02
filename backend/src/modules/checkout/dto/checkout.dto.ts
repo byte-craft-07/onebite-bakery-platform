@@ -13,6 +13,8 @@ export interface AddressPayloadDto {
 export interface CheckoutPreviewQueryDto {
   deliveryMethod?: DeliveryMethod;
   addressId?: string;
+  villageId?: string;
+  villageName?: string;
 }
 
 export interface ValidateCheckoutDto {

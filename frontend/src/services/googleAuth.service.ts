@@ -1,60 +1,39 @@
 import { apiClient } from "./api.client";
+import type { UserProfileResponse } from "./auth.service";
 
 export interface GoogleAuthResponse {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    phone?: string;
-    profilePhoto?: string;
-    role: string;
-  };
-  token: string;
+  user: UserProfileResponse;
 }
 
 export const googleAuthService = {
   /**
-   * Verify Google OAuth ID Token with backend or direct Google API
+   * Verify Google OAuth ID Token with backend API
    */
   async loginWithGoogleToken(idToken: string): Promise<GoogleAuthResponse> {
-    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { user: UserProfileResponse };
+    }>("/auth/google", {
+      credential: idToken,
+    });
 
-    try {
-      const response = await apiClient.post<GoogleAuthResponse>("/auth/google", {
-        token: idToken,
-        clientId: googleClientId,
-      });
+    const user = response.data.data.user;
+    localStorage.setItem("theonlinebakery_user", JSON.stringify(user));
 
-      if (response.data?.token) {
-        localStorage.setItem("onebite_token", response.data.token);
-        localStorage.setItem("onebite_user", JSON.stringify(response.data.user));
-        return response.data;
-      }
-    } catch (_err) {
-      // Fallback local simulation if backend API key not yet connected
-    }
-
-    // Fallback simulated user decoded from Google Identity token payload
-    const simulatedUser = {
-      id: `usr-google-${Date.now()}`,
-      name: "Google Customer",
-      email: "google.user@example.com",
-      profilePhoto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
-      role: "customer",
-    };
-
-    const token = `simulated-jwt-${Date.now()}`;
-    localStorage.setItem("onebite_token", token);
-    localStorage.setItem("onebite_user", JSON.stringify(simulatedUser));
-
-    return {
-      user: simulatedUser,
-      token,
-    };
+    return { user };
   },
 
   /**
-   * Load Google Identity Services script dynamically
+   * Redirect to Backend Google OAuth initiation URL
+   */
+  redirectToGoogleOAuth(): void {
+    const backendBaseUrl =
+      import.meta.env.VITE_API_BASE_URL || "/api/v1";
+    window.location.href = `${backendBaseUrl}/auth/google`;
+  },
+
+  /**
+   * Load Google Identity Services SDK dynamically
    */
   loadGoogleScript(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -69,7 +48,8 @@ export const googleAuthService = {
       script.async = true;
       script.defer = true;
       script.onload = () => resolve();
-      script.onerror = () => reject(new Error("Failed to load Google Identity SDK"));
+      script.onerror = () =>
+        reject(new Error("Failed to load Google Identity SDK"));
       document.head.appendChild(script);
     });
   },
