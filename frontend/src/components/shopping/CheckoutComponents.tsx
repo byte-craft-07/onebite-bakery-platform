@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import {
-  AlertCircle,
   Building,
   Calendar,
   CheckCircle2,
   Clock,
   ExternalLink,
-  Home,
   MapPin,
   Navigation,
   Phone,
@@ -243,7 +241,7 @@ export const CheckoutSummary: React.FC<{
       setAppliedCoupon(null);
       setAppliedDiscount(0);
       if (onCouponChanged) onCouponChanged();
-    } catch (_err) {
+    } catch {
       setAppliedCoupon(null);
     } finally {
       setIsApplying(false);

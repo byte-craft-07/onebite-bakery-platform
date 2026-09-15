@@ -48,12 +48,16 @@ export const AdminCustomersPage: React.FC = () => {
     fetchCustomers();
   }, []);
 
-  const filtered = customers.filter(
-    (c) =>
+  const filtered = customers.filter((c) => {
+    const contactPhone = c.address?.phone || c.phone || "";
+    return (
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.phone.includes(searchQuery) ||
-      (c.email && c.email.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+      contactPhone.includes(searchQuery) ||
+      (c.email && c.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (c.address?.village && c.address.village.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (c.currentLocation?.villageName && c.currentLocation.villageName.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  });
 
   const handleToggleStatus = async (usr: AdminCustomerSummary) => {
     try {
@@ -82,15 +86,65 @@ export const AdminCustomersPage: React.FC = () => {
         onSearchChange={setSearchQuery}
       />
 
-      <AdminTable headers={["Name", "Contact Phone", "Email", "Account Role", "Status", "Access Action"]}>
+      <AdminTable headers={["Name", "Contact Phone", "Contact", "Email", "Account Role", "Status", "Access Action"]}>
         {isLoading ? (
-          <AdminTableSkeleton columns={6} rows={4} />
+          <AdminTableSkeleton columns={7} rows={4} />
         ) : filtered.length > 0 ? (
-          filtered.map((usr) => (
-            <tr key={usr.id} className="hover:bg-[#FFF8EC]/50 transition-colors">
-              <td className="px-4 py-3 font-bold text-[#3B302B]">{usr.name}</td>
-              <td className="px-4 py-3 font-mono text-xs">{usr.phone || "Google Sign-In"}</td>
-              <td className="px-4 py-3 text-xs text-[#7A6E65]">{usr.email || "N/A"}</td>
+          filtered.map((usr) => {
+            const rawPhone = usr.address?.phone || usr.phone;
+            const formattedPhone = rawPhone
+              ? (rawPhone.startsWith("+91") ? rawPhone : `+91 ${rawPhone.replace(/\D/g, "").slice(-10)}`)
+              : null;
+            const cleanDigits = rawPhone ? rawPhone.replace(/\D/g, "") : "";
+            const validWaPhone =
+              cleanDigits.length >= 10
+                ? cleanDigits.length === 10
+                  ? `91${cleanDigits}`
+                  : cleanDigits.startsWith("91") && cleanDigits.length === 12
+                    ? cleanDigits
+                    : `91${cleanDigits.slice(-10)}`
+                : null;
+
+            return (
+              <tr key={usr.id} className="hover:bg-[#FFF8EC]/50 transition-colors">
+                <td className="px-4 py-3 font-bold text-[#3B302B]">{usr.name}</td>
+                <td className="px-4 py-3 font-mono text-xs">
+                  {formattedPhone ? (
+                    <span className="text-[#3B302B] font-semibold">{formattedPhone}</span>
+                  ) : (
+                    <span className="text-[#A3978E] italic">N/A</span>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  {validWaPhone ? (
+                    <a
+                      href={`https://wa.me/${validWaPhone}?text=${encodeURIComponent(`Hello ${usr.name}, greetings from The Online Bakery!`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold text-xs transition-all hover:shadow-xs group cursor-pointer"
+                      title={`Chat with ${usr.name} on WhatsApp (+${validWaPhone})`}
+                    >
+                      <svg className="w-3.5 h-3.5 fill-[#25D366] shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                      </svg>
+                      <span>WhatsApp</span>
+                    </a>
+                  ) : (
+                    <span
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 text-gray-400 border border-gray-200 text-xs font-medium cursor-not-allowed opacity-60"
+                      title="No contact phone available"
+                    >
+                      <svg className="w-3.5 h-3.5 fill-gray-400 shrink-0" viewBox="0 0 24 24">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                      </svg>
+                      <span>N/A</span>
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-xs text-[#7A6E65]">
+                  <span>{usr.email || "N/A"}</span>
+                  {usr.address?.village ? <span className="block text-[11px] text-[#596B58] font-medium">📍 {usr.address.village}, {usr.address.district || ""}</span> : null}
+                </td>
               <td className="px-4 py-3">
                 <Badge variant={usr.role === "admin" ? "primary" : "neutral"}>
                   {usr.role.toUpperCase()}
@@ -118,10 +172,11 @@ export const AdminCustomersPage: React.FC = () => {
                 )}
               </td>
             </tr>
-          ))
+          );
+        })
         ) : (
           <tr>
-            <td colSpan={6} className="text-center py-8 text-xs text-[#7A6E65]">
+            <td colSpan={7} className="text-center py-8 text-xs text-[#7A6E65]">
               No customer records found.
             </td>
           </tr>
@@ -404,7 +459,7 @@ export const AdminSettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<StoreSettingsPayload>({
     storeName: "The Online Bakery",
     phone: "+91 7897671632",
-    email: "theonlinebakery07@gmail.com",
+    email: "ajaykterha@gmail.com",
     gstin: "07AAAAA0000A1Z5",
     minOrderValue: 299,
     freeDeliveryThreshold: 799,
@@ -423,7 +478,7 @@ export const AdminSettingsPage: React.FC = () => {
         setSettings({
           storeName: res.storeName || "The Online Bakery",
           phone: res.phone || "+91 7897671632",
-          email: res.email || "theonlinebakery07@gmail.com",
+          email: res.email || "ajaykterha@gmail.com",
           gstin: res.gstin || "07AAAAA0000A1Z5",
           minOrderValue: res.minOrderValue ?? 299,
           freeDeliveryThreshold: res.freeDeliveryThreshold ?? 799,

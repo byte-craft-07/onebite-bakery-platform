@@ -1,6 +1,7 @@
 import type { HydratedDocument } from "mongoose";
 
-import { CustomCakeRepository } from "../repository/custom-cake.repository.js";
+import { toObjectId } from "../../../db/utils/object-id.js";
+import type { CustomCakeRepository } from "../repository/custom-cake.repository.js";
 import type {
   CustomCakeOption,
   CustomCakeOptionType,
@@ -79,7 +80,7 @@ const DEFAULT_OPTIONS: Partial<CustomCakeOption>[] = [
     description: "Golden praline butterscotch crunch with warm salted caramel layers.",
     priceModifier: 600,
     category: "Signature Classics",
-    imageUrl: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=400&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=400&q=80",
     colorCode: "#FF8F00",
     isActive: true,
     displayOrder: 6,
@@ -117,7 +118,7 @@ const DEFAULT_OPTIONS: Partial<CustomCakeOption>[] = [
     description: "24k edible gold foil accents, chocolate drip, luxury French macarons & sprinkles.",
     priceModifier: 350,
     category: "Luxury Celebration",
-    imageUrl: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=400&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=400&q=80",
     colorCode: "#D4AF37",
     isActive: true,
     displayOrder: 1,
@@ -286,12 +287,17 @@ export class CustomCakeService {
       };
     },
   ): Promise<HydratedDocument<CustomCakeInquiry> | null> {
-    const updateData: any = {};
+    const updateData: Partial<CustomCakeInquiry> = {};
     if (data.status) updateData.status = data.status;
     if (data.adminNotes !== undefined) updateData.adminNotes = data.adminNotes;
     if (data.adminRecommendation) {
       updateData.adminRecommendation = {
-        ...data.adminRecommendation,
+        recommendedProductId: data.adminRecommendation.recommendedProductId
+          ? toObjectId(data.adminRecommendation.recommendedProductId)
+          : undefined,
+        recommendedCakeTitle: data.adminRecommendation.recommendedCakeTitle,
+        quotedPrice: data.adminRecommendation.quotedPrice,
+        message: data.adminRecommendation.message,
         recommendedAt: new Date(),
       };
     }

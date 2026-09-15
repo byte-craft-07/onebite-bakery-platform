@@ -56,6 +56,7 @@ const SessionExpiredPage = lazy(() => import("@/pages/auth/StatusPages").then((m
 
 // Admin Pages (Lazy Loaded)
 const AdminDashboardShell = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminDashboardShell })));
+const AdminMainBranchOrdersPage = lazy(() => import("@/features/admin/pages/AdminMainBranchOrdersPage").then((m) => ({ default: m.AdminMainBranchOrdersPage })));
 const AdminAdminsPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminAdminsPage })));
 const AdminBannersPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminBannersPage })));
 const AdminBranchManagementPage = lazy(() => import("@/features/admin/pages/AdminBranchManagementPage").then((m) => ({ default: m.AdminBranchManagementPage })));
@@ -136,12 +137,19 @@ export const AppRoutes: React.FC = () => {
             <Route path="*" element={<NotFoundPage />} />
           </Route>
 
-          {/* Guest Auth Routes */}
+          {/* Guest Auth Routes & Aliases */}
           <Route path="/auth" element={<GuestRoute />}>
             <Route element={<AuthLayout />}>
+              <Route index element={<CustomerAuthContainer />} />
               <Route path="login" element={<CustomerAuthContainer />} />
             </Route>
           </Route>
+          <Route path="/customer/auth" element={<GuestRoute />}>
+            <Route element={<AuthLayout />}>
+              <Route index element={<CustomerAuthContainer />} />
+            </Route>
+          </Route>
+          <Route path="/login" element={<Navigate to="/auth/login" replace />} />
 
           {/* Status Pages */}
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -152,6 +160,7 @@ export const AppRoutes: React.FC = () => {
             <Route element={<AdminLayout />}>
               <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboardShell />} />
+              <Route path="main-branch-orders" element={<AdminMainBranchOrdersPage />} />
               <Route path="team" element={<AdminAdminsPage />} />
               <Route path="admins" element={<AdminAdminsPage />} />
               <Route path="banners" element={<AdminBannersPage />} />

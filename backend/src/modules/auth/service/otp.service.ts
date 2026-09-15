@@ -133,6 +133,12 @@ export class OtpService {
     return {
       expiresInSeconds: OTP_CONSTANTS.EXPIRY_MINUTES * 60,
       cooldownSeconds: OTP_CONSTANTS.COOLDOWN_SECONDS,
+      ...(env.nodeEnv !== "production"
+        ? {
+            devOtp: otp,
+            devHint: `Development mode: Use OTP ${otp} or default 123456`,
+          }
+        : {}),
     };
   }
 

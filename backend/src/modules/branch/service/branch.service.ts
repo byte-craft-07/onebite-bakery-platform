@@ -636,8 +636,15 @@ export class BranchService {
   public async resolveBranchForVillage(
     villageId?: string | Types.ObjectId,
   ): Promise<HydratedDocument<Branch> | null> {
+    // 1. Resolve true Main Branch (strictly MAIN type or TOB-HQ / Main Store name)
     const mainBranch =
       (await BranchModel.findOne({ type: "MAIN", isActive: true }).exec()) ||
+      (await BranchModel.findOne({ code: "TOB-HQ", isActive: true }).exec()) ||
+      (await BranchModel.findOne({ name: { $regex: /main\s*store|main\s*branch/i }, type: { $ne: "FRANCHISE" }, isActive: true }).exec()) ||
+      (await BranchModel.findOne({ type: "MAIN" }).exec()) ||
+      (await BranchModel.findOne({ code: "TOB-HQ" }).exec()) ||
+      (await BranchModel.findOne({ type: { $ne: "FRANCHISE" }, isActive: true }).exec()) ||
+      (await BranchModel.findOne({ name: { $not: { $regex: /raja|franchise/i } }, isActive: true }).exec()) ||
       (await BranchModel.findOne({ isActive: true }).exec());
 
     if (!villageId) {
@@ -645,6 +652,10 @@ export class BranchService {
     }
 
     const vStr = villageId.toString().trim();
+    if (!vStr) {
+      return mainBranch;
+    }
+
     let village = null;
 
     if (vStr.match(/^[0-9a-fA-F]{24}$/)) {
@@ -667,6 +678,25 @@ export class BranchService {
         village = await VillageModel.findOne({
           name: { $regex: new RegExp(`^${possibleName}$`, "i") },
         }).exec();
+      }
+
+      // If still not found, check if vStr matches or contains any known village name
+      if (!village && VillageModel.db?.readyState === 1) {
+        try {
+          const allActiveVillages = await VillageModel.find({ isActive: true }).exec();
+          if (Array.isArray(allActiveVillages)) {
+            const matched = allActiveVillages.find((v) => {
+              const vName = v.name?.trim().toLowerCase() || "";
+              const q = vStr.toLowerCase();
+              return q === vName || q.includes(vName) || vName.includes(q);
+            });
+            if (matched) {
+              village = matched;
+            }
+          }
+        } catch (_e) {
+          // Ignore
+        }
       }
     }
 

@@ -92,13 +92,13 @@ export const ContactUsFloatingButton: React.FC = () => {
 
             {/* 3. Email Support */}
             <a
-              href="mailto:theonlinebakery07@gmail.com"
+              href="mailto:ajaykterha@gmail.com"
               className="w-full p-2.5 rounded-2xl bg-[#F7F2E7] hover:bg-[#E5DEC9]/50 border border-[#E5DEC9] text-[#3B302B] flex items-center gap-3 text-xs font-semibold transition-all"
             >
               <div className="p-1.5 rounded-lg bg-white text-[#3B302B]">
                 <Mail className="h-3.5 w-3.5" />
               </div>
-              <span>Email: theonlinebakery07@gmail.com</span>
+              <span>Email: ajaykterha@gmail.com</span>
             </a>
           </div>
 

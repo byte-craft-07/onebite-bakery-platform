@@ -190,4 +190,35 @@ describe("NotificationService", () => {
       { page: 1 },
     );
   });
+
+  it("retrieves unread notification count for admin and users", async () => {
+    const { service, notificationRepository } = createService({
+      getUnreadCount: vi.fn().mockResolvedValue(5),
+    });
+
+    const unread = await service.getUnreadCount(customerId, "admin");
+    expect(unread).toBe(5);
+    expect(notificationRepository.getUnreadCount).toHaveBeenCalledWith(undefined);
+  });
+
+  it("marks a single notification as read", async () => {
+    const readDoc = createMockNotificationDocument({ isRead: true, readAt: new Date() });
+    const { service, notificationRepository } = createService({
+      markAsRead: vi.fn().mockResolvedValue(readDoc),
+    });
+
+    const result = await service.markAsRead(customerId, "admin", notificationId.toString());
+    expect(result.isRead).toBe(true);
+    expect(notificationRepository.markAsRead).toHaveBeenCalled();
+  });
+
+  it("marks all notifications as read", async () => {
+    const { service, notificationRepository } = createService({
+      markAllAsRead: vi.fn().mockResolvedValue(7),
+    });
+
+    const count = await service.markAllAsRead(customerId, "admin");
+    expect(count).toBe(7);
+    expect(notificationRepository.markAllAsRead).toHaveBeenCalledWith(undefined);
+  });
 });

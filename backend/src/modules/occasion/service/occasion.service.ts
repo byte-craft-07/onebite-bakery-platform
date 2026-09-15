@@ -38,7 +38,7 @@ export class OccasionService {
     if (existing) {
       throw new AppError("Occasion with this slug already exists.", HTTP_STATUS.CONFLICT);
     }
-    const defaultImg = payload.bannerImage || "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=800&q=80";
+    const defaultImg = payload.bannerImage || "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=800&q=80";
     const defaultDesc = payload.description || `${payload.name} celebration cakes and desserts`;
     return this.occasionRepository.create({
       ...payload,

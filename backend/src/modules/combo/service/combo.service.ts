@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 import { type Combo } from "../model/combo.model.js";
 import { comboRepository } from "../repository/combo.repository.js";
 
-const DEFAULT_SEED_COMBOS = [
+const DEFAULT_SEED_COMBOS: Partial<Combo>[] = [
   {
     title: "Birthday Party Celebration Combo",
     slug: "birthday-party-celebration-combo",
@@ -49,7 +49,7 @@ const DEFAULT_SEED_COMBOS = [
     items: ["1.5kg Chocolate Pinata Hammer Cake", "12 Rainbow Cupcakes", "Party Caps & Balloon Garland"],
     price: 1799,
     originalPrice: 2299,
-    image: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80",
     badge: "Mega Saver",
     isActive: true,
     isAvailable: true,
@@ -86,7 +86,7 @@ export class ComboService {
     const count = await comboRepository.count();
     if (count === 0) {
       for (const item of DEFAULT_SEED_COMBOS) {
-        await comboRepository.create(item as any);
+        await comboRepository.create(item);
       }
     }
   }
@@ -125,7 +125,7 @@ export class ComboService {
   }
 
   async updateCombo(id: string, input: Partial<CreateComboInput>): Promise<Combo | null> {
-    const updateData: any = { ...input };
+    const updateData: Partial<Combo> = { ...input };
     if (input.slug) {
       updateData.slug = this.generateSlug(input.slug);
     }

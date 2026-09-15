@@ -59,6 +59,9 @@ export class NotificationService {
       status: "PENDING",
       payload: dto.payload,
       retryCount: 0,
+      isRead: dto.isRead ?? false,
+      ...(dto.orderId ? { orderId: dto.orderId } : {}),
+      ...(dto.orderNumber ? { orderNumber: dto.orderNumber } : {}),
     });
 
     const provider = this.injectedProvider ?? this.providerFactory.getProvider(providerType);
@@ -227,6 +230,51 @@ export class NotificationService {
     return this.toResponse(notificationDoc);
   }
 
+  public async getUnreadCount(
+    userId: string,
+    userRole: string,
+  ): Promise<number> {
+    const filterUserId =
+      userRole === "admin" ? undefined : toObjectId(userId);
+    return this.notificationRepository.getUnreadCount(filterUserId);
+  }
+
+  public async markAsRead(
+    userId: string,
+    userRole: string,
+    id: string,
+  ): Promise<NotificationResponse> {
+    const notificationObjId = toObjectId(id);
+    const filterUserId =
+      userRole === "admin" ? undefined : toObjectId(userId);
+
+    const updated = await this.notificationRepository.markAsRead(
+      notificationObjId,
+      filterUserId,
+    );
+
+    if (!updated) {
+      throw new AppError(
+        "Notification not found.",
+        HTTP_STATUS.NOT_FOUND,
+        [],
+        true,
+        APP_ERROR_CODES.VALIDATION_ERROR,
+      );
+    }
+
+    return this.toResponse(updated);
+  }
+
+  public async markAllAsRead(
+    userId: string,
+    userRole: string,
+  ): Promise<number> {
+    const filterUserId =
+      userRole === "admin" ? undefined : toObjectId(userId);
+    return this.notificationRepository.markAllAsRead(filterUserId);
+  }
+
   private toResponse(
     notification: HydratedDocument<Notification>,
   ): NotificationResponse {
@@ -241,6 +289,10 @@ export class NotificationService {
       status: notification.status,
       payload: notification.payload,
       retryCount: notification.retryCount,
+      isRead: notification.isRead ?? false,
+      ...(notification.readAt ? { readAt: notification.readAt } : {}),
+      ...(notification.orderId ? { orderId: notification.orderId } : {}),
+      ...(notification.orderNumber ? { orderNumber: notification.orderNumber } : {}),
       ...(notification.providerMessageId
         ? { providerMessageId: notification.providerMessageId }
         : {}),

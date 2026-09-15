@@ -30,6 +30,8 @@ import { useAuth } from "@/contexts/auth.context";
 
 const centralAdminNavSections = [
   { id: "dashboard", label: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
+  { id: "main-branch-orders", label: "Main Branch Orders", path: "/admin/main-branch-orders", icon: ShoppingBag },
+  { id: "orders", label: "Global Orders", path: "/admin/orders", icon: ShoppingBag },
   { id: "admins", label: "Admin Team & Access", path: "/admin/team", icon: UserCheck },
   { id: "banners", label: "Hero Posters & Banners", path: "/admin/banners", icon: ImageIcon },
   { id: "branches", label: "Branch Management", path: "/admin/branches", icon: Building2 },
@@ -42,7 +44,6 @@ const centralAdminNavSections = [
   { id: "occasions", label: "Occasions", path: "/admin/occasions", icon: Sparkles },
   { id: "coupons", label: "Promo & Coupons", path: "/admin/coupons", icon: Tag },
   { id: "villages", label: "Villages Management", path: "/admin/villages", icon: MapPin },
-  { id: "orders", label: "Global Orders", path: "/admin/orders", icon: ShoppingBag },
   { id: "customers", label: "Customer Accounts", path: "/admin/customers", icon: Users },
   { id: "payments", label: "Payments & Financials", path: "/admin/payments", icon: Box },
   { id: "notifications", label: "Notification Center", path: "/admin/notifications", icon: Bell },
@@ -95,11 +96,11 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
           {/* Header Logo */}
           <div className="flex items-center justify-between">
             <Link to="/" title="Go to Home Page Storefront" className="flex items-center gap-2.5 group">
-              <div className="h-8 w-8 rounded-full overflow-hidden bg-white p-0.5 shadow-xs ring-1 ring-white/30 shrink-0">
+              <div className="h-8 w-8 shrink-0 flex items-center justify-center">
                 <img
                   src="/logo.svg"
                   alt="The Online Bakery"
-                  className="w-full h-full object-cover rounded-full"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <span className="text-xl font-extrabold text-[#596B58] tracking-tight group-hover:text-amber-400 transition-colors">The Online Bakery</span>

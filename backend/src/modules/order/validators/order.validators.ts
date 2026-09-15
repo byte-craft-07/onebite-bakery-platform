@@ -12,10 +12,12 @@ export const orderIdParamSchema = z.object({
 export const addressPayloadSchema = z.object({
   fullName: z.string().trim().min(2).max(100),
   phone: z.string().trim().min(10).max(15),
+  village: z.string().trim().max(120).optional(),
+  district: z.string().trim().max(120).optional(),
   street: z.string().trim().min(5).max(300),
   city: z.string().trim().min(2).max(100),
   state: z.string().trim().min(2).max(100),
-  pincode: z.string().trim().min(5).max(10),
+  pincode: z.string().trim().min(4).max(10),
   landmark: z.string().trim().max(100).optional(),
 });
 
@@ -58,4 +60,6 @@ export const listOrdersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   status: z.enum(ORDER_STATUSES).optional(),
   customerId: objectIdSchema.optional(),
+  branchId: objectIdSchema.optional(),
+  branchType: z.enum(["MAIN", "FRANCHISE"]).optional(),
 });

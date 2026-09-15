@@ -70,7 +70,7 @@ export const ContactPage: React.FC = () => {
           <div className="space-y-4 text-xs text-[#E5DEC9]/80 leading-relaxed">
             <p><strong>Address:</strong> The Online Bakery, N 80°14, terha 25°49'43.3, 54.7"E, hamirpur, Uttar Pradesh 210502</p>
             <p><strong>Phone:</strong> +91 7897671632</p>
-            <p><strong>Email:</strong> theonlinebakery07@gmail.com</p>
+            <p><strong>Email:</strong> ajaykterha@gmail.com</p>
             <p><strong>Store Pickup Hours:</strong> Monday – Sunday: 8:00 AM – 10:00 PM</p>
           </div>
         </div>

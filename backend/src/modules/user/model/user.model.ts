@@ -33,6 +33,8 @@ export interface User extends TimestampedDocument {
   branchId?: Types.ObjectId;
   currentLocation?: CustomerLocation;
   isVerified: boolean;
+  phoneVerified?: boolean;
+  phoneVerifiedAt?: Date;
   profileImage?: string;
   status: UserStatus;
   lastLogin?: Date;
@@ -122,6 +124,16 @@ const userSchema = new Schema<User>(
       type: Boolean,
       default: false,
       required: true,
+    },
+    phoneVerified: {
+      type: Boolean,
+      default: false,
+      required: false,
+    },
+    phoneVerifiedAt: {
+      type: Date,
+      default: undefined,
+      required: false,
     },
     profileImage: {
       type: String,

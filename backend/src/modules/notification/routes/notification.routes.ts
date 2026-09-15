@@ -10,7 +10,9 @@ import { NotificationRepository } from "../repository/index.js";
 import { NotificationService } from "../service/index.js";
 import {
   notificationIdParamSchema,
+  pushSubscriptionSchema,
   sendNotificationSchema,
+  unsubscribePushSchema,
 } from "../validators/index.js";
 
 export const notificationRouter = Router();
@@ -18,6 +20,31 @@ export const notificationRouter = Router();
 const notificationRepository = new NotificationRepository();
 const notificationService = new NotificationService(notificationRepository);
 const notificationController = new NotificationController(notificationService);
+
+notificationRouter.get(
+  "/vapid-public-key",
+  asyncHandler(notificationController.getVapidPublicKey),
+);
+
+notificationRouter.post(
+  "/push-subscriptions",
+  requireAuth,
+  validateRequest({ body: pushSubscriptionSchema }),
+  asyncHandler(notificationController.registerPushSubscription),
+);
+
+notificationRouter.delete(
+  "/push-subscriptions",
+  requireAuth,
+  validateRequest({ body: unsubscribePushSchema }),
+  asyncHandler(notificationController.unsubscribePush),
+);
+
+notificationRouter.post(
+  "/test-push",
+  requireAuth,
+  asyncHandler(notificationController.sendTestPush),
+);
 
 const orderConfirmationEmailSchema = z.object({
   orderNumber: z.string().trim().min(1),
@@ -155,6 +182,25 @@ notificationRouter.get(
   "/history",
   requireAuth,
   asyncHandler(notificationController.getHistory),
+);
+
+notificationRouter.get(
+  "/unread-count",
+  requireAuth,
+  asyncHandler(notificationController.getUnreadCount),
+);
+
+notificationRouter.patch(
+  "/read-all",
+  requireAuth,
+  asyncHandler(notificationController.markAllAsRead),
+);
+
+notificationRouter.patch(
+  "/:id/read",
+  requireAuth,
+  validateRequest({ params: notificationIdParamSchema }),
+  asyncHandler(notificationController.markAsRead),
 );
 
 notificationRouter.get(

@@ -4,12 +4,10 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Clock,
   Package,
   Sparkles,
   Star,
   Truck,
-  XCircle,
 } from "lucide-react";
 import type { OrderDetails } from "@/services/order.service";
 
@@ -35,8 +33,8 @@ const TRACKER_STEPS: StepInfo[] = [
   },
   {
     id: 1,
-    label: "Baking & Packed",
-    sublabel: "Freshly prepared at bakery",
+    label: "Order Packed",
+    sublabel: "Freshly baked & packed for delivery",
     icon: Sparkles,
   },
   {
@@ -88,7 +86,13 @@ export const FlipkartOrderTracker: React.FC<FlipkartOrderTrackerProps> = ({
 
   const primaryItem = order.items?.[0];
   const itemCount = order.items?.length || 1;
-  const itemImage = (primaryItem as any)?.image || FALLBACK_ITEM_IMAGE;
+  const itemImage =
+    (primaryItem as any)?.image ||
+    (primaryItem as any)?.thumbnailUrl ||
+    (primaryItem as any)?.imageUrl ||
+    (primaryItem as any)?.imageUrls?.[0] ||
+    (primaryItem as any)?.mainImage ||
+    FALLBACK_ITEM_IMAGE;
 
   return (
     <div className="space-y-4">

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { AuthProvider } from "@/contexts/auth.context";
 import { ToastProvider } from "@/contexts/toast.context";
+import { PWAProvider } from "@/contexts/pwa.context";
 import { ToastContainer } from "@/components/ui/Toast";
 
 const queryClient = new QueryClient({
@@ -18,12 +19,14 @@ const queryClient = new QueryClient({
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ToastProvider>
-          {children}
-          <ToastContainer />
-        </ToastProvider>
-      </AuthProvider>
+      <PWAProvider>
+        <AuthProvider>
+          <ToastProvider>
+            {children}
+            <ToastContainer />
+          </ToastProvider>
+        </AuthProvider>
+      </PWAProvider>
     </QueryClientProvider>
   );
 };

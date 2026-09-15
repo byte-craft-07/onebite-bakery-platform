@@ -58,6 +58,7 @@ export const AdminDashboardShell: React.FC = () => {
           change="Active in Catalog"
           isPositive={true}
           icon={<Package className="h-5 w-5 text-[#596B58]" />}
+          to="/admin/catalog"
         />
         <AdminStatCard
           title="Total Orders"
@@ -65,6 +66,7 @@ export const AdminDashboardShell: React.FC = () => {
           change="Orders Placed"
           isPositive={true}
           icon={<ShoppingBag className="h-5 w-5 text-blue-600" />}
+          to="/admin/orders"
         />
         <AdminStatCard
           title="Total Revenue"
@@ -72,6 +74,7 @@ export const AdminDashboardShell: React.FC = () => {
           change="Gross Sales"
           isPositive={true}
           icon={<BarChart3 className="h-5 w-5 text-green-600" />}
+          to="/admin/analytics"
         />
         <AdminStatCard
           title="Registered Customers"
@@ -79,6 +82,7 @@ export const AdminDashboardShell: React.FC = () => {
           change="Active Accounts"
           isPositive={true}
           icon={<Users className="h-5 w-5 text-amber-600" />}
+          to="/admin/customers"
         />
       </div>
 

@@ -34,12 +34,12 @@ export const BakeryLogo: React.FC<BakeryLogoProps> = ({
       className={`group flex items-center gap-2 sm:gap-2.5 select-none transition-transform active:scale-95 ${className}`}
       aria-label="The Online Bakery Home"
     >
-      {/* SVG Bakery Emblem Logo (Perfect Circle Badge) */}
-      <div className={`relative shrink-0 flex items-center justify-center ${sizeClasses[size]} rounded-full overflow-hidden bg-white p-0.5 shadow-sm ring-2 ring-[#E5DEC9] group-hover:ring-[#D8BE91] transition-all duration-300`}>
+      {/* SVG Bakery Emblem Logo */}
+      <div className={`relative shrink-0 flex items-center justify-center ${sizeClasses[size]}`}>
         <img
           src="/logo.svg"
           alt="The Online Bakery Emblem"
-          className="w-full h-full object-cover rounded-full transition-transform duration-300 group-hover:scale-105"
+          className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
           loading="eager"
         />
       </div>

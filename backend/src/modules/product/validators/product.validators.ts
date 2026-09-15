@@ -6,11 +6,26 @@ const objectIdSchema = z
   .string()
   .regex(/^[a-f\d]{24}$/i, "Invalid object id.");
 
+const optionalObjectIdSchema = z
+  .union([objectIdSchema, z.literal(""), z.null()])
+  .optional()
+  .transform((val) => (val === "" || val === null ? undefined : val));
+
 const slugSchema = z
   .string()
   .trim()
   .toLowerCase()
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be URL safe.");
+  .transform((val) =>
+    val
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, ""),
+  )
+  .pipe(
+    z
+      .string()
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be URL safe.")
+      .optional(),
+  );
 
 const imageUrlSchema = z.string().trim().min(1);
 const comboItemSchema = z.object({
@@ -41,18 +56,22 @@ const productSchemaBase = z.object({
   slug: slugSchema.optional(),
   shortDescription: z.string().trim().min(1).max(300).optional(),
   description: z.string().trim().min(1).max(2000).optional().default("Freshly baked artisanal delight from The Online Bakery."),
-  categoryId: objectIdSchema.optional(),
+  categoryId: optionalObjectIdSchema,
   occasionIds: z.array(objectIdSchema).default([]),
   productType: z.enum(PRODUCT_TYPES).default("NORMAL"),
   comboItems: z.array(comboItemSchema).default([]),
-  price: z.number().positive(),
-  compareAtPrice: z.number().positive().optional(),
-  costPrice: z.number().min(0).optional(),
+  price: z.coerce.number().positive(),
+  compareAtPrice: z
+    .union([z.coerce.number().positive(), z.literal(0), z.literal(""), z.null()])
+    .optional()
+    .transform((val) => (val === 0 || val === "" || val === null ? undefined : val)),
+  costPrice: z.coerce.number().min(0).optional(),
+  sku: z.string().trim().max(100).optional(),
   taxCategory: z.string().trim().min(1).max(80).optional(),
   imageUrls: z.array(imageUrlSchema).max(20).default([]),
   thumbnailUrl: imageUrlSchema.optional().default("https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80"),
-  stockQuantity: z.number().int().min(0).default(50),
-  lowStockThreshold: z.number().int().min(0).default(5),
+  stockQuantity: z.coerce.number().int().min(0).default(50),
+  lowStockThreshold: z.coerce.number().int().min(0).default(5),
   trackInventory: z.boolean().default(true),
   allowBackorder: z.boolean().default(false),
   stockStatus: z.enum(STOCK_STATUSES).optional(),
@@ -67,7 +86,7 @@ const productSchemaBase = z.object({
   pickupEligible: z.boolean().default(true),
   availableFrom: z.coerce.date().optional(),
   availableUntil: z.coerce.date().optional(),
-  displayOrder: z.number().int().min(0).default(0),
+  displayOrder: z.coerce.number().int().min(0).default(0),
   seoTitle: z.string().trim().min(1).max(70).optional(),
   seoDescription: z.string().trim().min(1).max(160).optional(),
   seoKeywords: seoKeywordsSchema,
@@ -202,4 +221,20 @@ export const productIdParamSchema = z.object({
 
 export const productSlugParamSchema = z.object({
   slug: slugSchema,
+});
+
+export const recordProductShareSchema = z.object({
+  productId: optionalObjectIdSchema,
+  productSlug: z.string().trim().min(1).max(160),
+  productName: z.string().trim().max(160).optional(),
+  shareMethod: z.enum([
+    "native",
+    "whatsapp",
+    "whatsapp_status",
+    "instagram_story",
+    "telegram",
+    "facebook",
+    "x",
+    "copy_link",
+  ]),
 });

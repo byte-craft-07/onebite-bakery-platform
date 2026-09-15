@@ -22,7 +22,9 @@ export interface ProductResponse {
     branchId: string;
     name: string;
     code: string;
+    city?: string;
   };
+  locationBranchName?: string;
   isAvailable: boolean;
   availableFrom?: Date;
   availableUntil?: Date;

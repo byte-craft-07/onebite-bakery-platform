@@ -90,7 +90,7 @@ export const invoiceService = {
               <div><strong>Store Name:</strong> The Online Bakery</div>
               <div><strong>Address:</strong> The Online Bakery, N 80°14, terha 25°49'43.3, 54.7"E, hamirpur, Uttar Pradesh 210502</div>
               <div><strong>Phone:</strong> +91 7897671632</div>
-              <div><strong>Email:</strong> theonlinebakery07@gmail.com</div>
+              <div><strong>Email:</strong> ajaykterha@gmail.com</div>
               <div><strong>GSTIN:</strong> 07AAAAA0000A1Z5</div>
               <div><strong>FSSAI Lic No:</strong> 10021011000458</div>
             </div>

@@ -34,7 +34,7 @@ export const GuestRoute: React.FC = () => {
       return <Navigate to="/agent/dashboard" replace />;
     }
     const rawRedirect = searchParams.get("redirect") || sessionStorage.getItem("theonlinebakery_auth_redirect");
-    const redirect = rawRedirect ? (rawRedirect.startsWith("%") ? decodeURIComponent(rawRedirect) : rawRedirect) : "/checkout";
+    const redirect = rawRedirect ? (rawRedirect.startsWith("%") ? decodeURIComponent(rawRedirect) : rawRedirect) : "/";
     sessionStorage.removeItem("theonlinebakery_auth_redirect");
     return <Navigate to={redirect} replace />;
   }

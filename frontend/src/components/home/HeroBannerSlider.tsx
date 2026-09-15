@@ -13,10 +13,10 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({
   autoPlayInterval = 4000,
   className = "",
 }) => {
-  const [banners, setBanners] = useState<BannerItem[]>([]);
+  const [banners, setBanners] = useState<BannerItem[]>(() => bannerService.getStoredBannersSync());
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(() => banners.length === 0);
 
   // Touch gesture tracking for mobile swipe
   const touchStartX = useRef<number | null>(null);
@@ -25,7 +25,9 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({
   const fetchBanners = useCallback(async () => {
     try {
       const list = await bannerService.getActiveBanners();
-      setBanners(list);
+      if (list && list.length > 0) {
+        setBanners(list);
+      }
     } catch (_e) {
       // Fallback handled in service
     } finally {
@@ -43,6 +45,21 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({
   }, [fetchBanners]);
 
   const bannerCount = banners.length;
+
+  // Preload upcoming slides into browser cache
+  useEffect(() => {
+    if (bannerCount <= 1) return;
+    const nextIdx = (currentIndex + 1) % bannerCount;
+    const nextBanner = banners[nextIdx];
+    if (nextBanner?.desktopImage) {
+      const img = new Image();
+      img.src = nextBanner.desktopImage;
+    }
+    if (nextBanner?.mobileImage) {
+      const imgMob = new Image();
+      imgMob.src = nextBanner.mobileImage;
+    }
+  }, [currentIndex, banners, bannerCount]);
 
   const goToNext = useCallback(() => {
     if (bannerCount === 0) return;
@@ -90,7 +107,7 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({
     touchEndX.current = null;
   };
 
-  if (isLoading) {
+  if (isLoading && bannerCount === 0) {
     return (
       <div className="relative w-full rounded-2xl sm:rounded-3xl bg-[#FFF8EC] border border-[#E5DEC9] aspect-[16/7] sm:aspect-[21/9] flex items-center justify-center animate-pulse">
         <div className="flex items-center gap-2 text-[#596B58] font-semibold text-xs sm:text-sm">
@@ -146,6 +163,8 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({
                     alt={banner.title || `Bakery Poster ${index + 1}`}
                     className="w-full h-full object-cover object-center transform transition-transform duration-700 group-hover:scale-[1.01]"
                     loading={index === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                    fetchPriority={index === 0 ? "high" : "auto"}
                   />
                 </picture>
               </Link>

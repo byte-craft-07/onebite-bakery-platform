@@ -3,6 +3,8 @@ import type { DeliveryMethod, OrderStatus, PaymentMethod } from "../constants/in
 export interface AddressPayloadDto {
   fullName: string;
   phone: string;
+  village?: string;
+  district?: string;
   street: string;
   city: string;
   state: string;
@@ -41,4 +43,5 @@ export interface ListOrdersFilterDto {
   status?: OrderStatus;
   customerId?: string;
   branchId?: string;
+  branchType?: "MAIN" | "FRANCHISE";
 }

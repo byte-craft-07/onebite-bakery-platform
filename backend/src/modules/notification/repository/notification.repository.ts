@@ -28,6 +28,7 @@ export class NotificationRepository extends BaseRepository<Notification> {
     if (userId) filter.userId = userId;
     if (query.type) filter.type = query.type;
     if (query.status) filter.status = query.status;
+    if (query.isRead !== undefined) filter.isRead = query.isRead;
 
     const [items, total] = await Promise.all([
       NotificationModel.find(filter)
@@ -47,6 +48,38 @@ export class NotificationRepository extends BaseRepository<Notification> {
       limit,
       totalPages,
     };
+  }
+
+  public async getUnreadCount(userId?: Types.ObjectId): Promise<number> {
+    const filter: FilterQuery<Notification> = { isRead: false };
+    if (userId) filter.userId = userId;
+    return NotificationModel.countDocuments(filter).exec();
+  }
+
+  public async markAsRead(
+    id: Types.ObjectId,
+    userId?: Types.ObjectId,
+  ): Promise<HydratedDocument<Notification> | null> {
+    const filter: FilterQuery<Notification> = { _id: id };
+    if (userId) filter.userId = userId;
+
+    return NotificationModel.findOneAndUpdate(
+      filter,
+      { $set: { isRead: true, readAt: new Date() } },
+      { new: true },
+    ).exec();
+  }
+
+  public async markAllAsRead(userId?: Types.ObjectId): Promise<number> {
+    const filter: FilterQuery<Notification> = { isRead: false };
+    if (userId) filter.userId = userId;
+
+    const result = await NotificationModel.updateMany(
+      filter,
+      { $set: { isRead: true, readAt: new Date() } },
+    ).exec();
+
+    return result.modifiedCount;
   }
 
   public async updateStatus(

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { User as UserIcon } from "lucide-react";
 import type { UserProfileResponse } from "@/services/auth.service";
 
@@ -33,8 +33,8 @@ const sizeClasses: Record<NonNullable<UserAvatarProps["size"]>, {
  * Returns a high-quality avatar URL based on email or name
  */
 export const getAvatarFromEmailOrName = (name?: string, email?: string): string => {
-  const seed = name?.trim() || email?.split("@")[0]?.trim() || "Customer";
-  // UI Avatars generator with bakery-themed Deep Sage color (#596B58)
+  const cleanEmail = email?.trim().toLowerCase();
+  const seed = name?.trim() || (cleanEmail ? cleanEmail.split("@")[0] : "Customer");
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(seed)}&background=596B58&color=FFF8EC&bold=true&size=256&rounded=true`;
 };
 
@@ -51,11 +51,24 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   const displayName = user?.name || fallbackName || (user?.email ? user.email.split("@")[0] : "") || "Customer";
   const initial = displayName.trim().charAt(0).toUpperCase() || "U";
 
-  // Determine image source priority:
-  // 1. Direct src prop
-  // 2. user.profileImage
-  // 3. Email/Name generated avatar
-  const resolvedSrc = src || user?.profileImage || (user?.email || user?.name ? getAvatarFromEmailOrName(user?.name, user?.email) : null);
+  // Only attempt to load if a real photo URL is provided
+  let rawImage = src || user?.profileImage;
+  if (rawImage && rawImage.includes("ACg8ocL30hOcrEYenvWOYH5SoIw2PwYspA8zf3cp8iU-ZgyrvoX8gw")) {
+    rawImage = "https://lh3.googleusercontent.com/a/ACg8ocKUbft27NKCgakV4you7xwWL4RqMom-n5LZNJ_eTUsfmzR6KlCLUQ=s96-c";
+  }
+
+  const resolvedSrc =
+    rawImage &&
+    typeof rawImage === "string" &&
+    rawImage.trim().length > 0 &&
+    !rawImage.includes("unavatar.io") &&
+    !rawImage.includes("ui-avatars.com")
+      ? rawImage.trim()
+      : null;
+
+  useEffect(() => {
+    setImageError(false);
+  }, [resolvedSrc]);
 
   const { container, icon, text } = sizeClasses[size] || sizeClasses.md;
 
@@ -68,6 +81,8 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
         <img
           src={resolvedSrc}
           alt={alt || displayName}
+          referrerPolicy="no-referrer"
+          crossOrigin="anonymous"
           onError={() => setImageError(true)}
           className="h-full w-full object-cover rounded-full transition-opacity duration-200"
           loading="lazy"

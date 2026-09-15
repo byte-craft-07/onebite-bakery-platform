@@ -192,7 +192,7 @@ export class CartService {
         productSnapshot: {
           name: product.name,
           slug: product.slug,
-          thumbnailUrl: product.thumbnailUrl,
+          thumbnailUrl: product.thumbnailUrl || (product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : undefined),
           productType: product.productType,
         },
         addedAt: new Date(),

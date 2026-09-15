@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { AlertCircle, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -18,22 +19,47 @@ export const AdminStatCard: React.FC<{
   change?: string;
   isPositive?: boolean;
   icon?: React.ReactNode;
-}> = ({ title, value, change, isPositive = true, icon }) => (
-  <AdminCard className="space-y-3">
-    <div className="flex items-center justify-between">
-      <span className="text-xs font-bold uppercase tracking-wider text-[#7A6E65]">{title}</span>
-      {icon ? <div className="p-2 rounded-xl bg-[#FFF8EC] text-[#596B58]">{icon}</div> : null}
-    </div>
-    <div className="flex items-baseline justify-between">
-      <span className="text-2xl font-extrabold text-[#3B302B]">{value}</span>
-      {change ? (
-        <span className={`text-xs font-bold ${isPositive ? "text-green-600" : "text-red-500"}`}>
-          {isPositive ? "+" : ""}{change}
+  to?: string;
+  onClick?: () => void;
+}> = ({ title, value, change, isPositive = true, icon, to, onClick }) => {
+  const content = (
+    <div
+      className={`rounded-2xl border border-[#E5DEC9] bg-white p-6 shadow-xs space-y-3 transition-all ${
+        to || onClick
+          ? "cursor-pointer hover:border-[#596B58] hover:shadow-md active:scale-[0.99] group"
+          : ""
+      }`}
+      onClick={onClick}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold uppercase tracking-wider text-[#7A6E65] group-hover:text-[#3B302B] transition-colors">
+          {title}
         </span>
-      ) : null}
+        {icon ? (
+          <div className="p-2 rounded-xl bg-[#FFF8EC] text-[#596B58] group-hover:bg-[#596B58]/10 group-hover:scale-105 transition-all">
+            {icon}
+          </div>
+        ) : null}
+      </div>
+      <div className="flex items-baseline justify-between">
+        <span className="text-2xl font-extrabold text-[#3B302B] group-hover:text-[#596B58] transition-colors">
+          {value}
+        </span>
+        {change ? (
+          <span className={`text-xs font-bold ${isPositive ? "text-green-600" : "text-red-500"}`}>
+            {isPositive ? "+" : ""}{change}
+          </span>
+        ) : null}
+      </div>
     </div>
-  </AdminCard>
-);
+  );
+
+  if (to) {
+    return <Link to={to} className="block no-underline">{content}</Link>;
+  }
+
+  return content;
+};
 
 // AdminStatCardSkeleton
 export const AdminStatCardSkeleton: React.FC = () => (

@@ -58,6 +58,13 @@ orderRouter.get(
   asyncHandler(orderController.adminGetOrder),
 );
 
+orderRouter.delete(
+  "/admin/orders/:id",
+  ...ownerOnly,
+  validateRequest({ params: orderIdParamSchema }),
+  asyncHandler(orderController.adminDeleteOrder),
+);
+
 orderRouter.patch(
   "/admin/orders/:id/status",
   ...staffOrAdmin,

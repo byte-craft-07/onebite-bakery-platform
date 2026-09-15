@@ -3,13 +3,17 @@ import { Link } from "react-router-dom";
 import { Minus, Plus, Trash2 } from "lucide-react";
 
 import type { CartItem } from "@/services/cart.service";
+import { getOptimizedImageUrl } from "@/utils/cdn.utils";
 
 export const CartItemCard: React.FC<{
   item: CartItem;
   onUpdateQuantity: (itemId: string, newQty: number) => void;
   onRemove: (itemId: string) => void;
 }> = ({ item, onUpdateQuantity, onRemove }) => {
-  const imageUrl = item.productId.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
+  const imageUrl = getOptimizedImageUrl(
+    item.productId.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=150&q=75",
+    { width: 140, height: 140, quality: 75 }
+  );
 
   return (
     <div className="p-3.5 sm:p-4 border border-[#E5DEC9] rounded-2xl bg-white shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
@@ -17,7 +21,7 @@ export const CartItemCard: React.FC<{
       <div className="flex items-center justify-between sm:justify-start gap-3 sm:gap-4 flex-1 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl overflow-hidden bg-[#FFF8EC] shrink-0 border border-[#E5DEC9]">
-            <img src={imageUrl} alt={item.productId.name} className="h-full w-full object-cover" />
+            <img src={imageUrl} alt={item.productId.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
           </div>
           <div className="space-y-0.5 min-w-0">
             <Link to={`/products/${item.productId.slug}`} className="text-xs sm:text-sm font-bold text-[#3B302B] hover:text-[#596B58] transition-colors line-clamp-1">

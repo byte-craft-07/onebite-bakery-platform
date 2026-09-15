@@ -74,36 +74,19 @@ export const addressService = {
         data: { address: Address };
       }>("/addresses", payload);
       if (response.data?.data?.address) {
+        const current = getLocalAddresses();
+        if (response.data.data.address.isDefault) {
+          current.forEach((a) => (a.isDefault = false));
+        }
+        current.unshift(response.data.data.address);
+        saveLocalAddresses(current);
         return response.data.data.address;
       }
-    } catch (_err) {
-      // Fallback
+      throw new Error("Failed to create address");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to create address";
+      throw new Error(msg);
     }
-
-    const current = getLocalAddresses();
-    const newAddr: Address = {
-      id: `addr-${Date.now()}`,
-      name: payload.name,
-      email: payload.email,
-      phone: payload.phone,
-      district: payload.district,
-      village: payload.village,
-      street: payload.street,
-      city: payload.city || "City",
-      state: payload.state || "State",
-      pincode: payload.pincode,
-      landmark: payload.landmark,
-      addressType: payload.addressType || "HOME",
-      isDefault: payload.isDefault || current.length === 0,
-    };
-
-    if (newAddr.isDefault) {
-      current.forEach((a) => (a.isDefault = false));
-    }
-
-    current.unshift(newAddr);
-    saveLocalAddresses(current);
-    return newAddr;
   },
 
   updateAddress: async (id: string, payload: Partial<AddressPayload>): Promise<Address> => {
@@ -113,31 +96,33 @@ export const addressService = {
         data: { address: Address };
       }>(`/addresses/${id}`, payload);
       if (response.data?.data?.address) {
+        const current = getLocalAddresses();
+        const idx = current.findIndex((a) => a.id === id);
+        if (idx >= 0) {
+          current[idx] = response.data.data.address;
+        } else {
+          current.push(response.data.data.address);
+        }
+        saveLocalAddresses(current);
         return response.data.data.address;
       }
-    } catch (_err) {
-      // Fallback
+      throw new Error("Failed to update address");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to update address";
+      throw new Error(msg);
     }
-
-    const current = getLocalAddresses();
-    const idx = current.findIndex((a) => a.id === id);
-    if (idx >= 0) {
-      current[idx] = { ...current[idx], ...payload };
-      saveLocalAddresses(current);
-      return current[idx];
-    }
-    return getLocalAddresses()[0];
   },
 
   deleteAddress: async (id: string) => {
     try {
       await apiClient.delete<{ success: boolean }>(`/addresses/${id}`);
-    } catch (_err) {
-      // Ignore
+      const current = getLocalAddresses().filter((a) => a.id !== id);
+      saveLocalAddresses(current);
+      return { success: true };
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to delete address";
+      throw new Error(msg);
     }
-    const current = getLocalAddresses().filter((a) => a.id !== id);
-    saveLocalAddresses(current);
-    return { success: true };
   },
 
   setDefaultAddress: async (id: string): Promise<Address> => {
@@ -147,15 +132,15 @@ export const addressService = {
         data: { address: Address };
       }>(`/addresses/${id}/default`);
       if (response.data?.data?.address) {
+        const current = getLocalAddresses();
+        current.forEach((a) => (a.isDefault = a.id === id));
+        saveLocalAddresses(current);
         return response.data.data.address;
       }
-    } catch (_err) {
-      // Fallback
+      throw new Error("Failed to set default address");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to set default address";
+      throw new Error(msg);
     }
-
-    const current = getLocalAddresses();
-    current.forEach((a) => (a.isDefault = a.id === id));
-    saveLocalAddresses(current);
-    return current.find((a) => a.id === id) || current[0];
   },
 };

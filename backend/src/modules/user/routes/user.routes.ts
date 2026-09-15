@@ -26,6 +26,7 @@ const listUsersQuerySchema = z.object({
 
 import type { AuthenticatedRequest } from "../../auth/index.js";
 import { VillageModel } from "../../village/model/village.model.js";
+import { AddressModel, type Address } from "../../address/model/address.model.js";
 
 const updateLocationSchema = z.object({
   villageId: z.string().refine((value) => Types.ObjectId.isValid(value), "Invalid villageId."),
@@ -38,26 +39,69 @@ const updateProfileSchema = z.object({
   profileImage: z.string().trim().url().or(z.literal("")).optional(),
 });
 
-const toUserResponse = (user: User) => ({
-  id: user._id.toString(),
-  name: user.name,
-  phone: user.phone,
-  email: user.email,
-  role: user.role,
-  status: user.status,
-  ...(user.profileImage ? { profileImage: user.profileImage } : {}),
-  ...(user.currentLocation
-    ? {
-        currentLocation: {
-          villageId: user.currentLocation.villageId.toString(),
-          villageName: user.currentLocation.villageName,
-          district: user.currentLocation.district,
-          pincode: user.currentLocation.pincode,
-        },
-      }
-    : {}),
-  createdAt: user.createdAt.toISOString(),
-});
+const toUserResponse = (
+  user: User,
+  address?: {
+    _id?: Types.ObjectId;
+    phone?: string;
+    village?: string;
+    district?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    landmark?: string;
+    isDefault?: boolean;
+  } | null,
+) => {
+  const contactPhone = address?.phone || user.phone;
+  return {
+    id: user._id.toString(),
+    name: user.name,
+    phone: contactPhone,
+    email: user.email,
+    role: user.role,
+    status: user.status,
+    phoneVerified: user.phoneVerified ?? false,
+    ...(user.profileImage ? { profileImage: user.profileImage } : {}),
+    ...(user.currentLocation
+      ? {
+          currentLocation: {
+            villageId: user.currentLocation.villageId.toString(),
+            villageName: user.currentLocation.villageName,
+            district: user.currentLocation.district,
+            pincode: user.currentLocation.pincode,
+          },
+        }
+      : address?.village
+      ? {
+          currentLocation: {
+            villageId: "",
+            villageName: address.village,
+            district: address.district || "Central",
+            pincode: address.pincode || "110001",
+          },
+        }
+      : {}),
+    ...(address
+      ? {
+          address: {
+            ...(address._id ? { id: address._id.toString() } : {}),
+            phone: address.phone,
+            village: address.village,
+            district: address.district,
+            street: address.address,
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+            landmark: address.landmark,
+            isDefault: address.isDefault,
+          },
+        }
+      : {}),
+    createdAt: user.createdAt.toISOString(),
+  };
+};
 
 // Authenticated User: Update profile details (name, email, profileImage)
 userRouter.patch(
@@ -194,10 +238,73 @@ userRouter.get(
     }
 
     const users = await UserModel.find(filter).sort({ createdAt: -1 }).limit(100).exec();
+    const userIds = users.map((u) => u._id);
+    let addresses: Address[] = [];
+    try {
+      addresses = await AddressModel.find({ userId: { $in: userIds } })
+        .sort({ isDefault: -1, createdAt: -1 })
+        .exec();
+    } catch {
+      // Address lookup fallback
+    }
+
+    const addressMap = new Map<string, Address>();
+    for (const addr of addresses) {
+      const key = addr.userId.toString();
+      const existing = addressMap.get(key);
+      if (!existing) {
+        addressMap.set(key, addr);
+      } else if (!existing.phone && addr.phone) {
+        addressMap.set(key, addr);
+      }
+    }
+
+    // For users still missing phone/address, check recent order address snapshots
+    const missingPhoneUserIds = users
+      .filter((u) => !u.phone && !addressMap.get(u._id.toString())?.phone)
+      .map((u) => u._id);
+
+    if (missingPhoneUserIds.length > 0) {
+      try {
+        const { OrderModel } = await import("../../order/model/order.model.js");
+        const recentOrders = await OrderModel.find({
+          $or: [
+            { userId: { $in: missingPhoneUserIds } },
+            { customerId: { $in: missingPhoneUserIds } },
+          ],
+        })
+          .sort({ createdAt: -1 })
+          .exec();
+
+        for (const ord of recentOrders) {
+          const uId = (ord.userId || ord.customerId)?.toString();
+          if (uId && ord.addressSnapshot?.phone) {
+            const existing = addressMap.get(uId);
+            if (!existing) {
+              addressMap.set(uId, {
+                phone: ord.addressSnapshot.phone,
+                village: ord.addressSnapshot.village,
+                district: ord.addressSnapshot.district,
+                address: ord.addressSnapshot.street,
+                city: ord.addressSnapshot.city,
+                state: ord.addressSnapshot.state,
+                pincode: ord.addressSnapshot.pincode,
+              } as unknown as Address);
+            } else if (!existing.phone) {
+              existing.phone = ord.addressSnapshot.phone;
+            }
+          }
+        }
+      } catch {
+        // order fallback
+      }
+    }
 
     res.json({
       success: true,
-      data: { users: users.map(toUserResponse) },
+      data: {
+        users: users.map((u) => toUserResponse(u, addressMap.get(u._id.toString()))),
+      },
     });
   }),
 );
@@ -249,7 +356,7 @@ const updateAdminRoleSchema = z.object({
     .optional(),
 });
 
-const PRIMARY_ADMIN_EMAILS = ["theonlinebakery07@gmail.com"];
+const PRIMARY_ADMIN_EMAILS = ["ajaykterha@gmail.com", "ajayterha@gmail.com"];
 const PRIMARY_ADMIN_PHONES = ["7897671632"];
 
 const isPrimaryAdmin = (user: User): boolean => {
@@ -434,9 +541,47 @@ userRouter.get(
     if (!user) {
       throw new AppError("Customer account not found.", HTTP_STATUS.NOT_FOUND);
     }
+    let defaultAddress: Parameters<typeof toUserResponse>[1] = null;
+    try {
+      defaultAddress = await AddressModel.findOne({ userId: user._id })
+        .sort({ isDefault: -1, createdAt: -1 })
+        .exec();
+    } catch {
+      // Address lookup fallback
+    }
+
+    if (!defaultAddress || !defaultAddress.phone) {
+      try {
+        const { OrderModel } = await import("../../order/model/order.model.js");
+        const lastOrder = await OrderModel.findOne({
+          $or: [{ userId: user._id }, { customerId: user._id }],
+        })
+          .sort({ createdAt: -1 })
+          .exec();
+
+        if (lastOrder?.addressSnapshot?.phone) {
+          if (!defaultAddress) {
+            defaultAddress = {
+              phone: lastOrder.addressSnapshot.phone,
+              village: lastOrder.addressSnapshot.village,
+              district: lastOrder.addressSnapshot.district,
+              address: lastOrder.addressSnapshot.street,
+              city: lastOrder.addressSnapshot.city,
+              state: lastOrder.addressSnapshot.state,
+              pincode: lastOrder.addressSnapshot.pincode,
+            };
+          } else if (!defaultAddress.phone) {
+            defaultAddress.phone = lastOrder.addressSnapshot.phone;
+          }
+        }
+      } catch {
+        // Fallback
+      }
+    }
+
     res.json({
       success: true,
-      data: { user: toUserResponse(user) },
+      data: { user: toUserResponse(user, defaultAddress) },
     });
   }),
 );

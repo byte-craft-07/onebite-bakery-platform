@@ -1,4 +1,4 @@
-import type { HydratedDocument } from "mongoose";
+import type { FilterQuery, HydratedDocument } from "mongoose";
 
 import { escapeRegex } from "../../../shared/utils/escape-regex.js";
 import {
@@ -15,7 +15,7 @@ import {
 export class CustomCakeRepository {
   // --- Options Repository Methods ---
   public async findAllOptions(type?: CustomCakeOptionType, onlyActive = true): Promise<HydratedDocument<CustomCakeOption>[]> {
-    const filter: Record<string, any> = {};
+    const filter: FilterQuery<CustomCakeOption> = {};
     if (type) filter.type = type;
     if (onlyActive) filter.isActive = true;
 
@@ -59,7 +59,7 @@ export class CustomCakeRepository {
     search?: string;
     userId?: string;
   } = {}): Promise<HydratedDocument<CustomCakeInquiry>[]> {
-    const query: Record<string, any> = {};
+    const query: FilterQuery<CustomCakeInquiry> = {};
     if (filters.status) query.status = filters.status;
     if (filters.userId) query.userId = filters.userId;
     if (filters.search && filters.search.trim()) {

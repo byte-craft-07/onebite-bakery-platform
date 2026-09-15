@@ -25,6 +25,10 @@ export interface Notification extends TimestampedDocument {
   providerMessageId?: string;
   failureReason?: string;
   sentAt?: Date;
+  isRead?: boolean;
+  readAt?: Date;
+  orderId?: string;
+  orderNumber?: string;
 }
 
 const notificationSchema = new Schema<Notification>(
@@ -94,9 +98,33 @@ const notificationSchema = new Schema<Notification>(
       type: Date,
       default: undefined,
     },
+    isRead: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    readAt: {
+      type: Date,
+      default: undefined,
+    },
+    orderId: {
+      type: String,
+      trim: true,
+      default: undefined,
+      index: true,
+    },
+    orderNumber: {
+      type: String,
+      trim: true,
+      default: undefined,
+      index: true,
+    },
   },
   baseSchemaOptions,
 );
+
+notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
+notificationSchema.index({ type: 1, isRead: 1, createdAt: -1 });
 
 export const NotificationModel = model<Notification>(
   "Notification",

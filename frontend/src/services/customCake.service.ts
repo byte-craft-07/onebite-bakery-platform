@@ -159,7 +159,7 @@ export const FALLBACK_FLAVORS: CustomCakeOption[] = [
     description: "Golden praline butterscotch crunch with warm salted caramel layers.",
     priceModifier: 600,
     category: "Signature Classics",
-    imageUrl: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=400&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=400&q=80",
     colorCode: "#FF8F00",
     isActive: true,
     displayOrder: 6,
@@ -204,7 +204,7 @@ export const FALLBACK_DESIGNS: CustomCakeOption[] = [
     description: "24k edible gold foil accents, chocolate drip, luxury French macarons & sprinkles.",
     priceModifier: 350,
     category: "Luxury Celebration",
-    imageUrl: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=400&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=400&q=80",
     colorCode: "#D4AF37",
     isActive: true,
     displayOrder: 1,
@@ -395,36 +395,11 @@ export const customCakeService = {
         saveLocalInquiry(response.data.data.inquiry);
         return response.data.data.inquiry;
       }
-    } catch (_err) {
-      // Fallback local inquiry
+      throw new Error("Failed to submit inquiry");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to submit inquiry";
+      throw new Error(msg);
     }
-
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const mockInquiry: CustomCakeInquiry = {
-      _id: `inq_${Date.now()}`,
-      inquiryNumber: `CC-${new Date().getFullYear()}-${randomNum}`,
-      customerName: payload.customerName,
-      customerPhone: payload.customerPhone,
-      customerEmail: payload.customerEmail,
-      tiers: payload.tiers || 1,
-      shape: payload.shape || "Round",
-      flavor: payload.flavor,
-      designTheme: payload.designTheme,
-      weightKg: payload.weightKg || 0.5,
-      isEggless: payload.isEggless ?? true,
-      cakeMessage: payload.cakeMessage,
-      queryText: payload.queryText,
-      referenceImageUrl: payload.referenceImageUrl,
-      estimatedPrice: payload.estimatedPrice,
-      budgetRange: payload.budgetRange,
-      eventDate: payload.eventDate,
-      occasion: payload.occasion,
-      status: "PENDING",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    saveLocalInquiry(mockInquiry);
-    return mockInquiry;
   },
 
   trackInquiry: async (ticketNumber: string): Promise<CustomCakeInquiry> => {
@@ -436,8 +411,9 @@ export const customCakeService = {
       if (response.data?.data?.inquiry) {
         return response.data.data.inquiry;
       }
-    } catch (_err) {
-      // Check local
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Inquiry not found.";
+      throw new Error(msg);
     }
     const local = getLocalInquiries().find((i) => i.inquiryNumber.toUpperCase() === ticketNumber.toUpperCase());
     if (local) return local;
@@ -470,26 +446,11 @@ export const customCakeService = {
         saveLocalOption(response.data.data.option);
         return response.data.data.option;
       }
-    } catch (_err) {
-      // Fallback
+      throw new Error("Failed to create option");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to create option";
+      throw new Error(msg);
     }
-
-    const newOpt: CustomCakeOption = {
-      id: `opt_${Date.now()}`,
-      _id: `opt_${Date.now()}`,
-      name: payload.name || "Untitled Flavor",
-      type: payload.type || "FLAVOR",
-      slug: payload.slug || payload.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") || `opt-${Date.now()}`,
-      description: payload.description || "",
-      priceModifier: payload.priceModifier || 600,
-      category: payload.category || "General",
-      imageUrl: payload.imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=400&q=80",
-      colorCode: payload.colorCode || "#596B58",
-      isActive: payload.isActive ?? true,
-      displayOrder: payload.displayOrder || 10,
-    };
-    saveLocalOption(newOpt);
-    return newOpt;
   },
 
   adminUpdateOption: async (id: string, payload: Partial<CustomCakeOption>): Promise<CustomCakeOption> => {
@@ -502,28 +463,21 @@ export const customCakeService = {
         saveLocalOption(response.data.data.option);
         return response.data.data.option;
       }
-    } catch (_err) {
-      // Fallback
+      throw new Error("Failed to update option");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to update option";
+      throw new Error(msg);
     }
-
-    const current = getLocalOptions().find((o) => o.id === id || o._id === id);
-    const updated = {
-      ...(current || {}),
-      ...payload,
-      id,
-      _id: id,
-    } as CustomCakeOption;
-    saveLocalOption(updated);
-    return updated;
   },
 
   adminDeleteOption: async (id: string): Promise<void> => {
     try {
       await apiClient.delete(`/custom-cake/admin/options/${id}`);
-    } catch (_err) {
-      // Ignore
+      deleteLocalOption(id);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to delete option";
+      throw new Error(msg);
     }
-    deleteLocalOption(id);
   },
 
   // Admin Inquiries
@@ -565,8 +519,9 @@ export const customCakeService = {
       if (response.data?.data?.inquiry) {
         return response.data.data.inquiry;
       }
-    } catch (_err) {
-      // Fallback
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Inquiry not found.";
+      throw new Error(msg);
     }
     const local = getLocalInquiries().find((i) => i._id === id);
     if (local) return local;
@@ -595,34 +550,20 @@ export const customCakeService = {
         saveLocalInquiry(response.data.data.inquiry);
         return response.data.data.inquiry;
       }
-    } catch (_err) {
-      // Fallback
+      throw new Error("Failed to update inquiry");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to update inquiry";
+      throw new Error(msg);
     }
-
-    const current = getLocalInquiries().find((i) => i._id === id);
-    const updated: CustomCakeInquiry = {
-      ...(current || ({} as any)),
-      _id: id,
-      status: (payload.status as any) || current?.status || "PENDING",
-      adminNotes: payload.adminNotes ?? current?.adminNotes,
-      adminRecommendation: payload.adminRecommendation
-        ? {
-            ...payload.adminRecommendation,
-            recommendedAt: new Date().toISOString(),
-          }
-        : current?.adminRecommendation,
-      updatedAt: new Date().toISOString(),
-    };
-    saveLocalInquiry(updated);
-    return updated;
   },
 
   adminDeleteInquiry: async (id: string): Promise<void> => {
     try {
       await apiClient.delete(`/custom-cake/admin/inquiries/${id}`);
-    } catch (_err) {
-      // Ignore
+      deleteLocalInquiry(id);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to delete inquiry";
+      throw new Error(msg);
     }
-    deleteLocalInquiry(id);
   },
 };

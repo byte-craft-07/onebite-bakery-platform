@@ -12,13 +12,6 @@ import { getOptimizedImageUrl } from "@/utils/cdn.utils";
 const FALLBACK_PRODUCT_IMAGE =
   "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
 
-// Fallback complementary photo angles for cakes, pastries, party items
-const COMPLEMENTARY_ANGLES = [
-  "https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80",
-];
-
 export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => {
   const navigate = useNavigate();
   const [isAdding, setIsAdding] = useState(false);
@@ -29,28 +22,31 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
     favoritesService.isFavorite(product.id)
   );
 
-  // Extract all available product images - guarantee at least 3 photos so dots are always available
+  // Extract all available product images - strictly match genuine product images
   const imageList: string[] = (() => {
     const list: string[] = [];
     if (Array.isArray(product.images) && product.images.length > 0) {
-      list.push(...product.images);
+      for (const img of product.images) {
+        if (img && typeof img === "string" && img.trim() && !list.includes(img.trim())) {
+          list.push(img.trim());
+        }
+      }
     } else if (Array.isArray((product as any).imageUrls) && (product as any).imageUrls.length > 0) {
-      list.push(...(product as any).imageUrls);
+      for (const img of (product as any).imageUrls) {
+        if (img && typeof img === "string" && img.trim() && !list.includes(img.trim())) {
+          list.push(img.trim());
+        }
+      }
     }
 
-    if (product.mainImage && !list.includes(product.mainImage)) {
-      list.unshift(product.mainImage);
+    if (product.mainImage && typeof product.mainImage === "string" && product.mainImage.trim() && !list.includes(product.mainImage.trim())) {
+      list.unshift(product.mainImage.trim());
+    } else if ((product as any).thumbnailUrl && typeof (product as any).thumbnailUrl === "string" && (product as any).thumbnailUrl.trim() && !list.includes((product as any).thumbnailUrl.trim())) {
+      list.unshift((product as any).thumbnailUrl.trim());
     }
 
     if (list.length === 0) {
       list.push(FALLBACK_PRODUCT_IMAGE);
-    }
-
-    // If only 1 image provided, add complimentary showcase angles
-    if (list.length === 1) {
-      list.push(COMPLEMENTARY_ANGLES[0], COMPLEMENTARY_ANGLES[1]);
-    } else if (list.length === 2) {
-      list.push(COMPLEMENTARY_ANGLES[2]);
     }
 
     return list;
@@ -95,6 +91,10 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
     };
   }, [product.id]);
 
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+  const [isSwiping, setIsSwiping] = useState(false);
+
   const handlePrevImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -105,6 +105,32 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
     e.preventDefault();
     e.stopPropagation();
     setCurrentImageIndex((prev) => (prev + 1) % imageList.length);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.targetTouches[0].clientX);
+    setTouchEndX(null);
+    setIsSwiping(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+    if (touchStartX !== null && Math.abs(e.targetTouches[0].clientX - touchStartX) > 10) {
+      setIsSwiping(true);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX || !touchEndX) return;
+    const distance = touchStartX - touchEndX;
+    const isLeftSwipe = distance > 40;
+    const isRightSwipe = distance < -40;
+
+    if (isLeftSwipe && imageList.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % imageList.length);
+    } else if (isRightSwipe && imageList.length > 1) {
+      setCurrentImageIndex((prev) => (prev === 0 ? imageList.length - 1 : prev - 1));
+    }
   };
 
   const activeImageUrl = getOptimizedImageUrl(
@@ -234,27 +260,35 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
 
   return (
     <div className="group relative rounded-2xl border border-[#E5DEC9] bg-white overflow-hidden shadow-[0_2px_12px_rgba(59,48,43,0.04)] hover:shadow-[0_8px_24px_rgba(59,48,43,0.08)] transition-all duration-300 flex flex-col justify-between hover:-translate-y-1">
-      {/* Product Image Section with Multi-Image Manual Slider */}
-      <div className="relative aspect-square w-full overflow-hidden bg-[#FFF8EC]">
-        <Link to={`/products/${product.slug || product.id}`} className="block h-full w-full relative">
-          {imageList.map((imgSrc, idx) => (
-            <img
-              key={idx}
-              src={getOptimizedImageUrl(imgSrc, { width: 600, quality: 80 })}
-              alt={`${product.name} angle ${idx + 1}`}
-              onError={(e) => {
-                e.currentTarget.onerror = null;
+      {/* Product Image Section with Multi-Image Touch & Button Slider */}
+      <div
+        className="relative aspect-square w-full overflow-hidden bg-[#FFF8EC] touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <Link
+          to={`/products/${product.slug || product.id}`}
+          onClick={(e) => {
+            if (isSwiping) e.preventDefault();
+          }}
+          className="block h-full w-full relative bg-[#FFF8EC]"
+        >
+          <img
+            key={currentImageIndex}
+            src={getOptimizedImageUrl(imageList[currentImageIndex] || imageList[0], { width: 380, quality: 75 })}
+            alt={`${product.name} - Angle ${currentImageIndex + 1}`}
+            onError={(e) => {
+              if (e.currentTarget.dataset.failed !== "true") {
+                e.currentTarget.dataset.failed = "true";
                 e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
-              }}
-              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 group-hover:scale-105 ${
-                idx === currentImageIndex
-                  ? "opacity-100 z-1"
-                  : "opacity-0 z-0 pointer-events-none"
-              }`}
-              loading={idx === 0 ? "eager" : "lazy"}
-              decoding="async"
-            />
-          ))}
+              }
+            }}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 select-none"
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+          />
         </Link>
 
         {/* Top-Left Indian Vegetarian Mark / Eggless Indicator */}
@@ -264,24 +298,24 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
           </div>
         </div>
 
-        {/* Manual Prev / Next Arrow Controls (Visible on hover if multiple images) */}
+        {/* Manual Prev / Next Arrow Controls (Visible on mobile and on desktop hover) */}
         {imageList.length > 1 && (
           <>
             <button
               type="button"
               onClick={handlePrevImage}
               aria-label="Previous image"
-              className="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-black/40 text-white hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-xs"
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-black/55 text-white hover:bg-black/80 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all cursor-pointer shadow-md active:scale-90 touch-manipulation"
             >
-              <ChevronLeft className="h-3.5 w-3.5" />
+              <ChevronLeft className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
             </button>
             <button
               type="button"
               onClick={handleNextImage}
               aria-label="Next image"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-black/40 text-white hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-xs"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-black/55 text-white hover:bg-black/80 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all cursor-pointer shadow-md active:scale-90 touch-manipulation"
             >
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
             </button>
           </>
         )}
@@ -300,7 +334,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
         {/* Dynamic Image Pagination Dots */}
         {imageList.length > 1 && (
           <div
-            className="absolute bottom-2.5 right-2.5 z-10 flex items-center gap-1.5 bg-black/40 backdrop-blur-xs px-2 py-1 rounded-full shadow-xs"
+            className="absolute bottom-2.5 right-2.5 z-10 flex items-center gap-1 bg-black/50 backdrop-blur-xs px-2 py-0.5 rounded-full shadow-md"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -316,12 +350,16 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
                   e.stopPropagation();
                   setCurrentImageIndex(idx);
                 }}
-                className={`rounded-full transition-all duration-200 cursor-pointer ${
-                  idx === currentImageIndex
-                    ? "w-2.5 h-2.5 bg-[#D8BE91] shadow-xs scale-110"
-                    : "w-2 h-2 bg-white/80 hover:bg-white hover:scale-125"
-                }`}
-              />
+                className="p-1 flex items-center justify-center cursor-pointer touch-manipulation"
+              >
+                <span
+                  className={`rounded-full transition-all duration-200 block ${
+                    idx === currentImageIndex
+                      ? "w-2.5 h-2.5 bg-[#D8BE91] shadow-xs scale-110"
+                      : "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white/80 hover:bg-white hover:scale-125"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         )}

@@ -109,19 +109,14 @@ export const LocationModal: React.FC<LocationModalProps> = ({ isOpen, onClose })
             <MapPin className="h-5 w-5 text-[#596B58]" />
             <h2 className="text-base sm:text-lg font-bold">Select Delivery Location</h2>
           </div>
-          {currentLocation ? (
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1.5 rounded-xl text-gray-400 hover:text-[#3B302B] hover:bg-[#F7F2E7] transition-colors cursor-pointer"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          ) : (
-            <span className="text-[10px] sm:text-[11px] font-bold text-[#596B58] bg-[#FFF8EC] px-2 py-0.5 rounded-full border border-[#596B58]/30">
-              Mandatory
-            </span>
-          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-xl text-gray-400 hover:text-[#3B302B] hover:bg-[#F7F2E7] transition-colors cursor-pointer"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         {/* Content */}

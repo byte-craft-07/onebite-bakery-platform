@@ -3,20 +3,16 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Award,
-  Check,
-  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Heart,
   Info,
   Layers,
-  MessageSquare,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
   Star,
-  ThumbsUp,
-  Truck,
-  Users,
   Utensils,
   Zap,
 } from "lucide-react";
@@ -29,16 +25,11 @@ import { catalogService, type ProductItem } from "@/services/catalog.service";
 import { favoritesService } from "@/services/favorites.service";
 import { reviewService } from "@/services/review.service";
 import { RatingModal } from "@/components/review/RatingModal";
+import { ShareButton } from "@/components/sharing";
 import { getOptimizedImageUrl } from "@/utils/cdn.utils";
 
 const FALLBACK_PRODUCT_IMAGE =
   "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=85";
-
-const COMPLEMENTARY_ANGLES = [
-  "https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?auto=format&fit=crop&w=800&q=85",
-  "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=800&q=85",
-  "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=800&q=85",
-];
 
 export const ProductDetailsPage: React.FC = () => {
   const { currentLocation } = useAuth();
@@ -127,31 +118,74 @@ export const ProductDetailsPage: React.FC = () => {
     };
   }, [product]);
 
-  // 3. Compute gallery images
+  // 3. Compute gallery images - strictly match genuine product images
   const detailImages = useMemo(() => {
     const list: string[] = [];
     if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
-      list.push(...product.images);
+      for (const img of product.images) {
+        if (img && typeof img === "string" && img.trim() && !list.includes(img.trim())) {
+          list.push(img.trim());
+        }
+      }
     } else if ((product as any)?.imageUrls && Array.isArray((product as any).imageUrls)) {
-      list.push(...(product as any).imageUrls);
+      for (const img of (product as any).imageUrls) {
+        if (img && typeof img === "string" && img.trim() && !list.includes(img.trim())) {
+          list.push(img.trim());
+        }
+      }
     }
 
-    if (product?.mainImage && !list.includes(product.mainImage)) {
-      list.unshift(product.mainImage);
+    if (product?.mainImage && typeof product.mainImage === "string" && product.mainImage.trim() && !list.includes(product.mainImage.trim())) {
+      list.unshift(product.mainImage.trim());
+    } else if ((product as any)?.thumbnailUrl && typeof (product as any)?.thumbnailUrl === "string" && (product as any)?.thumbnailUrl.trim() && !list.includes((product as any)?.thumbnailUrl.trim())) {
+      list.unshift((product as any).thumbnailUrl.trim());
     }
 
     if (list.length === 0) {
       list.push(FALLBACK_PRODUCT_IMAGE);
     }
-    if (list.length === 1) {
-      list.push(COMPLEMENTARY_ANGLES[0], COMPLEMENTARY_ANGLES[1]);
-    } else if (list.length === 2) {
-      list.push(COMPLEMENTARY_ANGLES[2]);
-    }
     return list;
   }, [product]);
 
   const activeImageUrl = detailImages[selectedImageIndex] || detailImages[0] || FALLBACK_PRODUCT_IMAGE;
+
+  // Dynamic Open Graph & Social Preview Metadata
+  useEffect(() => {
+    if (!product || typeof document === "undefined") return;
+    const originalTitle = document.title;
+    document.title = `${product.name} | The Online Bakery`;
+
+    const setMeta = (property: string, content: string) => {
+      let element = document.querySelector(`meta[property="${property}"], meta[name="${property}"]`);
+      if (!element) {
+        element = document.createElement("meta");
+        element.setAttribute("property", property);
+        document.head.appendChild(element);
+      }
+      element.setAttribute("content", content);
+    };
+
+    setMeta("og:title", `${product.name} | The Online Bakery`);
+    setMeta(
+      "og:description",
+      product.description || `Order freshly baked ${product.name} online from The Online Bakery.`,
+    );
+    setMeta("og:image", activeImageUrl || FALLBACK_PRODUCT_IMAGE);
+    if (typeof window !== "undefined") {
+      setMeta("og:url", window.location.href);
+    }
+    setMeta("twitter:card", "summary_large_image");
+    setMeta("twitter:title", `${product.name} | The Online Bakery`);
+    setMeta(
+      "twitter:description",
+      product.description || `Order freshly baked ${product.name} online from The Online Bakery.`,
+    );
+    setMeta("twitter:image", activeImageUrl || FALLBACK_PRODUCT_IMAGE);
+
+    return () => {
+      document.title = originalTitle;
+    };
+  }, [product, activeImageUrl]);
 
   // 4. Pricing & Discount Calculations
   const effectiveComparePrice = useMemo(() => {
@@ -165,6 +199,47 @@ export const ProductDetailsPage: React.FC = () => {
     if (!product || effectiveComparePrice <= product.price) return 10;
     return Math.round(((effectiveComparePrice - product.price) / effectiveComparePrice) * 100);
   }, [product, effectiveComparePrice]);
+
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+
+  const handlePrevImage = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setSelectedImageIndex((prev) => (prev === 0 ? detailImages.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setSelectedImageIndex((prev) => (prev + 1) % detailImages.length);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.targetTouches[0].clientX);
+    setTouchEndX(null);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX || !touchEndX) return;
+    const distance = touchStartX - touchEndX;
+    const isLeftSwipe = distance > 40;
+    const isRightSwipe = distance < -40;
+
+    if (isLeftSwipe && detailImages.length > 1) {
+      handleNextImage();
+    } else if (isRightSwipe && detailImages.length > 1) {
+      handlePrevImage();
+    }
+  };
 
   // 5. Actions Handlers
   const handleToggleFavorite = async () => {
@@ -291,12 +366,13 @@ export const ProductDetailsPage: React.FC = () => {
   if (!product) {
     return (
       <div className="text-center py-16 space-y-4 max-w-lg mx-auto bg-white p-8 rounded-3xl border border-[#E5DEC9] shadow-sm">
-        <h2 className="text-2xl font-black text-[#3B302B]">Product Not Found</h2>
+        <div className="text-4xl">🍰</div>
+        <h2 className="text-2xl font-black text-[#3B302B]">Product Not Available</h2>
         <p className="text-sm text-[#7A6E65]">
-          The product you are looking for is currently not in our catalog or the link is invalid.
+          Sorry, this product is currently unavailable or the shared link may have expired. Explore our other delicious freshly baked artisanal creations.
         </p>
         <Link to="/products" className="inline-block px-6 py-2.5 bg-[#596B58] text-white font-bold rounded-xl hover:bg-[#495948] transition-colors shadow-sm">
-          Browse All Products
+          Browse Products
         </Link>
       </div>
     );
@@ -324,17 +400,48 @@ export const ProductDetailsPage: React.FC = () => {
         {/* Left Column: Big Image Display Gallery (7 Cols) */}
         <div className="lg:col-span-7 space-y-4">
           {/* Big Featured Image Canvas */}
-          <div className="relative rounded-3xl overflow-hidden border border-[#E5DEC9] bg-[#FFF8EC] shadow-lg aspect-square sm:aspect-4/3 group">
+          <div
+            className="relative rounded-3xl overflow-hidden border border-[#E5DEC9] bg-[#FFF8EC] shadow-lg aspect-square sm:aspect-4/3 group touch-pan-y select-none"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             {detailImages.map((imgSrc, idx) => (
               <img
                 key={idx}
-                src={getOptimizedImageUrl(imgSrc, { width: 900, quality: 85 })}
+                src={getOptimizedImageUrl(imgSrc, { width: 750, quality: 80 })}
                 alt={`${product.name} - View ${idx + 1}`}
-                className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out group-hover:scale-105 ${
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out group-hover:scale-105 select-none ${
                   idx === selectedImageIndex ? "opacity-100 z-1" : "opacity-0 z-0 pointer-events-none"
                 }`}
+                loading={idx === 0 ? "eager" : "lazy"}
+                decoding="async"
+                fetchPriority={idx === 0 ? "high" : "auto"}
+                draggable={false}
               />
             ))}
+
+            {/* Manual Prev / Next Arrow Controls (Visible on mobile and on desktop hover) */}
+            {detailImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrevImage}
+                  aria-label="Previous photo"
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-2.5 rounded-full bg-black/55 text-white hover:bg-black/80 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all cursor-pointer shadow-md active:scale-90 touch-manipulation"
+                >
+                  <ChevronLeft className="h-5 w-5 sm:h-5 sm:w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextImage}
+                  aria-label="Next photo"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-2.5 rounded-full bg-black/55 text-white hover:bg-black/80 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all cursor-pointer shadow-md active:scale-90 touch-manipulation"
+                >
+                  <ChevronRight className="h-5 w-5 sm:h-5 sm:w-5" />
+                </button>
+              </>
+            )}
 
             {/* Top-Left Indian Vegetarian 100% Veg Mark */}
             <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-sm p-1.5 rounded-lg shadow-md flex items-center gap-1.5">
@@ -354,36 +461,55 @@ export const ProductDetailsPage: React.FC = () => {
 
             {/* Dynamic Dot Indicators on Image */}
             {detailImages.length > 1 && (
-              <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
+              <div className="absolute bottom-4 right-4 z-10 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-md">
                 {detailImages.map((_, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setSelectedImageIndex(idx)}
                     aria-label={`Switch to photo ${idx + 1}`}
-                    className={`rounded-full transition-all duration-300 cursor-pointer ${
-                      idx === selectedImageIndex
-                        ? "w-3 h-3 bg-[#E53935] ring-2 ring-white scale-110 shadow-xs"
-                        : "w-2 h-2 bg-white/75 hover:bg-white"
-                    }`}
-                  />
+                    className="p-1 flex items-center justify-center cursor-pointer touch-manipulation"
+                  >
+                    <span
+                      className={`rounded-full transition-all duration-300 block ${
+                        idx === selectedImageIndex
+                          ? "w-3 h-3 bg-[#E53935] ring-2 ring-white scale-110 shadow-xs"
+                          : "w-2 h-2 bg-white/75 hover:bg-white"
+                      }`}
+                    />
+                  </button>
                 ))}
               </div>
             )}
 
-            {/* Favorite / Wishlist Floating Button */}
-            <button
-              type="button"
-              onClick={handleToggleFavorite}
-              aria-label={isFavorite ? "Remove from wishlist" : "Add to wishlist"}
-              className="absolute top-4 right-4 z-10 p-3 rounded-full bg-white/90 hover:bg-white text-gray-800 shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
-            >
-              <Heart
-                className={`h-5 w-5 ${
-                  isFavorite ? "fill-[#DC2626] text-[#DC2626]" : "stroke-[2]"
-                }`}
+            {/* Floating Top-Right Actions: Share & Wishlist */}
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+              <ShareButton
+                product={{
+                  id: product.id,
+                  name: product.name,
+                  slug: product.slug,
+                  price: product.price,
+                  description: product.description,
+                  productType: product.productType,
+                  categoryName: product.categoryId?.name,
+                  mainImage: activeImageUrl,
+                }}
+                variant="floating"
               />
-            </button>
+              <button
+                type="button"
+                onClick={handleToggleFavorite}
+                aria-label={isFavorite ? "Remove from wishlist" : "Add to wishlist"}
+                className="p-2.5 sm:p-3 rounded-full bg-white/90 hover:bg-white text-gray-800 shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer border border-[#E5DEC9]/40"
+              >
+                <Heart
+                  className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${
+                    isFavorite ? "fill-[#DC2626] text-[#DC2626]" : "stroke-[2]"
+                  }`}
+                />
+              </button>
+            </div>
           </div>
 
           {/* High-Resolution Thumbnails Strip */}
@@ -400,7 +526,13 @@ export const ProductDetailsPage: React.FC = () => {
                       : "border-[#E5DEC9] opacity-70 hover:opacity-100 hover:border-gray-400"
                   }`}
                 >
-                  <img src={thumb} alt={`Thumbnail ${idx + 1}`} className="h-full w-full object-cover" />
+                  <img
+                    src={getOptimizedImageUrl(thumb, { width: 160, quality: 75 })}
+                    alt={`Thumbnail ${idx + 1}`}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </button>
               ))}
             </div>
@@ -463,6 +595,24 @@ export const ProductDetailsPage: React.FC = () => {
                 <Star className="h-3.5 w-3.5 fill-current text-amber-500" />
                 <span>Rate this Cake</span>
               </button>
+
+              <span className="text-gray-300">•</span>
+
+              <ShareButton
+                product={{
+                  id: product.id,
+                  name: product.name,
+                  slug: product.slug,
+                  price: product.price,
+                  description: product.description,
+                  productType: product.productType,
+                  categoryName: product.categoryId?.name,
+                  mainImage: activeImageUrl,
+                }}
+                variant="pill"
+                size="sm"
+                label="Share"
+              />
             </div>
           </div>
 
@@ -728,9 +878,15 @@ export const ProductDetailsPage: React.FC = () => {
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
                       <img
-                        src={rev.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"}
+                        src={getOptimizedImageUrl(rev.avatar, { width: 80, height: 80, quality: 75 })}
                         alt={rev.name || rev.customerName}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=75";
+                        }}
                         className="h-9 w-9 rounded-full object-cover border border-amber-200 shadow-2xs"
+                        loading="lazy"
+                        decoding="async"
                       />
                       <div>
                         <div className="flex items-center gap-1.5">

@@ -13,6 +13,12 @@ export interface AdminOrderSummary {
   deliveryTimePreference?: string;
   scheduledDate?: string;
   scheduledTimeSlot?: string;
+  branchSnapshot?: {
+    branchId?: string;
+    name: string;
+    code: string;
+    type?: "MAIN" | "FRANCHISE" | string;
+  };
   addressSnapshot?: {
     fullName?: string;
     phone?: string;
@@ -30,8 +36,11 @@ export interface AdminOrderSummary {
   };
   items?: Array<{
     id?: string;
+    productId?: string;
     productName?: string;
     name?: string;
+    image?: string;
+    thumbnailUrl?: string;
     quantity: number;
     unitPrice: number;
     subtotal?: number;
@@ -57,10 +66,23 @@ export interface PlatformHealthResponse {
 export interface AdminCustomerSummary {
   id: string;
   name: string;
-  phone: string;
+  phone?: string;
   email?: string;
   role: string;
   status: "active" | "blocked";
+  address?: {
+    phone?: string;
+    village?: string;
+    district?: string;
+    street?: string;
+    pincode?: string;
+  };
+  currentLocation?: {
+    villageId?: string;
+    villageName: string;
+    district: string;
+    pincode: string;
+  };
   createdAt: string;
 }
 
@@ -135,7 +157,7 @@ export const adminOperationsService = {
     setStored(LOGS_KEY, [newEntry, ...current]);
   },
 
-  getAllOrders: async (params: { orderStatus?: string; search?: string } = {}): Promise<AdminOrderSummary[]> => {
+  getAllOrders: async (params: { orderStatus?: string; search?: string; branchType?: "MAIN" | "FRANCHISE"; branchId?: string } = {}): Promise<AdminOrderSummary[]> => {
     try {
       const response = await apiClient.get<{
         success: boolean;
@@ -156,12 +178,21 @@ export const adminOperationsService = {
           deliveryTimePreference: o.deliveryTimePreference || (o.scheduledDate ? `📅 Scheduled: ${new Date(o.scheduledDate).toLocaleDateString()} ${o.scheduledTimeSlot || ""}` : "⚡ Instant Delivery (Within 30-45 mins)"),
           scheduledDate: o.scheduledDate,
           scheduledTimeSlot: o.scheduledTimeSlot,
+          branchSnapshot: o.branchSnapshot ? {
+            branchId: o.branchSnapshot.branchId ? String(o.branchSnapshot.branchId) : undefined,
+            name: o.branchSnapshot.name,
+            code: o.branchSnapshot.code,
+            type: o.branchSnapshot.type,
+          } : undefined,
           addressSnapshot: o.addressSnapshot,
           locationSnapshot: o.locationSnapshot,
           items: (o.items || []).map((it: any) => ({
             id: it.id || it._id,
+            productId: it.productId ? String(it.productId) : undefined,
             productName: it.productName || it.productNameSnapshot || it.name || "Bakery Product",
             name: it.productName || it.productNameSnapshot || it.name || "Bakery Product",
+            image: it.image || it.thumbnailUrl || it.imageUrl || (it.imageUrls && it.imageUrls[0]) || it.mainImage,
+            thumbnailUrl: it.thumbnailUrl || it.image || it.imageUrl || (it.imageUrls && it.imageUrls[0]) || it.mainImage,
             quantity: it.quantity || 1,
             unitPrice: it.unitPrice || it.unitPriceSnapshot || 0,
             subtotal: it.subtotal || it.itemTotal || (it.unitPrice || 0) * (it.quantity || 1),
@@ -172,6 +203,12 @@ export const adminOperationsService = {
           notes: o.notes,
           createdAt: o.createdAt || new Date().toISOString(),
         }));
+
+        if (params.branchType === "MAIN") {
+          list = list.filter((o) => !o.branchSnapshot || o.branchSnapshot.type !== "FRANCHISE");
+        } else if (params.branchType === "FRANCHISE") {
+          list = list.filter((o) => o.branchSnapshot?.type === "FRANCHISE");
+        }
 
         if (params.orderStatus && params.orderStatus !== "ALL") {
           list = list.filter((o) => o.orderStatus === params.orderStatus);
@@ -193,7 +230,20 @@ export const adminOperationsService = {
       // Fallback
     }
 
-    return getStored<AdminOrderSummary[]>(ORDERS_KEY, []);
+    let stored = getStored<AdminOrderSummary[]>(ORDERS_KEY, []);
+    if (params.branchType === "MAIN") {
+      stored = stored.filter((o) => !o.branchSnapshot || o.branchSnapshot.type !== "FRANCHISE");
+    } else if (params.branchType === "FRANCHISE") {
+      stored = stored.filter((o) => o.branchSnapshot?.type === "FRANCHISE");
+    }
+    return stored;
+  },
+
+  getMainBranchOrders: async (params: { orderStatus?: string; search?: string } = {}): Promise<AdminOrderSummary[]> => {
+    return adminOperationsService.getAllOrders({
+      ...params,
+      branchType: "MAIN",
+    });
   },
 
   addOrderRecord: (order: Partial<AdminOrderSummary> & { id: string; orderNumber: string; totalAmount: number; fulfillmentType?: string }) => {
@@ -211,6 +261,7 @@ export const adminOperationsService = {
       deliveryTimePreference: order.deliveryTimePreference || "⚡ Instant Delivery (Within 30-45 mins)",
       scheduledDate: order.scheduledDate,
       scheduledTimeSlot: order.scheduledTimeSlot,
+      branchSnapshot: order.branchSnapshot,
       addressSnapshot: order.addressSnapshot,
       locationSnapshot: order.locationSnapshot,
       items: order.items,
@@ -231,6 +282,42 @@ export const adminOperationsService = {
       status,
     });
     return response.data.data.order;
+  },
+
+  deleteOrder: async (orderId: string) => {
+    adminOperationsService.logAuditAction("DELETE_ORDER", `Order #${orderId} deleted`);
+    try {
+      await apiClient.delete(`/orders/admin/orders/${orderId}`);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to delete order";
+      throw new Error(msg);
+    }
+
+    const current = getStored<AdminOrderSummary[]>(ORDERS_KEY, []);
+    const updated = current.filter((o) => o.id !== orderId && o.orderNumber !== orderId);
+    setStored(ORDERS_KEY, updated);
+
+    try {
+      const custKey = "theonlinebakery_customer_orders_list";
+      const raw = localStorage.getItem(custKey);
+      if (raw) {
+        const list = JSON.parse(raw);
+        const filtered = list.filter((o: any) => o.id !== orderId && o.orderNumber !== orderId);
+        localStorage.setItem(custKey, JSON.stringify(filtered));
+      }
+    } catch (_e) {
+      // Ignore
+    }
+  },
+
+  clearAllTestOrders: async () => {
+    adminOperationsService.logAuditAction("CLEAR_TEST_ORDERS", "Cleared local test orders");
+    setStored(ORDERS_KEY, []);
+    try {
+      localStorage.removeItem("theonlinebakery_customer_orders_list");
+    } catch (_e) {
+      // Ignore
+    }
   },
 
   getCustomers: async (): Promise<AdminCustomerSummary[]> => {
@@ -264,7 +351,7 @@ export const adminOperationsService = {
       {
         id: "owner-1",
         name: "Ajay Prajapati",
-        email: "theonlinebakery07@gmail.com",
+        email: "ajaykterha@gmail.com",
         phone: "7897671632",
         role: "admin",
         status: "active",
@@ -363,6 +450,48 @@ export const adminOperationsService = {
     return getStored(NOTIFS_KEY, []);
   },
 
+  getUnreadNotificationCount: async (): Promise<number> => {
+    try {
+      const response = await apiClient.get<{
+        success: boolean;
+        data: { unreadCount: number };
+      }>("/notifications/unread-count");
+      if (typeof response.data?.data?.unreadCount === "number") {
+        return response.data.data.unreadCount;
+      }
+    } catch (_err) {
+      // Fallback
+    }
+    const notifs = getStored<any[]>(NOTIFS_KEY, []);
+    return notifs.filter((n) => !n.isRead).length;
+  },
+
+  markNotificationAsRead: async (id: string) => {
+    try {
+      const response = await apiClient.patch<{
+        success: boolean;
+        data: { notification: any };
+      }>(`/notifications/${id}/read`);
+      return response.data?.data?.notification;
+    } catch (_err) {
+      // Fallback
+    }
+  },
+
+  markAllNotificationsAsRead: async () => {
+    try {
+      const response = await apiClient.patch<{
+        success: boolean;
+        data: { updatedCount: number };
+      }>("/notifications/read-all");
+      return response.data?.data?.updatedCount;
+    } catch (_err) {
+      // Fallback
+    }
+    const notifs = getStored<any[]>(NOTIFS_KEY, []);
+    setStored(NOTIFS_KEY, notifs.map((n) => ({ ...n, isRead: true })));
+  },
+
   sendBroadcastNotification: async (payload: { title: string; message: string; targetRole: string }) => {
     adminOperationsService.logAuditAction("DISPATCH_BROADCAST", `Title: "${payload.title}"`);
     const response = await apiClient.post<{
@@ -387,7 +516,7 @@ export const adminOperationsService = {
     return {
       storeName: "The Online Bakery",
       phone: "+91 7897671632",
-      email: "theonlinebakery07@gmail.com",
+      email: "ajaykterha@gmail.com",
       gstin: "07AAAAA0000A1Z5",
       minOrderValue: 299,
       freeDeliveryThreshold: 799,

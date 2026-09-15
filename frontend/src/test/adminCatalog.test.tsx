@@ -13,7 +13,7 @@ describe("Admin Catalog Management & Media Uploader Tests", () => {
       <MediaUploader value="" onChange={() => {}} />
     );
 
-    expect(screen.getByText("Click to upload or drag image file")).toBeDefined();
+    expect(screen.getByText("Upload from Device")).toBeDefined();
   });
 
   it("renders ProductFormModal form modal", () => {
@@ -22,8 +22,7 @@ describe("Admin Catalog Management & Media Uploader Tests", () => {
     );
 
     expect(screen.getByText("Create New Product")).toBeDefined();
-    expect(screen.getByLabelText("Product Name")).toBeDefined();
-    expect(screen.getByLabelText("SKU Code")).toBeDefined();
+    expect(screen.getByPlaceholderText(/Belgian Truffle Cake/i)).toBeDefined();
   });
 
   it("renders AdminCatalogPage product table layout", () => {

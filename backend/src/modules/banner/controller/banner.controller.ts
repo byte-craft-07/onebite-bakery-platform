@@ -13,10 +13,10 @@ export class BannerController {
         success: true,
         data: { banners },
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(500).json({
         success: false,
-        message: err.message || "Failed to fetch active banners.",
+        message: err instanceof Error ? err.message : "Failed to fetch active banners.",
       });
     }
   };
@@ -28,10 +28,10 @@ export class BannerController {
         success: true,
         data: { banners },
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(500).json({
         success: false,
-        message: err.message || "Failed to fetch banners.",
+        message: err instanceof Error ? err.message : "Failed to fetch banners.",
       });
     }
   };
@@ -51,10 +51,10 @@ export class BannerController {
         success: true,
         data: { banner },
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(500).json({
         success: false,
-        message: err.message || "Failed to fetch banner.",
+        message: err instanceof Error ? err.message : "Failed to fetch banner.",
       });
     }
   };
@@ -67,10 +67,10 @@ export class BannerController {
         message: "Banner created successfully.",
         data: { banner },
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(400).json({
         success: false,
-        message: err.message || "Failed to create banner.",
+        message: err instanceof Error ? err.message : "Failed to create banner.",
       });
     }
   };
@@ -91,10 +91,10 @@ export class BannerController {
         message: "Banner updated successfully.",
         data: { banner },
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(400).json({
         success: false,
-        message: err.message || "Failed to update banner.",
+        message: err instanceof Error ? err.message : "Failed to update banner.",
       });
     }
   };
@@ -114,10 +114,10 @@ export class BannerController {
         success: true,
         message: "Banner deleted successfully.",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(500).json({
         success: false,
-        message: err.message || "Failed to delete banner.",
+        message: err instanceof Error ? err.message : "Failed to delete banner.",
       });
     }
   };
@@ -139,10 +139,10 @@ export class BannerController {
         message: `Banner marked as ${isActive ? "Active" : "Inactive"}.`,
         data: { banner },
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(400).json({
         success: false,
-        message: err.message || "Failed to toggle banner status.",
+        message: err instanceof Error ? err.message : "Failed to toggle banner status.",
       });
     }
   };
@@ -162,10 +162,10 @@ export class BannerController {
         success: true,
         message: "Banners reordered successfully.",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(500).json({
         success: false,
-        message: err.message || "Failed to reorder banners.",
+        message: err instanceof Error ? err.message : "Failed to reorder banners.",
       });
     }
   };

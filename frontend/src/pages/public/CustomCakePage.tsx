@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   PartyPopper,
 } from "lucide-react";
+import { getOptimizedImageUrl } from "@/utils/cdn.utils";
 
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/contexts/toast.context";
@@ -463,9 +464,11 @@ export const CustomCakePage: React.FC = () => {
                     >
                       <div className="aspect-4/3 w-full rounded-xl overflow-hidden mb-1.5 sm:mb-2 relative bg-gray-100">
                         <img
-                          src={dsg.imageUrl || "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=400&q=80"}
+                          src={getOptimizedImageUrl(dsg.imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=75", { width: 280, quality: 75 })}
                           alt={dsg.name}
                           className="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
                         />
                         {isSelected && (
                           <div className="absolute top-1.5 right-1.5 p-1 rounded-full bg-[#596B58] text-white shadow">
@@ -633,9 +636,14 @@ export const CustomCakePage: React.FC = () => {
               {/* Visual Cake Graphic with dynamic Inscription Plaque */}
               <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-[#E5DEC9] bg-stone-900 flex flex-col items-center justify-center p-4 group">
                 <img
-                  src={selectedDesign.imageUrl || selectedFlavor.imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80"}
+                  src={getOptimizedImageUrl(
+                    selectedDesign.imageUrl || selectedFlavor.imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=480&q=75",
+                    { width: 450, quality: 75 }
+                  )}
                   alt="Custom Cake Preview"
                   className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                  decoding="async"
                 />
 
                 {/* Subtle Overlay */}

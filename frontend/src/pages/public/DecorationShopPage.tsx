@@ -5,6 +5,7 @@ import { ArrowLeft, Check, Heart, PartyPopper, ShoppingBag, Star } from "lucide-
 import { Badge } from "@/components/ui/DisplayComponents";
 import { toast } from "@/contexts/toast.context";
 import { cartService } from "@/services/cart.service";
+import { getOptimizedImageUrl } from "@/utils/cdn.utils";
 
 interface DecorationItem {
   id: string;
@@ -45,7 +46,7 @@ const DECORATION_ITEMS: DecorationItem[] = [
     price: 249,
     originalPrice: 299,
     rating: 4.9,
-    image: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80",
     description: "Reusable mirrored gold acrylic topper customized for your celebration.",
   },
   {
@@ -121,14 +122,17 @@ export const DecorationShopPage: React.FC = () => {
             >
               <div className="relative aspect-square sm:aspect-4/3 overflow-hidden bg-[#FFF8EC]">
                 <img
-                  src={item.image}
+                  src={getOptimizedImageUrl(item.image, { width: 360, quality: 75 })}
                   alt={item.name}
                   onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80";
+                    if (e.currentTarget.dataset.failed !== "true") {
+                      e.currentTarget.dataset.failed = "true";
+                      e.currentTarget.src = "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=360&q=75";
+                    }
                   }}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
+                  decoding="async"
                 />
                 <div className="absolute top-2 sm:top-3 left-2 sm:left-3">
                   <Badge variant="primary" className="text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5">{item.category}</Badge>

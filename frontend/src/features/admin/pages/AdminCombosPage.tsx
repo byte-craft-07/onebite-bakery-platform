@@ -496,23 +496,14 @@ export const AdminCombosPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Image URL & Media Library */}
-          <div className="space-y-2">
-            <label className="block text-xs font-bold text-[#3B302B]">
-              Hamper Main Image URL <span className="text-red-500">*</span>
-            </label>
-            <Input
+          {/* Image Upload / URL */}
+          <div className="space-y-1">
+            <MediaUploader
               value={image}
-              onChange={(e) => setImage(e.target.value)}
-              placeholder="https://images.unsplash.com/... or /uploads/..."
-              required
+              onChange={(url) => setImage(url)}
+              label="Hamper Main Image (Upload from Device or URL) *"
+              entityType="PRODUCT"
             />
-            <div className="p-3 bg-[#FFF8EC]/60 rounded-xl border border-[#E5DEC9]">
-              <p className="text-[11px] font-semibold text-[#7A6E65] mb-2">
-                Or upload/select image from Media Library:
-              </p>
-              <MediaUploader value={image} onChange={(url) => setImage(url)} />
-            </div>
           </div>
 
           {/* Dynamic Items Builder */}

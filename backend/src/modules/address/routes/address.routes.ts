@@ -3,11 +3,13 @@ import { Types } from "mongoose";
 import { z } from "zod";
 
 import { requireAuth, type AuthenticatedRequest } from "../../auth/index.js";
+import { normalizeIndianPhone } from "../../auth/utils/phone-normalizer.js";
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
 import { AppError } from "../../../shared/errors/app-error.js";
 import { validateRequest } from "../../../shared/middlewares/validate-request.middleware.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { AddressModel, type Address } from "../model/index.js";
+import { UserModel } from "../../user/model/index.js";
 
 export const addressRouter = Router();
 
@@ -18,7 +20,7 @@ const addressIdParamSchema = z.object({
 const addressPayloadSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().optional(),
-  phone: z.string().trim().regex(/^[0-9]{10,15}$/),
+  phone: z.string().trim().transform((val) => normalizeIndianPhone(val)),
   district: z.string().trim().min(2).max(120).optional(),
   village: z.string().trim().min(2).max(120).optional(),
   street: z.string().trim().min(5).max(500),
@@ -145,6 +147,21 @@ addressRouter.post(
       },
     });
 
+    if (payload.phone) {
+      try {
+        const user = await UserModel.findById(userId).exec();
+        if (user && !user.phone) {
+          const conflict = await UserModel.findOne({ phone: payload.phone, _id: { $ne: userId } }).exec();
+          if (!conflict) {
+            user.phone = payload.phone;
+            await user.save();
+          }
+        }
+      } catch {
+        // Safe fallback
+      }
+    }
+
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: { address: toAddressResponse(address) },
@@ -186,6 +203,21 @@ addressRouter.put(
 
     if (!address) {
       throw new AppError("Address not found.", HTTP_STATUS.NOT_FOUND);
+    }
+
+    if (payload.phone) {
+      try {
+        const user = await UserModel.findById(userId).exec();
+        if (user && !user.phone) {
+          const conflict = await UserModel.findOne({ phone: payload.phone, _id: { $ne: userId } }).exec();
+          if (!conflict) {
+            user.phone = payload.phone;
+            await user.save();
+          }
+        }
+      } catch {
+        // Safe fallback
+      }
     }
 
     res.json({ success: true, data: { address: toAddressResponse(address) } });

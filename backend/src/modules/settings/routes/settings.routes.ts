@@ -71,7 +71,7 @@ const toSettingsResponse = (settings: Settings) => ({
   officialHindiTagline: "हर जश्न का पहला निवाला।",
   officialEnglishTagline: "Pure Joy in Every Single Bite",
   phone: `+91 ${settings.phone}`,
-  email: "theonlinebakery07@gmail.com",
+  email: "ajaykterha@gmail.com",
   gstin: "07AAAAA0000A1Z5",
   fssaiLicNo: "10020011000123",
   address: settings.address,

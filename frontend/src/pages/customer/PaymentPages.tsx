@@ -67,6 +67,12 @@ export const PaymentPage: React.FC = () => {
     if (!orderId) return;
     setErrorMsg(null);
     setStatusMsg(null);
+
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setErrorMsg("You are currently offline. Please reconnect to the internet to complete payment.");
+      return;
+    }
+
     setIsProcessing(true);
 
     try {

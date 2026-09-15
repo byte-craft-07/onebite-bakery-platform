@@ -58,6 +58,14 @@
     display: flex;
     flex-direction: column;
   }
+
+  /* PWA Safe Area insets */
+  .pwa-safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .pwa-safe-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
 }
 
 /* Global Custom Form Controls & Select Option Styling */
@@ -99,7 +107,7 @@ select,
 textarea {
   border-radius: 0.75rem;
   border-color: #E5DEC9;
-  color: #3B302B;
+  color: inherit;
   transition: all 0.2s ease-in-out;
   font-size: 16px;
 }
@@ -117,11 +125,9 @@ textarea {
   }
 }
 
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: #596B58 !important;
-  box-shadow: 0 0 0 3px rgba(89, 107, 88, 0.2) !important;
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: none;
 }
 

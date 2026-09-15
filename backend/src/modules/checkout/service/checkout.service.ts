@@ -1,3 +1,4 @@
+import type { Types } from "mongoose";
 import { toObjectId } from "../../../db/utils/object-id.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
@@ -46,12 +47,63 @@ export class CheckoutService {
     try {
       const { UserModel } = await import("../../user/model/user.model.js");
       if (UserModel.db?.readyState === 1) {
-        const userDoc = await UserModel.findById(customerObjId).exec();
-        if (userDoc?.currentLocation?.villageId) {
+        let villageToResolve: string | undefined = query.villageId;
+
+        if (!villageToResolve && query.addressId) {
+          const { AddressModel } = await import("../../address/index.js");
+          const addressDoc = await AddressModel.findOne({
+            _id: toObjectId(query.addressId),
+            userId: customerObjId,
+          }).exec();
+
+          if (addressDoc) {
+            const { VillageModel } = await import("../../village/model/village.model.js");
+            let vDoc = null;
+            if (addressDoc.village) {
+              vDoc = await VillageModel.findOne({
+                name: new RegExp(`^${addressDoc.village.trim()}$`, "i"),
+                isActive: true,
+              }).exec();
+            }
+            if (!vDoc && addressDoc.city) {
+              vDoc = await VillageModel.findOne({
+                name: new RegExp(`^${addressDoc.city.trim()}$`, "i"),
+                isActive: true,
+              }).exec();
+            }
+            if (!vDoc && addressDoc.address) {
+              vDoc = await VillageModel.findOne({
+                name: new RegExp(addressDoc.address.trim(), "i"),
+                isActive: true,
+              }).exec();
+            }
+
+            if (vDoc) {
+              villageToResolve = vDoc._id.toString();
+            } else {
+              villageToResolve = addressDoc.village || addressDoc.city;
+            }
+          }
+        }
+
+        if (!villageToResolve && query.villageName) {
+          villageToResolve = query.villageName;
+        }
+
+        if (!villageToResolve && customerObjId) {
+          const userDoc = await UserModel.findById(customerObjId).exec();
+          if (userDoc?.currentLocation?.villageId) {
+            villageToResolve = userDoc.currentLocation.villageId.toString();
+          } else if (userDoc?.currentLocation?.villageName) {
+            villageToResolve = userDoc.currentLocation.villageName;
+          }
+        }
+
+        if (villageToResolve) {
           const { BranchService } = await import("../../branch/service/branch.service.js");
           const { BranchRepository } = await import("../../branch/repository/branch.repository.js");
           const branchService = new BranchService(new BranchRepository());
-          const branchDoc = await branchService.resolveBranchForVillage(userDoc.currentLocation.villageId);
+          const branchDoc = await branchService.resolveBranchForVillage(villageToResolve);
           if (branchDoc) customerBranchId = branchDoc._id.toString();
         }
       }
@@ -162,9 +214,19 @@ export class CheckoutService {
     let selectedAddress: Record<string, unknown> | undefined;
     let villageDeliveryCharge: number | undefined;
     let villageFreeThreshold: number | undefined;
+    let addressDoc: {
+      _id: Types.ObjectId;
+      fullName: string;
+      phone: string;
+      address: string;
+      city: string;
+      state: string;
+      pincode: string;
+      landmark?: string;
+    } | null = null;
 
     if (query.addressId) {
-      const addressDoc = await AddressModel.findOne({
+      addressDoc = await AddressModel.findOne({
         _id: toObjectId(query.addressId),
         userId: customerObjId,
       }).exec();
@@ -184,62 +246,29 @@ export class CheckoutService {
           pincode: addressDoc.pincode,
           landmark: addressDoc.landmark,
         };
-
-        // Resolve village specific delivery charge
-        try {
-          const { VillageModel } = await import("../../village/model/village.model.js");
-          if (VillageModel.db?.readyState === 1) {
-            let villageDoc: any = null;
-
-            if (query.villageId) {
-              villageDoc = await VillageModel.findById(toObjectId(query.villageId)).exec();
-            }
-
-            if (!villageDoc && query.villageName) {
-              villageDoc = await VillageModel.findOne({ name: new RegExp(`^${query.villageName.trim()}$`, "i"), isActive: true }).exec();
-            }
-
-            if (!villageDoc && addressDoc) {
-              villageDoc =
-                (addressDoc.city ? await VillageModel.findOne({ name: new RegExp(`^${addressDoc.city.trim()}$`, "i"), isActive: true }).exec() : null) ||
-                (addressDoc.address ? await VillageModel.findOne({ name: new RegExp(addressDoc.address.trim(), "i"), isActive: true }).exec() : null);
-            }
-
-            if (!villageDoc && customerObjId) {
-              const { UserModel } = await import("../../user/model/user.model.js");
-              const userDoc = await UserModel.findById(customerObjId).exec();
-              if (userDoc?.currentLocation?.villageId) {
-                villageDoc = await VillageModel.findById(toObjectId(userDoc.currentLocation.villageId)).exec();
-              } else if (userDoc?.currentLocation?.villageName) {
-                villageDoc = await VillageModel.findOne({ name: new RegExp(`^${userDoc.currentLocation.villageName.trim()}$`, "i"), isActive: true }).exec();
-              }
-            }
-
-            if (villageDoc) {
-              if (villageDoc.deliveryCharge !== undefined && villageDoc.deliveryCharge !== null) {
-                villageDeliveryCharge = villageDoc.deliveryCharge;
-              }
-              if (villageDoc.freeDeliveryThreshold !== undefined && villageDoc.freeDeliveryThreshold !== null) {
-                villageFreeThreshold = villageDoc.freeDeliveryThreshold;
-              }
-            }
-          }
-        } catch (_err) {
-          // Fallback
-        }
       }
-    } else {
-      // No addressId passed in query; resolve from query.villageId, query.villageName or customer location
+    }
+
+      // Resolve village specific delivery charge
       try {
         const { VillageModel } = await import("../../village/model/village.model.js");
         if (VillageModel.db?.readyState === 1) {
-          let villageDoc: any = null;
+          let villageDoc: { deliveryCharge?: number; freeDeliveryThreshold?: number } | null = null;
+
           if (query.villageId) {
             villageDoc = await VillageModel.findById(toObjectId(query.villageId)).exec();
           }
+
           if (!villageDoc && query.villageName) {
             villageDoc = await VillageModel.findOne({ name: new RegExp(`^${query.villageName.trim()}$`, "i"), isActive: true }).exec();
           }
+
+          if (!villageDoc && addressDoc) {
+            villageDoc =
+              (addressDoc.city ? await VillageModel.findOne({ name: new RegExp(`^${addressDoc.city.trim()}$`, "i"), isActive: true }).exec() : null) ||
+              (addressDoc.address ? await VillageModel.findOne({ name: new RegExp(addressDoc.address.trim(), "i"), isActive: true }).exec() : null);
+          }
+
           if (!villageDoc && customerObjId) {
             const { UserModel } = await import("../../user/model/user.model.js");
             const userDoc = await UserModel.findById(customerObjId).exec();
@@ -262,7 +291,6 @@ export class CheckoutService {
       } catch (_err) {
         // Fallback
       }
-    }
 
     const discountAmount = cart.estimatedDiscount ?? cart.couponDiscount ?? 0;
     const freeDeliveryThreshold = villageFreeThreshold ?? (settings?.freeDeliveryThreshold ?? 799);

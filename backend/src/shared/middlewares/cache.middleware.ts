@@ -12,7 +12,7 @@ export interface CacheMiddlewareOptions {
  */
 export const defaultCacheKeyGenerator = (req: Request): string => {
   const branchId = (req.headers["x-branch-id"] as string) || "all";
-  const userRole = (req as any).user?.role || "public";
+  const userRole = (req as Request & { user?: { role?: string } }).user?.role || "public";
   const queryString = Object.keys(req.query).length > 0 ? JSON.stringify(req.query) : "";
   return `api:${req.method}:${req.baseUrl}${req.path}:${queryString}:branch:${branchId}:role:${userRole}`;
 };

@@ -172,12 +172,14 @@ export const BranchAdminOrdersPage: React.FC = () => {
         }
       }
 
-      if (branchOrders.length === 0) {
+      if (branchOrders.length === 0 && activeBranchId) {
         const globalOrders = await adminOperationsService.getAllOrders({
           orderStatus: selectedStatus !== "ALL" ? selectedStatus : undefined,
         });
 
-        branchOrders = globalOrders.map((g) => ({
+        branchOrders = globalOrders
+          .filter((g) => (g.branchSnapshot?.branchId && g.branchSnapshot.branchId === activeBranchId) || (g as any).branchId === activeBranchId)
+          .map((g) => ({
           id: g.id,
           orderNumber: g.orderNumber,
           orderStatus: g.orderStatus as any,
@@ -249,7 +251,7 @@ export const BranchAdminOrdersPage: React.FC = () => {
     setErrorMsg(null);
 
     try {
-      const fullChain = ["PENDING", "CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED"];
+      const fullChain = ["PENDING", "CONFIRMED", "PACKED", "OUT_FOR_DELIVERY", "DELIVERED"];
 
       if (newStatus === "CANCELLED") {
         await adminOperationsService.updateOrderStatus(orderId, "CANCELLED");
@@ -338,7 +340,7 @@ export const BranchAdminOrdersPage: React.FC = () => {
       {/* Status Filter Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         <Filter className="h-4 w-4 text-[#7A6E65] shrink-0" />
-        {["ALL", "PENDING", "CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"].map((status) => (
+        {["ALL", "PENDING", "CONFIRMED", "PACKED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"].map((status) => (
           <button
             key={status}
             onClick={() => setSelectedStatus(status)}
@@ -588,7 +590,7 @@ export const BranchAdminOrdersPage: React.FC = () => {
                     >
                       <option value="PENDING">PENDING</option>
                       <option value="CONFIRMED">CONFIRMED</option>
-                      <option value="PREPARING">PREPARING</option>
+                      <option value="PACKED">PACKED</option>
                       <option value="OUT_FOR_DELIVERY">OUT FOR DELIVERY</option>
                       <option value="DELIVERED">DELIVERED</option>
                       <option value="CANCELLED">CANCELLED</option>
@@ -617,7 +619,7 @@ export const BranchAdminOrdersPage: React.FC = () => {
       {/* Details Modal */}
       {activeOrderModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="bg-white border border-[#E5DEC9] rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto space-y-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white border border-[#E5DEC9] rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar space-y-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-4 border-b border-[#E5DEC9]">
               <div>
                 <h3 className="text-lg font-extrabold text-[#3B302B]">

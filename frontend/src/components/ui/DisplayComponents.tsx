@@ -71,18 +71,18 @@ export const Modal: React.FC<{
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-2xl border border-[#E5DEC9] max-w-lg w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 my-8 max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#E5DEC9] shrink-0">
-          {title ? <h3 className="text-xl font-bold text-[#3B302B]">{title}</h3> : <div />}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/55 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white rounded-3xl border border-[#E5DEC9] max-w-lg w-full p-4 sm:p-6 shadow-2xl animate-in fade-in zoom-in-95 my-auto max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center mb-3 pb-3 border-b border-[#E5DEC9] shrink-0">
+          {title ? <h3 className="text-lg sm:text-xl font-bold text-[#3B302B]">{title}</h3> : <div />}
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#3B302B] text-2xl font-bold p-1 leading-none cursor-pointer"
+            className="text-gray-400 hover:text-[#3B302B] text-2xl font-bold p-1 leading-none cursor-pointer rounded-lg hover:bg-gray-100 transition-colors"
           >
             &times;
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto pr-1 space-y-4">{children}</div>
+        <div className="flex-1 overflow-y-auto pr-1 sm:pr-1.5 space-y-4 custom-scrollbar">{children}</div>
       </div>
     </div>
   );

@@ -21,7 +21,12 @@ import {
   OTP_RATE_LIMITS,
   OTP_RESPONSE_MESSAGES,
 } from "../constants/index.js";
-import { sendOtpSchema, verifyOtpSchema, loginWithPasswordSchema } from "../validators/index.js";
+import {
+  sendOtpSchema,
+  verifyOtpSchema,
+  loginWithPasswordSchema,
+  verifyPhoneTokenSchema,
+} from "../validators/index.js";
 
 export const authRouter = Router();
 
@@ -109,6 +114,13 @@ authRouter.post(
   verifyOtpRateLimiter,
   validateRequest({ body: verifyOtpSchema }),
   asyncHandler(authController.verifyOtp),
+);
+
+authRouter.post(
+  "/phone/verify",
+  verifyOtpRateLimiter,
+  validateRequest({ body: verifyPhoneTokenSchema }),
+  asyncHandler(authController.verifyPhoneToken),
 );
 
 authRouter.post(

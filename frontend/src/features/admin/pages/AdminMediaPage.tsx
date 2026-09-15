@@ -36,7 +36,7 @@ const INITIAL_ASSETS: MediaAsset[] = [
   {
     id: "med-3",
     filename: "birthday-celebration-hero.jpg",
-    url: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80",
+    url: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=600&q=80",
     entityType: "OCCASION",
     size: "1.5 MB",
     createdAt: new Date().toISOString(),
@@ -97,8 +97,10 @@ export const AdminMediaPage: React.FC = () => {
                 src={asset.url}
                 alt={asset.filename}
                 onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
+                  if (e.currentTarget.dataset.failed !== "true") {
+                    e.currentTarget.dataset.failed = "true";
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
+                  }
                 }}
                 className="h-full w-full object-cover"
               />

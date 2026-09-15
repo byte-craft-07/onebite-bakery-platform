@@ -19,6 +19,19 @@ export interface AuthenticatedUserLocation {
   pincode: string;
 }
 
+export interface AuthenticatedUserAddress {
+  id?: string;
+  phone?: string;
+  village?: string;
+  district?: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  landmark?: string;
+  isDefault?: boolean;
+}
+
 export interface AuthenticatedUser {
   id: string;
   name: string;
@@ -27,8 +40,10 @@ export interface AuthenticatedUser {
   role: UserRole;
   branchId?: string;
   currentLocation?: AuthenticatedUserLocation;
+  address?: AuthenticatedUserAddress;
   profileImage?: string;
   isVerified: boolean;
+  phoneVerified?: boolean;
 }
 
 export interface AuthTokens {

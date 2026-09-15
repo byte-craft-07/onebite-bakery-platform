@@ -77,10 +77,10 @@ const INITIAL_DEFAULT_BRANCHES: BranchDetails[] = [
       pincode: "210502",
     },
     phone: "7897671632",
-    email: "theonlinebakery07@gmail.com",
+    email: "ajaykterha@gmail.com",
     managerName: "Ajay Prajapati",
     managerPhone: "7897671632",
-    managerEmail: "theonlinebakery07@gmail.com",
+    managerEmail: "ajaykterha@gmail.com",
     isActive: true,
     villageCount: 5,
     villages: [
@@ -150,213 +150,95 @@ function persistBranchLocally(branch: BranchDetails) {
 
 export const adminBranchService = {
   getAllBranches: async (): Promise<BranchDetails[]> => {
-    try {
-      const response = await apiClient.get<{
-        success: boolean;
-        data: { branches: BranchDetails[] };
-      }>("/branches");
-      if (response.data?.data?.branches && response.data.data.branches.length > 0) {
-        const normalized = response.data.data.branches.map((b) => ({
-          ...b,
-          id: b.id || b._id || `br_${Date.now()}`,
-        }));
-        try {
-          localStorage.setItem(LOCAL_BRANCHES_KEY, JSON.stringify(normalized));
-        } catch (_e) {
-          // Ignore
-        }
-        return normalized;
-      }
-    } catch (_err) {
-      // Return local stored branches
-    }
-    return getStoredBranches();
+    const response = await apiClient.get<{
+      success: boolean;
+      data: { branches: BranchDetails[] };
+    }>("/branches");
+    const list = response.data?.data?.branches || [];
+    return list.map((b) => ({
+      ...b,
+      id: b.id || b._id || "",
+    }));
   },
 
   getBranchById: async (id: string): Promise<BranchDetails> => {
-    try {
-      const response = await apiClient.get<{
-        success: boolean;
-        data: { branch: BranchDetails };
-      }>(`/branches/${id}`);
-      if (response.data?.data?.branch) {
-        const b = response.data.data.branch;
-        const normalized = { ...b, id: b.id || b._id || id };
-        persistBranchLocally(normalized);
-        return normalized;
-      }
-    } catch (_err) {
-      // Fallback
-    }
-    const local = getStoredBranches().find((b) => b.id === id || b._id === id);
-    if (local) return local;
-    throw new Error("Branch not found.");
+    const response = await apiClient.get<{
+      success: boolean;
+      data: { branch: BranchDetails };
+    }>(`/branches/${id}`);
+    const b = response.data.data.branch;
+    return {
+      ...b,
+      id: b.id || b._id || id,
+    };
   },
 
   createBranch: async (payload: CreateBranchPayload): Promise<BranchDetails> => {
-    try {
-      const response = await apiClient.post<{
-        success: boolean;
-        data: { branch: BranchDetails };
-      }>("/branches", payload);
-      if (response.data?.data?.branch) {
-        const created = response.data.data.branch;
-        const normalized = { ...created, id: created.id || created._id || `br_${Date.now()}` };
-        persistBranchLocally(normalized);
-        return normalized;
-      }
-    } catch (_err) {
-      // Fallback
-    }
-
-    const newBranch: BranchDetails = {
-      id: `branch_${Date.now()}`,
-      _id: `branch_${Date.now()}`,
-      name: payload.name,
-      code: payload.code.toUpperCase().trim(),
-      type: payload.type,
-      address: payload.address,
-      phone: payload.phone,
-      email: payload.email,
-      managerName: payload.adminCredentials?.name || undefined,
-      managerPhone: payload.adminCredentials?.phone || undefined,
-      managerEmail: payload.adminCredentials?.email || undefined,
-      isActive: true,
-      villageCount: 0,
-      villages: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { branch: BranchDetails };
+    }>("/branches", payload);
+    const created = response.data.data.branch;
+    return {
+      ...created,
+      id: created.id || created._id || "",
     };
-    persistBranchLocally(newBranch);
-    return newBranch;
   },
 
   updateBranch: async (id: string, payload: UpdateBranchPayload): Promise<BranchDetails> => {
-    try {
-      const response = await apiClient.patch<{
-        success: boolean;
-        data: { branch: BranchDetails };
-      }>(`/branches/${id}`, payload);
-      if (response.data?.data?.branch) {
-        const updated = response.data.data.branch;
-        const normalized = { ...updated, id: updated.id || updated._id || id };
-        persistBranchLocally(normalized);
-        return normalized;
-      }
-    } catch (_err) {
-      // Fallback
-    }
-
-    const current = getStoredBranches().find((b) => b.id === id || b._id === id);
-    const updated: BranchDetails = {
-      ...(current || ({} as any)),
-      id,
-      _id: id,
-      name: payload.name ?? current?.name ?? "Updated Branch",
-      type: payload.type ?? current?.type ?? "FRANCHISE",
-      phone: payload.phone ?? current?.phone ?? "",
-      email: payload.email ?? current?.email ?? "",
-      address: {
-        ...(current?.address || { street: "", city: "", state: "", pincode: "" }),
-        ...(payload.address || {}),
-      },
-      managerName: payload.adminCredentials?.name ?? current?.managerName,
-      managerPhone: payload.adminCredentials?.phone ?? current?.managerPhone,
-      managerEmail: payload.adminCredentials?.email ?? current?.managerEmail,
-      updatedAt: new Date().toISOString(),
+    const response = await apiClient.patch<{
+      success: boolean;
+      data: { branch: BranchDetails };
+    }>(`/branches/${id}`, payload);
+    const updated = response.data.data.branch;
+    return {
+      ...updated,
+      id: updated.id || updated._id || id,
     };
-    persistBranchLocally(updated);
-    return updated;
   },
 
   updateBranchStatus: async (id: string, isActive: boolean): Promise<BranchDetails> => {
-    try {
-      const response = await apiClient.patch<{
-        success: boolean;
-        data: { branch: BranchDetails };
-      }>(`/branches/${id}/status`, { isActive });
-      if (response.data?.data?.branch) {
-        const updated = response.data.data.branch;
-        const normalized = { ...updated, id: updated.id || updated._id || id };
-        persistBranchLocally(normalized);
-        return normalized;
-      }
-    } catch (_err) {
-      // Fallback
-    }
-
-    const current = getStoredBranches().find((b) => b.id === id || b._id === id);
-    const updated: BranchDetails = {
-      ...(current || ({} as any)),
-      id,
-      _id: id,
-      isActive,
-      updatedAt: new Date().toISOString(),
+    const response = await apiClient.patch<{
+      success: boolean;
+      data: { branch: BranchDetails };
+    }>(`/branches/${id}/status`, { isActive });
+    const updated = response.data.data.branch;
+    return {
+      ...updated,
+      id: updated.id || updated._id || id,
     };
-    persistBranchLocally(updated);
-    return updated;
   },
 
   assignServiceArea: async (branchId: string, villageId: string) => {
-    try {
-      const response = await apiClient.post<{
-        success: boolean;
-        message: string;
-      }>(`/branches/${branchId}/service-areas`, { villageId });
-      return response.data;
-    } catch (_err) {
-      const branches = getStoredBranches();
-      const b = branches.find((item) => item.id === branchId || item._id === branchId);
-      if (b) {
-        if (!b.villages) b.villages = [];
-        if (!b.villages.some((v) => v.id === villageId)) {
-          b.villages.push({
-            id: villageId,
-            name: "Assigned Village",
-            district: b.address?.city || "Local",
-            pincode: b.address?.pincode || "208001",
-          });
-          b.villageCount = b.villages.length;
-          persistBranchLocally(b);
-        }
-      }
-      return { success: true, message: "Village assigned successfully." };
-    }
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      data?: { village: unknown };
+    }>(`/branches/${branchId}/service-areas`, { villageId });
+    return response.data;
   },
 
   unassignServiceArea: async (branchId: string, serviceAreaId: string) => {
-    try {
-      const response = await apiClient.delete<{
-        success: boolean;
-        message: string;
-      }>(`/branches/${branchId}/service-areas/${serviceAreaId}`);
-      return response.data;
-    } catch (_err) {
-      const branches = getStoredBranches();
-      const b = branches.find((item) => item.id === branchId || item._id === branchId);
-      if (b && b.villages) {
-        b.villages = b.villages.filter((v) => v.id !== serviceAreaId);
-        b.villageCount = b.villages.length;
-        persistBranchLocally(b);
-      }
-      return { success: true, message: "Village removed successfully." };
-    }
+    const response = await apiClient.delete<{
+      success: boolean;
+      message: string;
+    }>(`/branches/${branchId}/service-areas/${serviceAreaId}`);
+    return response.data;
   },
 
-  assignBranchAdmin: async (branchId: string, userId: string) => {
-    try {
-      const response = await apiClient.post<{
-        success: boolean;
-        data: { branch: BranchDetails };
-      }>(`/branches/${branchId}/assign-admin`, { userId });
-      if (response.data?.data?.branch) {
-        persistBranchLocally(response.data.data.branch);
-        return response.data.data.branch;
-      }
-    } catch (_err) {
-      // Fallback
-    }
-    const current = getStoredBranches().find((b) => b.id === branchId || b._id === branchId);
-    return current!;
+  assignBranchAdmin: async (branchId: string, userId: string): Promise<BranchDetails> => {
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { branch: BranchDetails };
+    }>(`/branches/${branchId}/assign-admin`, { userId });
+    return response.data.data.branch;
+  },
+
+  removeBranchAdmin: async (branchId: string, userId: string): Promise<BranchDetails> => {
+    const response = await apiClient.delete<{
+      success: boolean;
+      data: { branch: BranchDetails };
+    }>(`/branches/${branchId}/admin/${userId}`);
+    return response.data.data.branch;
   },
 };

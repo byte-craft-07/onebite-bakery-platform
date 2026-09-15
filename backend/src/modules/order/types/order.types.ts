@@ -17,6 +17,11 @@ export interface OrderResponse {
   id: string;
   orderNumber: string;
   customerId: string;
+  customerName?: string;
+  customerPhone?: string;
+  totalAmount?: number;
+  subtotal?: number;
+  deliveryCharge?: number;
   branchId?: string;
   deliveryAgentId?: string;
   items: OrderItemSnapshot[];

@@ -24,7 +24,7 @@ export const createCategorySchema = z.object({
   name: z.string().trim().min(1).max(120),
   slug: slugSchema.optional(),
   description: z.string().trim().min(1).max(1000).optional().default("Fresh artisanal category from The Online Bakery."),
-  image: z.string().trim().min(1).optional().default("https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=800&q=80"),
+  image: z.string().trim().min(1).optional().default("https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80"),
   icon: z.string().trim().min(1).max(120).optional(),
   displayOrder: z.number().int().min(0).default(0),
   isActive: z.boolean().default(true),

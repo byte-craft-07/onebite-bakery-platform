@@ -39,52 +39,41 @@ const normalizeAuthPhone = (phone: string): string =>
 
 export const authService = {
   sendOtp: async (payload: SendOtpPayload) => {
-    try {
-      const response = await apiClient.post<{ success: boolean; message: string }>("/auth/send-otp", payload);
-      return response.data;
-    } catch (err: any) {
-      if (import.meta.env.DEV) {
-        return { success: true, message: "Dev mode OTP verification code is 123456." };
-      }
-      throw err;
-    }
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      data?: {
+        expiresInSeconds: number;
+        cooldownSeconds: number;
+        devOtp?: string;
+        devHint?: string;
+      };
+    }>("/auth/send-otp", payload);
+    return response.data;
   },
 
   verifyOtp: async (payload: VerifyOtpPayload) => {
-    try {
-      const otp = payload.otp ?? payload.code;
-      const response = await apiClient.post<{
-        success: boolean;
-        data: { user: UserProfileResponse; accessToken?: string };
-      }>("/auth/verify-otp", {
-        phone: payload.phone,
-        purpose: payload.purpose,
-        otp,
-      });
-      return response.data;
-    } catch (err: any) {
-      if (import.meta.env.DEV) {
-        const isDevAdmin = payload.phone === "7897671632" || payload.phone === "9999999999";
-        const email = isDevAdmin ? "theonlinebakery07@gmail.com" : "customer@theonlinebakery.com";
-        const name = isDevAdmin ? "Ajay Prajapati" : "Bakery Customer";
-        const devUser: UserProfileResponse = {
-          id: isDevAdmin ? "dev-admin-id" : `usr-${Date.now()}`,
-          phone: payload.phone,
-          name,
-          email,
-          role: isDevAdmin ? "admin" : "customer",
-          profileImage: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=E67E22&color=ffffff&bold=true&size=256`,
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        return {
-          success: true,
-          data: { user: devUser, accessToken: "dev-session-token" },
-        };
-      }
-      throw err;
-    }
+    const otp = payload.otp ?? payload.code;
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { user: UserProfileResponse; accessToken?: string };
+    }>("/auth/verify-otp", {
+      phone: payload.phone,
+      purpose: payload.purpose,
+      otp,
+    });
+    return response.data;
+  },
+
+  verifyPhoneAccessToken: async (accessToken: string) => {
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      data: { user: UserProfileResponse };
+    }>("/auth/phone/verify", {
+      accessToken,
+    });
+    return response.data;
   },
 
   loginWithPassword: async (identifier: string, password: string): Promise<UserProfileResponse> => {
@@ -103,8 +92,10 @@ export const authService = {
           identifier.toLowerCase().includes("admin") ||
           identifier === "7897671632" ||
           identifier === "9999999999" ||
+          identifier.toLowerCase() === "ajaykterha@gmail.com" ||
+          identifier.toLowerCase() === "ajayterha@gmail.com" ||
           identifier.toLowerCase() === "theonlinebakery07@gmail.com";
-        const email = identifier.includes("@") ? identifier : (isDevAdmin ? "theonlinebakery07@gmail.com" : "customer@theonlinebakery.com");
+        const email = identifier.includes("@") ? identifier : (isDevAdmin ? "ajaykterha@gmail.com" : "customer@theonlinebakery.com");
         const name = isDevAdmin ? "Ajay Prajapati" : (identifier.includes("@") ? identifier.split("@")[0] : "Branch Admin");
         const devUser: UserProfileResponse = {
           id: isDevAdmin ? "dev-admin-id" : `usr-${Date.now()}`,

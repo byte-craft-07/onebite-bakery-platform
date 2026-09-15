@@ -87,7 +87,7 @@ export const MOCK_OCCASIONS: MockOccasion[] = [
     id: "occ-1",
     name: "Birthdays",
     slug: "birthdays",
-    image: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=600&q=80",
     tagline: "Celebrate special milestones with custom tiered cakes.",
   },
   {
@@ -145,7 +145,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     images: [
       "https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?auto=format&fit=crop&w=600&q=80",
       "https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
     ],
     category: "Artisanal Cakes",
     isEggless: true,
@@ -233,9 +233,9 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     compareAtPrice: 299,
     rating: 4.9,
     reviewCount: 41,
-    image: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80",
     images: [
-      "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80",
       "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80",
     ],
     category: "Party Decorations",

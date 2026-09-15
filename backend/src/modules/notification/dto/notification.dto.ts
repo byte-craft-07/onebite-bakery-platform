@@ -11,6 +11,9 @@ export interface SendNotificationDto {
   payload: Record<string, unknown>;
   userId?: string;
   provider?: NotificationProviderType;
+  orderId?: string;
+  orderNumber?: string;
+  isRead?: boolean;
 }
 
 export interface NotificationHistoryQueryDto {
@@ -18,4 +21,6 @@ export interface NotificationHistoryQueryDto {
   limit?: number;
   type?: NotificationType;
   status?: NotificationStatus;
+  isRead?: boolean;
 }
+

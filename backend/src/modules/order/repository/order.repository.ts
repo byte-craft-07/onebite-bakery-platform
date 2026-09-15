@@ -117,6 +117,29 @@ export class OrderRepository extends BaseRepository<Order> {
       filter.customerId = query.customerId;
     }
 
+    if (query.branchId) {
+      filter.$or = [
+        { branchId: query.branchId },
+        { "branchSnapshot.branchId": query.branchId },
+      ];
+    }
+
+    if (query.branchType === "MAIN") {
+      filter.$and = [
+        ...(filter.$and || []),
+        {
+          $or: [
+            { "branchSnapshot.type": "MAIN" },
+            { "branchSnapshot.type": { $exists: false } },
+            { "branchSnapshot.type": { $ne: "FRANCHISE" } },
+            { branchSnapshot: { $exists: false } },
+          ],
+        },
+      ];
+    } else if (query.branchType === "FRANCHISE") {
+      filter["branchSnapshot.type"] = "FRANCHISE";
+    }
+
     const [items, total] = await Promise.all([
       OrderModel.find(filter)
         .sort({ createdAt: -1 })
@@ -135,5 +158,10 @@ export class OrderRepository extends BaseRepository<Order> {
       limit,
       totalPages,
     };
+  }
+
+  public async deleteOrderById(orderId: Types.ObjectId): Promise<boolean> {
+    const res = await OrderModel.findByIdAndDelete(orderId).exec();
+    return Boolean(res);
   }
 }

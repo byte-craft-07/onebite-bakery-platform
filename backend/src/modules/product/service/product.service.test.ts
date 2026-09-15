@@ -412,7 +412,7 @@ describe("ProductService", () => {
   it("queries public catalog for Main branch without excluding products disabled in sub-branches", async () => {
     const { VillageModel } = await import("../../village/model/village.model.js");
     const { BranchModel } = await import("../../branch/model/branch.model.js");
-    vi.spyOn(VillageModel, "findOne").mockReturnValue({ exec: vi.fn().mockResolvedValue(null) } as any);
+    vi.spyOn(VillageModel, "findOne").mockReturnValue({ exec: vi.fn().mockResolvedValue(null) } as unknown as ReturnType<typeof VillageModel.findOne>);
     vi.spyOn(BranchModel, "findOne").mockReturnValue({
       exec: vi.fn().mockResolvedValue({
         _id: new Types.ObjectId(),
@@ -421,13 +421,13 @@ describe("ProductService", () => {
         code: "CD-01",
         isActive: true,
       }),
-    } as any);
+    } as unknown as ReturnType<typeof BranchModel.findOne>);
 
     const { service, repository } = createService();
     const result = await service.queryPublicCatalog({
       villageName: "Chandpur",
       district: "North Delhi",
-    } as any);
+    } as unknown as PublicProductQueryDto);
 
     expect(result.products).toHaveLength(1);
     expect(result.products[0]?.isAvailable).toBe(true);

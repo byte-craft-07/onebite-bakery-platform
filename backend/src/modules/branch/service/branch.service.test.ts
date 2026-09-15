@@ -253,10 +253,10 @@ describe("BranchService", () => {
 
     vi.spyOn(VillageModel, "findById").mockReturnValue({
       exec: vi.fn().mockResolvedValue(mockVillage),
-    } as any);
+    } as unknown as ReturnType<typeof VillageModel.findById>);
     const updateOneSpy = vi.spyOn(VillageModel, "updateOne").mockReturnValue({
       exec: vi.fn().mockResolvedValue({ modifiedCount: 1 }),
-    } as any);
+    } as unknown as ReturnType<typeof VillageModel.updateOne>);
 
     const res = await service.unassignServiceArea(
       mockBranchId.toString(),

@@ -203,6 +203,22 @@ export class OrderController {
     });
   };
 
+  public adminDeleteOrder = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const orderId = this.getIdParam(request);
+    const result = await this.orderService.adminDeleteOrder(
+      orderId,
+      this.createAuthContext(request),
+    );
+
+    return sendSuccess(response, {
+      message: "Order deleted successfully.",
+      data: result,
+    });
+  };
+
   public adminUpdateReadyTime = async (
     request: Request,
     response: Response,

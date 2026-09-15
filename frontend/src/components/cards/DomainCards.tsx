@@ -4,9 +4,10 @@ import { ArrowRight, Check, Star } from "lucide-react";
 
 import type { MockCategory, MockCombo, MockOccasion, MockReview } from "@/data/mockData";
 import { cartService } from "@/services/cart.service";
+import { getOptimizedImageUrl } from "@/utils/cdn.utils";
 
-const FALLBACK_CATEGORY_IMAGE = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
-const FALLBACK_OCCASION_IMAGE = "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80";
+const FALLBACK_CATEGORY_IMAGE = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=360&q=75";
+const FALLBACK_OCCASION_IMAGE = "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=360&q=75";
 
 export const CategoryCard: React.FC<{ category: MockCategory }> = ({ category }) => {
   return (
@@ -15,14 +16,17 @@ export const CategoryCard: React.FC<{ category: MockCategory }> = ({ category })
       className="group relative rounded-2xl overflow-hidden aspect-square sm:aspect-4/3 border border-[#E5DEC9] shadow-2xs hover:shadow-md transition-all flex flex-col justify-end p-3 sm:p-5 bg-[#FFF8EC]"
     >
       <img
-        src={category.image || FALLBACK_CATEGORY_IMAGE}
+        src={getOptimizedImageUrl(category.image || FALLBACK_CATEGORY_IMAGE, { width: 360, quality: 75 })}
         alt={category.name}
         onError={(e) => {
-          e.currentTarget.onerror = null;
-          e.currentTarget.src = FALLBACK_CATEGORY_IMAGE;
+          if (e.currentTarget.dataset.failed !== "true") {
+            e.currentTarget.dataset.failed = "true";
+            e.currentTarget.src = FALLBACK_CATEGORY_IMAGE;
+          }
         }}
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="lazy"
+        decoding="async"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
@@ -43,14 +47,17 @@ export const OccasionCard: React.FC<{ occasion: MockOccasion }> = ({ occasion })
       className="group relative rounded-2xl overflow-hidden aspect-square sm:aspect-3/2 border border-[#E5DEC9] shadow-2xs hover:shadow-md transition-all flex flex-col justify-end p-3 sm:p-5 bg-[#FFF8EC]"
     >
       <img
-        src={occasion.image || FALLBACK_OCCASION_IMAGE}
+        src={getOptimizedImageUrl(occasion.image || FALLBACK_OCCASION_IMAGE, { width: 360, quality: 75 })}
         alt={occasion.name}
         onError={(e) => {
-          e.currentTarget.onerror = null;
-          e.currentTarget.src = FALLBACK_OCCASION_IMAGE;
+          if (e.currentTarget.dataset.failed !== "true") {
+            e.currentTarget.dataset.failed = "true";
+            e.currentTarget.src = FALLBACK_OCCASION_IMAGE;
+          }
         }}
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="lazy"
+        decoding="async"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
 
@@ -99,14 +106,17 @@ export const ComboCard: React.FC<{ combo: MockCombo }> = ({ combo }) => {
     <div className="rounded-2xl border border-[#E5DEC9] bg-white p-4 sm:p-6 shadow-2xs hover:shadow-md transition-all flex flex-col md:flex-row gap-4 sm:gap-6 items-center">
       <div className="w-full md:w-1/3 aspect-4/3 rounded-xl overflow-hidden bg-[#FFF8EC]">
         <img
-          src={combo.image || FALLBACK_CATEGORY_IMAGE}
+          src={getOptimizedImageUrl(combo.image || FALLBACK_CATEGORY_IMAGE, { width: 420, quality: 75 })}
           alt={combo.title}
           onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = FALLBACK_CATEGORY_IMAGE;
+            if (e.currentTarget.dataset.failed !== "true") {
+              e.currentTarget.dataset.failed = "true";
+              e.currentTarget.src = FALLBACK_CATEGORY_IMAGE;
+            }
           }}
           className="h-full w-full object-cover"
           loading="lazy"
+          decoding="async"
         />
       </div>
 
@@ -183,13 +193,17 @@ export const ReviewCard: React.FC<{ review: MockReview }> = ({ review }) => {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <img
-              src={review.avatar}
+              src={getOptimizedImageUrl(review.avatar, { width: 80, height: 80, quality: 75 })}
               alt={review.name}
               onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80";
+                if (e.currentTarget.dataset.failed !== "true") {
+                  e.currentTarget.dataset.failed = "true";
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=75";
+                }
               }}
               className="h-9 w-9 rounded-full object-cover border border-[#596B58]/30 shrink-0"
+              loading="lazy"
+              decoding="async"
             />
             <div>
               <h4 className="text-xs sm:text-sm font-bold text-[#3B302B] line-clamp-1">

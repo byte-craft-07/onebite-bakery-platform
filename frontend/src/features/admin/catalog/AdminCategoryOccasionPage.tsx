@@ -68,7 +68,7 @@ export const AdminCategoryPage: React.FC = () => {
       name: name.trim(),
       slug: slug.trim() || name.trim().toLowerCase().replace(/\s+/g, "-"),
       description: description.trim() || `${name.trim()} category from The Online Bakery.`,
-      image: imageUrl || "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=800&q=80",
+      image: imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80",
     };
 
     try {
@@ -235,7 +235,7 @@ export const AdminOccasionPage: React.FC = () => {
       slug: slug.trim() || name.trim().toLowerCase().replace(/\s+/g, "-"),
       tagline: tagline.trim(),
       description: tagline.trim() || `${name.trim()} celebration occasion cakes and desserts`,
-      bannerImage: imageUrl || "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=800&q=80",
+      bannerImage: imageUrl || "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=800&q=80",
     };
 
     try {

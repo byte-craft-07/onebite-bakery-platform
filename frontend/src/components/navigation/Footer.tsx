@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Clock, Mail, MapPin, Phone, Share2, Star } from "lucide-react";
+import { Clock, Download, Mail, MapPin, Phone, Share2, Star } from "lucide-react";
 import { RatingModal } from "@/components/review/RatingModal";
+import { usePWA } from "@/hooks/usePWA";
 
 export const Footer: React.FC = () => {
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+  const { isStandalone, promptInstall } = usePWA();
 
   return (
     <footer className="border-t border-[#E5DEC9] bg-[#3B302B] text-[#FFF8EC] pt-12 sm:pt-16 pb-28 lg:pb-12">
@@ -12,11 +14,11 @@ export const Footer: React.FC = () => {
         {/* Brand Column */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full overflow-hidden bg-white p-0.5 shadow-md ring-2 ring-[#D8BE91] shrink-0">
+            <div className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 flex items-center justify-center">
               <img
                 src="/logo.svg"
                 alt="The Online Bakery Logo"
-                className="w-full h-full object-cover rounded-full"
+                className="w-full h-full object-contain"
               />
             </div>
             <div className="space-y-0.5">
@@ -54,6 +56,18 @@ export const Footer: React.FC = () => {
                 <span>Rate Our Bakery / Write Review</span>
               </button>
             </li>
+            {!isStandalone && (
+              <li>
+                <button
+                  type="button"
+                  onClick={promptInstall}
+                  className="text-[#D8BE91] hover:text-[#FFF8EC] font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <Download className="h-3.5 w-3.5 text-[#D8BE91]" />
+                  <span>Install App (Mobile & Desktop)</span>
+                </button>
+              </li>
+            )}
             <li><Link to="/about" className="hover:text-[#D8BE91] transition-colors">Our Story & Craft</Link></li>
             <li><Link to="/contact" className="hover:text-[#D8BE91] transition-colors">Contact & Store Pickup</Link></li>
           </ul>
@@ -84,7 +98,7 @@ export const Footer: React.FC = () => {
           </div>
           <div className="flex items-center gap-2.5">
             <Mail className="h-4 w-4 text-[#D8BE91] shrink-0" />
-            <span>theonlinebakery07@gmail.com</span>
+            <span>ajaykterha@gmail.com</span>
           </div>
           <div className="flex items-center gap-2.5">
             <Clock className="h-4 w-4 text-[#D8BE91] shrink-0" />

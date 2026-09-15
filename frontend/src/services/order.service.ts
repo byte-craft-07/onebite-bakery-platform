@@ -5,6 +5,7 @@ export interface OrderItemDetails {
   id: string;
   productId: string;
   name: string;
+  image?: string;
   unitPrice: number;
   quantity: number;
   itemTotal: number;
@@ -73,6 +74,8 @@ interface BackendOrderItem {
   productName?: string;
   productNameSnapshot?: string;
   name?: string;
+  image?: string;
+  thumbnailUrl?: string;
   unitPrice?: number;
   unitPriceSnapshot?: number;
   quantity: number;
@@ -228,6 +231,7 @@ const toOrderDetails = (order: BackendOrder): OrderDetails => {
         id: item.id ?? item._id ?? `${order.id}-${index}`,
         productId: item.productId ?? "",
         name: item.name ?? item.productName ?? item.productNameSnapshot ?? "The Online Bakery item",
+        image: item.image || (item as any).thumbnailUrl || (item as any).imageUrl || (item as any).imageUrls?.[0] || (item as any).mainImage,
         unitPrice,
         quantity: item.quantity,
         itemTotal,
@@ -319,7 +323,7 @@ export const orderService = {
     const found = localList.find((o) => o.id === id || o.orderNumber === id);
     if (found) return found;
 
-    return localList[0] || mockOrders[0];
+    throw new Error("Order not found.");
   },
 
   cancelOrder: async (id: string, reason?: string) => {
@@ -328,16 +332,17 @@ export const orderService = {
         success: boolean;
         data: { order: BackendOrder };
       }>(`/orders/${id}/cancel`, { reason });
-      return toOrderDetails(response.data.data.order);
-    } catch (_err) {
+      const updated = toOrderDetails(response.data.data.order);
       const localList = orderService.getLocalOrders();
       const idx = localList.findIndex((o) => o.id === id);
       if (idx >= 0) {
-        localList[idx].orderStatus = "CANCELLED";
+        localList[idx] = updated;
         localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(localList));
-        return localList[idx];
       }
-      throw new Error("Unable to cancel order.");
+      return updated;
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Unable to cancel order.";
+      throw new Error(msg);
     }
   },
 };

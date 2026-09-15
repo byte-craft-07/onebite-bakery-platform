@@ -22,6 +22,7 @@ export interface CheckoutPreviewResponse {
   items: Array<{
     productId: string;
     name: string;
+    image?: string;
     quantity: number;
     unitPrice: number;
     itemTotal: number;
@@ -94,6 +95,7 @@ export const checkoutService = {
         {
           productId: directItem.productId,
           name: directItem.name,
+          image: directItem.mainImage,
           quantity: directItem.quantity,
           unitPrice: directItem.price,
           itemTotal: directItem.itemTotal,
@@ -105,6 +107,7 @@ export const checkoutService = {
       items = backendPreview?.items || cart.items.map((i) => ({
         productId: i.productId.id,
         name: i.productId.name,
+        image: i.productId.mainImage,
         quantity: i.quantity,
         unitPrice: i.unitPrice,
         itemTotal: i.itemTotal,
@@ -224,6 +227,13 @@ export const checkoutService = {
       if (payload.directItem) {
         // Save current cart backup so cart items are NOT lost
         originalLocalCartJson = localStorage.getItem("theonlinebakery_local_cart");
+        // Clear backend cart first so stale items are not mixed
+        try {
+          await apiClient.delete("/cart");
+        } catch (_e) {
+          // Ignore
+        }
+
         // Temporarily prepare cart for this direct order
         const tempCart = {
           id: "temp_direct_cart",
@@ -260,6 +270,11 @@ export const checkoutService = {
       } else {
         const localCart = await cartService.getCart();
         if (localCart.items && localCart.items.length > 0) {
+          try {
+            await apiClient.delete("/cart");
+          } catch (_e) {
+            // Ignore
+          }
           for (const item of localCart.items) {
             try {
               await apiClient.post("/cart/items", {
@@ -278,7 +293,7 @@ export const checkoutService = {
 
     const response = await apiClient.post<{
       success: boolean;
-      data: { order: { id: string; orderNumber: string; totalAmount: number; orderStatus: string; paymentStatus?: string; paymentMethod?: "UPI" | "COD"; deliveryTimingType?: string; deliveryTimePreference?: string; scheduledDate?: string; scheduledTimeSlot?: string } };
+      data: { order: any };
     }>("/orders", {
       deliveryMethod: payload.fulfillmentType,
       paymentMethod: payload.paymentMethod ?? "UPI",

@@ -3,12 +3,13 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft,
   Bell,
+  BellRing,
   CheckCircle2,
   ChevronRight,
-  Mail,
-  MessageCircle,
+  Download,
   Phone,
   ShieldCheck,
+  Smartphone,
   Sparkles,
   User,
 } from "lucide-react";
@@ -16,9 +17,11 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/DisplayComponents";
 import { useAuth } from "@/contexts/auth.context";
+import { usePWA } from "@/hooks/usePWA";
 
 export const CustomerSettingsPage: React.FC = () => {
   const { user } = useAuth();
+  const { isStandalone, isInstallable, promptInstall, setShowPushModal } = usePWA();
 
   const [smsNotifs, setSmsNotifs] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
@@ -76,10 +79,10 @@ export const CustomerSettingsPage: React.FC = () => {
             <label className="flex items-start justify-between gap-4 p-3 rounded-xl bg-[#FFF8EC] border border-[#E5DEC9] cursor-pointer hover:border-[#596B58]/50 transition-colors">
               <div className="space-y-0.5">
                 <span className="text-xs font-extrabold text-[#3B302B] block">
-                  Transactional SMS Notifications (+91 {user?.phone || "Phone"})
+                  Transactional SMS Notifications (+91 {user?.phone || "Address Contact"})
                 </span>
                 <span className="text-[11px] text-[#7A6E65]">
-                  Receive live OTPs, order confirmation, and dispatch SMS alerts.
+                  Receive order confirmation, baking progress, and delivery dispatch SMS alerts.
                 </span>
               </div>
               <input
@@ -150,6 +153,66 @@ export const CustomerSettingsPage: React.FC = () => {
                 className="rounded border-gray-300 text-[#596B58] h-4 w-4 mt-1"
               />
             </label>
+          </div>
+        </Card>
+
+        {/* PWA App Installation & Web Push Notification Card */}
+        <Card className="space-y-4 border-[#E5DEC9]">
+          <div className="flex items-center gap-2 text-sm font-extrabold text-[#3B302B] border-b border-[#E5DEC9] pb-3">
+            <Smartphone className="h-4 w-4 text-[#596B58]" />
+            <span>Progressive Web App & Push Alerts</span>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#FFF8EC] border border-[#E5DEC9]">
+              <div className="space-y-0.5">
+                <span className="text-xs font-extrabold text-[#3B302B] flex items-center gap-1.5">
+                  <BellRing className="h-3.5 w-3.5 text-[#596B58]" />
+                  <span>Browser Web Push Notifications</span>
+                </span>
+                <span className="text-[11px] text-[#7A6E65] block">
+                  Receive instant baking, dispatch, and delivery updates directly on this device.
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPushModal(true)}
+                className="shrink-0 text-xs font-bold"
+              >
+                Configure Push Alerts
+              </Button>
+            </div>
+
+            {!isStandalone && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#FFF8EC] border border-[#E5DEC9]">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-extrabold text-[#3B302B] flex items-center gap-1.5">
+                    <Download className="h-3.5 w-3.5 text-[#596B58]" />
+                    <span>Install The Online Bakery App</span>
+                  </span>
+                  <span className="text-[11px] text-[#7A6E65] block">
+                    Install as a standalone app on your home screen for faster checkout and offline access.
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={promptInstall}
+                  className="shrink-0 bg-[#596B58] text-white text-xs font-bold"
+                >
+                  Install App
+                </Button>
+              </div>
+            )}
+
+            {isStandalone && (
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-green-50 border border-green-200 text-green-800 text-xs font-semibold">
+                <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                <span>Running as installed Progressive Web App on this device.</span>
+              </div>
+            )}
           </div>
         </Card>
 

@@ -32,8 +32,8 @@ export const FALLBACK_HERO_BANNERS: BannerItem[] = [
   {
     id: "poster-2",
     title: "Custom 3D & Tier Designer Cakes Studio",
-    desktopImage: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=1600&h=650&q=85",
-    mobileImage: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=800&h=450&q=85",
+    desktopImage: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=1600&h=650&q=85",
+    mobileImage: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=800&h=450&q=85",
     linkUrl: "/custom-cake",
     displayOrder: 2,
     isActive: true,
@@ -61,6 +61,26 @@ export const FALLBACK_HERO_BANNERS: BannerItem[] = [
 const LOCAL_STORAGE_KEY = "theonlinebakery_hero_banners";
 
 export const bannerService = {
+  getStoredBannersSync: (placement: string = "home_hero"): BannerItem[] => {
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const active = parsed.filter(
+            (b: BannerItem) => b.isActive && (!placement || !b.placement || b.placement === placement)
+          );
+          if (active.length > 0) {
+            return active.sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+          }
+        }
+      }
+    } catch (_err) {
+      // Ignore
+    }
+    return FALLBACK_HERO_BANNERS;
+  },
+
   getActiveBanners: async (placement: string = "home_hero"): Promise<BannerItem[]> => {
     try {
       const res = await apiClient.get<{
@@ -69,28 +89,21 @@ export const bannerService = {
       }>("/banners", { params: { placement } });
 
       if (res.data?.data?.banners && res.data.data.banners.length > 0) {
-        return res.data.data.banners.map((b) => ({
+        const list = res.data.data.banners.map((b) => ({
           ...b,
           id: b._id || b.id,
         }));
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(list));
+        } catch (_e) {
+          // LocalStorage save error
+        }
+        return list;
       }
     } catch (_err) {
       // Fallback
     }
 
-    // Check localStorage cache
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.filter((b: BannerItem) => b.isActive);
-        }
-      }
-    } catch (_err) {
-      // Ignore
-    }
-
-    return FALLBACK_HERO_BANNERS;
+    return bannerService.getStoredBannersSync(placement);
   },
 };

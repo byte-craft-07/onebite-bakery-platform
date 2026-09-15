@@ -9,10 +9,10 @@ export class ComboController {
         success: true,
         data: combos,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(500).json({
         success: false,
-        message: err.message || "Failed to fetch celebration combos.",
+        message: err instanceof Error ? err.message : "Failed to fetch celebration combos.",
       });
     }
   }
@@ -24,10 +24,10 @@ export class ComboController {
         success: true,
         data: combos,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(500).json({
         success: false,
-        message: err.message || "Failed to fetch combos list.",
+        message: err instanceof Error ? err.message : "Failed to fetch combos list.",
       });
     }
   }
@@ -47,10 +47,10 @@ export class ComboController {
         success: true,
         data: combo,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(500).json({
         success: false,
-        message: err.message || "Failed to fetch combo details.",
+        message: err instanceof Error ? err.message : "Failed to fetch combo details.",
       });
     }
   }
@@ -87,10 +87,10 @@ export class ComboController {
         message: "Celebration combo created successfully.",
         data: combo,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(500).json({
         success: false,
-        message: err.message || "Failed to create combo hamper.",
+        message: err instanceof Error ? err.message : "Failed to create combo hamper.",
       });
     }
   }
@@ -111,10 +111,10 @@ export class ComboController {
         message: "Combo updated successfully.",
         data: combo,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(500).json({
         success: false,
-        message: err.message || "Failed to update combo.",
+        message: err instanceof Error ? err.message : "Failed to update combo.",
       });
     }
   }
@@ -135,10 +135,10 @@ export class ComboController {
         message: `Combo status changed to ${combo.isActive ? "Active" : "Inactive"}.`,
         data: combo,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(500).json({
         success: false,
-        message: err.message || "Failed to toggle combo status.",
+        message: err instanceof Error ? err.message : "Failed to toggle combo status.",
       });
     }
   }
@@ -158,10 +158,10 @@ export class ComboController {
         success: true,
         message: "Combo deleted successfully.",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res.status(500).json({
         success: false,
-        message: err.message || "Failed to delete combo.",
+        message: err instanceof Error ? err.message : "Failed to delete combo.",
       });
     }
   }

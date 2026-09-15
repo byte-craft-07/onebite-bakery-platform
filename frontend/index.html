@@ -2,14 +2,41 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=4" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png?v=4" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png?v=4" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=4" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#8B291A" />
+    <meta name="theme-color" content="#596B58" />
+    <meta name="application-name" content="The Online Bakery" />
+    <meta name="apple-mobile-web-app-title" content="Online Bakery" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="format-detection" content="telephone=no" />
+    <meta name="description" content="Order fresh handcrafted cakes, pastries, custom celebratory cakes and party supplies online from The Online Bakery." />
+    <script>
+      (function() {
+        window.__PWA_PROMPT__ = null;
+        window.addEventListener('beforeinstallprompt', function(event) {
+          event.preventDefault();
+          window.__PWA_PROMPT__ = event;
+          window.dispatchEvent(new CustomEvent('pwa_prompt_available', { detail: event }));
+        });
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function(err) {
+              console.warn('[SW] Registration error:', err);
+            });
+          });
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
     <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Berkshire+Swash&family=Cookie&family=Dancing+Script:wght@500;600;700&family=Fredoka:wght@500;600;700&family=Great+Vibes&family=Parisienne&family=Playball&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Satisfy&display=swap" rel="stylesheet" />
     <title>The Online Bakery | Fresh Handcrafted Cakes, Pastries & Party Supplies</title>
   </head>

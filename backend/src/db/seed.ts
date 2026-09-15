@@ -9,15 +9,12 @@ import { logger } from "../shared/utils/logger.js";
 export const seedDevelopmentData = async (): Promise<void> => {
   try {
     // 1. Seed Admin & Customer Users
-    await UserModel.updateMany(
-      { email: "ajaykterha@gmail.com" },
-      { $set: { role: "customer" } },
-    );
-
     const existingAdmin = await UserModel.findOne({
       $or: [
         { phone: "7897671632" },
         { phone: "9999999999" },
+        { email: "ajaykterha@gmail.com" },
+        { email: "ajayterha@gmail.com" },
         { email: "theonlinebakery07@gmail.com" },
       ],
     });
@@ -25,7 +22,7 @@ export const seedDevelopmentData = async (): Promise<void> => {
       await UserModel.create({
         name: "Ajay Prajapati",
         phone: "7897671632",
-        email: "theonlinebakery07@gmail.com",
+        email: "ajaykterha@gmail.com",
         role: "admin",
         isVerified: true,
         status: "active",
@@ -35,7 +32,7 @@ export const seedDevelopmentData = async (): Promise<void> => {
     } else {
       existingAdmin.name = "Ajay Prajapati";
       existingAdmin.phone = "7897671632";
-      existingAdmin.email = "theonlinebakery07@gmail.com";
+      existingAdmin.email = "ajaykterha@gmail.com";
       existingAdmin.role = "admin";
       await existingAdmin.save();
     }
@@ -240,16 +237,16 @@ export const seedDevelopmentData = async (): Promise<void> => {
             pincode: "210502",
           },
           phone: "7897671632",
-          email: "theonlinebakery07@gmail.com",
+          email: "ajaykterha@gmail.com",
           isActive: true,
         },
         {
           name: "Hamirpur Town Branch",
           code: "HMR-01",
-          type: "STANDARD",
+          type: "FRANCHISE",
           address: { street: "Main Market Road", city: "Hamirpur", state: "Uttar Pradesh", pincode: "210502" },
           phone: "7897671632",
-          email: "theonlinebakery07@gmail.com",
+          email: "ajaykterha@gmail.com",
           isActive: true,
         },
       ]);
@@ -265,17 +262,55 @@ export const seedDevelopmentData = async (): Promise<void> => {
       ]);
       logger.info("All Default Villages seeded and linked to Main Branch (The Online Bakery Main Store)");
     } else {
-      const mainBranch = await BranchModel.findOne({ type: "MAIN", isActive: true }) || await BranchModel.findOne({ isActive: true });
-      const villageCount = await VillageModel.countDocuments();
-      if (villageCount === 0) {
-        await VillageModel.insertMany([
-          { name: "Terha", district: "Hamirpur", pincode: "210502", branchId: mainBranch?._id, isActive: true },
-          { name: "Hamirpur Main", district: "Hamirpur", pincode: "210502", branchId: mainBranch?._id, isActive: true },
-          { name: "Kurara", district: "Hamirpur", pincode: "210502", branchId: mainBranch?._id, isActive: true },
-          { name: "Sumerpur", district: "Hamirpur", pincode: "210502", branchId: mainBranch?._id, isActive: true },
-          { name: "Maudaha", district: "Hamirpur", pincode: "210507", branchId: mainBranch?._id, isActive: true },
-        ]);
-        logger.info("Default Villages seeded into MongoDB");
+      const mainBranch =
+        (await BranchModel.findOne({ type: "MAIN", isActive: true })) ||
+        (await BranchModel.findOne({ code: "TOB-HQ" })) ||
+        (await BranchModel.findOne({ name: /Main Store/i })) ||
+        (await BranchModel.findOne({ isActive: true }));
+
+      if (mainBranch) {
+        if (mainBranch.type !== "MAIN") {
+          mainBranch.type = "MAIN";
+          mainBranch.isActive = true;
+          await mainBranch.save();
+        }
+
+        // Find Raja / Franchise branch if created
+        const rajaBranch = await BranchModel.findOne({
+          $or: [{ name: /Raja/i }, { code: /RAJ/i }],
+        });
+
+        if (rajaBranch && rajaBranch.type !== "FRANCHISE") {
+          rajaBranch.type = "FRANCHISE";
+          await rajaBranch.save();
+        }
+
+        // Seed default core villages ONLY if they do not exist yet (never overwrite admin's manual assignments)
+        const defaultVillageNames = ["Terha", "Hamirpur Main", "Kurara", "Sumerpur", "Maudaha", "Magura"];
+        for (const vName of defaultVillageNames) {
+          const vDoc = await VillageModel.findOne({ name: new RegExp(`^${vName}$`, "i") });
+          if (!vDoc) {
+            await VillageModel.create({
+              name: vName,
+              district: "Hamirpur",
+              pincode: vName === "Maudaha" || vName === "Magura" ? "210507" : "210502",
+              branchId: mainBranch._id,
+              isActive: true,
+            });
+          }
+        }
+
+        // Seed Raypur village only if it does not exist
+        const raypurDoc = await VillageModel.findOne({ name: /^Raypur$/i });
+        if (!raypurDoc) {
+          await VillageModel.create({
+            name: "Raypur",
+            district: "Hamirpur",
+            pincode: "210502",
+            branchId: rajaBranch ? rajaBranch._id : mainBranch._id,
+            isActive: true,
+          });
+        }
       }
     }
 
@@ -315,8 +350,8 @@ export const seedDevelopmentData = async (): Promise<void> => {
           title: "Custom 3D & Tier Designer Cakes Studio",
           subtitle: "Make Memories Sweeter",
           description: "Personalized dream cakes designed by master bakers for birthdays, anniversaries, weddings and milestones.",
-          desktopImage: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=1200&q=80",
-          mobileImage: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80",
+          desktopImage: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=1200&q=80",
+          mobileImage: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=600&q=80",
           linkUrl: "/custom-cake",
           buttonText: "Design Your Cake",
           badgeText: "Customized with Care",
@@ -414,7 +449,7 @@ export const seedDevelopmentData = async (): Promise<void> => {
           description: "24k edible gold foil accents, chocolate drip, luxury French macarons & sprinkles.",
           priceModifier: 350,
           category: "Luxury Celebration",
-          imageUrl: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=400&q=80",
+          imageUrl: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=400&q=80",
           colorCode: "#D4AF37",
           isActive: true,
           displayOrder: 1,

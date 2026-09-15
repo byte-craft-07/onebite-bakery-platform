@@ -41,6 +41,8 @@ export interface OrderAddressSnapshot {
   addressId?: Types.ObjectId;
   fullName: string;
   phone: string;
+  village?: string;
+  district?: string;
   street: string;
   city: string;
   state: string;
@@ -166,6 +168,8 @@ const orderAddressSnapshotSchema = new Schema<OrderAddressSnapshot>(
     addressId: { type: Schema.Types.ObjectId, ref: "Address", default: undefined },
     fullName: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
+    village: { type: String, trim: true, default: undefined },
+    district: { type: String, trim: true, default: undefined },
     street: { type: String, required: true, trim: true },
     city: { type: String, required: true, trim: true },
     state: { type: String, required: true, trim: true },

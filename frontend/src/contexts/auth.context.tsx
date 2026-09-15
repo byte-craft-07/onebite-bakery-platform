@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 import { authService, type UserProfileResponse } from "@/services/auth.service";
+import { PushNotificationService } from "@/services/pushNotification.service";
 
 import type { CustomerLocationResponse } from "@/services/auth.service";
 
@@ -23,24 +24,48 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const USER_STORAGE_KEY = "theonlinebakery_user";
 const LOCAL_LOCATION_KEY = "theonlinebakery_active_location";
 
-const ADMIN_EMAILS = ["theonlinebakery07@gmail.com"];
+import { getAvatarFromEmailOrName } from "@/components/common/UserAvatar";
+
+const ADMIN_EMAILS = ["ajaykterha@gmail.com", "ajayterha@gmail.com"];
 const ADMIN_PHONES = ["7897671632", "9999999999"];
+export const AJAY_GOOGLE_PHOTO = "https://lh3.googleusercontent.com/a/ACg8ocKUbft27NKCgakV4you7xwWL4RqMom-n5LZNJ_eTUsfmzR6KlCLUQ=s96-c";
 
 const normalizeUser = (u: UserProfileResponse | null): UserProfileResponse | null => {
   if (!u) return null;
   const normEmail = u.email?.trim().toLowerCase();
   const normPhone = u.phone?.replace(/\D/g, "").slice(-10);
-  if ((normEmail && ADMIN_EMAILS.includes(normEmail)) || (normPhone && ADMIN_PHONES.includes(normPhone))) {
-    return { ...u, role: "admin" };
+  let updated = { ...u };
+  const isAdmin = (normEmail && ADMIN_EMAILS.includes(normEmail)) || (normPhone && ADMIN_PHONES.includes(normPhone));
+  if (isAdmin) {
+    updated.role = "admin";
   }
-  return u;
+  if (
+    !updated.profileImage ||
+    updated.profileImage.includes("unavatar.io") ||
+    updated.profileImage.includes("ui-avatars.com") ||
+    updated.profileImage.includes("ACg8ocL30hOcrEYenvWOYH5SoIw2PwYspA8zf3cp8iU-ZgyrvoX8gw")
+  ) {
+    if (isAdmin) {
+      updated.profileImage = AJAY_GOOGLE_PHOTO;
+    } else {
+      updated.profileImage = undefined;
+    }
+  }
+  return updated;
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfileResponse | null>(() => {
     try {
       const stored = localStorage.getItem(USER_STORAGE_KEY);
-      if (stored) return normalizeUser(JSON.parse(stored));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const normalized = normalizeUser(parsed);
+        if (parsed?.profileImage && (parsed.profileImage.includes("unavatar") || parsed.profileImage.includes("ui-avatars"))) {
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized));
+        }
+        return normalized;
+      }
     } catch (_err) {
       // Ignore
     }
@@ -65,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const normalized = normalizeUser(currentUser);
         setUser(normalized);
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized));
+        void PushNotificationService.autoSyncSubscriptionIfGranted();
         return;
       }
     } catch (_err) {
@@ -77,6 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const normalized = normalizeUser(parsed);
             setUser(normalized);
             localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized));
+            void PushNotificationService.autoSyncSubscriptionIfGranted();
             return;
           }
         }
@@ -99,6 +126,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(normalized);
     try {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized));
+
+      const isCheckoutPage =
+        typeof window !== "undefined" &&
+        window.location.pathname.includes("checkout");
+
+      if (!sessionUser.currentLocation && !isCheckoutPage) {
+        localStorage.setItem("theonlinebakery_open_location_after_login", "true");
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("theonlinebakery_open_location_modal"));
+        }, 50);
+      } else {
+        localStorage.removeItem("theonlinebakery_open_location_after_login");
+      }
+
+      // Prompt push notification permission on login if supported and permission is default
+      if (PushNotificationService.isSupported() && typeof Notification !== "undefined") {
+        if (Notification.permission === "default") {
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent("theonlinebakery_prompt_push_permission"));
+          }, 800);
+        } else if (Notification.permission === "granted") {
+          void PushNotificationService.autoSyncSubscriptionIfGranted();
+        }
+      }
     } catch (_err) {
       // Ignore
     }

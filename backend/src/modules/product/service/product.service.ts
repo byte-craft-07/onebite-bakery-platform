@@ -6,6 +6,7 @@ import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
 import { AppError } from "../../../shared/errors/app-error.js";
 import type { RequestContext } from "../../../shared/types/request-context.types.js";
 import { createSlug } from "../../../shared/utils/slug.js";
+import { CategoryModel } from "../../category/index.js";
 import {
   PRODUCT_ERROR_MESSAGES,
   type ProductType,
@@ -38,16 +39,22 @@ export class ProductService {
     dto: CreateProductDto,
     context: RequestContext,
   ): Promise<ProductResponse> {
-    const categoryId = dto.categoryId
-      ? toObjectId(dto.categoryId)
-      : toObjectId("64e000000000000000000001");
+    let categoryId: Types.ObjectId;
+    if (dto.categoryId) {
+      categoryId = toObjectId(dto.categoryId);
+      await this.ensureCategoryExists(categoryId);
+    } else {
+      const defaultCategory = await CategoryModel.findOne({ isDeleted: false }).sort({ displayOrder: 1 }).exec();
+      if (defaultCategory) {
+        categoryId = defaultCategory._id;
+      } else {
+        categoryId = toObjectId("64e000000000000000000001");
+      }
+    }
     const occasionIds = (dto.occasionIds || []).map((occasionId) =>
       toObjectId(occasionId),
     );
 
-    if (dto.categoryId) {
-      await this.ensureCategoryExists(categoryId);
-    }
     if (occasionIds.length > 0) {
       await this.ensureOccasionsExist(occasionIds);
     }
@@ -175,7 +182,7 @@ export class ProductService {
       update.$set = {
         ...update.$set,
         thumbnailUrl: newMainImg,
-        imageUrls: [newMainImg],
+        imageUrls: dto.imageUrls && dto.imageUrls.length > 0 ? dto.imageUrls : [newMainImg],
       };
     }
 
@@ -308,8 +315,8 @@ export class ProductService {
     }
 
     let disabledProductIds: Types.ObjectId[] = [];
-    const branchOverridesMap = new Map<string, any>();
-    let resolvedBranchDoc: any = null;
+    const branchOverridesMap = new Map<string, { productId: Types.ObjectId | string; isAvailable?: boolean; stockQuantity?: number; price?: number }>();
+    let resolvedBranchDoc: { _id: Types.ObjectId; name: string; code: string; type?: string; address?: { city?: string } } | null = null;
 
     const rawLocationQuery =
       (query as Record<string, unknown>).villageId ||
@@ -331,16 +338,21 @@ export class ProductService {
           const isMainBranch = branchDoc.type === "MAIN" || branchDoc.code === "CD-01";
 
           if (!isMainBranch) {
-            const queryChain: any = BranchProductModel.find({
+            const queryChain = BranchProductModel.find({
               branchId: branchDoc._id,
               isAvailable: false,
-            });
+            }) as unknown as {
+              select?: (f: string) => { lean?: () => { exec: () => Promise<unknown> }; exec: () => Promise<unknown> };
+              lean?: () => { exec: () => Promise<unknown> };
+              exec: () => Promise<unknown>;
+            };
 
-            let disabledQuery = typeof queryChain.select === "function" ? queryChain.select("productId") : queryChain;
+            let disabledQuery: { lean?: () => { exec: () => Promise<unknown> }; exec: () => Promise<unknown> } =
+              typeof queryChain.select === "function" ? queryChain.select("productId") : queryChain;
             if (typeof disabledQuery.lean === "function") {
               disabledQuery = disabledQuery.lean();
             }
-            const disabledOverrides = await disabledQuery.exec();
+            const disabledOverrides = (await disabledQuery.exec()) as { productId: Types.ObjectId }[];
 
             if (Array.isArray(disabledOverrides)) {
               for (const ov of disabledOverrides) {
@@ -350,13 +362,18 @@ export class ProductService {
             }
 
             try {
-              const activeChain: any = BranchProductModel.find({
+              const activeChain = BranchProductModel.find({
                 branchId: branchDoc._id,
                 isAvailable: true,
-              });
-              let activeQuery = typeof activeChain.select === "function" ? activeChain.select("productId isAvailable stockQuantity price") : activeChain;
+              }) as unknown as {
+                select?: (f: string) => { lean?: () => { exec: () => Promise<unknown> }; exec: () => Promise<unknown> };
+                lean?: () => { exec: () => Promise<unknown> };
+                exec: () => Promise<unknown>;
+              };
+              let activeQuery: { lean?: () => { exec: () => Promise<unknown> }; exec: () => Promise<unknown> } =
+                typeof activeChain.select === "function" ? activeChain.select("productId isAvailable stockQuantity price") : activeChain;
               if (typeof activeQuery.lean === "function") activeQuery = activeQuery.lean();
-              const activeOverrides = await activeQuery.exec();
+              const activeOverrides = (await activeQuery.exec()) as { productId: Types.ObjectId; isAvailable?: boolean; stockQuantity?: number; price?: number }[];
               if (Array.isArray(activeOverrides)) {
                 for (const ov of activeOverrides) {
                   branchOverridesMap.set(ov.productId.toString(), ov);
@@ -396,18 +413,18 @@ export class ProductService {
         if (ov) {
           if (typeof ov.isAvailable === "boolean") response.isAvailable = ov.isAvailable;
           if (typeof ov.stockQuantity === "number") response.stockQuantity = ov.stockQuantity;
-          if (typeof (ov as any).price === "number") response.price = (ov as any).price;
+          if (typeof ov.price === "number") response.price = ov.price;
         } else {
           response.isAvailable = true;
         }
         if (resolvedBranchDoc) {
-          (response as any).branchSnapshot = {
+          response.branchSnapshot = {
             branchId: resolvedBranchDoc._id.toString(),
             name: resolvedBranchDoc.name,
             code: resolvedBranchDoc.code,
             city: resolvedBranchDoc.address?.city,
           };
-          (response as any).locationBranchName = resolvedBranchDoc.name;
+          response.locationBranchName = resolvedBranchDoc.name;
         }
         return response;
       });
@@ -520,13 +537,13 @@ export class ProductService {
         const branchDoc = await branchService.resolveBranchForVillage(villageId);
 
         if (branchDoc) {
-          (response as any).branchSnapshot = {
+          response.branchSnapshot = {
             branchId: branchDoc._id.toString(),
             name: branchDoc.name,
             code: branchDoc.code,
             city: branchDoc.address?.city,
           };
-          (response as any).locationBranchName = branchDoc.name;
+          response.locationBranchName = branchDoc.name;
 
           const override = await BranchProductModel.findOne({
             branchId: branchDoc._id,

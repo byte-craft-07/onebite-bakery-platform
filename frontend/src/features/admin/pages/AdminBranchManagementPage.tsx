@@ -472,7 +472,7 @@ export const AdminBranchManagementPage: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateBranch} className="p-6 space-y-4 overflow-y-auto">
+            <form onSubmit={handleCreateBranch} className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
               {formError ? (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl">
                   {formError}
@@ -690,7 +690,7 @@ export const AdminBranchManagementPage: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleUpdateBranch} className="p-6 space-y-4 overflow-y-auto">
+            <form onSubmit={handleUpdateBranch} className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
               {editFormError ? (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl">
                   {editFormError}
@@ -894,7 +894,7 @@ export const AdminBranchManagementPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-6 space-y-5 overflow-y-auto">
+            <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
               {/* Assign Village Dropdown */}
               <div className="space-y-2 bg-white p-3.5 rounded-xl border border-[#E5DEC9]">
                 <label className="block text-xs font-bold text-[#3B302B]">
@@ -906,12 +906,21 @@ export const AdminBranchManagementPage: React.FC = () => {
                     onChange={(e) => setSelectedVillageId(e.target.value)}
                     className="w-full h-9 px-2.5 rounded-lg border border-[#E5DEC9] text-xs bg-white focus:outline-none focus:border-[#596B58]"
                   >
-                    <option value="">Select a village...</option>
-                    {unassignedVillages.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.name} ({v.district})
-                      </option>
-                    ))}
+                    <option value="">Select a village to assign...</option>
+                    {unassignedVillages
+                      .filter(
+                        (v) =>
+                          !selectedBranch.villages?.some(
+                            (assigned: any) =>
+                              (assigned.id || assigned._id?.toString() || assigned._id) ===
+                              (v.id || (v as any)._id?.toString() || (v as any)._id),
+                          ),
+                      )
+                      .map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.name} ({v.district})
+                        </option>
+                      ))}
                   </select>
                   <Button
                     size="sm"

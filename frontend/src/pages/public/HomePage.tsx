@@ -252,7 +252,7 @@ export const HomePage: React.FC = () => {
                 id: occasion.id,
                 name: occasion.name,
                 slug: occasion.slug,
-                image: occasion.image || "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=600&q=80",
+                image: occasion.image || "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=600&q=80",
                 tagline: occasion.tagline || "Artisanal celebration cakes.",
               }}
             />

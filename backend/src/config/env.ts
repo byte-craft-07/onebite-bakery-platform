@@ -56,6 +56,9 @@ const envSchema = z.object({
   MSG91_SENDER_ID: z.string().min(1).optional(),
   ACCESS_TOKEN_EXPIRES: z.string().default("15m"),
   REFRESH_TOKEN_EXPIRES: z.string().default("30d"),
+  VAPID_PUBLIC_KEY: z.string().min(1).optional(),
+  VAPID_PRIVATE_KEY: z.string().min(1).optional(),
+  VAPID_SUBJECT: z.string().default("mailto:admin@theonlinebakery.in"),
   REQUIRE_DATABASE_CONNECTION: z
     .enum(["true", "false"])
     .optional()
@@ -144,7 +147,7 @@ export const env = {
   resendFromEmail:
     parsedEnv.data.RESEND_FROM_EMAIL ??
     parsedEnv.data.SENDER_EMAIL ??
-    "theonlinebakery07@gmail.com",
+    "ajaykterha@gmail.com",
   whatsappApiToken: parsedEnv.data.WHATSAPP_API_TOKEN,
   whatsappPhoneNumberId: parsedEnv.data.WHATSAPP_PHONE_NUMBER_ID,
   whatsappApiVersion: parsedEnv.data.WHATSAPP_API_VERSION,
@@ -156,4 +159,7 @@ export const env = {
   msg91AuthKey: parsedEnv.data.MSG91_AUTH_KEY,
   msg91TemplateId: parsedEnv.data.MSG91_TEMPLATE_ID,
   msg91SenderId: parsedEnv.data.MSG91_SENDER_ID,
+  vapidPublicKey: parsedEnv.data.VAPID_PUBLIC_KEY,
+  vapidPrivateKey: parsedEnv.data.VAPID_PRIVATE_KEY,
+  vapidSubject: parsedEnv.data.VAPID_SUBJECT,
 } as const;

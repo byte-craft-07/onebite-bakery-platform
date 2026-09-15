@@ -25,7 +25,7 @@ describe("Admin Operations Dashboard & Full Modules Tests", () => {
       </AuthProvider>
     );
 
-    expect(screen.getByText("Order Management & Dispatch Console")).toBeDefined();
+    expect(screen.getByText("Global Orders & Dispatch Console")).toBeDefined();
     expect(screen.getByText("PENDING")).toBeDefined();
   });
 

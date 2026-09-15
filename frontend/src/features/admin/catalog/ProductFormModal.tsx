@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Trash2, Image as ImageIcon } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 import { Modal } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
@@ -10,19 +10,41 @@ import { CustomSelect, Input } from "@/components/ui/FormControls";
 import { MediaUploader } from "./MediaUploader";
 import { adminCatalogService, type CreateProductPayload } from "../services/adminCatalog.service";
 
-const productSchema = z.object({
-  name: z.string().trim().min(2, "Product name is required."),
-  slug: z.string().trim().min(2, "Product slug is required."),
-  description: z.string().trim().min(2, "Description required."),
-  productType: z.enum(["NORMAL", "COMBO", "CUSTOM_CAKE", "DECORATION"]).optional(),
-  price: z.coerce.number().min(1, "Valid price is required."),
-  compareAtPrice: z.coerce.number().optional(),
-  costPrice: z.coerce.number().optional(),
-  sku: z.string().trim().optional(),
-  stockQuantity: z.coerce.number().min(0).optional(),
-  isEggless: z.boolean().optional(),
-  isAvailable: z.boolean().optional(),
-});
+const cleanSlug = (text: string): string => {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+};
+
+const productSchema = z
+  .object({
+    name: z.string().trim().min(2, "Product name is required."),
+    slug: z.string().trim().optional(),
+    categoryId: z.string().optional(),
+    description: z.string().trim().min(2, "Description required."),
+    productType: z.enum(["NORMAL", "COMBO", "CUSTOM_CAKE", "DECORATION"]).optional(),
+    price: z.coerce.number().min(1, "Valid price greater than 0 is required."),
+    compareAtPrice: z.coerce.number().optional().nullable(),
+    costPrice: z.coerce.number().optional().nullable(),
+    sku: z.string().trim().optional(),
+    stockQuantity: z.coerce.number().min(0).optional(),
+    isEggless: z.boolean().optional(),
+    isAvailable: z.boolean().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.compareAtPrice && data.price) {
+        return Number(data.compareAtPrice) >= Number(data.price);
+      }
+      return true;
+    },
+    {
+      message: "Compare Price (MRP) must be greater than or equal to Selling Price.",
+      path: ["compareAtPrice"],
+    }
+  );
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -35,22 +57,52 @@ export const ProductFormModal: React.FC<{
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState<string>("");
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isManualSlug, setIsManualSlug] = useState(false);
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
   });
 
-  React.useEffect(() => {
+  // Load available categories
+  useEffect(() => {
+    let isMounted = true;
+    const loadCategories = async () => {
+      try {
+        const cats = await adminCatalogService.getCategories();
+        if (isMounted && Array.isArray(cats)) {
+          setCategories(
+            cats.map((c: any) => ({
+              id: c.id || c._id,
+              name: c.name,
+            }))
+          );
+        }
+      } catch (_err) {
+        // Ignore fallback
+      }
+    };
     if (isOpen) {
+      loadCategories();
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsManualSlug(!!initialData?.slug);
       if (initialData) {
         form.reset({
           name: initialData.name || "",
           slug: initialData.slug || "",
+          categoryId: initialData.categoryId || (typeof initialData.category === "object" ? initialData.category?.id || initialData.category?._id : initialData.category) || "",
           description: initialData.description || "",
           productType: initialData.productType || "NORMAL",
           price: initialData.price ?? 499,
-          compareAtPrice: initialData.compareAtPrice,
+          compareAtPrice: initialData.compareAtPrice || undefined,
           sku: initialData.sku || "",
           stockQuantity: initialData.stockQuantity ?? 50,
           isEggless: initialData.isEggless ?? true,
@@ -73,6 +125,7 @@ export const ProductFormModal: React.FC<{
         form.reset({
           name: "",
           slug: "",
+          categoryId: "",
           description: "",
           productType: "NORMAL",
           price: 499,
@@ -87,7 +140,20 @@ export const ProductFormModal: React.FC<{
       setNewImageUrl("");
       setErrorMsg(null);
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, form]);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    form.setValue("name", val, { shouldValidate: true });
+    if (!isManualSlug) {
+      form.setValue("slug", cleanSlug(val), { shouldValidate: false });
+    }
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsManualSlug(true);
+    form.setValue("slug", cleanSlug(e.target.value), { shouldValidate: true });
+  };
 
   const handleAddImage = (url: string) => {
     if (!url) return;
@@ -110,20 +176,26 @@ export const ProductFormModal: React.FC<{
           ? imageUrls
           : ["https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80"];
 
+      const sanitizedSlug = cleanSlug(data.slug || data.name);
+
       const payload: CreateProductPayload = {
-        name: data.name,
-        slug: data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        description: data.description,
+        name: data.name.trim(),
+        slug: sanitizedSlug,
+        description: data.description.trim(),
         productType: data.productType || "NORMAL",
         price: Number(data.price),
-        compareAtPrice: data.compareAtPrice ? Number(data.compareAtPrice) : undefined,
-        sku: data.sku || `SKU-${Date.now()}`,
+        compareAtPrice:
+          data.compareAtPrice && Number(data.compareAtPrice) > 0
+            ? Number(data.compareAtPrice)
+            : undefined,
+        sku: data.sku?.trim() || `SKU-${Date.now()}`,
         stockQuantity: Number(data.stockQuantity ?? 50),
         isEggless: data.isEggless ?? true,
         isAvailable: data.isAvailable ?? true,
         mainImage: finalImages[0],
         thumbnailUrl: finalImages[0],
         imageUrls: finalImages,
+        categoryId: data.categoryId?.trim() || undefined,
       };
 
       if (initialData?.id) {
@@ -136,10 +208,16 @@ export const ProductFormModal: React.FC<{
       onClose();
     } catch (err: any) {
       console.error("Failed to save product:", err);
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Failed to save product in backend.";
+      let msg = "Failed to save product in backend.";
+      if (err?.response?.data?.errors && Array.isArray(err.response.data.errors) && err.response.data.errors.length > 0) {
+        msg = err.response.data.errors
+          .map((e: any) => `${e.path?.length ? e.path.join(".") + ": " : ""}${e.message}`)
+          .join(" | ");
+      } else if (err?.response?.data?.message) {
+        msg = err.response.data.message;
+      } else if (err?.message) {
+        msg = err.message;
+      }
       setErrorMsg(msg);
     } finally {
       setIsSaving(false);
@@ -151,6 +229,11 @@ export const ProductFormModal: React.FC<{
     { label: "Combo Hamper Box", value: "COMBO" },
     { label: "Custom Tier Cake", value: "CUSTOM_CAKE" },
     { label: "Party Accessory", value: "DECORATION" },
+  ];
+
+  const categoryOptions = [
+    { label: "-- Select Category (Optional) --", value: "" },
+    ...categories.map((c) => ({ label: c.name, value: c.id })),
   ];
 
   return (
@@ -168,45 +251,35 @@ export const ProductFormModal: React.FC<{
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <Input
-            label="Product Name"
+            label="Product Name *"
             placeholder="Belgian Truffle Cake"
             {...form.register("name")}
+            onChange={handleNameChange}
             error={form.formState.errors.name?.message}
           />
           <Input
-            label="Slug"
+            label="Slug (URL Friendly) *"
             placeholder="belgian-truffle-cake"
             {...form.register("slug")}
+            onChange={handleSlugChange}
             error={form.formState.errors.slug?.message}
           />
         </div>
 
-        <div>
-          <label className="block text-xs font-bold text-[#3B302B] mb-1">Description</label>
-          <textarea
-            rows={3}
-            placeholder="Rich Belgian chocolate truffle cake with ganache layers..."
-            {...form.register("description")}
-            className="w-full p-3 rounded-lg border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58]"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Input
-            label="Selling Price (₹)"
-            type="number"
-            {...form.register("price")}
-            error={form.formState.errors.price?.message}
-          />
-          <Input
-            label="Compare Price (₹)"
-            type="number"
-            {...form.register("compareAtPrice")}
-          />
-          <Input label="SKU Code" {...form.register("sku")} />
-        </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <Controller
+            control={form.control}
+            name="categoryId"
+            render={({ field }) => (
+              <CustomSelect
+                label="Category"
+                value={field.value || ""}
+                onChange={field.onChange}
+                options={categoryOptions}
+              />
+            )}
+          />
+
           <Controller
             control={form.control}
             name="productType"
@@ -219,7 +292,40 @@ export const ProductFormModal: React.FC<{
               />
             )}
           />
+        </div>
 
+        <div>
+          <label className="block text-xs font-bold text-[#3B302B] mb-1">Description *</label>
+          <textarea
+            rows={3}
+            placeholder="Rich Belgian chocolate truffle cake with ganache layers..."
+            {...form.register("description")}
+            className="w-full p-3 rounded-lg border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58]"
+          />
+          {form.formState.errors.description?.message ? (
+            <p className="text-[11px] text-red-500 font-semibold mt-1">
+              {form.formState.errors.description.message}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Input
+            label="Selling Price (₹) *"
+            type="number"
+            {...form.register("price")}
+            error={form.formState.errors.price?.message}
+          />
+          <Input
+            label="Compare Price / MRP (₹)"
+            type="number"
+            {...form.register("compareAtPrice")}
+            error={form.formState.errors.compareAtPrice?.message}
+          />
+          <Input label="SKU Code" {...form.register("sku")} />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <Input
             label="Initial Stock Quantity"
             type="number"

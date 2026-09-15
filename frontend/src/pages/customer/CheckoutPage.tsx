@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
-import { Link, useLocation } from "react-router-dom";
-import { ArrowLeft, Banknote, CheckCircle2, Download, FileText, Plus, QrCode, ShieldCheck, Zap } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft, Banknote, CheckCircle2, Download, FileText, Plus, QrCode, ShieldCheck, ShoppingBag, Zap } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -76,8 +76,9 @@ const getCheckoutErrorMessage = (err: unknown, fallback: string): string => {
 };
 
 export const CheckoutPage: React.FC = () => {
-  const { user, login } = useAuth();
+  const { user, login, updateUser } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Instant Direct Order Item (isolated from general cart)
   const [directItem, setDirectItem] = useState<DirectOrderItem | null>(() => {
@@ -206,8 +207,21 @@ export const CheckoutPage: React.FC = () => {
 
       const villageName = matchedVillage?.name || storedLoc?.villageName || activeAddr?.village || activeAddr?.city;
 
+      // If user has neither a direct item nor cart items and no order placed, redirect to home page
+      if (!directItem && (!currentCart?.items || currentCart.items.length === 0) && !placedOrder) {
+        toast.info("Your Cart is Empty", "Please select items to place an order.");
+        navigate("/", { replace: true });
+        return;
+      }
+
       const preview = await checkoutService.getCheckoutPreview(fulfillmentType, initialAddressId, villageName, directItem);
       setCheckoutPreview(preview);
+
+      if (!directItem && (!preview?.items || preview.items.length === 0) && !placedOrder) {
+        toast.info("Your Cart is Empty", "Please select items to place an order.");
+        navigate("/", { replace: true });
+        return;
+      }
     } catch (_err) {
       setErrorMsg("Failed to load checkout preview.");
     } finally {
@@ -239,6 +253,12 @@ export const CheckoutPage: React.FC = () => {
     checkPendingOrderOnLoad();
     fetchAddressesAndPreview();
   }, [fulfillmentType, selectedAddressId]);
+
+  useEffect(() => {
+    if (!isLoading && !placedOrder && !directItem && (!checkoutPreview?.items || checkoutPreview.items.length === 0)) {
+      navigate("/", { replace: true });
+    }
+  }, [isLoading, placedOrder, directItem, checkoutPreview, navigate]);
 
   const handleCreateInlineAddress = async (data: InlineAddressData) => {
     setIsAddingAddress(true);
@@ -289,6 +309,12 @@ export const CheckoutPage: React.FC = () => {
     setErrorMsg(null);
     setPaymentStateMessage(null);
 
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setErrorMsg("You are currently offline. Please connect to the internet to place your order.");
+      toast.error("Offline", "An active internet connection is required to complete checkout.");
+      return;
+    }
+
     if (fulfillmentType === "HOME_DELIVERY" && !selectedAddressId) {
       if (addresses.length === 0) {
         setIsAddAddressModalOpen(true);
@@ -320,7 +346,9 @@ export const CheckoutPage: React.FC = () => {
       setIsPlacingOrder(true);
       if (import.meta.env.DEV) {
         const backendUser = await authService.ensureDevBackendSession(checkoutPhone);
-        login(backendUser);
+        if (!user || user.id !== backendUser.id) {
+          updateUser(backendUser);
+        }
       }
 
       if (paymentMethod === "COD") {
@@ -343,22 +371,35 @@ export const CheckoutPage: React.FC = () => {
           paymentStatus: (order.paymentStatus as OrderDetails["paymentStatus"]) || "PENDING",
           paymentMethod: "COD",
           fulfillmentType,
-          items: directItem
+          items: order.items && Array.isArray(order.items) && order.items.length > 0
+            ? order.items.map((it: any, idx: number) => ({
+                id: it.id || it._id || `item_${idx}`,
+                productId: it.productId ? String(it.productId) : directItem?.productId || "",
+                name: it.productName || it.productNameSnapshot || it.name || directItem?.name || "Bakery Product",
+                image: it.image || it.thumbnailUrl || it.imageUrl || directItem?.mainImage,
+                quantity: it.quantity || 1,
+                unitPrice: it.unitPrice || it.unitPriceSnapshot || 0,
+                itemTotal: it.subtotal || it.itemTotal || (it.unitPrice || 0) * (it.quantity || 1),
+                isEggless: Boolean(it.customization?.eggless),
+              }))
+            : directItem
             ? [
                 {
                   id: "item_direct_1",
                   productId: directItem.productId,
                   name: directItem.name,
+                  image: directItem.mainImage,
                   quantity: directItem.quantity,
                   unitPrice: directItem.price,
                   itemTotal: directItem.itemTotal,
                   isEggless: Boolean(directItem.customization?.eggless),
                 },
               ]
-            : (checkoutPreview?.items || []).map((i, idx) => ({
+            : (checkoutPreview?.items || []).map((i: any, idx: number) => ({
                 id: `item_${idx}`,
                 productId: i.productId,
                 name: i.name,
+                image: i.image || i.mainImage || i.thumbnailUrl,
                 quantity: i.quantity,
                 unitPrice: i.unitPrice,
                 itemTotal: i.itemTotal,
@@ -420,7 +461,7 @@ export const CheckoutPage: React.FC = () => {
       await razorpayService.openPaymentModal({
         payment,
         customerName: selectedAddr?.name || user?.name || "The Online Bakery Customer",
-        customerEmail: user?.email && user.email.includes("@") && !user.email.endsWith(".test") ? user.email : "theonlinebakery07@gmail.com",
+        customerEmail: user?.email && user.email.includes("@") && !user.email.endsWith(".test") ? user.email : "ajaykterha@gmail.com",
         customerPhone: checkoutPhone || "7897671632",
         onSuccess: async () => {
           setPaymentStateMessage("Payment received. Waiting for secure backend confirmation...");
@@ -629,9 +670,34 @@ export const CheckoutPage: React.FC = () => {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Left Options */}
-        <div className="lg:col-span-2 space-y-6">
+      {!directItem && !isLoading && (!checkoutPreview || !checkoutPreview.items || checkoutPreview.items.length === 0) ? (
+        <div className="p-12 text-center bg-white rounded-3xl border border-[#E5DEC9] shadow-sm space-y-4 my-6">
+          <div className="h-16 w-16 mx-auto rounded-2xl bg-[#FFF8EC] border border-[#E5DEC9] flex items-center justify-center text-[#596B58]">
+            <ShoppingBag className="h-8 w-8 text-[#596B58]" />
+          </div>
+          <h2 className="text-xl font-extrabold text-[#3B302B]">Your Checkout is Empty</h2>
+          <p className="text-xs text-[#7A6E65] max-w-md mx-auto">
+            You don't have any items ready for checkout. Browse our fresh artisanal cakes, combos, and treats to place an order!
+          </p>
+          <div className="pt-3 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/products"
+              className="px-6 py-2.5 rounded-xl bg-[#596B58] hover:bg-[#495948] text-white text-xs font-bold transition-all shadow-sm"
+            >
+              Explore Bakery Menu
+            </Link>
+            <Link
+              to="/"
+              className="px-6 py-2.5 rounded-xl bg-white border border-[#E5DEC9] hover:bg-[#FFF8EC] text-[#3B302B] text-xs font-bold transition-all"
+            >
+              Go to Home Page
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          {/* Left Options */}
+          <div className="lg:col-span-2 space-y-6">
           <Card className="space-y-4">
             <h3 className="text-lg font-bold text-[#3B302B]">1. Fulfillment Method</h3>
             <DeliverySelector fulfillmentType={fulfillmentType} onChange={setFulfillmentType} />
@@ -786,6 +852,7 @@ export const CheckoutPage: React.FC = () => {
           </p>
         </div>
       </div>
+      )}
 
       {/* Inline Create Address Modal */}
       <Modal isOpen={isAddAddressModalOpen} onClose={() => setIsAddAddressModalOpen(false)} title="Create Delivery Address">

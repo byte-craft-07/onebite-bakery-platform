@@ -12,6 +12,7 @@ import {
   productIdParamSchema,
   productSlugParamSchema,
   publicProductQuerySchema,
+  recordProductShareSchema,
   updateAvailabilitySchema,
   updateInventorySchema,
   updatePricingSchema,
@@ -146,6 +147,19 @@ productRouter.patch(
   validateRequest({ params: productIdParamSchema }),
   invalidateCache(["products", "categories"]),
   asyncHandler(productController.restore),
+);
+
+// Product Share Analytics Endpoints
+productRouter.post(
+  "/share-event",
+  validateRequest({ body: recordProductShareSchema }),
+  asyncHandler(productController.recordShare),
+);
+
+productRouter.get(
+  "/admin/shares/stats",
+  ...ownerOnly,
+  asyncHandler(productController.getShareStats),
 );
 
 productRouter.get(

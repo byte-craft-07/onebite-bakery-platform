@@ -3,6 +3,7 @@ export {
   productIdParamSchema,
   productSlugParamSchema,
   publicProductQuerySchema,
+  recordProductShareSchema,
   updateAvailabilitySchema,
   updateInventorySchema,
   updatePricingSchema,

@@ -105,7 +105,7 @@ export const AdminCouponsPage: React.FC = () => {
       setCoupons((prev) =>
         prev.map((c) => (c.id === cpn.id ? { ...c, isActive: updated.isActive } : c))
       );
-    } catch (_err) {
+    } catch {
       setCoupons((prev) =>
         prev.map((c) => (c.id === cpn.id ? { ...c, isActive: !c.isActive } : c))
       );
@@ -118,7 +118,7 @@ export const AdminCouponsPage: React.FC = () => {
       await adminCouponsService.deleteCoupon(id);
       setCoupons((prev) => prev.filter((c) => c.id !== id));
       setSuccessMessage(`Coupon "${couponCode}" deleted.`);
-    } catch (_err) {
+    } catch {
       // Ignore
     }
   };

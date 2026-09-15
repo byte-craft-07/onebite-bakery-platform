@@ -61,7 +61,7 @@ export const villageService = {
         return response.data.data.districts;
       }
     } catch (_err) {
-      // Fallback
+      // Fallback for offline mode
     }
     const local = getLocalVillages().filter((v) => v.isActive);
     const uniqueDistricts = Array.from(new Set(local.map((v) => v.district))).sort();
@@ -75,14 +75,14 @@ export const villageService = {
         success: boolean;
         data: { villages: Village[] };
       }>(url);
-      if (response.data?.data?.villages && response.data.data.villages.length > 0) {
+      if (response.data?.data?.villages) {
         return response.data.data.villages.map((v: any) => ({
           ...v,
           id: v.id || v._id?.toString() || String(v._id),
         }));
       }
     } catch (_err) {
-      // Fallback to local
+      // Fallback for offline mode
     }
     let list = getLocalVillages().filter((v) => v.isActive);
     if (district) {
@@ -92,78 +92,42 @@ export const villageService = {
   },
 
   getAdminVillages: async (): Promise<Village[]> => {
-    try {
-      const response = await apiClient.get<{
-        success: boolean;
-        data: { villages: Village[] };
-      }>("/villages/admin");
-      if (response.data?.data?.villages) {
-        return response.data.data.villages;
-      }
-    } catch (_err) {
-      // Fallback
-    }
-    return getLocalVillages();
+    const response = await apiClient.get<{
+      success: boolean;
+      data: { villages: Village[] };
+    }>("/villages/admin");
+    return (response.data?.data?.villages || []).map((v: any) => ({
+      ...v,
+      id: v.id || v._id?.toString() || String(v._id),
+    }));
   },
 
   createVillage: async (payload: VillagePayload): Promise<Village> => {
-    try {
-      const response = await apiClient.post<{
-        success: boolean;
-        data: { village: Village };
-      }>("/villages", payload);
-      if (response.data?.data?.village) {
-        return response.data.data.village;
-      }
-    } catch (_err) {
-      // Fallback
-    }
-
-    const current = getLocalVillages();
-    const newVillage: Village = {
-      id: `v-${Date.now()}`,
-      name: payload.name,
-      district: payload.district,
-      pincode: payload.pincode,
-      isActive: payload.isActive ?? true,
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { village: Village };
+    }>("/villages", payload);
+    const v = response.data.data.village as any;
+    return {
+      ...v,
+      id: v.id || v._id?.toString() || String(v._id),
     };
-    current.unshift(newVillage);
-    saveLocalVillages(current);
-    return newVillage;
   },
 
   updateVillage: async (id: string, payload: Partial<VillagePayload>): Promise<Village> => {
-    try {
-      const response = await apiClient.patch<{
-        success: boolean;
-        data: { village: Village };
-      }>(`/villages/${id}`, payload);
-      if (response.data?.data?.village) {
-        return response.data.data.village;
-      }
-    } catch (_err) {
-      // Fallback
-    }
-
-    const current = getLocalVillages();
-    const idx = current.findIndex((v) => v.id === id);
-    if (idx >= 0) {
-      current[idx] = { ...current[idx], ...payload };
-      saveLocalVillages(current);
-      return current[idx];
-    }
-    return getLocalVillages()[0];
+    const response = await apiClient.patch<{
+      success: boolean;
+      data: { village: Village };
+    }>(`/villages/${id}`, payload);
+    const v = response.data.data.village as any;
+    return {
+      ...v,
+      id: v.id || v._id?.toString() || String(v._id),
+    };
   },
 
   deleteVillage: async (id: string) => {
-    try {
-      await apiClient.delete<{ success: boolean }>(`/villages/${id}`);
-    } catch (_err) {
-      // Fallback
-    }
-
-    const current = getLocalVillages().filter((v) => v.id !== id);
-    saveLocalVillages(current);
-    return { success: true };
+    const response = await apiClient.delete<{ success: boolean }>(`/villages/${id}`);
+    return response.data;
   },
 };

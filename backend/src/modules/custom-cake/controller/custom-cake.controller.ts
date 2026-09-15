@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
 import type { CustomCakeService } from "../service/custom-cake.service.js";
 import type { CustomCakeOptionType } from "../model/custom-cake-option.model.js";
+import type { CustomCakeInquiryStatus } from "../model/custom-cake-inquiry.model.js";
 
 export class CustomCakeController {
   constructor(private readonly service: CustomCakeService) {}
@@ -18,7 +19,7 @@ export class CustomCakeController {
   };
 
   public submitInquiry = async (req: Request, res: Response): Promise<void> => {
-    const user = (req as any).user;
+    const user = (req as Request & { user?: { id?: string; _id?: string } }).user;
     const payload = {
       ...req.body,
       userId: user?.id || user?._id || undefined,
@@ -99,7 +100,7 @@ export class CustomCakeController {
   public getAllInquiriesAdmin = async (req: Request, res: Response): Promise<void> => {
     const { status, search, userId } = req.query;
     const inquiries = await this.service.getInquiries({
-      status: status as any,
+      status: status as CustomCakeInquiryStatus | undefined,
       search: search ? String(search) : undefined,
       userId: userId ? String(userId) : undefined,
     });

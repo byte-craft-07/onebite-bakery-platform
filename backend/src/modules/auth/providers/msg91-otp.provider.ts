@@ -14,7 +14,7 @@ export class Msg91OtpProvider implements OtpProvider {
         {
           phone: maskPhone(payload.phone),
           purpose: payload.purpose,
-          otpMasked: maskOtp(payload.otp),
+          otp: env.nodeEnv !== "production" ? payload.otp : maskOtp(payload.otp),
         },
         "MSG91_AUTH_KEY not configured. Falling back to development console OTP delivery.",
       );
@@ -26,17 +26,20 @@ export class Msg91OtpProvider implements OtpProvider {
     const formattedMobile = normalizedPhone.length === 10 ? `91${normalizedPhone}` : normalizedPhone;
 
     try {
-      const url = "https://control.msg91.com/api/v5/otp";
       const params = new URLSearchParams({
-        template_id: templateId || "",
         mobile: formattedMobile,
         otp: payload.otp,
       });
 
-      if (senderId) {
-        params.append("sender", senderId);
+      if (templateId && templateId.trim()) {
+        params.append("template_id", templateId.trim());
       }
 
+      if (senderId && senderId.trim()) {
+        params.append("sender", senderId.trim());
+      }
+
+      const url = "https://control.msg91.com/api/v5/otp";
       const requestUrl = `${url}?${params.toString()}`;
 
       const response = await fetch(requestUrl, {
@@ -58,6 +61,15 @@ export class Msg91OtpProvider implements OtpProvider {
           },
           "MSG91 API failed to deliver OTP SMS",
         );
+
+        if (env.nodeEnv !== "production") {
+          logger.warn(
+            { phone: payload.phone, otp: payload.otp },
+            "MSG91 delivery failed in development mode; gracefully allowing dev fallback OTP.",
+          );
+          return;
+        }
+
         throw new Error(responseData.message || "Failed to send SMS via MSG91");
       }
 
@@ -76,7 +88,17 @@ export class Msg91OtpProvider implements OtpProvider {
         },
         "Error calling MSG91 OTP API",
       );
+
+      if (env.nodeEnv !== "production") {
+        logger.warn(
+          { phone: payload.phone, otp: payload.otp },
+          "MSG91 call threw error in dev mode; continuing with dev OTP.",
+        );
+        return;
+      }
+
       throw err;
     }
   }
 }
+

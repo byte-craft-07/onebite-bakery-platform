@@ -305,9 +305,12 @@ export const catalogService = {
       });
       return response.data.data.product;
     } catch (_err) {
-      const found = fallbackProducts.find((p) => p.slug === slug);
+      const cleanSlug = slug.toLowerCase().trim();
+      const found = fallbackProducts.find(
+        (p) => p.slug?.toLowerCase() === cleanSlug || p.id === slug,
+      );
       if (found) return found;
-      return fallbackProducts[0];
+      throw new Error(`Product with slug "${slug}" not found.`);
     }
   },
 

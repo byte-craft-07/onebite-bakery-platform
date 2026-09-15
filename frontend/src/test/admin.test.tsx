@@ -5,9 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { AuthProvider } from "@/contexts/auth.context";
 import {
-  AdminCard,
   AdminDashboardShell,
-  AdminLayout,
   AdminPageHeader,
   AdminStatCard,
   Sidebar,

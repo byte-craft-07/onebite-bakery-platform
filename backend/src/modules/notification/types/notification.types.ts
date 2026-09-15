@@ -18,6 +18,10 @@ export interface NotificationResponse {
   providerMessageId?: string;
   failureReason?: string;
   sentAt?: Date;
+  isRead?: boolean;
+  readAt?: Date;
+  orderId?: string;
+  orderNumber?: string;
   createdAt: Date;
   updatedAt: Date;
 }

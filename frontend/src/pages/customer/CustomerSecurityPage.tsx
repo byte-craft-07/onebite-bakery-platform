@@ -83,16 +83,16 @@ export const CustomerSecurityPage: React.FC = () => {
 
           <div className="p-4 rounded-2xl bg-[#FFF8EC] border border-[#E5DEC9] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#7A6E65]">Mobile Number Verification</span>
-              <Badge variant="primary">Active OTP</Badge>
+              <span className="text-xs font-bold text-[#7A6E65]">Delivery Contact Number</span>
+              <Badge variant="neutral">Address Contact</Badge>
             </div>
             <div className="flex items-center gap-3 pt-1">
-              <div className="h-10 w-10 rounded-full bg-[#27AE60]/10 flex items-center justify-center text-[#27AE60]">
+              <div className="h-10 w-10 rounded-full bg-[#596B58]/10 flex items-center justify-center text-[#596B58]">
                 <UserCheck className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm font-bold text-[#3B302B]">+91 {user?.phone || "9876543210"}</p>
-                <p className="text-xs text-gray-400">1-Step OTP Verification</p>
+                <p className="text-sm font-bold text-[#3B302B]">+91 {user?.phone || "Saved in Address"}</p>
+                <p className="text-xs text-gray-400">Maintained via Delivery Address</p>
               </div>
             </div>
           </div>

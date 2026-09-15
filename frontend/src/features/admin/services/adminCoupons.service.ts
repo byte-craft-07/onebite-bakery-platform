@@ -53,21 +53,11 @@ export const adminCouponsService = {
         const created = res.data.data.coupon;
         return { ...created, id: created.id || created._id || "" };
       }
+      throw new Error("Failed to create coupon");
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || "Failed to create coupon";
       throw new Error(msg);
     }
-    const newCoupon: AdminCoupon = {
-      id: `cpn_${Date.now()}`,
-      ...payload,
-      code: payload.code.toUpperCase(),
-      minOrderAmount: payload.minOrderAmount || 0,
-      usedCount: 0,
-      isActive: payload.isActive ?? true,
-      createdAt: new Date().toISOString(),
-    };
-    saveLocalCoupon(newCoupon);
-    return newCoupon;
   },
 
   toggleCouponStatus: async (id: string): Promise<AdminCoupon> => {
@@ -77,19 +67,21 @@ export const adminCouponsService = {
         const updated = res.data.data.coupon;
         return { ...updated, id: updated.id || updated._id || "" };
       }
-    } catch (_err) {
-      // Local toggle
+      return toggleLocalCoupon(id);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to toggle coupon status";
+      throw new Error(msg);
     }
-    return toggleLocalCoupon(id);
   },
 
   deleteCoupon: async (id: string): Promise<void> => {
     try {
       await apiClient.delete(`/coupons/${id}`);
-    } catch (_err) {
-      // Local delete
+      deleteLocalCoupon(id);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to delete coupon";
+      throw new Error(msg);
     }
-    deleteLocalCoupon(id);
   },
 };
 

@@ -202,7 +202,7 @@ export const razorpayService = {
       order_id: validOrderId,
       prefill: {
         name: options.customerName || "The Online Bakery Customer",
-        email: options.customerEmail || "theonlinebakery07@gmail.com",
+        email: options.customerEmail || "ajaykterha@gmail.com",
         contact: options.customerPhone || "7897671632",
       },
       readonly: {

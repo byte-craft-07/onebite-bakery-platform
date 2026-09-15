@@ -101,10 +101,58 @@ textarea {
   }
 }
 
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: #596B58 !important;
-  box-shadow: 0 0 0 3px rgba(89, 107, 88, 0.2) !important;
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+/* Custom smooth scrollbar styling across all modal forms and containers */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFF8EC;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D8BE91;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #596B58;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #D8BE91 #FFF8EC;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #FFF8EC;
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #D8BE91;
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #596B58;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #D8BE91 #FFF8EC;
 }
 

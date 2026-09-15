@@ -208,7 +208,13 @@ export const OrdersHistoryPage: React.FC = () => {
 
             <div className="space-y-3 py-1">
               {ord.items.map((item, idx) => {
-                const itemImg = (item as any)?.image || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=400&q=80";
+                const itemImg =
+                  (item as any)?.image ||
+                  (item as any)?.thumbnailUrl ||
+                  (item as any)?.imageUrl ||
+                  (item as any)?.imageUrls?.[0] ||
+                  (item as any)?.mainImage ||
+                  "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=400&q=80";
                 return (
                   <div key={item.id || idx} className="flex items-center justify-between gap-3 text-xs">
                     <div className="flex items-center gap-3">

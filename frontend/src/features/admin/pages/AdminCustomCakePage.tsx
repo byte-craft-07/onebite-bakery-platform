@@ -1,30 +1,21 @@
 import React, { useState, useEffect } from "react";
 import {
   Cake,
-  Layers,
   Sparkles,
   Search,
   Plus,
   Edit2,
   Trash2,
   CheckCircle,
-  XCircle,
   MessageSquare,
-  IndianRupee,
-  ExternalLink,
   Phone,
-  Mail,
-  Calendar,
   Image as ImageIcon,
   Check,
   Loader2,
-  Filter,
-  Send,
   User,
   Eye,
   X,
 } from "lucide-react";
-
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/FormControls";
@@ -58,7 +49,6 @@ export const AdminCustomCakePage: React.FC = () => {
 
   // Flavors State
   const [flavors, setFlavors] = useState<CustomCakeOption[]>([]);
-  const [isLoadingFlavors, setIsLoadingFlavors] = useState(true);
   const [flavorModalOpen, setFlavorModalOpen] = useState(false);
   const [editingFlavor, setEditingFlavor] = useState<CustomCakeOption | null>(null);
   const [flavorForm, setFlavorForm] = useState({
@@ -72,7 +62,6 @@ export const AdminCustomCakePage: React.FC = () => {
 
   // Designs State
   const [designs, setDesigns] = useState<CustomCakeOption[]>([]);
-  const [isLoadingDesigns, setIsLoadingDesigns] = useState(true);
   const [designModalOpen, setDesignModalOpen] = useState(false);
   const [editingDesign, setEditingDesign] = useState<CustomCakeOption | null>(null);
   const [designForm, setDesignForm] = useState({
@@ -86,8 +75,6 @@ export const AdminCustomCakePage: React.FC = () => {
 
   // Image zoom modal
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [isSavingFlavor, setIsSavingFlavor] = useState(false);
-  const [isSavingDesign, setIsSavingDesign] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -104,7 +91,7 @@ export const AdminCustomCakePage: React.FC = () => {
         search: inquirySearch || undefined,
       });
       setInquiries(data || []);
-    } catch (_err) {
+    } catch {
       setInquiries([]);
     } finally {
       setIsLoadingInquiries(false);
@@ -113,27 +100,21 @@ export const AdminCustomCakePage: React.FC = () => {
 
   // Load Flavors
   const fetchFlavors = async () => {
-    setIsLoadingFlavors(true);
     try {
       const data = await customCakeService.adminGetOptions("FLAVOR");
       setFlavors(data && data.length > 0 ? data : FALLBACK_FLAVORS);
-    } catch (_err) {
+    } catch {
       setFlavors(FALLBACK_FLAVORS);
-    } finally {
-      setIsLoadingFlavors(false);
     }
   };
 
   // Load Designs
   const fetchDesigns = async () => {
-    setIsLoadingDesigns(true);
     try {
       const data = await customCakeService.adminGetOptions("DESIGN");
       setDesigns(data && data.length > 0 ? data : FALLBACK_DESIGNS);
-    } catch (_err) {
+    } catch {
       setDesigns(FALLBACK_DESIGNS);
-    } finally {
-      setIsLoadingDesigns(false);
     }
   };
 
@@ -187,7 +168,7 @@ export const AdminCustomCakePage: React.FC = () => {
     try {
       await customCakeService.adminDeleteInquiry(id);
       fetchInquiries();
-    } catch (err: any) {
+    } catch {
       alert("Failed to delete inquiry.");
     }
   };
@@ -196,7 +177,6 @@ export const AdminCustomCakePage: React.FC = () => {
   const handleSaveFlavor = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!flavorForm.name.trim()) return;
-    setIsSavingFlavor(true);
     try {
       if (editingFlavor && (editingFlavor._id || editingFlavor.id)) {
         const id = editingFlavor._id || editingFlavor.id!;
@@ -216,13 +196,11 @@ export const AdminCustomCakePage: React.FC = () => {
       setFlavorModalOpen(false);
       setEditingFlavor(null);
       await fetchFlavors();
-    } catch (_err) {
+    } catch {
       showToast(`Flavor saved successfully!`);
       setFlavorModalOpen(false);
       setEditingFlavor(null);
       fetchFlavors();
-    } finally {
-      setIsSavingFlavor(false);
     }
   };
 
@@ -234,7 +212,7 @@ export const AdminCustomCakePage: React.FC = () => {
       await customCakeService.adminDeleteOption(id);
       showToast("Flavor deleted successfully.");
       fetchFlavors();
-    } catch (_err) {
+    } catch {
       showToast("Flavor removed.");
       fetchFlavors();
     }
@@ -244,7 +222,6 @@ export const AdminCustomCakePage: React.FC = () => {
   const handleSaveDesign = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!designForm.name.trim()) return;
-    setIsSavingDesign(true);
     try {
       if (editingDesign && (editingDesign._id || editingDesign.id)) {
         const id = editingDesign._id || editingDesign.id!;
@@ -264,13 +241,11 @@ export const AdminCustomCakePage: React.FC = () => {
       setDesignModalOpen(false);
       setEditingDesign(null);
       await fetchDesigns();
-    } catch (_err) {
+    } catch {
       showToast(`Design theme saved successfully!`);
       setDesignModalOpen(false);
       setEditingDesign(null);
       fetchDesigns();
-    } finally {
-      setIsSavingDesign(false);
     }
   };
 
@@ -282,7 +257,7 @@ export const AdminCustomCakePage: React.FC = () => {
       await customCakeService.adminDeleteOption(id);
       showToast("Design theme deleted successfully.");
       fetchDesigns();
-    } catch (_err) {
+    } catch {
       showToast("Design theme removed.");
       fetchDesigns();
     }
@@ -712,7 +687,7 @@ export const AdminCustomCakePage: React.FC = () => {
                 <div className="space-y-2">
                   <div className="aspect-video w-full rounded-xl overflow-hidden bg-gray-100 relative">
                     <img
-                      src={dsg.imageUrl || "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=300&q=80"}
+                      src={dsg.imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80"}
                       alt={dsg.name}
                       className="w-full h-full object-cover"
                     />
@@ -886,21 +861,21 @@ export const AdminCustomCakePage: React.FC = () => {
       {/* FLAVOR MODAL */}
       {/* ========================================================= */}
       {flavorModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 border border-[#E5DEC9] shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E5DEC9]">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 border border-[#E5DEC9] shadow-2xl my-auto max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E5DEC9] shrink-0">
               <h3 className="font-extrabold text-lg text-[#3B302B]">
                 {editingFlavor ? "Edit Cake Flavor" : "Add New Cake Flavor"}
               </h3>
               <button
                 onClick={() => setFlavorModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400"
+                className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveFlavor} className="space-y-4">
+            <form onSubmit={handleSaveFlavor} className="space-y-4 flex-1 overflow-y-auto pr-1 pt-2 custom-scrollbar">
               <Input
                 label="Flavor Name *"
                 placeholder="e.g. Belgian Dark Chocolate Ganache"
@@ -947,9 +922,10 @@ export const AdminCustomCakePage: React.FC = () => {
                 value={flavorForm.imageUrl}
                 onChange={(url) => setFlavorForm({ ...flavorForm, imageUrl: url })}
                 entityType="PRODUCT"
+                label="Flavor Photo / Image"
               />
 
-              <div className="pt-2 flex justify-end gap-3">
+              <div className="pt-2 flex justify-end gap-3 shrink-0">
                 <Button type="button" variant="outline" onClick={() => setFlavorModalOpen(false)}>
                   Cancel
                 </Button>
@@ -966,21 +942,21 @@ export const AdminCustomCakePage: React.FC = () => {
       {/* DESIGN THEME MODAL */}
       {/* ========================================================= */}
       {designModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 border border-[#E5DEC9] shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E5DEC9]">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 border border-[#E5DEC9] shadow-2xl my-auto max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E5DEC9] shrink-0">
               <h3 className="font-extrabold text-lg text-[#3B302B]">
                 {editingDesign ? "Edit Design Theme" : "Add New Design Theme"}
               </h3>
               <button
                 onClick={() => setDesignModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400"
+                className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveDesign} className="space-y-4">
+            <form onSubmit={handleSaveDesign} className="space-y-4 flex-1 overflow-y-auto pr-1 pt-2 custom-scrollbar">
               <Input
                 label="Design Theme Name *"
                 placeholder="e.g. Royal Gold Drip & Macarons"
@@ -1018,7 +994,7 @@ export const AdminCustomCakePage: React.FC = () => {
                 <label className="block text-xs font-bold text-[#3B302B] mb-1">Theme Description</label>
                 <textarea
                   rows={2}
-                  placeholder="24k edible gold foil accents, chocolate drip..."
+                  placeholder="Elegant celebration theme with gold leaf..."
                   value={designForm.description}
                   onChange={(e) => setDesignForm({ ...designForm, description: e.target.value })}
                   className="w-full p-2.5 rounded-xl border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58]"
@@ -1029,14 +1005,15 @@ export const AdminCustomCakePage: React.FC = () => {
                 value={designForm.imageUrl}
                 onChange={(url) => setDesignForm({ ...designForm, imageUrl: url })}
                 entityType="PRODUCT"
+                label="Theme Photo / Image"
               />
 
-              <div className="pt-2 flex justify-end gap-3">
+              <div className="pt-2 flex justify-end gap-3 shrink-0">
                 <Button type="button" variant="outline" onClick={() => setDesignModalOpen(false)}>
                   Cancel
                 </Button>
                 <Button type="submit">
-                  <span>Save Design Theme</span>
+                  <span>Save Theme</span>
                 </Button>
               </div>
             </form>

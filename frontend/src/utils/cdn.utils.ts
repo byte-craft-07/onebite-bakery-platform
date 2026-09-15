@@ -11,8 +11,8 @@ export interface ImageOptimizationOptions {
 }
 
 /**
- * Transforms an image URL to use CDN-level resizing and auto-format (WebP/AVIF)
- * if using Cloudinary, ImageKit, or custom CDN.
+ * Transforms an image URL to use CDN-level resizing, WebP/AVIF auto-formatting,
+ * and high-efficiency compression (Unsplash / Cloudinary / ImageKit).
  */
 export function getOptimizedImageUrl(
   url: string | undefined | null,
@@ -27,9 +27,25 @@ export function getOptimizedImageUrl(
     return url;
   }
 
-  const { width, height, quality = 80, format = 'auto' } = options;
+  const { width = 400, height, quality = 75, format = 'auto' } = options;
 
-  // 1. Cloudinary optimization
+  // 1. Unsplash optimization (parse and clean existing query params)
+  if (url.includes('images.unsplash.com')) {
+    try {
+      const urlObj = new URL(url);
+      urlObj.searchParams.set('auto', 'format');
+      urlObj.searchParams.set('fit', 'crop');
+      urlObj.searchParams.set('q', quality.toString());
+      if (width) urlObj.searchParams.set('w', width.toString());
+      if (height) urlObj.searchParams.set('h', height.toString());
+      return urlObj.toString();
+    } catch {
+      const base = url.split('?')[0];
+      return `${base}?auto=format&fit=crop&w=${width}&q=${quality}${height ? `&h=${height}` : ''}`;
+    }
+  }
+
+  // 2. Cloudinary optimization
   if (url.includes('res.cloudinary.com')) {
     const transformations: string[] = [`f_${format}`, `q_${quality}`];
     if (width) transformations.push(`w_${width}`);
@@ -39,7 +55,7 @@ export function getOptimizedImageUrl(
     return url.replace('/upload/', `/upload/${transformString}/`);
   }
 
-  // 2. ImageKit optimization
+  // 3. ImageKit optimization
   if (url.includes('ik.imagekit.io')) {
     const params: string[] = [`f-${format}`, `q-${quality}`];
     if (width) params.push(`w-${width}`);
@@ -49,19 +65,6 @@ export function getOptimizedImageUrl(
     return `${url}${separator}tr=${params.join(',')}`;
   }
 
-  // 3. Unsplash optimization
-  if (url.includes('images.unsplash.com')) {
-    const separator = url.includes('?') ? '&' : '?';
-    const params = new URLSearchParams();
-    params.set('auto', 'format');
-    params.set('fit', 'crop');
-    params.set('q', quality.toString());
-    if (width) params.set('w', width.toString());
-    if (height) params.set('h', height.toString());
-
-    return `${url}${separator}${params.toString()}`;
-  }
-
   // 4. Local uploads from backend / static assets
   return url;
 }
@@ -69,12 +72,12 @@ export function getOptimizedImageUrl(
 /**
  * Generates a responsive srcset string for high-DPI (Retina) and mobile displays.
  */
-export function getResponsiveSrcSet(url: string, widths: number[] = [320, 640, 960, 1200]): string {
+export function getResponsiveSrcSet(url: string, widths: number[] = [280, 400, 600, 800]): string {
   if (!url || url.startsWith('data:') || url.endsWith('.svg')) {
     return '';
   }
 
   return widths
-    .map((w) => `${getOptimizedImageUrl(url, { width: w })} ${w}w`)
+    .map((w) => `${getOptimizedImageUrl(url, { width: w, quality: 75 })} ${w}w`)
     .join(', ');
 }

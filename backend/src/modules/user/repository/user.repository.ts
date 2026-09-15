@@ -86,7 +86,8 @@ export class UserRepository extends BaseRepository<User> {
     return this.create({
       name: "Ajay Prajapati",
       phone,
-      email: "theonlinebakery07@gmail.com",
+      email: "ajaykterha@gmail.com",
+      profileImage: "https://lh3.googleusercontent.com/a/ACg8ocKUbft27NKCgakV4you7xwWL4RqMom-n5LZNJ_eTUsfmzR6KlCLUQ=s96-c",
       role: "admin",
       isVerified: true,
       status: "active",

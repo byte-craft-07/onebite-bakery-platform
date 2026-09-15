@@ -21,3 +21,18 @@ export const sendNotificationSchema = z.object({
   userId: objectIdSchema.optional(),
   provider: z.enum(NOTIFICATION_PROVIDERS).optional(),
 });
+
+export const pushSubscriptionSchema = z.object({
+  endpoint: z.string().trim().url("Invalid push subscription endpoint URL."),
+  keys: z.object({
+    p256dh: z.string().trim().min(1, "p256dh key is required."),
+    auth: z.string().trim().min(1, "auth secret is required."),
+  }),
+  deviceInfo: z.record(z.unknown()).optional(),
+  userAgent: z.string().optional(),
+});
+
+export const unsubscribePushSchema = z.object({
+  endpoint: z.string().trim().url("Invalid push subscription endpoint URL."),
+});
+

@@ -165,7 +165,7 @@ export const adminCatalogService = {
       name: payload.name,
       slug: payload.slug || payload.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
       description: payload.description || payload.tagline || `${payload.name} celebration cakes and desserts`,
-      bannerImage: payload.bannerImage || "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=800&q=80",
+      bannerImage: payload.bannerImage || "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=800&q=80",
       seoTitle: payload.name,
       seoDescription: payload.description || `${payload.name} cakes`,
     });

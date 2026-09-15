@@ -54,7 +54,7 @@ reviewRouter.get(
     const queryLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 100);
 
     try {
-      const filter: Record<string, any> = { isActive: true };
+      const filter: Record<string, unknown> = { isActive: true };
       if (productId) {
         filter.productId = productId;
       }
@@ -175,11 +175,11 @@ reviewRouter.post(
   "/batch",
   asyncHandler(async (req, res) => {
     const { items, orderId, customerName, name, avatar } = req.body || {};
-    const addedReviews: any[] = [];
+    const addedReviews: Record<string, unknown>[] = [];
 
     if (Array.isArray(items)) {
       const limitedItems = items.slice(0, 20);
-      const docsToInsert = limitedItems.map((item: any, idx: number) => {
+      const docsToInsert = limitedItems.map((item: { rating?: number; qualityRating?: number; tasteRating?: number; comment?: string; productName?: string; productId?: string; tags?: unknown[] }) => {
         const cleanRating = Math.min(Math.max(Number(item.rating) || 5, 1), 5);
         const cleanName = typeof customerName === "string" && customerName.trim()
           ? customerName.trim().slice(0, 100)

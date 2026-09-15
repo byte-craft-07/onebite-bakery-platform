@@ -5,6 +5,9 @@ import type { OrderResponse } from "../../order/types/index.js";
 import type { NotificationResponse } from "../types/index.js";
 import type { SendNotificationDto } from "../dto/index.js";
 import type { NotificationService } from "./notification.service.js";
+import { broadcastNewOrderNotification } from "../../../socket/index.js";
+
+import { WebPushService } from "./web-push.service.js";
 
 type OrderNotificationEvent = "created" | "status-updated" | "cancelled";
 
@@ -19,12 +22,103 @@ export class OrderNotificationService {
   public constructor(
     private readonly notificationService: NotificationService,
     private readonly userRepository = new UserRepository(),
+    private readonly webPushService = new WebPushService(),
   ) {}
 
   public async dispatchOrderCreated(
     order: OrderResponse,
   ): Promise<NotificationResponse[]> {
-    return this.dispatch(order, "created");
+    const results = await this.dispatch(order, "created");
+
+    // Real-time admin broadcast & persistent record creation
+    try {
+      const user = await this.userRepository.findById(toObjectId(order.customerId));
+      const customerName =
+        order.addressSnapshot?.fullName || user?.name || "Customer";
+      const customerPhone =
+        order.addressSnapshot?.phone || user?.phone || "N/A";
+
+      // 1. Create persistent in-app notification record for Admins
+      const adminNotification = await this.notificationService.send({
+        recipient: "ADMIN",
+        type: "ORDER_CREATED",
+        template: "admin-order-created",
+        payload: {
+          title: `New Order Received: #${order.orderNumber}`,
+          message: `Customer ${customerName} placed order #${order.orderNumber} for ₹${order.pricingSnapshot.grandTotal}`,
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          customerName,
+          customerPhone,
+          totalAmount: order.pricingSnapshot.grandTotal,
+          paymentMethod: order.paymentMethod ?? "UPI",
+          deliveryMethod: order.deliveryMethod,
+          deliveryTimingType: order.deliveryTimingType ?? "INSTANT",
+          itemCount: order.items?.length || 0,
+          items: (order.items || []).map((it) => ({
+            name: it.productName,
+            quantity: it.quantity,
+          })),
+        },
+        provider: "IN_APP",
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        isRead: false,
+      });
+
+      // 2. Broadcast via Socket.IO to connected active admin dashboards
+      broadcastNewOrderNotification(
+        {
+          notificationId: adminNotification.id,
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          customer: {
+            name: customerName,
+            phone: customerPhone,
+          },
+          items: (order.items || []).map((it) => ({
+            name: it.productName,
+            quantity: it.quantity,
+          })),
+          totalAmount: order.pricingSnapshot.grandTotal,
+          paymentMethod: order.paymentMethod ?? "UPI",
+          orderType: order.deliveryMethod ?? "HOME_DELIVERY",
+          createdAt:
+            order.createdAt instanceof Date
+              ? order.createdAt.toISOString()
+              : String(order.createdAt),
+        },
+        order.branchId,
+      );
+
+      // 3. Dispatch Web Push notification to all registered admin devices (background / closed browsers)
+      void this.webPushService.sendPushToAdmins(
+        {
+          notificationId: adminNotification.id,
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          customerName,
+          totalAmount: order.pricingSnapshot.grandTotal,
+          paymentMethod: order.paymentMethod ?? "UPI",
+          orderType: order.deliveryMethod,
+          branchId: order.branchId,
+        },
+        order.branchId,
+      );
+
+      results.push(adminNotification);
+    } catch (socketError) {
+      logger.error(
+        {
+          error: socketError,
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+        },
+        "Failed to dispatch real-time admin order notification (non-fatal)",
+      );
+    }
+
+    return results;
   }
 
   public async dispatchOrderStatusUpdated(
@@ -95,6 +189,29 @@ export class OrderNotificationService {
       }
 
       const results = await this.notificationService.sendBulk(notifications);
+
+      // Web Push dispatch to customer device (browser / PWA / mobile)
+      void this.webPushService.sendPushToUser(order.customerId, {
+        title: this.resolveTitle(order, event),
+        body: this.resolveMessage(order, event),
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        url: `/customer/orders/${order.id}`,
+        type: type,
+      });
+
+      // If delivery agent is assigned, also dispatch push notification to agent device
+      if (order.deliveryAgentId) {
+        void this.webPushService.sendPushToUser(order.deliveryAgentId, {
+          title: `🛵 Order #${order.orderNumber} • ${formatStatus(order.orderStatus)}`,
+          body: `Customer: ${customerName} • Status: ${formatStatus(order.orderStatus)}`,
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          url: `/agent/dashboard`,
+          type: "DELIVERY_UPDATE",
+        });
+      }
+
       logger.info(
         {
           orderId: order.id,

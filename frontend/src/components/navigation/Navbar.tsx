@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft,
   Box,
   Building,
   Cake,
   ChevronDown,
+  Download,
   Gift,
   Heart,
   Home,
@@ -19,13 +19,13 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
-  Tag,
   Ticket,
   User,
   X,
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/auth.context";
+import { usePWA } from "@/hooks/usePWA";
 import { cartService } from "@/services/cart.service";
 import { LocationModal } from "@/components/location/LocationModal";
 import { UserAvatar } from "@/components/common/UserAvatar";
@@ -41,12 +41,13 @@ export const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, currentLocation, logout } = useAuth();
+  const { isStandalone, promptInstall } = usePWA();
 
   const syncCartCount = async () => {
     try {
       const cart = await cartService.getCart();
       setCartCount(cart.itemCount || 0);
-    } catch (_err) {
+    } catch {
       setCartCount(0);
     }
   };
@@ -58,14 +59,32 @@ export const Navbar: React.FC = () => {
       syncCartCount();
     };
 
+    const checkShouldOpenLocation = () => {
+      const shouldOpen = localStorage.getItem("theonlinebakery_open_location_after_login");
+      if (shouldOpen === "true") {
+        localStorage.removeItem("theonlinebakery_open_location_after_login");
+        if (!location.pathname.includes("checkout")) {
+          setIsLocationModalOpen(true);
+        }
+      }
+    };
+
+    checkShouldOpenLocation();
+
+    const handleOpenLocationModal = () => {
+      setIsLocationModalOpen(true);
+    };
+
     window.addEventListener("theonlinebakery_cart_updated", handleCartUpdate);
     window.addEventListener("storage", handleCartUpdate);
+    window.addEventListener("theonlinebakery_open_location_modal", handleOpenLocationModal);
 
     return () => {
       window.removeEventListener("theonlinebakery_cart_updated", handleCartUpdate);
       window.removeEventListener("storage", handleCartUpdate);
+      window.removeEventListener("theonlinebakery_open_location_modal", handleOpenLocationModal);
     };
-  }, []);
+  }, [location.pathname, isAuthenticated]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,6 +207,19 @@ export const Navbar: React.FC = () => {
             >
               <Heart className="h-4.5 w-4.5 xl:h-5 xl:w-5" />
             </Link>
+
+            {!isStandalone && (
+              <button
+                type="button"
+                onClick={promptInstall}
+                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl bg-[#596B58]/10 hover:bg-[#596B58]/20 text-[#596B58] text-xs font-bold transition-all border border-[#596B58]/20 cursor-pointer shadow-2xs whitespace-nowrap"
+                title="Install The Online Bakery App"
+              >
+                <Download className="h-4 w-4 text-[#596B58]" />
+                <span className="hidden xl:inline">Install App</span>
+                <span className="xl:hidden">App</span>
+              </button>
+            )}
 
             <Link
               to="/cart"
@@ -438,6 +470,23 @@ export const Navbar: React.FC = () => {
                       <User className="h-4 w-4 text-[#FFF8EC]" />
                       <span>Log In</span>
                     </Link>
+                  )}
+
+                  {!isStandalone && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        promptInstall();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-[#FFF8EC] border border-[#D8BE91] text-[#596B58] font-bold hover:bg-[#A8B89A]/20 transition-colors text-left text-xs cursor-pointer"
+                    >
+                      <Download className="h-4 w-4 text-[#596B58] shrink-0" />
+                      <div className="flex-1">
+                        <div>Install App</div>
+                        <div className="text-[10px] text-[#7A6E65] font-normal">Add to Home Screen for fast ordering</div>
+                      </div>
+                    </button>
                   )}
                 </div>
               </nav>

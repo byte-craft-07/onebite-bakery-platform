@@ -59,25 +59,6 @@ export class OrderService {
     await this.cartService.recalculateCart(cart);
 
     if (!cart.items || cart.items.length === 0) {
-      const activeProduct = await ProductModel.findOne({ isActive: true, isDeleted: false }).exec();
-      if (activeProduct) {
-        await this.cartService.addItem(customerId, undefined, {
-          productId: activeProduct._id.toString(),
-          quantity: 1,
-        });
-        const reloadedCart = await this.cartService.getOrCreateCartDocument(customerId);
-        await this.cartService.recalculateCart(reloadedCart);
-        cart.items = reloadedCart.items;
-        cart.subtotal = reloadedCart.subtotal;
-        cart.estimatedDeliveryCharge = reloadedCart.estimatedDeliveryCharge;
-        cart.estimatedTax = reloadedCart.estimatedTax;
-        cart.estimatedDiscount = reloadedCart.estimatedDiscount;
-        cart.homeDeliveryAvailable = reloadedCart.homeDeliveryAvailable;
-        cart.pickupAvailable = reloadedCart.pickupAvailable;
-      }
-    }
-
-    if (!cart.items || cart.items.length === 0) {
       throw new AppError(
         "Cart is empty. Add items to cart before placing an order.",
         HTTP_STATUS.BAD_REQUEST,
@@ -110,7 +91,7 @@ export class OrderService {
 
         if (!addressDoc) {
           throw new AppError(
-            "Specified delivery address not found.",
+            "Specified delivery address not found or does not belong to your account.",
             HTTP_STATUS.NOT_FOUND,
             [],
             true,
@@ -122,6 +103,8 @@ export class OrderService {
           addressId: addressDoc._id,
           fullName: addressDoc.fullName,
           phone: addressDoc.phone,
+          village: addressDoc.village,
+          district: addressDoc.district,
           street: addressDoc.address,
           city: addressDoc.city,
           state: addressDoc.state,
@@ -132,6 +115,8 @@ export class OrderService {
         addressSnapshot = {
           fullName: dto.address.fullName,
           phone: dto.address.phone,
+          village: dto.address.village,
+          district: dto.address.district,
           street: dto.address.street,
           city: dto.address.city,
           state: dto.address.state,
@@ -234,14 +219,108 @@ export class OrderService {
 
     if (UserModel.db?.readyState === 1) {
       try {
-        const userDoc = await UserModel.findById(customerObjId).exec();
-        if (userDoc?.currentLocation) {
-          locationSnapshot = {
-            villageId: userDoc.currentLocation.villageId,
-            villageName: userDoc.currentLocation.villageName,
-            district: userDoc.currentLocation.district,
-            pincode: userDoc.currentLocation.pincode,
-          };
+        const { VillageModel } = await import("../../village/model/village.model.js");
+        let villageDoc = null;
+
+        // A. If addressId / addressDoc exists, resolve village from the delivery address
+        if (dto.addressId) {
+          const addressDoc = await AddressModel.findOne({
+            _id: toObjectId(dto.addressId),
+            userId: customerObjId,
+          }).exec();
+
+          if (addressDoc) {
+            // 1. Try matching by village
+            if (addressDoc.village && addressDoc.village.trim()) {
+              villageDoc = await VillageModel.findOne({
+                name: new RegExp(`^${addressDoc.village.trim()}$`, "i"),
+                isActive: true,
+              }).exec();
+            }
+            // 2. Try matching by city
+            if (!villageDoc && addressDoc.city && addressDoc.city.trim()) {
+              villageDoc = await VillageModel.findOne({
+                name: new RegExp(`^${addressDoc.city.trim()}$`, "i"),
+                isActive: true,
+              }).exec();
+            }
+            // 3. Try matching by district
+            if (!villageDoc && addressDoc.district && addressDoc.district.trim()) {
+              villageDoc = await VillageModel.findOne({
+                name: new RegExp(`^${addressDoc.district.trim()}$`, "i"),
+                isActive: true,
+              }).exec();
+            }
+            // 4. Try matching by full address text containing any active village name
+            if (!villageDoc) {
+              const fullAddressStr = `${addressDoc.village || ""} ${addressDoc.address || ""} ${addressDoc.city || ""} ${addressDoc.district || ""}`.toLowerCase();
+              const allActiveVillages = await VillageModel.find({ isActive: true }).exec();
+              const matched = allActiveVillages.find((v) => {
+                const vName = v.name.trim().toLowerCase();
+                return fullAddressStr.includes(vName);
+              });
+              if (matched) {
+                villageDoc = matched;
+              }
+            }
+
+            if (villageDoc) {
+              locationSnapshot = {
+                villageId: villageDoc._id,
+                villageName: villageDoc.name,
+                district: villageDoc.district,
+                pincode: addressDoc.pincode || villageDoc.pincode,
+              };
+            } else {
+              locationSnapshot = {
+                villageName: addressDoc.village || addressDoc.city || "Hamirpur",
+                district: addressDoc.district || addressDoc.state || "Hamirpur",
+                pincode: addressDoc.pincode || "210502",
+              };
+            }
+          }
+        } else if (dto.address) {
+          if (dto.address.city) {
+            villageDoc = await VillageModel.findOne({
+              name: new RegExp(`^${dto.address.city.trim()}$`, "i"),
+              isActive: true,
+            }).exec();
+          }
+          if (!villageDoc && dto.address.street) {
+            const fullStr = `${dto.address.street} ${dto.address.city || ""}`.toLowerCase();
+            const allActiveVillages = await VillageModel.find({ isActive: true }).exec();
+            const matched = allActiveVillages.find((v) => fullStr.includes(v.name.trim().toLowerCase()));
+            if (matched) {
+              villageDoc = matched;
+            }
+          }
+          if (villageDoc) {
+            locationSnapshot = {
+              villageId: villageDoc._id,
+              villageName: villageDoc.name,
+              district: villageDoc.district,
+              pincode: dto.address.pincode || villageDoc.pincode,
+            };
+          } else {
+            locationSnapshot = {
+              villageName: dto.address.city || "Hamirpur",
+              district: dto.address.state || "Hamirpur",
+              pincode: dto.address.pincode || "210502",
+            };
+          }
+        }
+
+        // B. Fallback to user's currentLocation (e.g. for Store Pickup or missing address)
+        if (!locationSnapshot) {
+          const userDoc = await UserModel.findById(customerObjId).exec();
+          if (userDoc?.currentLocation) {
+            locationSnapshot = {
+              villageId: userDoc.currentLocation.villageId,
+              villageName: userDoc.currentLocation.villageName,
+              district: userDoc.currentLocation.district,
+              pincode: userDoc.currentLocation.pincode,
+            };
+          }
         }
       } catch (_err) {
         // Ignore error
@@ -250,9 +329,9 @@ export class OrderService {
 
     if (!locationSnapshot && addressSnapshot) {
       locationSnapshot = {
-        villageName: addressSnapshot.city,
-        district: addressSnapshot.state,
-        pincode: addressSnapshot.pincode,
+        villageName: addressSnapshot.city || "Hamirpur",
+        district: addressSnapshot.state || "Hamirpur",
+        pincode: addressSnapshot.pincode || "210502",
       };
     }
 
@@ -265,7 +344,9 @@ export class OrderService {
         const { BranchService } = await import("../../branch/service/branch.service.js");
         const { BranchRepository } = await import("../../branch/repository/branch.repository.js");
         const branchService = new BranchService(new BranchRepository());
-        const branchDoc = await branchService.resolveBranchForVillage(locationSnapshot?.villageId);
+        const branchDoc = await branchService.resolveBranchForVillage(
+          locationSnapshot?.villageId || locationSnapshot?.villageName,
+        );
         if (branchDoc) {
           branchId = branchDoc._id;
           branchSnapshot = {
@@ -572,8 +653,24 @@ export class OrderService {
   }> {
     const result = await this.orderRepository.findAllOrders(query);
 
+    const customerIds = [...new Set(result.items.map((it) => it.customerId.toString()))];
+    const userMap = new Map<string, { name?: string; phone?: string }>();
+    if (customerIds.length > 0) {
+      try {
+        const users = await UserModel.find({ _id: { $in: customerIds.map(toObjectId) } })
+          .select("_id name phone")
+          .lean()
+          .exec();
+        for (const u of users) {
+          userMap.set(u._id.toString(), { name: u.name, phone: u.phone });
+        }
+      } catch (_e) {
+        // Ignore
+      }
+    }
+
     return {
-      orders: result.items.map((item) => this.toResponse(item)),
+      orders: result.items.map((item) => this.toResponse(item, userMap)),
       pagination: {
         total: result.total,
         page: result.page,
@@ -581,6 +678,40 @@ export class OrderService {
         totalPages: result.totalPages,
       },
     };
+  }
+
+  public async adminDeleteOrder(
+    orderId: string,
+    context?: RequestContext,
+  ): Promise<{ id: string; success: boolean }> {
+    const orderObjId = toObjectId(orderId);
+    let order = await this.orderRepository.findById(orderObjId);
+    if (!order) {
+      order = await this.orderRepository.findByOrderNumber(orderId);
+    }
+
+    if (!order) {
+      throw this.createNotFoundError();
+    }
+
+    await this.orderRepository.deleteOrderById(order._id);
+
+    if (context?.userId) {
+      void AuditLogModel.create({
+        actorId: toObjectId(context.userId),
+        actorRole: context.userRole ?? "admin",
+        action: "ORDER_DELETED",
+        entity: "Order",
+        entityId: order._id.toString(),
+        timestamp: new Date(),
+        metadata: {
+          orderNumber: order.orderNumber,
+          deletedBy: context.userId,
+        },
+      }).catch(() => {});
+    }
+
+    return { id: order._id.toString(), success: true };
   }
 
   public async adminGetOrderById(orderId: string): Promise<OrderResponse> {
@@ -1043,11 +1174,23 @@ export class OrderService {
     return this.toResponse(order);
   }
 
-  private toResponse(order: HydratedDocument<Order>): OrderResponse {
+  private toResponse(
+    order: HydratedDocument<Order>,
+    userMap?: Map<string, { name?: string; phone?: string }>,
+  ): OrderResponse {
+    const user = userMap?.get(order.customerId.toString());
+    const customerName = order.addressSnapshot?.fullName || user?.name;
+    const customerPhone = order.addressSnapshot?.phone || user?.phone;
+
     return {
       id: order._id.toString(),
       orderNumber: order.orderNumber,
       customerId: order.customerId.toString(),
+      ...(customerName ? { customerName } : {}),
+      ...(customerPhone ? { customerPhone } : {}),
+      totalAmount: order.totalAmount ?? order.pricingSnapshot?.grandTotal ?? 0,
+      subtotal: order.subtotal ?? order.pricingSnapshot?.subtotal ?? 0,
+      deliveryCharge: order.deliveryCharge ?? order.pricingSnapshot?.deliveryCharge ?? 0,
       items: order.items,
       ...(order.addressSnapshot
         ? { addressSnapshot: order.addressSnapshot }

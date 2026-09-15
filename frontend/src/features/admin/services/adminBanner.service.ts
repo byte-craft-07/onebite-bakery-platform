@@ -92,29 +92,15 @@ export const adminBannerService = {
       if (res.data?.data?.banner) {
         const b = res.data.data.banner;
         const newBanner = { ...b, id: b._id || b.id };
-        const list = [newBanner, ...getStoredBanners()];
+        const list = [newBanner, ...getStoredBanners().filter((item) => item.id !== newBanner.id)];
         saveStoredBanners(list);
         return newBanner;
       }
-    } catch (_err) {
-      // Fallback
+      throw new Error("Failed to create banner");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to create banner";
+      throw new Error(msg);
     }
-
-    const current = getStoredBanners();
-    const newBanner: BannerItem = {
-      ...payload,
-      id: `banner-${Date.now()}`,
-      displayOrder: payload.displayOrder ?? current.length + 1,
-      isActive: payload.isActive ?? true,
-      buttonText: payload.buttonText || "Explore All Products",
-      badgeText: payload.badgeText || "Freshly Baked Daily",
-      linkUrl: payload.linkUrl || "/products",
-      bgGradient: payload.bgGradient || "from-[#FFF8EC] via-[#FFF8EC] to-[#FFF8EC]",
-      createdAt: new Date().toISOString(),
-    };
-    const updated = [...current, newBanner];
-    saveStoredBanners(updated);
-    return newBanner;
   },
 
   updateBanner: async (id: string, payload: Partial<BannerPayload>): Promise<BannerItem> => {
@@ -131,27 +117,24 @@ export const adminBannerService = {
         saveStoredBanners(list);
         return updatedBanner;
       }
-    } catch (_err) {
-      // Fallback
+      throw new Error("Failed to update banner");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to update banner";
+      throw new Error(msg);
     }
-
-    const current = getStoredBanners();
-    const updated = current.map((b) => (b.id === id ? { ...b, ...payload } : b));
-    saveStoredBanners(updated);
-    return updated.find((b) => b.id === id) as BannerItem;
   },
 
   deleteBanner: async (id: string): Promise<boolean> => {
     try {
       await apiClient.delete(`/banners/${id}`);
-    } catch (_err) {
-      // Fallback
+      const current = getStoredBanners();
+      const filtered = current.filter((b) => b.id !== id);
+      saveStoredBanners(filtered);
+      return true;
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to delete banner";
+      throw new Error(msg);
     }
-
-    const current = getStoredBanners();
-    const filtered = current.filter((b) => b.id !== id);
-    saveStoredBanners(filtered);
-    return true;
   },
 
   toggleStatus: async (id: string, isActive: boolean): Promise<BannerItem> => {
@@ -168,33 +151,30 @@ export const adminBannerService = {
         saveStoredBanners(list);
         return updatedBanner;
       }
-    } catch (_err) {
-      // Fallback
+      throw new Error("Failed to toggle banner status");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to toggle banner status";
+      throw new Error(msg);
     }
-
-    const current = getStoredBanners();
-    const updated = current.map((b) => (b.id === id ? { ...b, isActive } : b));
-    saveStoredBanners(updated);
-    return updated.find((b) => b.id === id) as BannerItem;
   },
 
   reorderBanners: async (orderedIds: string[]): Promise<boolean> => {
     try {
       await apiClient.patch("/banners/reorder", { orderedIds });
-    } catch (_err) {
-      // Fallback
+      const current = getStoredBanners();
+      const map = new Map(current.map((b) => [b.id, b]));
+      const reordered: BannerItem[] = [];
+      orderedIds.forEach((id, idx) => {
+        const item = map.get(id);
+        if (item) {
+          reordered.push({ ...item, displayOrder: idx + 1 });
+        }
+      });
+      saveStoredBanners(reordered);
+      return true;
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to reorder banners";
+      throw new Error(msg);
     }
-
-    const current = getStoredBanners();
-    const map = new Map(current.map((b) => [b.id, b]));
-    const reordered: BannerItem[] = [];
-    orderedIds.forEach((id, idx) => {
-      const item = map.get(id);
-      if (item) {
-        reordered.push({ ...item, displayOrder: idx + 1 });
-      }
-    });
-    saveStoredBanners(reordered);
-    return true;
   },
 };

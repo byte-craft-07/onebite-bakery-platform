@@ -279,6 +279,63 @@ export class ProductController {
     });
   };
 
+  public recordShare = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const { productId, productSlug, productName, shareMethod } = request.body as {
+      productId?: string;
+      productSlug: string;
+      productName?: string;
+      shareMethod: string;
+    };
+
+    try {
+      const { ProductShareModel } = await import("../model/product-share.model.js");
+      await ProductShareModel.create({
+        productId: productId || undefined,
+        productSlug: productSlug.toLowerCase().trim(),
+        productName: productName?.trim(),
+        shareMethod,
+      });
+    } catch {
+      // Non-blocking log
+    }
+
+    return sendSuccess(response, {
+      message: "Product share event recorded.",
+      data: { recorded: true },
+    });
+  };
+
+  public getShareStats = async (
+    _request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const { ProductShareModel } = await import("../model/product-share.model.js");
+    const totalShares = await ProductShareModel.countDocuments();
+    const byMethod = await ProductShareModel.aggregate([
+      { $group: { _id: "$shareMethod", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]);
+    const topProducts = await ProductShareModel.aggregate([
+      {
+        $group: {
+          _id: "$productSlug",
+          productName: { $first: "$productName" },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]);
+
+    return sendSuccess(response, {
+      message: "Share analytics fetched.",
+      data: { totalShares, byMethod, topProducts },
+    });
+  };
+
   private createAuthContext(request: Request): RequestContext {
     const context = createRequestContext(request);
     const authenticatedRequest = request as AuthenticatedRequest;
@@ -300,3 +357,4 @@ export class ProductController {
     return value;
   }
 }
+

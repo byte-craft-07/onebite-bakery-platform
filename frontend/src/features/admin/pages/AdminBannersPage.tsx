@@ -51,31 +51,31 @@ const SAMPLE_POSTERS = [
   {
     name: "🍫 Belgian Truffle Special",
     title: "Belgian Truffle Cake Celebration Poster",
-    desktopImage: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=1600&h=650&q=85",
+    desktopImage: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=1400&h=560&q=80",
     linkUrl: "/products",
   },
   {
     name: "🎂 Custom Designer Cakes",
     title: "Custom 3D & Tier Designer Cakes Studio",
-    desktopImage: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=1600&h=650&q=85",
+    desktopImage: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=1400&h=560&q=80",
     linkUrl: "/custom-cake",
   },
   {
     name: "🍓 Fresh Fruit Delights",
     title: "Fresh Strawberry & Berry Delights Poster",
-    desktopImage: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=1600&h=650&q=85",
+    desktopImage: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=1400&h=560&q=80",
     linkUrl: "/categories/pastries-tarts",
   },
   {
     name: "🥐 European Bakery & Croissants",
     title: "Freshly Baked European Bakery Poster",
-    desktopImage: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1600&h=650&q=85",
+    desktopImage: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1400&h=560&q=80",
     linkUrl: "/categories/fresh-breads",
   },
   {
     name: "🎉 Party Shop & Combos",
     title: "Celebration Party Shop Poster",
-    desktopImage: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=1600&h=650&q=85",
+    desktopImage: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=1400&h=560&q=80",
     linkUrl: "/combos",
   },
 ];
