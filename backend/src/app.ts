@@ -40,7 +40,7 @@ export const createApp = (): Application => {
   // High performance static caching headers for uploaded images and media
   app.use(
     "/uploads",
-    express.static(path.join(process.cwd(), "uploads"), {
+    express.static(path.join(process.cwd(), "public", "uploads"), {
       maxAge: "7d",
       etag: true,
       lastModified: true,
@@ -55,13 +55,13 @@ export const createApp = (): Application => {
   app.use(cookieParser());
   app.use(
     express.json({
-      limit: env.jsonBodyLimit || "50mb",
+      limit: env.jsonBodyLimit,
       verify: (request: RawBodyRequest, _response, buffer) => {
         request.rawBody = Buffer.from(buffer);
       },
     }),
   );
-  app.use(express.urlencoded({ extended: true, limit: env.jsonBodyLimit || "50mb" }));
+  app.use(express.urlencoded({ extended: true, limit: env.jsonBodyLimit }));
   app.use(mongoSanitize);
   app.use(hpp());
   app.use(compression());

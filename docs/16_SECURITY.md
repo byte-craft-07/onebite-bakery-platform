@@ -73,35 +73,11 @@ Potential Attackers
 
 # AUTHENTICATION SECURITY
 
-Use OTP Authentication.
+Customer identities are verified through Google OAuth/OpenID Connect.
 
-OTP expires after 5 minutes.
+The OAuth callback must validate the browser-bound state value before exchanging the authorization code.
 
-Maximum OTP attempts
-
-5
-
-Maximum OTP resend
-
-3 per 15 minutes
-
-After repeated failures
-
-Temporarily block verification.
-
-Never store plain OTP.
-
-Store only hashed OTP.
-
-OTP becomes invalid immediately after successful verification.
-
-OTP hashing must use a server-side secret.
-
-Production must configure:
-
-OTP_HASH_SECRET
-
-Development delivery providers must never log raw OTP values.
+Production must configure Google OAuth credentials and use HTTPS for all authentication routes.
 
 ---
 
@@ -161,7 +137,7 @@ Reserved for future.
 
 Current Version
 
-OTP only.
+Google OAuth/OIDC.
 
 ---
 
@@ -191,11 +167,11 @@ General API
 
 100 requests / 15 minutes
 
-OTP Send
+Authentication start
 
 5 requests / 15 minutes
 
-OTP Verify
+Authentication callback
 
 10 requests / 15 minutes
 
@@ -351,7 +327,7 @@ MongoDB URI
 
 Cloudinary Secret
 
-OTP Provider Key
+Google OAuth Client Secret
 
 Any API Secret
 
@@ -378,8 +354,6 @@ Errors
 Warnings
 
 Never log
-
-OTP
 
 JWT
 
@@ -415,7 +389,7 @@ Track
 
 Failed Logins
 
-OTP Failures
+Authentication Failures
 
 Rate Limit Violations
 
@@ -485,7 +459,7 @@ File Upload Validation
 
 JWT Validation
 
-OTP Abuse
+OAuth Abuse
 
 CORS
 

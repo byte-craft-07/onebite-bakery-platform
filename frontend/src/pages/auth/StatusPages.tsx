@@ -25,7 +25,7 @@ export const SessionExpiredPage: React.FC = () => {
       <ShieldAlert className="h-16 w-16 text-[#596B58]" />
       <h1 className="text-3xl font-extrabold text-[#3B302B]">Session Expired</h1>
       <p className="text-sm text-[#7A6E65] max-w-md">
-        Your login session has expired for security reasons. Please log in again using OTP.
+        Your login session has expired for security reasons. Please sign in with Google again.
       </p>
       <Link to="/auth/login">
         <Button>Log In Again</Button>

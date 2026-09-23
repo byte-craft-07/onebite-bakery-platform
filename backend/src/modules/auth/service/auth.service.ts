@@ -11,7 +11,6 @@ import { logger } from "../../../shared/utils/logger.js";
 import { AddressModel } from "../../address/model/address.model.js";
 import type { User, UserRepository } from "../../user/index.js";
 import { AUTH_RESPONSE_MESSAGES, AUTH_TOKEN_TYPES } from "../constants/index.js";
-import type { VerifyOtpDto, VerifyPhoneTokenDto } from "../dto/index.js";
 import type { RefreshTokenRepository } from "../repository/index.js";
 import type {
   AuthenticatedUser,
@@ -22,41 +21,29 @@ import {
   createRefreshTokenHash,
   generateAuthTokens,
   generateDeviceId,
-  maskPhone,
   normalizeIndianPhone,
   verifyRefreshToken,
 } from "../utils/index.js";
-import type { OtpService } from "./index.js";
-import { Msg91WidgetService } from "./msg91-widget.service.js";
-
-export const ADMIN_EMAILS = [
-  "ajaykterha@gmail.com",
-  "ajayterha@gmail.com",
-];
-
-export const ADMIN_PHONES = [
-  "7897671632",
-  "9999999999",
-];
-
-export const isConfiguredAdmin = (email?: string, phone?: string): boolean => {
-  const normEmail = email?.trim().toLowerCase();
-  const normPhone = phone ? normalizeIndianPhone(phone) : undefined;
-  if (normEmail && ADMIN_EMAILS.includes(normEmail)) return true;
-  if (normPhone && ADMIN_PHONES.includes(normPhone)) return true;
-  return false;
-};
 
 export class AuthService {
   public constructor(
-    private readonly otpService: OtpService,
     private readonly userRepository: UserRepository,
     private readonly refreshTokenRepository: RefreshTokenRepository,
-    private readonly msg91WidgetService: Msg91WidgetService = new Msg91WidgetService(),
   ) {}
 
   public getGoogleAuthUrl(state?: string): string {
-    const clientId = env.googleClientId || "development-google-client-id";
+    const isConfigured = Boolean(
+      env.googleClientId && env.googleClientSecret && env.googleCallbackUrl,
+    );
+
+    if (!isConfigured && env.nodeEnv !== "test") {
+      throw new AppError(
+        "Google sign-in is not configured.",
+        HTTP_STATUS.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    const clientId = env.googleClientId || "test-google-client-id";
     const redirectUri =
       env.googleCallbackUrl ||
       "http://localhost:5000/api/v1/auth/google/callback";
@@ -73,120 +60,6 @@ export class AuthService {
       prompt: "select_account",
       ...(state ? { state } : {}),
     });
-  }
-
-  public async authenticateWithOtp(
-    dto: VerifyOtpDto,
-    context: RequestContext,
-  ): Promise<AuthenticationResult> {
-    await this.otpService.verifyOtp(dto, context);
-
-    const normalizedPhone = normalizeIndianPhone(dto.phone);
-    let user = await this.userRepository.findByPhone(normalizedPhone);
-
-    const isAdminUser = isConfiguredAdmin(user?.email, normalizedPhone);
-
-    if (!user) {
-      if (isAdminUser) {
-        user = await this.userRepository.createAdminFromPhone(normalizedPhone);
-      } else {
-        user =
-          await this.userRepository.createCustomerFromPhone(normalizedPhone);
-      }
-    } else {
-      if (isAdminUser && user.role !== "admin") {
-        user.role = "admin";
-        await user.save();
-      }
-      this.ensureUserCanAuthenticate(user);
-      user = await this.userRepository.markVerifiedLogin(user._id);
-    }
-
-    if (!user) {
-      throw new AppError("Unable to authenticate user.");
-    }
-
-    this.ensureUserCanAuthenticate(user);
-
-    const deviceId = generateDeviceId();
-    const tokens = generateAuthTokens({
-      userId: user._id.toString(),
-      role: user.role,
-      branchId: user.branchId?.toString(),
-      deviceId,
-    });
-
-    await this.createRefreshSession(user._id, deviceId, tokens, context);
-
-    logger.info(
-      {
-        userId: user._id.toString(),
-        phone: maskPhone(normalizedPhone),
-        requestId: context.requestId,
-      },
-      "User authenticated with OTP",
-    );
-
-    return {
-      user: this.toAuthenticatedUser(user),
-      tokens,
-    };
-  }
-
-  public async authenticateWithPhoneToken(
-    dto: VerifyPhoneTokenDto,
-    context: RequestContext,
-  ): Promise<AuthenticationResult> {
-    const verified = await this.msg91WidgetService.verifyAccessToken(dto.accessToken);
-    const normalizedPhone = normalizeIndianPhone(verified.phone);
-
-    let user = await this.userRepository.findByPhone(normalizedPhone);
-    const isAdminUser = isConfiguredAdmin(user?.email, normalizedPhone);
-
-    if (!user) {
-      if (isAdminUser) {
-        user = await this.userRepository.createAdminFromPhone(normalizedPhone);
-      } else {
-        user = await this.userRepository.createCustomerFromPhone(normalizedPhone);
-      }
-    } else {
-      if (isAdminUser && user.role !== "admin") {
-        user.role = "admin";
-        await user.save();
-      }
-      this.ensureUserCanAuthenticate(user);
-      user = await this.userRepository.markVerifiedLogin(user._id);
-    }
-
-    if (!user) {
-      throw new AppError("Unable to authenticate user.");
-    }
-
-    this.ensureUserCanAuthenticate(user);
-
-    const deviceId = generateDeviceId();
-    const tokens = generateAuthTokens({
-      userId: user._id.toString(),
-      role: user.role,
-      branchId: user.branchId?.toString(),
-      deviceId,
-    });
-
-    await this.createRefreshSession(user._id, deviceId, tokens, context);
-
-    logger.info(
-      {
-        userId: user._id.toString(),
-        phone: maskPhone(normalizedPhone),
-        requestId: context.requestId,
-      },
-      "User authenticated with MSG91 phone token",
-    );
-
-    return {
-      user: this.toAuthenticatedUser(user),
-      tokens,
-    };
   }
 
   public async authenticateWithPassword(
@@ -211,7 +84,7 @@ export class AuthService {
     }
 
     if (!user.password) {
-      throw new AppError("Password login is not configured for this account. Please log in with Phone OTP.", HTTP_STATUS.UNAUTHORIZED);
+      throw new AppError("Password login is not configured for this account. Please sign in with Google.", HTTP_STATUS.UNAUTHORIZED);
     }
 
     const { verifyPassword } = await import("../utils/password.js");
@@ -259,7 +132,6 @@ export class AuthService {
     context: RequestContext,
   ): Promise<AuthenticationResult> {
     const identity = await this.verifyGoogleIdentity(dto);
-    const isAdminUser = isConfiguredAdmin(identity.email);
 
     try {
       let user = await this.userRepository.findByGoogleId(identity.sub);
@@ -268,10 +140,6 @@ export class AuthService {
         // Safe Account Linking: link existing customer account by verified email
         user = await this.userRepository.findByEmail(identity.email);
         if (user) {
-          if (isAdminUser && user.role !== "admin") {
-            user.role = "admin";
-            await user.save();
-          }
           user = await this.userRepository.linkGoogleAccount(
             user._id,
             identity.sub,
@@ -290,27 +158,14 @@ export class AuthService {
       }
 
       if (!user) {
-        // Create new account with verified Google identity
-        if (isAdminUser) {
-          user = await this.userRepository.create({
-            name: identity.name,
-            email: identity.email.toLowerCase(),
-            googleId: identity.sub,
-            profileImage: identity.picture,
-            authProviders: ["google"],
-            role: "admin",
-            isVerified: true,
-            status: "active",
-            lastLogin: new Date(),
-          });
-        } else {
-          user = await this.userRepository.createCustomerFromGoogle({
-            name: identity.name,
-            email: identity.email,
-            googleId: identity.sub,
-            profileImage: identity.picture,
-          });
-        }
+        // New Google identities always start as customers. An existing admin
+        // must grant privileged roles through the protected admin API.
+        user = await this.userRepository.createCustomerFromGoogle({
+          name: identity.name,
+          email: identity.email,
+          googleId: identity.sub,
+          profileImage: identity.picture,
+        });
 
         logger.info(
           {
@@ -322,10 +177,6 @@ export class AuthService {
           "New user registered via Google",
         );
       } else {
-        if (isAdminUser && user.role !== "admin") {
-          user.role = "admin";
-          await user.save();
-        }
         this.ensureUserCanAuthenticate(user);
         user = await this.userRepository.markVerifiedLogin(user._id);
       }
@@ -350,33 +201,8 @@ export class AuthService {
         user: this.toAuthenticatedUser(user),
         tokens,
       };
-    } catch (err: unknown) {
-      if (env.nodeEnv !== "production") {
-        logger.warn(
-          { error: err instanceof Error ? err.message : String(err) },
-          "Database unavailable in development during Google auth; generating dev session",
-        );
-        const deviceId = generateDeviceId();
-        const role = isAdminUser ? "admin" : "customer";
-        const tokens = generateAuthTokens({
-          userId: `dev-${role}-${Date.now()}`,
-          role,
-          deviceId,
-        });
-
-        return {
-          user: {
-            id: `dev-${role}-id`,
-            name: identity.name,
-            email: identity.email,
-            role,
-            isVerified: true,
-            phoneVerified: false,
-          },
-          tokens,
-        };
-      }
-      throw err;
+    } catch (error: unknown) {
+      throw error;
     }
   }
 
@@ -385,11 +211,6 @@ export class AuthService {
 
     if (!user) {
       throw this.createAuthenticationRequiredError();
-    }
-
-    if (isConfiguredAdmin(user.email, user.phone) && user.role !== "admin") {
-      user.role = "admin";
-      await user.save();
     }
 
     this.ensureUserCanAuthenticate(user);
@@ -428,11 +249,6 @@ export class AuthService {
 
     if (!user) {
       throw this.createInvalidRefreshTokenError();
-    }
-
-    if (isConfiguredAdmin(user.email, user.phone) && user.role !== "admin") {
-      user.role = "admin";
-      await user.save();
     }
 
     this.ensureUserCanAuthenticate(user);
@@ -506,7 +322,7 @@ export class AuthService {
     // ID Token verification via Google OAuth2Client
     if (idToken) {
       if (
-        env.nodeEnv !== "production" &&
+        env.nodeEnv === "test" &&
         (idToken === "simulated-google-id-token" ||
           idToken.startsWith("simulated-"))
       ) {
@@ -559,13 +375,9 @@ export class AuthService {
     // Authorization Code exchange via Google OAuth2Client
     if (dto.code) {
       if (
-        env.nodeEnv !== "production" &&
+        env.nodeEnv === "test" &&
         (dto.code === "simulated-google-oauth-code" ||
-          dto.code === "simulated-dev-code" ||
-          dto.code.startsWith("simulated-") ||
-          !env.googleClientId ||
-          env.googleClientId.startsWith("your_") ||
-          env.googleClientId === "development-google-client-id")
+          dto.code.startsWith("simulated-"))
       ) {
         const email = dto.email || "customer.google@theonlinebakery.in";
         const name = dto.name || "Google Customer";
@@ -639,32 +451,11 @@ export class AuthService {
           { error: err instanceof Error ? err.message : String(err) },
           "Google Auth Code exchange failed",
         );
-        if (env.nodeEnv !== "production") {
-          logger.warn("Dev mode fallback activated for Google OAuth code exchange");
-          const email = "ajaykterha@gmail.com";
-          const name = "Ajay Prajapati";
-          return {
-            sub: `google-sub-${email.replace(/[^a-z0-9]/gi, "")}`,
-            email,
-            name,
-            picture: undefined,
-          };
-        }
         throw new AppError(
           "Google authentication code exchange failed.",
           HTTP_STATUS.UNAUTHORIZED,
         );
       }
-    }
-
-    // Non-production fallback when credentials are not configured yet
-    if (env.nodeEnv !== "production") {
-      const email = dto.email || "customer.google@theonlinebakery.in";
-      return {
-        sub: `google-sub-${email.replace(/[^a-z0-9]/gi, "")}`,
-        email,
-        name: dto.name || "Google Customer",
-      };
     }
 
     throw new AppError(
@@ -789,7 +580,6 @@ export class AuthService {
           }
         : {}),
       isVerified: user.isVerified,
-      phoneVerified: user.phoneVerified ?? false,
     };
   }
 }

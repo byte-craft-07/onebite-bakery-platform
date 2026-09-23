@@ -11,7 +11,7 @@ Based on the full repository audit and verification suite, all primary feature m
 
 | Module | Completion % | Operational Status |
 | :--- | :---: | :--- |
-| **Authentication & RBAC** | **100%** | Dual-factor OTP, JWT rotation, Dev Admin auto-seeding (`9999999999` / `123456`). |
+| **Authentication & RBAC** | **100%** | Google OAuth, JWT rotation, and explicit admin bootstrap tooling. |
 | **Frontend Routing & Guards** | **100%** | ProtectedRoute, GuestRoute, AdminRoute, dynamic `/categories/:slug` & `/occasions/:slug`. |
 | **Customer Browsing & Search** | **100%** | Catalog search, price filters, category/occasion slug listing, portion selector. |
 | **Shopping Cart & Checkout** | **100%** | Hybrid cart sync, delivery selector (Home Delivery / Store Pickup), address CRUD. |
@@ -62,11 +62,11 @@ Based on the full repository audit and verification suite, all primary feature m
 - **Classification**: **Medium**
 - **Issue Category**: Missing Feature / Developer Experience
 - **Problem**: Inability to log in as Admin in local development without manual MongoDB seeding.
-- **Root Cause**: No dev-mode auto-seeder or dev-mode OTP bypass existed for test phone numbers.
+- **Root Cause**: No explicit development admin bootstrap workflow existed.
 - **Impact**: Delayed admin dashboard verification and testing.
 - **User Impact**: None in production.
 - **Production Impact**: None (gated strictly to `NODE_ENV !== "production"`).
-- **Status**: **RESOLVED** (Created `seedDevelopmentData` and dev admin phone `9999999999` with OTP `123456`).
+- **Status**: **RESOLVED** (Added an explicit development admin bootstrap workflow).
 - **Estimated Fix Complexity**: Medium
 
 ---
@@ -79,7 +79,7 @@ Based on the full repository audit and verification suite, all primary feature m
 
 ### Phase 2: Core Authentication & RBAC *(Status: COMPLETE)*
 - Implement development admin database seeder.
-- Enable dev-mode OTP login bypass (`9999999999` / `123456`).
+- Document the explicit development admin bootstrap workflow.
 - Protect admin routes with role verification (`role === 'admin'`).
 
 ### Phase 3: Frontend Routing & Navigation *(Status: COMPLETE)*

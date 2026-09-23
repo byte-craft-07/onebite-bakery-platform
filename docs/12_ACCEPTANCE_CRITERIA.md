@@ -44,9 +44,9 @@ Every feature must:
 
 # AUTHENTICATION
 
-OTP sent successfully
+Google sign-in starts successfully
 
-OTP verification works
+Google identity verification works
 
 JWT generated
 
@@ -56,9 +56,9 @@ Logout works
 
 Protected routes secured
 
-Invalid OTP handled
+Invalid Google authentication response handled
 
-Expired OTP handled
+Failed or cancelled Google sign-in handled
 
 Rate limiting enabled
 

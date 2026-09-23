@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
-import type { HydratedDocument, Types } from "mongoose";
+import type { ClientSession, HydratedDocument, Types } from "mongoose";
 
+import { withTransaction } from "../../../db/utils/transaction.js";
 import { toObjectId } from "../../../db/utils/object-id.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
@@ -12,6 +13,7 @@ import { CategoryModel } from "../../category/index.js";
 import { OccasionModel } from "../../occasion/index.js";
 import { ProductModel } from "../../product/index.js";
 import { couponService } from "../../coupon/index.js";
+import { CouponModel } from "../../coupon/model/coupon.model.js";
 import type { OrderNotificationService } from "../../notification/index.js";
 import {
   VALID_STATUS_TRANSITIONS,
@@ -136,6 +138,10 @@ export class OrderService {
 
     // 3. Create Immutable Order Item Snapshots
     const orderItemSnapshots: OrderItemSnapshot[] = [];
+    const inventoryReservations: Array<{
+      productId: Types.ObjectId;
+      quantity: number;
+    }> = [];
 
     for (const cartItem of cart.items) {
       const product = await ProductModel.findOne({
@@ -152,6 +158,23 @@ export class OrderService {
           true,
           APP_ERROR_CODES.PRODUCT_INVALID_AVAILABILITY,
         );
+      }
+
+      if (product.trackInventory && !product.allowBackorder) {
+        if (product.stockQuantity < cartItem.quantity) {
+          throw new AppError(
+            `Insufficient stock for '${product.name}'.`,
+            HTTP_STATUS.UNPROCESSABLE_ENTITY,
+            [],
+            true,
+            APP_ERROR_CODES.PRODUCT_INVALID_AVAILABILITY,
+          );
+        }
+
+        inventoryReservations.push({
+          productId: product._id,
+          quantity: cartItem.quantity,
+        });
       }
 
 
@@ -394,8 +417,10 @@ export class OrderService {
       }
     }
 
-    // 8. Persist Order Document
-    const order = await this.orderRepository.createOrder({
+    // 8. Persist the order, stock reservation, coupon usage and cart clearing
+    // atomically. The conditional product updates prevent concurrent checkouts
+    // from selling stock that has already been reserved by another order.
+    const orderData: Partial<Order> = {
       orderNumber,
       userId: customerObjId,
       customerId: customerObjId,
@@ -418,14 +443,88 @@ export class OrderService {
       ...(dto.notes ? { notes: dto.notes } : {}),
       ...(dto.scheduledDate ? { scheduledDate: new Date(dto.scheduledDate) } : {}),
       ...(dto.scheduledTimeSlot ? { scheduledTimeSlot: dto.scheduledTimeSlot } : {}),
-    });
+    };
 
-    if (cart.couponCode) {
-      await couponService.incrementCouponUsage(cart.couponCode);
-    }
+    const persistOrder = async (session?: ClientSession): Promise<HydratedDocument<Order>> => {
+      if (session) {
+        for (const reservation of inventoryReservations) {
+          const reservedProduct = await ProductModel.findOneAndUpdate(
+            {
+              _id: reservation.productId,
+              isActive: true,
+              isDeleted: false,
+              isAvailable: true,
+              trackInventory: true,
+              allowBackorder: false,
+              stockQuantity: { $gte: reservation.quantity },
+            },
+            { $inc: { stockQuantity: -reservation.quantity } },
+            { new: true, session },
+          ).exec();
 
-    // 7. Clear Customer Cart only after successful order creation
-    await this.cartService.clearCart(customerId);
+          if (!reservedProduct) {
+            throw new AppError(
+              "One or more products are no longer in stock.",
+              HTTP_STATUS.UNPROCESSABLE_ENTITY,
+              [],
+              true,
+              APP_ERROR_CODES.PRODUCT_INVALID_AVAILABILITY,
+            );
+          }
+        }
+      }
+
+      const order = session
+        ? await this.orderRepository.createOrder(orderData, session)
+        : await this.orderRepository.createOrder(orderData);
+
+      if (cart.couponCode) {
+        if (session) {
+          const now = new Date();
+          const coupon = await CouponModel.findOneAndUpdate(
+            {
+              code: cart.couponCode,
+              isActive: true,
+              startDate: { $lte: now },
+              endDate: { $gte: now },
+              $or: [
+                { usageLimit: { $exists: false } },
+                { $expr: { $lt: ["$usedCount", "$usageLimit"] } },
+              ],
+            },
+            { $inc: { usedCount: 1 } },
+            { new: true, session },
+          ).exec();
+
+          if (!coupon) {
+            throw new AppError(
+              "Coupon is no longer available.",
+              HTTP_STATUS.UNPROCESSABLE_ENTITY,
+              [],
+              true,
+              APP_ERROR_CODES.COUPON_USAGE_LIMIT_EXCEEDED,
+            );
+          }
+        } else {
+          await couponService.incrementCouponUsage(cart.couponCode);
+        }
+      }
+
+      if (session) {
+        cart.items = [];
+        cart.totalItems = 0;
+        await this.cartService.recalculateCart(cart);
+        await cart.save({ session });
+      } else {
+        await this.cartService.clearCart(customerId);
+      }
+
+      return order;
+    };
+
+    const order = ProductModel.db?.readyState === 1
+      ? await withTransaction((session) => persistOrder(session))
+      : await persistOrder();
 
     const response = this.toResponse(order);
     void this.orderNotificationService?.dispatchOrderCreated(response);

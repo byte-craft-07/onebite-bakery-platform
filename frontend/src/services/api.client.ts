@@ -68,8 +68,6 @@ const processQueue = (error: Error | null) => {
 const isAuthLifecycleRequest = (url?: string): boolean => {
   if (!url) return false;
   return [
-    "/auth/send-otp",
-    "/auth/verify-otp",
     "/auth/refresh",
     "/auth/logout",
     "/auth/logout-all",

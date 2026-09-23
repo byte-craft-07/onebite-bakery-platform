@@ -148,9 +148,9 @@ Minimum Home Delivery Amount
 
 Delivery Radius
 
-Maximum OTP Attempts
+Google OAuth State Validation
 
-OTP Expiry
+Session Expiry
 
 Combo Rules
 
@@ -181,8 +181,6 @@ Categories and Occasions are independent.
 # Security Rules
 
 Never store:
-
-OTP
 
 Refresh Token
 

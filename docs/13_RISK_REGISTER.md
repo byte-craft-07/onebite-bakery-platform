@@ -46,7 +46,7 @@ R002
 
 Risk
 
-OTP Service Failure
+Google identity provider failure
 
 Impact
 
@@ -288,7 +288,7 @@ Minimal Fields
 
 Guest Cart
 
-Fast OTP Login
+Fast Google Sign-In
 
 --------------------------------------------------------
 

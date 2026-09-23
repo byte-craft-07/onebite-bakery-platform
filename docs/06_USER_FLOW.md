@@ -42,7 +42,7 @@ Checkout
 
 ↓
 
-OTP Login (If Required)
+Google Sign-In (If Required)
 
 ↓
 
@@ -120,7 +120,7 @@ Checkout
 
 ↓
 
-OTP Login
+Google Sign-In
 
 ↓
 
@@ -146,7 +146,7 @@ Open Website
 
 ↓
 
-OTP Login
+Google Sign-In
 
 ↓
 
@@ -506,7 +506,7 @@ LocalStorage
 
 ↓
 
-OTP Login
+Google Sign-In
 
 ↓
 

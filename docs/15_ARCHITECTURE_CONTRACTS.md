@@ -129,7 +129,6 @@ CORS origins must be configured explicitly in production.
 
 Route-specific rate limits must be added for:
 
-* OTP
 * Authentication
 * Uploads
 * Checkout
@@ -138,23 +137,15 @@ Logs must redact:
 
 * Authorization headers
 * Cookies
-* OTP values
 * JWT values
 * Secrets
 
-OTP foundation rules:
+Authentication foundation rules:
 
-* OTP length is 6 digits.
-* OTP expiry is 5 minutes.
-* Maximum verification attempts is 5.
-* Maximum resend count is 3.
-* Cooldown is 60 seconds.
-* OTP values are stored only as server-secret HMAC hashes.
-* OTP comparison must use constant-time comparison.
-* Successful verification invalidates the challenge.
-* OTP delivery must use the `OtpProvider` abstraction.
-* Development delivery providers must not log raw OTP values.
-* OTP foundation must not issue JWTs, refresh tokens, cookies, or sessions.
+* Customer identity is verified through Google OAuth/OpenID Connect.
+* OAuth state must be bound to the initiating browser before a callback is accepted.
+* Successful identity verification creates a server-side refresh-token session.
+* Browser session cookies must be HttpOnly and Secure in production.
 
 ---
 
@@ -236,10 +227,12 @@ Business logic must not be placed inside repositories.
 
 # Authentication Foundation Contract
 
-Current OTP endpoints:
+Current authentication endpoints:
 
-* `POST /auth/send-otp`
-* `POST /auth/verify-otp`
+* `GET /auth/google`
+* `GET /auth/google/callback`
+* `POST /auth/google`
+* `POST /auth/login-password`
 * `POST /auth/refresh`
 * `POST /auth/logout`
 * `POST /auth/logout-all`
@@ -258,7 +251,7 @@ Routes only register endpoint middleware and controller handlers.
 
 Controllers must not access Mongoose.
 
-Repositories must not contain OTP business rules.
+Repositories must not contain authentication business rules.
 
 Authentication session rules:
 

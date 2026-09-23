@@ -25,6 +25,8 @@ export const CustomerAuthContainer: React.FC = () => {
     const errorParam = searchParams.get("error");
     if (errorParam === "google_cancelled") {
       setApiError("Google authentication was cancelled. Please try again.");
+    } else if (errorParam === "google_invalid_state") {
+      setApiError("Google Sign-In verification expired or was invalid. Please try again.");
     } else if (errorParam === "google_failed") {
       setApiError("Google Sign-In failed. Please click below to try again.");
     }
@@ -131,6 +133,5 @@ export const CustomerAuthContainer: React.FC = () => {
     </div>
   );
 };
-
 
 

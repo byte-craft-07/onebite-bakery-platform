@@ -20,5 +20,4 @@ Describe what changed and why.
 - [ ] I updated documentation if architecture or behavior changed.
 - [ ] TypeScript passes.
 - [ ] ESLint passes.
-- [ ] No secrets, OTPs, JWTs, or sensitive data are logged or committed.
-
+- [ ] No secrets, session tokens, or sensitive data are logged or committed.

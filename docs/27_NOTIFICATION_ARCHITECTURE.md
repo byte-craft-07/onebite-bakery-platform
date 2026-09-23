@@ -77,7 +77,6 @@ Supported Events
 
 Authentication
 
-- OTP Sent
 - Login Success
 
 Orders
@@ -163,7 +162,6 @@ Email
 SMS
 
 - Twilio
-- MSG91
 - Fast2SMS
 
 WhatsApp
@@ -186,8 +184,6 @@ Never build notification text inside business logic.
 Example:
 
 order-created
-
-otp
 
 welcome
 
@@ -212,8 +208,6 @@ Examples
 Customer Name
 
 Order Number
-
-OTP
 
 Amount
 
@@ -313,7 +307,8 @@ Queue implementation must remain provider-independent.
 
 # Rate Limiting
 
-OTP
+Marketing
+Authentication notifications
 
 Strict rate limits.
 
@@ -332,8 +327,6 @@ High priority.
 Validate recipient.
 
 Mask sensitive values.
-
-Never log OTP.
 
 Never log secrets.
 
@@ -360,8 +353,6 @@ Delivery Status
 Duration
 
 Never log:
-
-OTP
 
 Passwords
 

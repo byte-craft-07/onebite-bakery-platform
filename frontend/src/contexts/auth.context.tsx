@@ -24,53 +24,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const USER_STORAGE_KEY = "theonlinebakery_user";
 const LOCAL_LOCATION_KEY = "theonlinebakery_active_location";
 
-import { getAvatarFromEmailOrName } from "@/components/common/UserAvatar";
-
-const ADMIN_EMAILS = ["ajaykterha@gmail.com", "ajayterha@gmail.com"];
-const ADMIN_PHONES = ["7897671632", "9999999999"];
-export const AJAY_GOOGLE_PHOTO = "https://lh3.googleusercontent.com/a/ACg8ocKUbft27NKCgakV4you7xwWL4RqMom-n5LZNJ_eTUsfmzR6KlCLUQ=s96-c";
-
 const normalizeUser = (u: UserProfileResponse | null): UserProfileResponse | null => {
-  if (!u) return null;
-  const normEmail = u.email?.trim().toLowerCase();
-  const normPhone = u.phone?.replace(/\D/g, "").slice(-10);
-  let updated = { ...u };
-  const isAdmin = (normEmail && ADMIN_EMAILS.includes(normEmail)) || (normPhone && ADMIN_PHONES.includes(normPhone));
-  if (isAdmin) {
-    updated.role = "admin";
-  }
-  if (
-    !updated.profileImage ||
-    updated.profileImage.includes("unavatar.io") ||
-    updated.profileImage.includes("ui-avatars.com") ||
-    updated.profileImage.includes("ACg8ocL30hOcrEYenvWOYH5SoIw2PwYspA8zf3cp8iU-ZgyrvoX8gw")
-  ) {
-    if (isAdmin) {
-      updated.profileImage = AJAY_GOOGLE_PHOTO;
-    } else {
-      updated.profileImage = undefined;
-    }
-  }
-  return updated;
+  return u ? { ...u } : null;
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfileResponse | null>(() => {
-    try {
-      const stored = localStorage.getItem(USER_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const normalized = normalizeUser(parsed);
-        if (parsed?.profileImage && (parsed.profileImage.includes("unavatar") || parsed.profileImage.includes("ui-avatars"))) {
-          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized));
-        }
-        return normalized;
-      }
-    } catch (_err) {
-      // Ignore
-    }
-    return null;
-  });
+  const [user, setUser] = useState<UserProfileResponse | null>(null);
   const [guestLocation, setGuestLocation] = useState<CustomerLocationResponse | null>(() => {
     try {
       const storedLoc = localStorage.getItem(LOCAL_LOCATION_KEY);
@@ -94,22 +53,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
     } catch (_err) {
-      // If server check fails (e.g. offline dev mode or cookie issue), preserve stored session if valid
-      try {
-        const stored = localStorage.getItem(USER_STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed && parsed.id) {
-            const normalized = normalizeUser(parsed);
-            setUser(normalized);
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized));
-            void PushNotificationService.autoSyncSubscriptionIfGranted();
-            return;
-          }
-        }
-      } catch (_parseErr) {
-        // ignore
-      }
       clearClientData();
     } finally {
       setIsLoading(false);

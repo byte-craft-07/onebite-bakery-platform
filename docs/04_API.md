@@ -28,9 +28,9 @@ Error
 
 # AUTH
 
-POST    /auth/send-otp
+GET     /auth/google
 
-POST    /auth/verify-otp
+POST    /auth/google
 
 POST    /auth/refresh
 

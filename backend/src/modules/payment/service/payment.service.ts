@@ -99,6 +99,23 @@ export class PaymentService {
       );
     }
 
+    // A payment order is created once and reused for every retry. This avoids
+    // duplicate gateway orders (and potentially duplicate customer charges).
+    const existingPayment = await this.paymentRepository.findByOrder(orderObjId);
+    if (existingPayment) {
+      if (existingPayment.paymentStatus === "CAPTURED") {
+        throw new AppError(
+          "Order has already been paid.",
+          HTTP_STATUS.BAD_REQUEST,
+          [],
+          true,
+          APP_ERROR_CODES.PAYMENT_ALREADY_PAID,
+        );
+      }
+
+      return this.toCreatePaymentResponse(existingPayment);
+    }
+
     // Always calculate amount from server-side order snapshot
     const payableAmount = order.pricingSnapshot?.grandTotal ?? order.totalAmount;
 
@@ -134,20 +151,7 @@ export class PaymentService {
       await order.save();
     }
 
-    const razorpayKeyId =
-      this.provider instanceof RazorpayProvider
-        ? (this.provider as RazorpayProvider).getKeyId()
-        : undefined;
-
-    return {
-      paymentId: payment._id.toString(),
-      orderId: order._id.toString(),
-      provider: "RAZORPAY",
-      providerOrderId: providerResult.providerOrderId,
-      amount: payableAmount,
-      currency: "INR",
-      ...(razorpayKeyId ? { razorpayKeyId } : {}),
-    };
+    return this.toCreatePaymentResponse(payment);
   }
 
   public async verifyPayment(
@@ -429,6 +433,25 @@ export class PaymentService {
         APP_ERROR_CODES.PAYMENT_GATEWAY_ERROR,
       );
     }
+  }
+
+  private toCreatePaymentResponse(
+    payment: Pick<Payment, "_id" | "orderId" | "provider" | "providerOrderId" | "amount" | "currency">,
+  ): CreatePaymentResponse {
+    const razorpayKeyId =
+      this.provider instanceof RazorpayProvider
+        ? this.provider.getKeyId()
+        : undefined;
+
+    return {
+      paymentId: payment._id.toString(),
+      orderId: payment.orderId.toString(),
+      provider: payment.provider,
+      providerOrderId: payment.providerOrderId,
+      amount: payment.amount,
+      currency: payment.currency,
+      ...(razorpayKeyId ? { razorpayKeyId } : {}),
+    };
   }
 
   private toResponse(payment: HydratedDocument<Payment>): PaymentDetailsResponse {

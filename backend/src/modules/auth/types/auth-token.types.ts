@@ -43,7 +43,6 @@ export interface AuthenticatedUser {
   address?: AuthenticatedUserAddress;
   profileImage?: string;
   isVerified: boolean;
-  phoneVerified?: boolean;
 }
 
 export interface AuthTokens {

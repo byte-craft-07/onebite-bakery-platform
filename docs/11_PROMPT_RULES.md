@@ -208,8 +208,6 @@ Strong typing everywhere
 
 Never expose secrets.
 
-Never log OTP.
-
 Never log JWT.
 
 Never trust client input.

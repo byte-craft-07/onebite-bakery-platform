@@ -164,7 +164,7 @@ Purpose
 
 Caching
 
-OTP Storage
+Session Storage
 
 Rate Limiting
 

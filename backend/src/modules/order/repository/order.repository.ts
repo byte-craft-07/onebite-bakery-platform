@@ -1,4 +1,4 @@
-import type { FilterQuery, HydratedDocument, Types } from "mongoose";
+import type { ClientSession, FilterQuery, HydratedDocument, Types } from "mongoose";
 
 import { BaseRepository } from "../../../db/base.repository.js";
 import type { OrderStatus, PaymentStatus } from "../constants/index.js";
@@ -12,8 +12,10 @@ export class OrderRepository extends BaseRepository<Order> {
 
   public async createOrder(
     data: Partial<Order>,
+    session?: ClientSession,
   ): Promise<HydratedDocument<Order>> {
-    return this.create(data);
+    const order = new OrderModel(data);
+    return order.save(session ? { session } : undefined);
   }
 
   public async findByOrderNumber(

@@ -22,7 +22,7 @@ Available
 
 Authentication
 
-Mobile OTP
+Google Sign-In
 
 Cart
 

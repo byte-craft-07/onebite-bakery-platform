@@ -14,13 +14,14 @@ const environment = {
   MONGODB_URI: process.env.MONGODB_URI ?? process.env.MONGO_URI,
   RAZORPAY_KEY_SECRET:
     process.env.RAZORPAY_KEY_SECRET ?? process.env.RAZORPAY_SECRET,
-  OTP_HASH_SECRET: process.env.OTP_HASH_SECRET ?? process.env.JWT_SECRET,
 };
 
 const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
-    .default("development"),
+    // Missing NODE_ENV must fail closed: an unknown deployment must not
+    // enable development-only authentication behaviour.
+    .default("production"),
   PORT: z.coerce.number().int().positive().default(5000),
   API_PREFIX: z.string().default(API_PREFIX),
   MONGODB_URI: z
@@ -30,11 +31,10 @@ const envSchema = z.object({
   CLIENT_URL: z.string().url().optional(),
   ADMIN_URL: z.string().url().optional(),
   CORS_ORIGINS: z.string().optional(),
-  JSON_BODY_LIMIT: z.string().default("50mb"),
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60000),
-  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10000),
+  JSON_BODY_LIMIT: z.string().default("1mb"),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
   LOG_LEVEL: z.string().default("info"),
-  OTP_HASH_SECRET: z.string().min(32).optional(),
   JWT_SECRET: z.string().min(32).optional(),
   JWT_REFRESH_SECRET: z.string().min(32).optional(),
   RAZORPAY_KEY_ID: z.string().min(1).optional(),
@@ -50,19 +50,14 @@ const envSchema = z.object({
   WHATSAPP_DEFAULT_LANGUAGE: z.string().min(1).default("en_US"),
   GOOGLE_CLIENT_ID: z.string().min(1).optional(),
   GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
-  GOOGLE_CALLBACK_URL: z.string().optional(),
-  MSG91_AUTH_KEY: z.string().min(1).optional(),
-  MSG91_TEMPLATE_ID: z.string().min(1).optional(),
-  MSG91_SENDER_ID: z.string().min(1).optional(),
+  GOOGLE_CALLBACK_URL: z.string().url().optional(),
   ACCESS_TOKEN_EXPIRES: z.string().default("15m"),
   REFRESH_TOKEN_EXPIRES: z.string().default("30d"),
   VAPID_PUBLIC_KEY: z.string().min(1).optional(),
   VAPID_PRIVATE_KEY: z.string().min(1).optional(),
   VAPID_SUBJECT: z.string().default("mailto:admin@theonlinebakery.in"),
-  REQUIRE_DATABASE_CONNECTION: z
-    .enum(["true", "false"])
-    .optional()
-    .transform((value) => (value ? value === "true" : process.env.NODE_ENV === "production")),
+  REQUIRE_DATABASE_CONNECTION: z.enum(["true", "false"]).optional(),
+  REQUIRE_MONGODB_TRANSACTIONS: z.enum(["true", "false"]).optional(),
 });
 
 const parsedEnv = envSchema.safeParse(environment);
@@ -87,6 +82,36 @@ const resolveCorsOrigins = (): string[] => {
 
 const corsOrigins = resolveCorsOrigins();
 const isProduction = parsedEnv.data.NODE_ENV === "production";
+const requireDatabaseConnection =
+  parsedEnv.data.REQUIRE_DATABASE_CONNECTION === undefined
+    ? isProduction
+    : parsedEnv.data.REQUIRE_DATABASE_CONNECTION === "true";
+const requireMongoTransactions =
+  parsedEnv.data.REQUIRE_MONGODB_TRANSACTIONS === undefined
+    ? isProduction
+    : parsedEnv.data.REQUIRE_MONGODB_TRANSACTIONS === "true";
+
+const isUnsetOrPlaceholder = (value: string | undefined): boolean => {
+  if (!value) {
+    return true;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return (
+    normalized.length === 0 ||
+    normalized.includes("<") ||
+    normalized.includes(">") ||
+    normalized.startsWith("your_") ||
+    normalized.startsWith("change-this") ||
+    normalized.startsWith("development-")
+  );
+};
+
+const requireProductionValue = (name: string, value: string | undefined): void => {
+  if (isUnsetOrPlaceholder(value)) {
+    throw new Error(`${name} must be configured with a non-placeholder value in production.`);
+  }
+};
 
 if (isProduction && corsOrigins.length === 0) {
   throw new Error(
@@ -94,28 +119,19 @@ if (isProduction && corsOrigins.length === 0) {
   );
 }
 
-if (isProduction && !parsedEnv.data.OTP_HASH_SECRET) {
-  throw new Error("OTP_HASH_SECRET must be configured in production.");
-}
-
-if (isProduction && !parsedEnv.data.JWT_SECRET) {
-  throw new Error("JWT_SECRET must be configured in production.");
-}
-
-if (isProduction && !parsedEnv.data.JWT_REFRESH_SECRET) {
-  throw new Error("JWT_REFRESH_SECRET must be configured in production.");
-}
-
-if (isProduction && !parsedEnv.data.RAZORPAY_KEY_ID) {
-  throw new Error("RAZORPAY_KEY_ID must be configured in production.");
-}
-
-if (isProduction && !parsedEnv.data.RAZORPAY_KEY_SECRET) {
-  throw new Error("RAZORPAY_KEY_SECRET must be configured in production.");
-}
-
-if (isProduction && !parsedEnv.data.RAZORPAY_WEBHOOK_SECRET) {
-  throw new Error("RAZORPAY_WEBHOOK_SECRET must be configured in production.");
+if (isProduction) {
+  requireProductionValue("MONGODB_URI", parsedEnv.data.MONGODB_URI);
+  requireProductionValue("JWT_SECRET", parsedEnv.data.JWT_SECRET);
+  requireProductionValue("JWT_REFRESH_SECRET", parsedEnv.data.JWT_REFRESH_SECRET);
+  requireProductionValue("RAZORPAY_KEY_ID", parsedEnv.data.RAZORPAY_KEY_ID);
+  requireProductionValue("RAZORPAY_KEY_SECRET", parsedEnv.data.RAZORPAY_KEY_SECRET);
+  requireProductionValue(
+    "RAZORPAY_WEBHOOK_SECRET",
+    parsedEnv.data.RAZORPAY_WEBHOOK_SECRET,
+  );
+  requireProductionValue("GOOGLE_CLIENT_ID", parsedEnv.data.GOOGLE_CLIENT_ID);
+  requireProductionValue("GOOGLE_CLIENT_SECRET", parsedEnv.data.GOOGLE_CLIENT_SECRET);
+  requireProductionValue("GOOGLE_CALLBACK_URL", parsedEnv.data.GOOGLE_CALLBACK_URL);
 }
 
 export const env = {
@@ -128,9 +144,6 @@ export const env = {
   rateLimitWindowMs: parsedEnv.data.RATE_LIMIT_WINDOW_MS,
   rateLimitMax: parsedEnv.data.RATE_LIMIT_MAX,
   logLevel: parsedEnv.data.LOG_LEVEL,
-  otpHashSecret:
-    parsedEnv.data.OTP_HASH_SECRET ??
-    "development-only-otp-hash-secret-change-before-production",
   jwtSecret:
     parsedEnv.data.JWT_SECRET ??
     "development-only-jwt-secret-change-before-production",
@@ -139,7 +152,8 @@ export const env = {
     "development-only-refresh-secret-change-before-production",
   accessTokenExpires: parsedEnv.data.ACCESS_TOKEN_EXPIRES,
   refreshTokenExpires: parsedEnv.data.REFRESH_TOKEN_EXPIRES,
-  requireDatabaseConnection: parsedEnv.data.REQUIRE_DATABASE_CONNECTION,
+  requireDatabaseConnection,
+  requireMongoTransactions,
   razorpayKeyId: parsedEnv.data.RAZORPAY_KEY_ID,
   razorpayKeySecret: parsedEnv.data.RAZORPAY_KEY_SECRET,
   razorpayWebhookSecret: parsedEnv.data.RAZORPAY_WEBHOOK_SECRET,
@@ -156,9 +170,6 @@ export const env = {
   googleClientId: parsedEnv.data.GOOGLE_CLIENT_ID,
   googleClientSecret: parsedEnv.data.GOOGLE_CLIENT_SECRET,
   googleCallbackUrl: parsedEnv.data.GOOGLE_CALLBACK_URL,
-  msg91AuthKey: parsedEnv.data.MSG91_AUTH_KEY,
-  msg91TemplateId: parsedEnv.data.MSG91_TEMPLATE_ID,
-  msg91SenderId: parsedEnv.data.MSG91_SENDER_ID,
   vapidPublicKey: parsedEnv.data.VAPID_PUBLIC_KEY,
   vapidPrivateKey: parsedEnv.data.VAPID_PRIVATE_KEY,
   vapidSubject: parsedEnv.data.VAPID_SUBJECT,

@@ -31,7 +31,6 @@ const paymentSchema = new Schema<Payment>(
       type: Schema.Types.ObjectId,
       ref: "Order",
       required: true,
-      index: true,
     },
     userId: {
       type: Schema.Types.ObjectId,
@@ -95,6 +94,10 @@ const paymentSchema = new Schema<Payment>(
 paymentSchema.index(
   { provider: 1, providerOrderId: 1 },
   { unique: true, name: "uniq_payment_provider_order" },
+);
+paymentSchema.index(
+  { orderId: 1 },
+  { unique: true, name: "uniq_payment_order" },
 );
 paymentSchema.index(
   { providerPaymentId: 1 },

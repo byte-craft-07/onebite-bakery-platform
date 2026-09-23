@@ -10,7 +10,7 @@
 ## 2. Customer Journeys
 
 ### 2.1 Catalog & Quick Purchase Journey
-`Landing Page` ➔ `Product Catalog / Filter` ➔ `Quick View / Detail Page` ➔ `Add to Cart Drawer` ➔ `Checkout` ➔ `OTP Login Modal (if guest)` ➔ `Payment` ➔ `Order Confirmation`.
+`Landing Page` ➔ `Product Catalog / Filter` ➔ `Quick View / Detail Page` ➔ `Add to Cart Drawer` ➔ `Checkout` ➔ `Google Sign-In (if guest)` ➔ `Payment` ➔ `Order Confirmation`.
 
 ### 2.2 Custom Cake Request Journey
 `Home / Custom Cake Page` ➔ `Select Flavour / Weight / Tiers / Egg Preference` ➔ `Upload Reference Image` ➔ `Submit Request` ➔ `Track Request Status`.

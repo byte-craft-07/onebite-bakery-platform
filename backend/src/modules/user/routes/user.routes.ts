@@ -62,7 +62,6 @@ const toUserResponse = (
     email: user.email,
     role: user.role,
     status: user.status,
-    phoneVerified: user.phoneVerified ?? false,
     ...(user.profileImage ? { profileImage: user.profileImage } : {}),
     ...(user.currentLocation
       ? {
@@ -331,7 +330,7 @@ userRouter.patch(
 
 const grantAdminSchema = z
   .object({
-    email: z.string().trim().email().optional(),
+    email: z.string().trim().email(),
     phone: z
       .string()
       .trim()
@@ -344,9 +343,6 @@ const grantAdminSchema = z
       .refine((val) => Types.ObjectId.isValid(val), "Invalid branchId")
       .optional(),
   })
-  .refine((data) => data.email || data.phone, {
-    message: "Either email or phone number is required to grant admin access.",
-  });
 
 const updateAdminRoleSchema = z.object({
   role: z.enum(["admin", "branch_admin", "customer"]),
@@ -356,17 +352,32 @@ const updateAdminRoleSchema = z.object({
     .optional(),
 });
 
-const PRIMARY_ADMIN_EMAILS = ["ajaykterha@gmail.com", "ajayterha@gmail.com"];
-const PRIMARY_ADMIN_PHONES = ["7897671632"];
+const ensureAdminRoleCanBeRemoved = async (
+  requesterId: string,
+  user: User,
+): Promise<void> => {
+  if (user.role !== "admin") {
+    return;
+  }
 
-const isPrimaryAdmin = (user: User): boolean => {
-  if (user.email && PRIMARY_ADMIN_EMAILS.includes(user.email.toLowerCase())) {
-    return true;
+  if (user._id.toString() === requesterId) {
+    throw new AppError(
+      "You cannot remove your own full-admin access.",
+      HTTP_STATUS.FORBIDDEN,
+    );
   }
-  if (user.phone && PRIMARY_ADMIN_PHONES.includes(user.phone)) {
-    return true;
+
+  const anotherFullAdminExists = await UserModel.exists({
+    _id: { $ne: user._id },
+    role: "admin",
+  });
+
+  if (!anotherFullAdminExists) {
+    throw new AppError(
+      "At least one full admin account must remain.",
+      HTTP_STATUS.FORBIDDEN,
+    );
   }
-  return false;
 };
 
 // Admin: List all Admins & Branch Staff
@@ -385,7 +396,6 @@ userRouter.get(
       data: {
         admins: admins.map((u) => ({
           ...toUserResponse(u),
-          isPrimaryOwner: isPrimaryAdmin(u),
           branchId: u.branchId ? u.branchId.toString() : undefined,
         })),
       },
@@ -393,7 +403,7 @@ userRouter.get(
   }),
 );
 
-// Admin: Grant Admin access to a new or existing user by Email/Phone
+// Admin: Grant Admin access to a Google identity by email.
 userRouter.post(
   "/admins",
   ...adminOnly,
@@ -405,10 +415,6 @@ userRouter.post(
 
     const query: Record<string, unknown>[] = [];
     if (email) query.push({ email: email.toLowerCase() });
-    if (phone) {
-      const normalizedPhone = phone.replace(/\D/g, "").slice(-10);
-      query.push({ phone: normalizedPhone });
-    }
 
     let user = await UserModel.findOne({ $or: query }).exec();
 
@@ -421,9 +427,6 @@ userRouter.post(
       if (email && !user.email) {
         user.email = email.toLowerCase();
       }
-      if (phone && !user.phone) {
-        user.phone = phone.replace(/\D/g, "").slice(-10);
-      }
       if (branchId) {
         user.branchId = new Types.ObjectId(branchId);
       }
@@ -431,19 +434,18 @@ userRouter.post(
       user.isVerified = true;
       await user.save();
     } else {
-      // User does not exist yet -> Pre-register authorized admin account
+      // User does not exist yet -> Pre-register an authorized Google account.
       const normalizedPhone = phone
         ? phone.replace(/\D/g, "").slice(-10)
         : undefined;
       user = await UserModel.create({
-        name: name || (email ? email.split("@")[0] : "Admin Staff"),
-        email: email ? email.toLowerCase() : undefined,
+        name: name || email.split("@")[0] || "Admin Staff",
+        email: email.toLowerCase(),
         phone: normalizedPhone,
         role,
         branchId: branchId ? new Types.ObjectId(branchId) : undefined,
         status: "active",
         isVerified: true,
-        authProviders: email ? ["google"] : ["phone"],
       });
     }
 
@@ -453,7 +455,6 @@ userRouter.post(
       data: {
         admin: {
           ...toUserResponse(user),
-          isPrimaryOwner: isPrimaryAdmin(user),
           branchId: user.branchId ? user.branchId.toString() : undefined,
         },
       },
@@ -473,12 +474,8 @@ userRouter.delete(
       throw new AppError("Admin account not found.", HTTP_STATUS.NOT_FOUND);
     }
 
-    if (isPrimaryAdmin(user)) {
-      throw new AppError(
-        "Primary Owner admin account cannot be revoked.",
-        HTTP_STATUS.FORBIDDEN,
-      );
-    }
+    const authenticatedRequest = req as AuthenticatedRequest;
+    await ensureAdminRoleCanBeRemoved(authenticatedRequest.user.id, user);
 
     user.role = "customer";
     await user.save();
@@ -504,11 +501,9 @@ userRouter.patch(
       throw new AppError("Admin account not found.", HTTP_STATUS.NOT_FOUND);
     }
 
-    if (isPrimaryAdmin(user) && role !== "admin") {
-      throw new AppError(
-        "Primary Owner must maintain full admin role.",
-        HTTP_STATUS.FORBIDDEN,
-      );
+    if (role !== "admin") {
+      const authenticatedRequest = req as AuthenticatedRequest;
+      await ensureAdminRoleCanBeRemoved(authenticatedRequest.user.id, user);
     }
 
     user.role = role;
@@ -525,7 +520,6 @@ userRouter.patch(
       data: {
         admin: {
           ...toUserResponse(user),
-          isPrimaryOwner: isPrimaryAdmin(user),
         },
       },
     });

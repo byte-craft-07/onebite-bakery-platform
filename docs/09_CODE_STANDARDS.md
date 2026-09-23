@@ -222,8 +222,6 @@ Never log
 
 Passwords
 
-OTP
-
 JWT
 
 Sensitive Data

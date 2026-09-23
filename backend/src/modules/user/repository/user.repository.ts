@@ -37,7 +37,6 @@ export class UserRepository extends BaseRepository<User> {
       email: payload.email.toLowerCase(),
       googleId: payload.googleId,
       profileImage: payload.profileImage,
-      authProviders: ["google"],
       role: "customer",
       isVerified: true,
       status: "active",
@@ -59,40 +58,9 @@ export class UserRepository extends BaseRepository<User> {
           isVerified: true,
           lastLogin: new Date(),
         },
-        $addToSet: {
-          authProviders: "google",
-        },
       },
       { new: true, runValidators: true },
     ).exec();
-  }
-
-  public async createCustomerFromPhone(
-    phone: string,
-  ): Promise<HydratedDocument<User>> {
-    return this.create({
-      name: "The Online Bakery Customer",
-      phone,
-      role: "customer",
-      isVerified: true,
-      status: "active",
-      lastLogin: new Date(),
-    });
-  }
-
-  public async createAdminFromPhone(
-    phone: string,
-  ): Promise<HydratedDocument<User>> {
-    return this.create({
-      name: "Ajay Prajapati",
-      phone,
-      email: "ajaykterha@gmail.com",
-      profileImage: "https://lh3.googleusercontent.com/a/ACg8ocKUbft27NKCgakV4you7xwWL4RqMom-n5LZNJ_eTUsfmzR6KlCLUQ=s96-c",
-      role: "admin",
-      isVerified: true,
-      status: "active",
-      lastLogin: new Date(),
-    });
   }
 
   public async markVerifiedLogin(

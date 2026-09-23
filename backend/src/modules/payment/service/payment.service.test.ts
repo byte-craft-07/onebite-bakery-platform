@@ -76,7 +76,7 @@ const createService = (
         Promise.resolve(createMockPaymentDocument(data)),
       ),
     findById: vi.fn().mockResolvedValue(createMockPaymentDocument()),
-    findByOrder: vi.fn().mockResolvedValue(createMockPaymentDocument()),
+    findByOrder: vi.fn().mockResolvedValue(null),
     findByProviderOrder: vi.fn().mockResolvedValue(createMockPaymentDocument()),
     findByProviderPayment: vi.fn().mockResolvedValue(createMockPaymentDocument()),
     updateStatus: vi
@@ -133,6 +133,22 @@ describe("PaymentService", () => {
     expect(result.providerOrderId).toBe("order_rzp_mock_123");
     expect(mockProvider.createOrder).toHaveBeenCalledWith(1050, "INR", "OB-20260731-PAY01");
     expect(paymentRepository.create).toHaveBeenCalledOnce();
+  });
+
+  it("reuses an existing payment order rather than creating a duplicate gateway order", async () => {
+    const existingPayment = createMockPaymentDocument();
+    const { service, paymentRepository, mockProvider } = createService({
+      findByOrder: vi.fn().mockResolvedValue(existingPayment),
+    });
+
+    const result = await service.createPayment(customerId, {
+      orderId: orderId.toString(),
+      provider: "RAZORPAY",
+    });
+
+    expect(result.providerOrderId).toBe(existingPayment.providerOrderId);
+    expect(mockProvider.createOrder).not.toHaveBeenCalled();
+    expect(paymentRepository.create).not.toHaveBeenCalled();
   });
 
   it("rejects payment creation if order has already been paid", async () => {

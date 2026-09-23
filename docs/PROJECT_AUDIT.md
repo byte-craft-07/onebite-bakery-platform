@@ -19,7 +19,7 @@ The system is verified to be **production-ready baseline**, fully functional, an
 
 | Module / Layer | Status | Verification & Functional Summary |
 | :--- | :---: | :--- |
-| **Authentication Service** | ✅ Complete | Dual-factor OTP verification, JWT access tokens, refresh token rotation, device session management, dev admin auto-provisioning. |
+| **Authentication Service** | ✅ Complete | Google OAuth, JWT access tokens, refresh token rotation, device session management, and explicit admin bootstrap tooling. |
 | **RBAC Authorization** | ✅ Complete | Role-based middleware (`requireRole('admin')`), token payload claim validation, route protection. |
 | **Product Management** | ✅ Complete | Multi-type products (Normal, Combo, Custom Tier, Decoration), stock quantity, pricing, soft delete, SEO fields. |
 | **Category Management** | ✅ Complete | Category CRUD, status toggling, slug generation, item counts, image attachments. |
@@ -48,7 +48,7 @@ The system is verified to be **production-ready baseline**, fully functional, an
 | **Category Detail** | `/categories/:slug` | ✅ Complete | Dynamically filters catalog items by category slug without 404 errors. |
 | **Occasions Listing** | `/occasions` | ✅ Complete | Milestone event cards (Birthdays, Anniversaries, Weddings, Festivals). |
 | **Occasion Detail** | `/occasions/:slug` | ✅ Complete | Dynamically filters catalog items by occasion slug. |
-| **Customer Auth** | `/auth/login` | ✅ Complete | 1-step OTP phone login, dev-mode admin shortcut (`9999999999` / `123456`). |
+| **Customer Auth** | `/auth/login` | ✅ Complete | Google sign-in with secure server-side sessions. |
 | **Customer Profile** | `/customer/profile` | ✅ Complete | User information dashboard, saved addresses CRUD modal dialog. |
 | **Cart Page** | `/cart` | ✅ Complete | Quantity increments/decrements, item removals, delivery fee calculator, order summary. |
 | **Checkout Page** | `/checkout` | ✅ Complete | Delivery vs Pickup selector, delivery address picker, GST breakdown, checkout summary. |
@@ -79,7 +79,7 @@ The system is verified to be **production-ready baseline**, fully functional, an
 
 ### Major Issues
 **Count: 0**  
-*(All major API connection fallbacks, dev-mode OTP login bypasses, and category slug route handlers are fully implemented and verified).*
+*(All major API connection fallbacks, secure authentication flows, and category slug route handlers are fully implemented and verified).*
 
 ### Minor Issues
 **Count: 0**  

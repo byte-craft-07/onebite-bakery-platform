@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 
 import { env } from "../../../config/env.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
@@ -11,69 +12,19 @@ import {
   AUTH_COOKIE_NAMES,
   AUTH_RESPONSE_MESSAGES,
 } from "../constants/index.js";
-import {
-  OTP_RESPONSE_MESSAGES,
-} from "../constants/otp.constants.js";
 import type { AuthService } from "../service/index.js";
-import type { SendOtpDto, VerifyOtpDto, VerifyPhoneTokenDto } from "../dto/index.js";
-import type { OtpService } from "../service/index.js";
 import type { AuthenticatedRequest } from "../types/index.js";
-import { clearAuthCookies, setAuthCookies } from "../utils/index.js";
+import {
+  clearAuthCookies,
+  clearGoogleOAuthStateCookie,
+  setAuthCookies,
+  setGoogleOAuthStateCookie,
+} from "../utils/index.js";
 
 export class AuthController {
   public constructor(
-    private readonly otpService: OtpService,
     private readonly authService: AuthService,
   ) {}
-
-  public sendOtp = async (
-    request: Request,
-    response: Response,
-  ): Promise<Response> => {
-    const result = await this.otpService.sendOtp(
-      request.body as SendOtpDto,
-      createRequestContext(request),
-    );
-
-    return sendSuccess(response, {
-      message: OTP_RESPONSE_MESSAGES.SEND_ACCEPTED,
-      data: result,
-    });
-  };
-
-  public verifyOtp = async (
-    request: Request,
-    response: Response,
-  ): Promise<Response> => {
-    const result = await this.authService.authenticateWithOtp(
-      request.body as VerifyOtpDto,
-      createRequestContext(request),
-    );
-
-    setAuthCookies(response, result.tokens);
-
-    return sendSuccess(response, {
-      message: AUTH_RESPONSE_MESSAGES.AUTHENTICATED,
-      data: { user: result.user },
-    });
-  };
-
-  public verifyPhoneToken = async (
-    request: Request,
-    response: Response,
-  ): Promise<Response> => {
-    const result = await this.authService.authenticateWithPhoneToken(
-      request.body as VerifyPhoneTokenDto,
-      createRequestContext(request),
-    );
-
-    setAuthCookies(response, result.tokens);
-
-    return sendSuccess(response, {
-      message: AUTH_RESPONSE_MESSAGES.AUTHENTICATED,
-      data: { user: result.user },
-    });
-  };
 
   public loginWithPassword = async (
     request: Request,
@@ -90,7 +41,6 @@ export class AuthController {
       message: AUTH_RESPONSE_MESSAGES.AUTHENTICATED,
       data: {
         user: result.user,
-        tokens: result.tokens,
       },
     });
   };
@@ -108,7 +58,7 @@ export class AuthController {
 
     return sendSuccess(response, {
       message: AUTH_RESPONSE_MESSAGES.AUTHENTICATED,
-      data: { user: result.user, tokens: result.tokens },
+      data: { user: result.user },
     });
   };
 
@@ -116,21 +66,9 @@ export class AuthController {
     _request: Request,
     response: Response,
   ): Promise<void> => {
-    const isConfigured =
-      Boolean(env.googleClientId) &&
-      !env.googleClientId?.startsWith("your_") &&
-      env.googleClientId !== "development-google-client-id";
-
-    if (!isConfigured && env.nodeEnv !== "production") {
-      logger.info("Google OAuth credentials not configured in dev; using seamless simulated OAuth redirect");
-      const redirectUri =
-        env.googleCallbackUrl ||
-        "http://localhost:5000/api/v1/auth/google/callback";
-      response.redirect(`${redirectUri}?code=simulated-google-oauth-code`);
-      return;
-    }
-
-    const redirectUrl = this.authService.getGoogleAuthUrl();
+    const state = randomBytes(32).toString("base64url");
+    const redirectUrl = this.authService.getGoogleAuthUrl(state);
+    setGoogleOAuthStateCookie(response, state);
     response.redirect(redirectUrl);
   };
 
@@ -140,27 +78,21 @@ export class AuthController {
   ): Promise<void> => {
     const code = request.query.code as string | undefined;
     const error = request.query.error as string | undefined;
+    const state = request.query.state;
+    const expectedState = this.getOptionalCookie(
+      request,
+      AUTH_COOKIE_NAMES.GOOGLE_OAUTH_STATE,
+    );
 
     const frontendUrl = env.corsOrigins[0] || "http://localhost:5173";
+    clearGoogleOAuthStateCookie(response);
+
+    if (!this.isValidGoogleOAuthState(state, expectedState)) {
+      response.redirect(`${frontendUrl}/auth/login?error=google_invalid_state`);
+      return;
+    }
 
     if (error || !code) {
-      if (env.nodeEnv !== "production") {
-        try {
-          const result = await this.authService.authenticateWithGoogle(
-            { code: "simulated-google-oauth-code" },
-            createRequestContext(request),
-          );
-          setAuthCookies(response, result.tokens);
-          const targetPath =
-            result.user.role === "admin"
-              ? "/admin/dashboard"
-              : "/customer/dashboard";
-          response.redirect(`${frontendUrl}${targetPath}`);
-          return;
-        } catch {
-          // fall through
-        }
-      }
       response.redirect(`${frontendUrl}/auth/login?error=google_cancelled`);
       return;
     }
@@ -183,23 +115,6 @@ export class AuthController {
         { error: err instanceof Error ? err.message : String(err) },
         "Google OAuth callback authentication failed",
       );
-      if (env.nodeEnv !== "production") {
-        try {
-          const result = await this.authService.authenticateWithGoogle(
-            { code: "simulated-google-oauth-code" },
-            createRequestContext(request),
-          );
-          setAuthCookies(response, result.tokens);
-          const targetPath =
-            result.user.role === "admin"
-              ? "/admin/dashboard"
-              : "/customer/dashboard";
-          response.redirect(`${frontendUrl}${targetPath}`);
-          return;
-        } catch {
-          // fall through
-        }
-      }
       response.redirect(`${frontendUrl}/auth/login?error=google_failed`);
     }
   };
@@ -294,5 +209,22 @@ export class AuthController {
     const value = cookies?.[name];
 
     return typeof value === "string" ? value : undefined;
+  }
+
+  private isValidGoogleOAuthState(
+    submittedState: unknown,
+    expectedState: string | undefined,
+  ): boolean {
+    if (typeof submittedState !== "string" || !expectedState) {
+      return false;
+    }
+
+    const submitted = Buffer.from(submittedState);
+    const expected = Buffer.from(expectedState);
+
+    return (
+      submitted.length === expected.length &&
+      timingSafeEqual(submitted, expected)
+    );
   }
 }

@@ -4,8 +4,8 @@ import { env } from "./env.js";
 import { ERROR_MESSAGES } from "../shared/constants/messages.js";
 
 export const globalRateLimitOptions: Partial<Options> = {
-  windowMs: env.rateLimitWindowMs || 60000,
-  limit: Math.max(env.rateLimitMax || 10000, 10000),
+  windowMs: env.rateLimitWindowMs,
+  limit: env.rateLimitMax,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   skip: (req) => {

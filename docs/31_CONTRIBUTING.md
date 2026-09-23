@@ -216,8 +216,6 @@ Log secrets
 
 Store plain passwords
 
-Store plain OTPs
-
 Expose internal IDs unnecessarily
 
 Disable validation

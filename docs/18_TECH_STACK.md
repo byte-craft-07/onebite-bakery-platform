@@ -138,11 +138,11 @@ JWT
 
 Password Strategy
 
-OTP Authentication
+Google OAuth/OIDC
 
-OTP Hashing
+OAuth authorization-code verification
 
-Node.js crypto HMAC with constant-time comparison
+Google OpenID Connect
 
 Logging
 
@@ -248,7 +248,7 @@ Automatic
 
 Method
 
-Mobile OTP
+Google OAuth
 
 Access Token
 
@@ -262,11 +262,11 @@ Session Rotation
 
 Enabled
 
-OTP Storage
+Session Storage
 
 Hashed
 
-OTP Expiry
+Access Token Expiry
 
 5 Minutes
 
@@ -289,8 +289,6 @@ Never Store
 JWT
 
 Refresh Token
-
-OTP
 
 Sensitive Data
 

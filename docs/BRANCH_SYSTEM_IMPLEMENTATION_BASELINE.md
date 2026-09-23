@@ -20,7 +20,7 @@ The The Online Bakery Platform currently operates as a single-store / centralize
                                         │
                                         ▼ REST API / HTTPS
                               [ BACKEND (Express / TS) ]
-                         ├── Auth & Security (JWT, OTP, RBAC)
+                         ├── Auth & Security (Google OAuth, JWT, RBAC)
                          ├── Catalog (Products, Categories, Occasions)
                          ├── Checkout & Cart Service
                          ├── Order Engine & Payment Gateway (Razorpay)
@@ -41,7 +41,7 @@ The The Online Bakery Platform currently operates as a single-store / centralize
 
 ### Backend Modules (`backend/src/modules/`)
 1. `address`: Customer delivery address management (CRUD, default set, pincode).
-2. `auth`: OTP phone authentication, Google OAuth login/link, JWT access & refresh tokens, cookie handling, dev shortcuts.
+2. `auth`: Google OAuth login/link, JWT access & refresh tokens, cookie handling, and session management.
 3. `cart`: Cart creation (guest session or customer ID), item additions, quantity updates, coupon calculation, cart merging.
 4. `category`: Product categories (CRUD, active toggle, slug-based queries).
 5. `checkout`: Delivery serviceability check, delivery fee estimation, minimum order value validation.
@@ -104,7 +104,7 @@ The system will introduce `BRANCH_ADMIN` (`branch_admin`) to allow branch manage
 
 The existing backend exposes API endpoints under `/api/v1/`:
 
-- **Auth**: `POST /auth/request-otp`, `POST /auth/verify-otp`, `POST /auth/google`, `POST /auth/logout`, `GET /auth/me`
+- **Auth**: `GET /auth/google`, `POST /auth/google`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me`
 - **Products**: `GET /products`, `GET /products/:slug`, `POST /products` (Admin), `PUT /products/:id` (Admin), `DELETE /products/:id` (Admin)
 - **Categories & Occasions**: `GET /categories`, `GET /categories/:slug`, `GET /occasions`, `GET /occasions/:slug`
 - **Cart**: `GET /cart`, `POST /cart/items`, `PUT /cart/items/:itemId`, `DELETE /cart/items/:itemId`, `POST /cart/merge`, `POST /cart/coupon`, `DELETE /cart/coupon`
@@ -128,7 +128,7 @@ The frontend router (`frontend/src/routes.tsx`) defines the full set of customer
   - `/categories` & `/categories/:slug` (Category Listings)
   - `/occasions` & `/occasions/:slug` (Occasion Listings)
 - **Customer Auth & Account**:
-  - `/auth/login` (OTP & Google Login)
+  - `/auth/login` (Google Login)
   - `/customer/profile` (Profile & Saved Addresses)
   - `/customer/favorites` (Favorites List)
   - `/customer/orders` (Order History)

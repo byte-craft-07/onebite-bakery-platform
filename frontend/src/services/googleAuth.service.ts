@@ -1,8 +1,6 @@
 import { apiClient } from "./api.client";
 import type { UserProfileResponse } from "./auth.service";
 
-import { getAvatarFromEmailOrName } from "@/components/common/UserAvatar";
-
 export interface GoogleAuthResponse {
   user: UserProfileResponse;
 }
@@ -15,41 +13,20 @@ export const googleAuthService = {
     idToken: string,
     payload?: { email?: string; name?: string; picture?: string },
   ): Promise<GoogleAuthResponse> {
-    try {
-      const response = await apiClient.post<{
-        success: boolean;
-        data: { user: UserProfileResponse };
-      }>("/auth/google", {
-        credential: idToken,
-        email: payload?.email,
-        name: payload?.name,
-        picture: payload?.picture,
-      });
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { user: UserProfileResponse };
+    }>("/auth/google", {
+      credential: idToken,
+      email: payload?.email,
+      name: payload?.name,
+      picture: payload?.picture,
+    });
 
-      const user = response.data.data.user;
-      localStorage.setItem("theonlinebakery_user", JSON.stringify(user));
+    const user = response.data.data.user;
+    localStorage.setItem("theonlinebakery_user", JSON.stringify(user));
 
-      return { user };
-    } catch (err: unknown) {
-      if (import.meta.env.DEV) {
-        const name = payload?.name || "Ajay Prajapati";
-        const email = payload?.email || "ajaykterha@gmail.com";
-        const devUser: UserProfileResponse = {
-          id: `usr-google-${Date.now()}`,
-          name,
-          email,
-          role: "admin",
-          profileImage: payload?.picture || getAvatarFromEmailOrName(name, email),
-          isActive: true,
-          isVerified: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        localStorage.setItem("theonlinebakery_user", JSON.stringify(devUser));
-        return { user: devUser };
-      }
-      throw err;
-    }
+    return { user };
   },
 
   /**

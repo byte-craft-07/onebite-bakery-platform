@@ -7,7 +7,6 @@ import type { User, UserRepository } from "../../user/index.js";
 import type { Address } from "../../address/index.js";
 import type { RefreshTokenRepository } from "../repository/index.js";
 import { AuthService } from "./auth.service.js";
-import type { OtpService } from "./otp.service.js";
 import { OrderService } from "../../order/service/order.service.js";
 import type { OrderRepository } from "../../order/repository/order.repository.js";
 import type { CartService } from "../../cart/service/cart.service.js";
@@ -29,8 +28,6 @@ const createMockUser = (overrides: Partial<User> = {}): User =>
     googleId: "google-sub-12345",
     role: "customer",
     isVerified: true,
-    phoneVerified: false,
-    authProviders: ["google"],
     status: "active",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -57,11 +54,10 @@ const createMockAddress = (overrides: Partial<Address> = {}): Address =>
 
 describe("Customer Authentication + Address-Based Mobile Number Architecture", () => {
   describe("1. Authentication & Google Login", () => {
-    it("Google login succeeds without OTP for new customer", async () => {
+    it("Google login succeeds for a new customer", async () => {
       const newUser = createMockUser({
         _id: new Types.ObjectId("6aa3ebcda67a0fb724c636c1"),
         email: "new.google@theonlinebakery.in",
-        phoneVerified: false,
       });
 
       const userRepository = {
@@ -76,7 +72,6 @@ describe("Customer Authentication + Address-Based Mobile Number Architecture", (
       } as unknown as RefreshTokenRepository;
 
       const authService = new AuthService(
-        {} as OtpService,
         userRepository,
         refreshTokenRepository,
       );
@@ -94,14 +89,12 @@ describe("Customer Authentication + Address-Based Mobile Number Architecture", (
       expect(result.user.email).toBe("new.google@theonlinebakery.in");
       expect(result.tokens.accessToken).toBeDefined();
       expect(result.tokens.refreshToken).toBeDefined();
-      expect(result.user.phoneVerified).toBe(false);
     });
 
-    it("Existing Google customer logs in and gets secure session without OTP", async () => {
+    it("Existing Google customer logs in and gets a secure session", async () => {
       const existingUser = createMockUser({
         googleId: "google-sub-existing",
         email: "existing.customer@theonlinebakery.in",
-        phoneVerified: false,
       });
 
       const userRepository = {
@@ -115,7 +108,6 @@ describe("Customer Authentication + Address-Based Mobile Number Architecture", (
       } as unknown as RefreshTokenRepository;
 
       const authService = new AuthService(
-        {} as OtpService,
         userRepository,
         refreshTokenRepository,
       );
@@ -182,7 +174,6 @@ describe("Customer Authentication + Address-Based Mobile Number Architecture", (
       } as unknown as UserRepository;
 
       const authService = new AuthService(
-        {} as OtpService,
         userRepository,
         {} as RefreshTokenRepository,
       );
@@ -191,17 +182,7 @@ describe("Customer Authentication + Address-Based Mobile Number Architecture", (
       expect(userProfile.phone).toBe("9123456789");
       expect(userProfile.address?.village).toBe("Sumerpur");
       expect(userProfile.address?.district).toBe("Hamirpur");
-      expect(userProfile.phoneVerified).toBe(false);
-
       vi.restoreAllMocks();
-    });
-
-    it("entering a mobile number into address does not mark phoneVerified as true", () => {
-      const user = createMockUser({ phoneVerified: false });
-      const address = createMockAddress({ phone: "9876543210" });
-
-      expect(user.phoneVerified).toBe(false);
-      expect(address.phone).toBe("9876543210");
     });
   });
 

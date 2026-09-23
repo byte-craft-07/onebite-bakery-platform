@@ -132,7 +132,7 @@ Future database migration becomes easier.
 
 # Decision 08
 
-OTP Authentication
+Google Authentication
 
 Status
 
@@ -140,8 +140,8 @@ Approved
 
 Reason
 
-Most bakery customers remember phone numbers,
-not passwords.
+Google OAuth verifies a customer identity without the
+platform storing a customer password.
 
 Faster checkout.
 
@@ -481,7 +481,7 @@ Approved
 
 Reason
 
-User, Address, OTP, RefreshToken, and Settings models are foundational
+User, Address, RefreshToken, and Settings models are foundational
 for authentication, customer profile, serviceability, and configurable
 business behavior.
 

@@ -7,7 +7,6 @@ import { AuthProvider } from "@/contexts/auth.context";
 import { CustomerAuthContainer } from "@/pages/auth/CustomerAuthContainer";
 import { SessionExpiredPage, UnauthorizedPage } from "@/pages/auth/StatusPages";
 import { authService } from "@/services/auth.service";
-import { formatPhoneForMsg91 } from "@/services/msg91.service";
 import { UserAvatar, getAvatarFromEmailOrName } from "@/components/common/UserAvatar";
 
 describe("Customer Authentication & Login Tests", () => {
@@ -28,16 +27,7 @@ describe("Customer Authentication & Login Tests", () => {
     expect(screen.getByText("256-Bit Encrypted & Secure Authentication")).toBeDefined();
   });
 
-  it("formats Indian phone numbers correctly for MSG91 (no + sign, 91 prefix)", () => {
-    expect(formatPhoneForMsg91("9876543210")).toBe("919876543210");
-    expect(formatPhoneForMsg91("+91 98765-43210")).toBe("919876543210");
-    expect(formatPhoneForMsg91("919876543210")).toBe("919876543210");
-  });
-
-  it("tests authService method definitions including verifyPhoneAccessToken", () => {
-    expect(typeof authService.sendOtp).toBe("function");
-    expect(typeof authService.verifyOtp).toBe("function");
-    expect(typeof authService.verifyPhoneAccessToken).toBe("function");
+  it("tests session auth service method definitions", () => {
     expect(typeof authService.getCurrentUser).toBe("function");
     expect(typeof authService.logout).toBe("function");
     expect(typeof authService.logoutAll).toBe("function");

@@ -7,6 +7,10 @@ import { BannerModel } from "../modules/banner/model/banner.model.js";
 import { logger } from "../shared/utils/logger.js";
 
 export const seedDevelopmentData = async (): Promise<void> => {
+  if (env.nodeEnv !== "development") {
+    return;
+  }
+
   try {
     // 1. Seed Admin & Customer Users
     const existingAdmin = await UserModel.findOne({

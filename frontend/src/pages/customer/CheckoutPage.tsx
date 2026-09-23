@@ -76,7 +76,7 @@ const getCheckoutErrorMessage = (err: unknown, fallback: string): string => {
 };
 
 export const CheckoutPage: React.FC = () => {
-  const { user, login, updateUser } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -324,7 +324,7 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
-    const selectedAddr = addresses.find((a) => a.id === selectedAddressId);
+    const selectedAddr = addresses.find((address) => address.id === selectedAddressId);
     const checkoutPhone = (selectedAddr?.phone || user?.phone || "9876543210").replace(/\D/g, "").slice(-10);
 
     const effectiveTimingType = hasCustomCake ? "SCHEDULED" : timingType;
@@ -344,13 +344,6 @@ export const CheckoutPage: React.FC = () => {
 
     try {
       setIsPlacingOrder(true);
-      if (import.meta.env.DEV) {
-        const backendUser = await authService.ensureDevBackendSession(checkoutPhone);
-        if (!user || user.id !== backendUser.id) {
-          updateUser(backendUser);
-        }
-      }
-
       if (paymentMethod === "COD") {
         setPaymentStateMessage("Creating your order (Cash on Delivery)...");
         const order = await checkoutService.createOrder({

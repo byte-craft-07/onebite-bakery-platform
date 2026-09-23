@@ -129,8 +129,6 @@ JWT_SECRET
 
 JWT_REFRESH_SECRET
 
-OTP_HASH_SECRET
-
 CLIENT_URL
 
 ADMIN_URL
@@ -142,10 +140,6 @@ CLOUDINARY_CLOUD_NAME
 CLOUDINARY_API_KEY
 
 CLOUDINARY_API_SECRET
-
-OTP_PROVIDER
-
-OTP_API_KEY
 
 UPI_ID
 
@@ -293,7 +287,7 @@ Environment variables verified
 
 Cloudinary configured
 
-OTP provider configured
+Google OAuth configured
 
 UPI details verified
 
@@ -315,7 +309,7 @@ Products visible
 
 Search works
 
-OTP Login works
+Google sign-in works
 
 Refresh token rotation works
 

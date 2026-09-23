@@ -76,7 +76,7 @@ COD
 
 UPI
 
-OTP Login
+Google Sign-In
 
 Guest Cart
 

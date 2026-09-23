@@ -6,6 +6,7 @@ import type { RequestContext } from "../../../shared/types/request-context.types
 import type { CreateProductDto } from "../dto/index.js";
 import type { Product } from "../model/index.js";
 import type { InventoryRepository, ProductRepository } from "../repository/index.js";
+import type { PublicProductQueryDto } from "../types/index.js";
 import { ProductService } from "./product.service.js";
 
 const context: RequestContext = {

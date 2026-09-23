@@ -6,14 +6,14 @@
 
 A production-ready full-stack bakery platform built with React, Node.js, Express, MongoDB, and TypeScript.
 
-Designed for seamless online ordering, custom cake requests, OTP authentication, hybrid cart, order tracking, and a premium mobile-first customer experience.
+Designed for seamless online ordering, custom cake requests, Google sign-in, hybrid cart, order tracking, and a premium mobile-first customer experience.
 
 ## Features
 
 - 🎂 Online Cake Ordering
 - 🎨 Custom Cake Builder
 - 🚚 Home Delivery & Store Pickup
-- 📱 OTP Authentication
+- 🔐 Google Authentication
 - ❤️ Favorites
 - ⭐ Reviews & Ratings
 - 📦 Order Tracking

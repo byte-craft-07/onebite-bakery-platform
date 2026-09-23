@@ -1,7 +1,6 @@
 export const COLLECTION_NAMES = {
   USERS: "users",
   ADDRESSES: "addresses",
-  OTPS: "otps",
   REFRESH_TOKENS: "refreshTokens",
   CATEGORIES: "categories",
   OCCASIONS: "occasions",
@@ -25,4 +24,3 @@ export const COLLECTION_NAMES = {
 
 export type CollectionName =
   (typeof COLLECTION_NAMES)[keyof typeof COLLECTION_NAMES];
-

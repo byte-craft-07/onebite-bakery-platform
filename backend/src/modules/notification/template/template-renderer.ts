@@ -12,10 +12,6 @@ export class TemplateRenderer {
     string,
     { subject: string; body: string }
   > = {
-    otp: {
-      subject: "Your The Online Bakery Verification Code",
-      body: "<p>Hello {{customerName}},</p><p>Your verification code is <strong>{{otp}}</strong>. It is valid for 5 minutes.</p>",
-    },
     "order-created": {
       subject: "The Online Bakery Order Received - {{orderNumber}}",
       body: "<p>Hello {{customerName}},</p><p>Thank you for your order <strong>{{orderNumber}}</strong>! Subtotal: ₹{{amount}}. We are processing your request.</p>",

@@ -40,7 +40,7 @@ The PWA functions as both:
 
 ### Key Principles
 - **Enhancement Layer Only**: No rebuilds, no framework migrations, no API breakages.
-- **Zero Sensitive Caching**: Authentication tokens, OTPs, customer profiles, payments, checkouts, and admin actions are **strictly network-only** and never stored in service worker caches.
+- **Zero Sensitive Caching**: Authentication tokens, customer profiles, payments, checkouts, and admin actions are **strictly network-only** and never stored in service worker caches.
 - **Offline Transparency**: Offline users can browse previously cached pages and view clear offline banners; checkout/payment submissions are explicitly guarded and require network connectivity.
 
 ---

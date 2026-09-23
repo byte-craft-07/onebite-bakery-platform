@@ -123,7 +123,7 @@ Customer authentication.
 
 Tasks
 
-OTP
+Google OAuth sign-in
 
 JWT
 

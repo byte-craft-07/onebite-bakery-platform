@@ -11,9 +11,6 @@ export type UserRole = (typeof USER_ROLES)[number];
 export const USER_STATUSES = ["active", "blocked"] as const;
 export type UserStatus = (typeof USER_STATUSES)[number];
 
-export const AUTH_PROVIDERS = ["phone", "google"] as const;
-export type AuthProviderType = (typeof AUTH_PROVIDERS)[number];
-
 export interface CustomerLocation {
   villageId: Types.ObjectId;
   villageName: string;
@@ -27,14 +24,11 @@ export interface User extends TimestampedDocument {
   phone?: string;
   email?: string;
   googleId?: string;
-  authProviders?: AuthProviderType[];
   password?: string;
   role: UserRole;
   branchId?: Types.ObjectId;
   currentLocation?: CustomerLocation;
   isVerified: boolean;
-  phoneVerified?: boolean;
-  phoneVerifiedAt?: Date;
   profileImage?: string;
   status: UserStatus;
   lastLogin?: Date;
@@ -99,11 +93,6 @@ const userSchema = new Schema<User>(
       required: false,
       select: false,
     },
-    authProviders: {
-      type: [String],
-      enum: AUTH_PROVIDERS,
-      default: ["phone"],
-    },
     role: {
       type: String,
       enum: USER_ROLES,
@@ -125,16 +114,6 @@ const userSchema = new Schema<User>(
       default: false,
       required: true,
     },
-    phoneVerified: {
-      type: Boolean,
-      default: false,
-      required: false,
-    },
-    phoneVerifiedAt: {
-      type: Date,
-      default: undefined,
-      required: false,
-    },
     profileImage: {
       type: String,
       trim: true,
@@ -154,7 +133,7 @@ const userSchema = new Schema<User>(
   baseSchemaOptions,
 );
 
-// Sparse unique lookup for OTP login and phone ownership.
+// Sparse unique lookup for customer contact phone ownership.
 userSchema.index(
   { phone: 1 },
   { unique: true, sparse: true, name: INDEX_NAMES.USER_PHONE_UNIQUE },

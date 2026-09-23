@@ -14,6 +14,14 @@ const createCookieOptions = (maxAge: number): CookieOptions => {
   };
 };
 
+const createGoogleOAuthStateCookieOptions = (): CookieOptions => ({
+  httpOnly: true,
+  secure: env.nodeEnv === "production",
+  sameSite: "lax",
+  maxAge: 10 * 60 * 1000,
+  path: `${env.apiPrefix}/auth/google`,
+});
+
 export const setAuthCookies = (
   response: Response,
   tokens: AuthTokens,
@@ -33,4 +41,22 @@ export const setAuthCookies = (
 export const clearAuthCookies = (response: Response): void => {
   response.clearCookie(AUTH_COOKIE_NAMES.ACCESS_TOKEN, { path: "/" });
   response.clearCookie(AUTH_COOKIE_NAMES.REFRESH_TOKEN, { path: "/" });
+};
+
+export const setGoogleOAuthStateCookie = (
+  response: Response,
+  state: string,
+): void => {
+  response.cookie(
+    AUTH_COOKIE_NAMES.GOOGLE_OAUTH_STATE,
+    state,
+    createGoogleOAuthStateCookieOptions(),
+  );
+};
+
+export const clearGoogleOAuthStateCookie = (response: Response): void => {
+  response.clearCookie(
+    AUTH_COOKIE_NAMES.GOOGLE_OAUTH_STATE,
+    createGoogleOAuthStateCookieOptions(),
+  );
 };

@@ -1,7 +1,6 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 
-import { env } from "../../../config/env.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
 import { validateRequest } from "../../../shared/middlewares/validate-request.middleware.js";
@@ -9,74 +8,29 @@ import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { UserRepository } from "../../user/index.js";
 import { requireAuth } from "../middlewares/index.js";
 import { AuthController } from "../controller/index.js";
-import { ConsoleOtpProvider, Msg91OtpProvider } from "../providers/index.js";
-import {
-  OtpRepository,
-  RefreshTokenRepository,
-} from "../repository/index.js";
-import { AuthService, OtpService } from "../service/index.js";
+import { RefreshTokenRepository } from "../repository/index.js";
+import { AuthService } from "../service/index.js";
 import {
   AUTH_RATE_LIMITS,
   AUTH_RESPONSE_MESSAGES,
-  OTP_RATE_LIMITS,
-  OTP_RESPONSE_MESSAGES,
 } from "../constants/index.js";
 import {
-  sendOtpSchema,
-  verifyOtpSchema,
   loginWithPasswordSchema,
-  verifyPhoneTokenSchema,
 } from "../validators/index.js";
 
 export const authRouter = Router();
 
-const otpRepository = new OtpRepository();
 const refreshTokenRepository = new RefreshTokenRepository();
 const userRepository = new UserRepository();
-const otpProvider = env.msg91AuthKey
-  ? new Msg91OtpProvider()
-  : new ConsoleOtpProvider();
-const otpService = new OtpService(otpRepository, otpProvider);
 const authService = new AuthService(
-  otpService,
   userRepository,
   refreshTokenRepository,
 );
-const authController = new AuthController(otpService, authService);
-const getRouteLimit = (productionLimit: number): number =>
-  env.nodeEnv === "production" ? productionLimit : Math.max(productionLimit, 100);
-
-const sendOtpRateLimiter = rateLimit({
-  windowMs: OTP_RATE_LIMITS.SEND_WINDOW_MS,
-  limit: getRouteLimit(OTP_RATE_LIMITS.SEND_MAX),
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
-  message: {
-    success: false,
-    message: OTP_RESPONSE_MESSAGES.RESEND_LIMIT_REACHED,
-    errors: [],
-    code: APP_ERROR_CODES.TOO_MANY_REQUESTS,
-  },
-  statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
-});
-
-const verifyOtpRateLimiter = rateLimit({
-  windowMs: OTP_RATE_LIMITS.VERIFY_WINDOW_MS,
-  limit: getRouteLimit(OTP_RATE_LIMITS.VERIFY_MAX),
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
-  message: {
-    success: false,
-    message: OTP_RESPONSE_MESSAGES.ATTEMPTS_EXCEEDED,
-    errors: [],
-    code: APP_ERROR_CODES.TOO_MANY_REQUESTS,
-  },
-  statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
-});
+const authController = new AuthController(authService);
 
 const refreshRateLimiter = rateLimit({
   windowMs: AUTH_RATE_LIMITS.REFRESH_WINDOW_MS,
-  limit: getRouteLimit(AUTH_RATE_LIMITS.REFRESH_MAX),
+  limit: AUTH_RATE_LIMITS.REFRESH_MAX,
   standardHeaders: "draft-8",
   legacyHeaders: false,
   statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
@@ -90,7 +44,7 @@ const refreshRateLimiter = rateLimit({
 
 const sessionRateLimiter = rateLimit({
   windowMs: AUTH_RATE_LIMITS.SESSION_WINDOW_MS,
-  limit: getRouteLimit(AUTH_RATE_LIMITS.SESSION_MAX),
+  limit: AUTH_RATE_LIMITS.SESSION_MAX,
   standardHeaders: "draft-8",
   legacyHeaders: false,
   statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
@@ -103,36 +57,15 @@ const sessionRateLimiter = rateLimit({
 });
 
 authRouter.post(
-  "/send-otp",
-  sendOtpRateLimiter,
-  validateRequest({ body: sendOtpSchema }),
-  asyncHandler(authController.sendOtp),
-);
-
-authRouter.post(
-  "/verify-otp",
-  verifyOtpRateLimiter,
-  validateRequest({ body: verifyOtpSchema }),
-  asyncHandler(authController.verifyOtp),
-);
-
-authRouter.post(
-  "/phone/verify",
-  verifyOtpRateLimiter,
-  validateRequest({ body: verifyPhoneTokenSchema }),
-  asyncHandler(authController.verifyPhoneToken),
-);
-
-authRouter.post(
   "/login-password",
-  verifyOtpRateLimiter,
+  sessionRateLimiter,
   validateRequest({ body: loginWithPasswordSchema }),
   asyncHandler(authController.loginWithPassword),
 );
 
 authRouter.post(
   "/login",
-  verifyOtpRateLimiter,
+  sessionRateLimiter,
   validateRequest({ body: loginWithPasswordSchema }),
   asyncHandler(authController.loginWithPassword),
 );

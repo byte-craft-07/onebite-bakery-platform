@@ -14,7 +14,7 @@ export class LocalStorageProvider implements StorageProvider {
   private readonly baseUrl: string;
 
   public constructor(uploadDir?: string, baseUrl?: string) {
-    this.uploadDir = uploadDir ?? path.join(process.cwd(), "uploads");
+    this.uploadDir = uploadDir ?? path.join(process.cwd(), "public", "uploads");
     this.baseUrl = baseUrl ?? "/uploads";
   }
 

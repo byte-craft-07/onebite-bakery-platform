@@ -501,7 +501,7 @@ export const AdminAdminsPage: React.FC = () => {
             </div>
           </div>
           <p className="text-[11px] text-[#7A6E65] italic">
-            * Provide either Email (for Google/email login) or Phone (for OTP login).
+            * Provide an email for Google sign-in. A phone number is optional contact information.
           </p>
 
           <div>

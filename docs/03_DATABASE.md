@@ -12,7 +12,6 @@ MongoDB + Mongoose + TypeScript
 
 * users
 * addresses
-* otps
 * refreshTokens
 * branches
 * categories
@@ -41,10 +40,10 @@ Purpose: Customer and Admin accounts
 | ------------ | -------- | -------- | --------------- |
 | _id          | ObjectId | Yes      | Primary key     |
 | name         | String   | Yes      | Customer name   |
-| phone        | String   | Yes      | Unique          |
-| email        | String   | No       | Optional        |
+| phone        | String   | No       | Delivery contact |
+| email        | String   | No       | Account linking  |
 | role         | String   | Yes      | customer/admin  |
-| isVerified   | Boolean  | Yes      | OTP verified    |
+| isVerified   | Boolean  | Yes      | Identity verified |
 | profileImage | String   | No       | Cloudinary URL  |
 | status       | String   | Yes      | active/blocked  |
 | lastLogin    | Date     | No       | Last login time |
@@ -59,9 +58,8 @@ Indexes:
 
 Implementation Notes:
 
-* `phone` unique index supports OTP login and prevents duplicate customer accounts.
+* `phone` sparse unique index prevents duplicate customer contact ownership.
 * `role + status` index supports future admin/customer filtering.
-* OTP values are never stored on the user document.
 
 ---
 
@@ -95,37 +93,7 @@ Implementation Notes:
 
 ---
 
-# 2A. otps
-
-Purpose: Temporary OTP verification challenges
-
-| Field       | Type   | Notes                |
-| ----------- | ------ | -------------------- |
-| phone       | String | Customer/admin phone |
-| purpose     | String | login/admin_login    |
-| otpHash     | String | Stored hashed only   |
-| expiresAt   | Date   | TTL cleanup          |
-| attempts    | Number | Verification tries   |
-| resendCount | Number | Resend tracking      |
-| lastSentAt  | Date   | Rate-limit support   |
-| isUsed      | Boolean| Prevent reuse        |
-| ipAddress   | String | Security context     |
-| userAgent   | String | Security context     |
-
-Indexes:
-
-* phone + purpose + createdAt
-* expiresAt (TTL)
-
-Implementation Notes:
-
-* Raw OTP values must never be stored.
-* TTL index automatically removes expired OTP challenges.
-* This model does not send OTPs; sending belongs to the authentication service.
-
----
-
-# 2B. refreshTokens
+# 2A. refreshTokens
 
 Purpose: Refresh-token session tracking
 
@@ -652,7 +620,7 @@ Guest User → localStorage
 
 Logged-in User → MongoDB
 
-Auto merge after OTP login.
+Auto merge after authenticated sign-in.
 
 ---
 
@@ -695,7 +663,6 @@ Models created in the database foundation:
 
 * User
 * Address
-* OTP
 * RefreshToken
 * Settings
 

@@ -5,7 +5,6 @@ import type { RequestContext } from "../../../shared/types/request-context.types
 import type { User, UserRepository } from "../../user/index.js";
 import type { RefreshTokenRepository } from "../repository/index.js";
 import { AuthService } from "./auth.service.js";
-import type { OtpService } from "./otp.service.js";
 
 const context: RequestContext = {
   requestId: "test-google-request",
@@ -22,7 +21,6 @@ const createMockUser = (overrides: Partial<User> = {}): User =>
     role: "customer",
     isVerified: true,
     status: "active",
-    authProviders: ["google"],
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -51,11 +49,8 @@ const createService = (
     createSession: vi.fn().mockResolvedValue({ _id: new Types.ObjectId() }),
   } as unknown as RefreshTokenRepository;
 
-  const otpService = {} as OtpService;
-
   return {
     service: new AuthService(
-      otpService,
       userRepository,
       refreshTokenRepository,
     ),
@@ -89,6 +84,24 @@ describe("AuthService - Google Authentication", () => {
     expect(result.user.email).toBe("new.customer@theonlinebakery.in");
     expect(result.tokens.accessToken).toBeDefined();
     expect(userRepository.createCustomerFromGoogle).toHaveBeenCalledOnce();
+  });
+
+  it("does not grant an admin role from a Google email address", async () => {
+    const { service, userRepository } = createService();
+
+    const result = await service.authenticateWithGoogle(
+      {
+        token: "simulated-google-id-token",
+        email: "ajaykterha@gmail.com",
+        name: "Privileged Email Holder",
+      },
+      context,
+    );
+
+    expect(result.user.role).toBe("customer");
+    expect(userRepository.createCustomerFromGoogle).toHaveBeenCalledWith(
+      expect.objectContaining({ email: "ajaykterha@gmail.com" }),
+    );
   });
 
   it("safely links existing email customer with Google identity", async () => {

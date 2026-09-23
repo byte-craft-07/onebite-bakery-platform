@@ -12,7 +12,7 @@
 
 ## Phase 3: Hybrid Cart & Checkout Flow
 - Implement Cart Drawer & Cart Page with real-time quantity adjustments.
-- Implement Guest to Customer OTP Login modal and automatic cart merging.
+- Implement Google sign-in and automatic guest-cart merging.
 - Build Checkout Preview Page with home delivery vs store pickup selection and minimum delivery threshold warnings.
 - Build Razorpay Payment gateway integration modal and signature verification feedback.
 
