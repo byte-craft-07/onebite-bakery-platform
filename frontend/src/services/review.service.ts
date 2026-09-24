@@ -1,8 +1,8 @@
 import { MOCK_PRODUCTS, MOCK_REVIEWS, type MockProduct, type MockReview } from "@/data/mockData";
 import { apiClient } from "./api.client";
 
-const LOCAL_REVIEWS_KEY = "theonlinebakery_local_reviews";
-const LOCAL_RATED_ITEMS_KEY = "theonlinebakery_rated_order_items";
+const LOCAL_REVIEWS_KEY = "onebitebakery_local_reviews";
+const LOCAL_RATED_ITEMS_KEY = "onebitebakery_rated_order_items";
 
 export interface ReviewPayload {
   name: string;
@@ -104,7 +104,7 @@ export const reviewService = {
       // Ignore
     }
 
-    window.dispatchEvent(new Event("theonlinebakery_review_submitted"));
+    window.dispatchEvent(new Event("onebitebakery_review_submitted"));
     return newReview;
   },
 
@@ -150,8 +150,8 @@ export const reviewService = {
       // Ignore
     }
 
-    window.dispatchEvent(new Event("theonlinebakery_review_submitted"));
-    window.dispatchEvent(new CustomEvent("theonlinebakery_order_rated", { detail: { orderId: payload.orderId } }));
+    window.dispatchEvent(new Event("onebitebakery_review_submitted"));
+    window.dispatchEvent(new CustomEvent("onebitebakery_order_rated", { detail: { orderId: payload.orderId } }));
     return createdReviews;
   },
 

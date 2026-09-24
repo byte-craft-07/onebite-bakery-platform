@@ -75,7 +75,7 @@ export const CustomerSecurityPage: React.FC = () => {
                 G
               </div>
               <div>
-                <p className="text-sm font-bold text-[#3B302B]">{user?.email || "customer.google@theonlinebakery.in"}</p>
+                <p className="text-sm font-bold text-[#3B302B]">{user?.email || "customer.google@onebitebakery.in"}</p>
                 <p className="text-xs text-gray-400">OAuth 2.0 Identity Services</p>
               </div>
             </div>
@@ -104,7 +104,7 @@ export const CustomerSecurityPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-bold text-[#3B302B]">Active Device Sessions ({sessions.length})</h3>
-            <p className="text-xs text-[#7A6E65]">Devices currently authenticated to your The Online Bakery account.</p>
+            <p className="text-xs text-[#7A6E65]">Devices currently authenticated to your Onebite Bakery account.</p>
           </div>
           {sessions.length > 1 ? (
             <Button size="sm" variant="outline" onClick={handleRevokeAllOther} className="border-red-300 text-red-600 hover:bg-red-50">
@@ -177,7 +177,7 @@ export const CustomerSecurityPage: React.FC = () => {
       <div className="text-center pt-4">
         <Button onClick={logout} variant="outline" className="border-red-400 text-red-600 hover:bg-red-50">
           <LogOut className="h-4 w-4 mr-2" />
-          <span>Logout of The Online Bakery Account Now</span>
+          <span>Logout of Onebite Bakery Account Now</span>
         </Button>
       </div>
     </div>

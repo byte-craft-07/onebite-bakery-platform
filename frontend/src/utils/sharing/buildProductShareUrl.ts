@@ -6,7 +6,7 @@ export function buildProductShareUrl(
   customBaseUrl?: string,
 ): string {
   if (!productSlugOrId || typeof productSlugOrId !== "string") {
-    return typeof window !== "undefined" ? window.location.href : "https://theonlinebakery.com";
+    return typeof window !== "undefined" ? window.location.href : "https://onebitebakery.com";
   }
 
   const cleanSlug = productSlugOrId
@@ -28,7 +28,7 @@ export function buildProductShareUrl(
   } else if (typeof window !== "undefined" && window.location?.origin) {
     origin = window.location.origin;
   } else {
-    origin = "https://theonlinebakery.com";
+    origin = "https://onebitebakery.com";
   }
 
   return `${origin}/products/${cleanSlug}`;

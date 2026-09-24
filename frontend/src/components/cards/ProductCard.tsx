@@ -66,12 +66,12 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
       setLiveRatingData(reviewService.getProductRating(product));
     };
 
-    window.addEventListener("theonlinebakery_review_submitted", handleRatingUpdate);
-    window.addEventListener("theonlinebakery_order_rated", handleRatingUpdate);
+    window.addEventListener("onebitebakery_review_submitted", handleRatingUpdate);
+    window.addEventListener("onebitebakery_order_rated", handleRatingUpdate);
 
     return () => {
-      window.removeEventListener("theonlinebakery_review_submitted", handleRatingUpdate);
-      window.removeEventListener("theonlinebakery_order_rated", handleRatingUpdate);
+      window.removeEventListener("onebitebakery_review_submitted", handleRatingUpdate);
+      window.removeEventListener("onebitebakery_order_rated", handleRatingUpdate);
     };
   }, [product]);
 
@@ -85,9 +85,9 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
       }
     };
 
-    window.addEventListener("theonlinebakery_favorites_updated", handleFavUpdate);
+    window.addEventListener("onebitebakery_favorites_updated", handleFavUpdate);
     return () => {
-      window.removeEventListener("theonlinebakery_favorites_updated", handleFavUpdate);
+      window.removeEventListener("onebitebakery_favorites_updated", handleFavUpdate);
     };
   }, [product.id]);
 
@@ -249,7 +249,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
         mainImage: activeImageUrl,
         itemTotal: product.price,
       };
-      sessionStorage.setItem("theonlinebakery_direct_order_item", JSON.stringify(directItem));
+      sessionStorage.setItem("onebitebakery_direct_order_item", JSON.stringify(directItem));
       navigate("/checkout?direct=1");
     } finally {
       setIsOrderingNow(false);

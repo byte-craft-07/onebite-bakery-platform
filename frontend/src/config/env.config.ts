@@ -12,7 +12,7 @@ const resolveApiBaseUrl = (): string => {
 
 export const ENV = {
   API_BASE_URL: resolveApiBaseUrl(),
-  APP_NAME: "The Online Bakery",
+  APP_NAME: "Onebite Bakery",
   IS_DEV: import.meta.env.DEV,
 } as const;
 

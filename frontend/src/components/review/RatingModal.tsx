@@ -145,7 +145,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({
             </p>
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#E5DEC9] rounded-full text-xs font-bold text-[#596B58]">
               <Heart className="h-4 w-4 fill-current text-red-500" />
-              <span>The Online Bakery Community</span>
+              <span>Onebite Bakery Community</span>
             </div>
           </div>
         ) : (

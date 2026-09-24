@@ -33,7 +33,7 @@ const envSchema = z.object({
   CORS_ORIGINS: z.string().optional(),
   JSON_BODY_LIMIT: z.string().default("1mb"),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
-  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(500),
   LOG_LEVEL: z.string().default("info"),
   JWT_SECRET: z.string().min(32).optional(),
   JWT_REFRESH_SECRET: z.string().min(32).optional(),
@@ -55,7 +55,7 @@ const envSchema = z.object({
   REFRESH_TOKEN_EXPIRES: z.string().default("30d"),
   VAPID_PUBLIC_KEY: z.string().min(1).optional(),
   VAPID_PRIVATE_KEY: z.string().min(1).optional(),
-  VAPID_SUBJECT: z.string().default("mailto:admin@theonlinebakery.in"),
+  VAPID_SUBJECT: z.string().default("mailto:admin@onebitebakery.in"),
   REQUIRE_DATABASE_CONNECTION: z.enum(["true", "false"]).optional(),
   REQUIRE_MONGODB_TRANSACTIONS: z.enum(["true", "false"]).optional(),
 });
@@ -71,13 +71,13 @@ if (!parsedEnv.success) {
 const resolveCorsOrigins = (): string[] => {
   if (parsedEnv.data.CORS_ORIGINS) {
     return parsedEnv.data.CORS_ORIGINS.split(",")
-      .map((origin) => origin.trim())
+      .map((origin) => origin.trim().replace(/\/+$/, ""))
       .filter(Boolean);
   }
 
-  return [parsedEnv.data.CLIENT_URL, parsedEnv.data.ADMIN_URL].filter(
-    (origin): origin is string => Boolean(origin),
-  );
+  return [parsedEnv.data.CLIENT_URL, parsedEnv.data.ADMIN_URL]
+    .filter((origin): origin is string => Boolean(origin))
+    .map((origin) => origin.trim().replace(/\/+$/, ""));
 };
 
 const corsOrigins = resolveCorsOrigins();

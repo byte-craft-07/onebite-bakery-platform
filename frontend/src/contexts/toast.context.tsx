@@ -32,7 +32,7 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
-const GLOBAL_TOAST_EVENT = "theonlinebakery_show_toast";
+const GLOBAL_TOAST_EVENT = "onebitebakery_show_toast";
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastItem[]>([]);

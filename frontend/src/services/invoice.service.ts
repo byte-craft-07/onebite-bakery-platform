@@ -39,7 +39,7 @@ export const invoiceService = {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Invoice #${order.orderNumber} - The Online Bakery</title>
+        <title>Invoice #${order.orderNumber} - Onebite Bakery</title>
         <meta charset="utf-8" />
         <style>
           body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #FFF8EC; color: #3B302B; padding: 30px; margin: 0; }
@@ -68,7 +68,7 @@ export const invoiceService = {
         <div class="invoice-card">
           <div class="header">
             <div>
-              <h1 class="brand-title">The Online Bakery</h1>
+              <h1 class="brand-title">Onebite Bakery</h1>
               <div class="tagline">हर जश्न का पहला निवाला। &bull; Pure Joy in Every Single Bite</div>
             </div>
             <div class="invoice-meta">
@@ -87,8 +87,8 @@ export const invoiceService = {
             </div>
             <div class="box">
               <h4>Bakery Store Info:</h4>
-              <div><strong>Store Name:</strong> The Online Bakery</div>
-              <div><strong>Address:</strong> The Online Bakery, N 80°14, terha 25°49'43.3, 54.7"E, hamirpur, Uttar Pradesh 210502</div>
+              <div><strong>Store Name:</strong> Onebite Bakery</div>
+              <div><strong>Address:</strong> Onebite Bakery, N 80°14, terha 25°49'43.3, 54.7"E, hamirpur, Uttar Pradesh 210502</div>
               <div><strong>Phone:</strong> +91 7897671632</div>
               <div><strong>Email:</strong> ajaykterha@gmail.com</div>
               <div><strong>GSTIN:</strong> 07AAAAA0000A1Z5</div>
@@ -118,7 +118,7 @@ export const invoiceService = {
           </div>
 
           <div class="footer">
-            <p><strong>Thank you for celebrating with The Online Bakery!</strong></p>
+            <p><strong>Thank you for celebrating with Onebite Bakery!</strong></p>
             <p>This is a computer-generated tax invoice and requires no physical signature.</p>
           </div>
         </div>

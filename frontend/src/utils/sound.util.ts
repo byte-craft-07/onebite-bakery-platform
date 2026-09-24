@@ -1,6 +1,6 @@
-const SOUND_ENABLED_KEY = "theonlinebakery_admin_sound_enabled";
-const NOTIFS_ENABLED_KEY = "theonlinebakery_admin_notifs_enabled";
-const VOLUME_KEY = "theonlinebakery_admin_sound_volume";
+const SOUND_ENABLED_KEY = "onebitebakery_admin_sound_enabled";
+const NOTIFS_ENABLED_KEY = "onebitebakery_admin_notifs_enabled";
+const VOLUME_KEY = "onebitebakery_admin_sound_volume";
 
 export interface SoundSettings {
   soundEnabled: boolean;
@@ -32,7 +32,7 @@ export const getSoundSettings = (): SoundSettings => {
 export const setSoundEnabled = (enabled: boolean): void => {
   try {
     localStorage.setItem(SOUND_ENABLED_KEY, enabled ? "true" : "false");
-    window.dispatchEvent(new CustomEvent("theonlinebakery_sound_settings_changed"));
+    window.dispatchEvent(new CustomEvent("onebitebakery_sound_settings_changed"));
   } catch (_err) {
     // Ignore
   }
@@ -41,7 +41,7 @@ export const setSoundEnabled = (enabled: boolean): void => {
 export const setNotificationsEnabled = (enabled: boolean): void => {
   try {
     localStorage.setItem(NOTIFS_ENABLED_KEY, enabled ? "true" : "false");
-    window.dispatchEvent(new CustomEvent("theonlinebakery_sound_settings_changed"));
+    window.dispatchEvent(new CustomEvent("onebitebakery_sound_settings_changed"));
   } catch (_err) {
     // Ignore
   }
@@ -51,7 +51,7 @@ export const setSoundVolume = (volume: number): void => {
   try {
     const clamped = Math.max(0, Math.min(1, volume));
     localStorage.setItem(VOLUME_KEY, String(clamped));
-    window.dispatchEvent(new CustomEvent("theonlinebakery_sound_settings_changed"));
+    window.dispatchEvent(new CustomEvent("onebitebakery_sound_settings_changed"));
   } catch (_err) {
     // Ignore
   }

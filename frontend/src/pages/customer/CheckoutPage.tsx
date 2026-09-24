@@ -83,7 +83,7 @@ export const CheckoutPage: React.FC = () => {
   // Instant Direct Order Item (isolated from general cart)
   const [directItem, setDirectItem] = useState<DirectOrderItem | null>(() => {
     try {
-      const raw = sessionStorage.getItem("theonlinebakery_direct_order_item");
+      const raw = sessionStorage.getItem("onebitebakery_direct_order_item");
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
@@ -129,7 +129,7 @@ export const CheckoutPage: React.FC = () => {
     },
   });
 
-  const PENDING_ORDER_KEY = "theonlinebakery_pending_upi_order_id";
+  const PENDING_ORDER_KEY = "onebitebakery_pending_upi_order_id";
 
   const fetchAddressesAndPreview = async () => {
     setIsLoading(true);
@@ -406,7 +406,7 @@ export const CheckoutPage: React.FC = () => {
           deliveryTimePreference: deliveryPreference,
           scheduledDate: effectiveTimingType === "SCHEDULED" ? scheduledDate : undefined,
           scheduledTimeSlot: effectiveTimingType === "SCHEDULED" ? scheduledTimeSlot : undefined,
-          customerName: selectedAddr?.name || user?.name || "The Online Bakery Customer",
+          customerName: selectedAddr?.name || user?.name || "Onebite Bakery Customer",
           customerPhone: checkoutPhone,
           addressSnapshot: selectedAddr
             ? {
@@ -453,7 +453,7 @@ export const CheckoutPage: React.FC = () => {
 
       await razorpayService.openPaymentModal({
         payment,
-        customerName: selectedAddr?.name || user?.name || "The Online Bakery Customer",
+        customerName: selectedAddr?.name || user?.name || "Onebite Bakery Customer",
         customerEmail: user?.email && user.email.includes("@") && !user.email.endsWith(".test") ? user.email : "ajaykterha@gmail.com",
         customerPhone: checkoutPhone || "7897671632",
         onSuccess: async () => {
@@ -584,7 +584,7 @@ export const CheckoutPage: React.FC = () => {
         <Link
           to="/cart"
           onClick={() => {
-            sessionStorage.removeItem("theonlinebakery_direct_order_item");
+            sessionStorage.removeItem("onebitebakery_direct_order_item");
           }}
           className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58]"
         >
@@ -636,7 +636,7 @@ export const CheckoutPage: React.FC = () => {
           <button
             type="button"
             onClick={() => {
-              sessionStorage.removeItem("theonlinebakery_direct_order_item");
+              sessionStorage.removeItem("onebitebakery_direct_order_item");
               setDirectItem(null);
               window.location.href = "/checkout";
             }}

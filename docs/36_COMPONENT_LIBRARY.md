@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-The The Online Bakery Component Library defines modular, reusable React UI components built with TailwindCSS / Vanilla CSS tokens and Radix UI primitives for accessibility.
+Onebite Bakery Component Library defines modular, reusable React UI components built with TailwindCSS / Vanilla CSS tokens and Radix UI primitives for accessibility.
 
 ---
 

@@ -308,8 +308,8 @@ export const OrderDetailsPage: React.FC = () => {
       setRatingVersion((v) => v + 1);
     };
 
-    window.addEventListener("theonlinebakery_order_rated", handleOrderRated);
-    return () => window.removeEventListener("theonlinebakery_order_rated", handleOrderRated);
+    window.addEventListener("onebitebakery_order_rated", handleOrderRated);
+    return () => window.removeEventListener("onebitebakery_order_rated", handleOrderRated);
   }, [id]);
 
   const handleExportPDF = () => {
@@ -317,7 +317,7 @@ export const OrderDetailsPage: React.FC = () => {
   };
 
   const handleWhatsAppSupport = () => {
-    const text = encodeURIComponent(`Hi The Online Bakery! I need support regarding my Order #${order?.orderNumber || id}.`);
+    const text = encodeURIComponent(`Hi Onebite Bakery! I need support regarding my Order #${order?.orderNumber || id}.`);
     window.open(`https://wa.me/919876543210?text=${text}`, "_blank");
   };
 
@@ -412,10 +412,10 @@ export const OrderDetailsPage: React.FC = () => {
           </div>
           {order.fulfillmentType === "STORE_PICKUP" ? (
             <div className="space-y-1.5 pt-0.5">
-              <p className="text-xs font-bold text-[#3B302B]">The Online Bakery Store</p>
-              <p className="text-xs text-[#7A6E65]">The Online Bakery, N 80°14, terha 25°49'43.3, 54.7"E, hamirpur, Uttar Pradesh 210502</p>
+              <p className="text-xs font-bold text-[#3B302B]">Onebite Bakery Store</p>
+              <p className="text-xs text-[#7A6E65]">Onebite Bakery, N 80°14, terha 25°49'43.3, 54.7"E, hamirpur, Uttar Pradesh 210502</p>
               <a
-                href={getStoreGoogleMapsUrl("The Online Bakery terha hamirpur Uttar Pradesh 210502")}
+                href={getStoreGoogleMapsUrl("Onebite Bakery terha hamirpur Uttar Pradesh 210502")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs font-bold text-[#596B58] hover:text-[#495948] underline pt-1"
@@ -435,9 +435,9 @@ export const OrderDetailsPage: React.FC = () => {
             </p>
           ) : (
             <div className="space-y-1">
-              <p className="text-xs text-[#7A6E65]">The Online Bakery Store Counter</p>
+              <p className="text-xs text-[#7A6E65]">Onebite Bakery Store Counter</p>
               <a
-                href={getStoreGoogleMapsUrl("The Online Bakery terha hamirpur Uttar Pradesh 210502")}
+                href={getStoreGoogleMapsUrl("Onebite Bakery terha hamirpur Uttar Pradesh 210502")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs font-bold text-[#596B58] hover:text-[#495948] underline"

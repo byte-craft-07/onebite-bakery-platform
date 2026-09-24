@@ -4,11 +4,11 @@
 
 Project
 
-The Online Bakery Platform
+Onebite Bakery Platform
 
 Brand
 
-The Online Bakery
+Onebite Bakery
 
 Tagline
 

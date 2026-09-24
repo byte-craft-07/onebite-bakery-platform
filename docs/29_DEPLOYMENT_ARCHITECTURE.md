@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the production deployment architecture for the The Online Bakery Platform.
+This document defines the production deployment architecture for the Onebite Bakery Platform.
 
 The deployment architecture must be secure, scalable, highly available, and maintainable.
 

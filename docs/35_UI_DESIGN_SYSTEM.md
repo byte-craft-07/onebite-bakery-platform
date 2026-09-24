@@ -2,7 +2,7 @@
 
 ## 1. Purpose & Brand Identity
 
-The **The Online Bakery Platform** design system establishes a warm, artisanal, yet modern and high-converting visual identity. It bridges the sensory delight of freshly baked cakes, pastries, and artisanal breads with a seamless, luxury digital shopping experience.
+The **Onebite Bakery Platform** design system establishes a warm, artisanal, yet modern and high-converting visual identity. It bridges the sensory delight of freshly baked cakes, pastries, and artisanal breads with a seamless, luxury digital shopping experience.
 
 ---
 

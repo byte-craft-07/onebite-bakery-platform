@@ -1,7 +1,7 @@
-// Service Worker for The Online Bakery Progressive Web App
+// Service Worker for Onebite Bakery Progressive Web App
 // Version: 2.0.0
 
-const CACHE_NAME = 'theonlinebakery-pwa-v2';
+const CACHE_NAME = 'onebitebakery-pwa-v2';
 const STATIC_CACHE = `${CACHE_NAME}-static`;
 const RUNTIME_CACHE = `${CACHE_NAME}-runtime`;
 const OFFLINE_CACHE = `${CACHE_NAME}-offline`;
@@ -37,10 +37,16 @@ const NEVER_CACHE_PATTERNS = [
 ];
 
 /**
- * Check if request URL matches sensitive endpoints that must not be cached
+ * Check if request URL matches dynamic API or realtime endpoints that must not be cached
  */
 function isNeverCacheUrl(url) {
   const pathname = url.pathname;
+  if (pathname.startsWith('/api') || pathname.includes('/api/')) {
+    return true;
+  }
+  if (pathname.startsWith('/socket.io') || pathname.includes('socket.io')) {
+    return true;
+  }
   return NEVER_CACHE_PATTERNS.some((pattern) => pattern.test(pathname));
 }
 
@@ -139,7 +145,7 @@ self.addEventListener('fetch', (event) => {
           }
           // Otherwise serve dedicated offline fallback page
           const offlinePage = await caches.match('/offline.html');
-          return offlinePage || new Response('Offline - The Online Bakery', {
+          return offlinePage || new Response('Offline - Onebite Bakery', {
             status: 503,
             headers: { 'Content-Type': 'text/html' }
           });
@@ -206,8 +212,8 @@ self.addEventListener('message', (event) => {
 // ==========================================
 self.addEventListener('push', (event) => {
   let data = {
-    title: '🎂 The Online Bakery',
-    body: 'You have a new update from The Online Bakery.',
+    title: '🎂 Onebite Bakery',
+    body: 'You have a new update from Onebite Bakery.',
     url: '/',
     tag: 'bakery-notification'
   };

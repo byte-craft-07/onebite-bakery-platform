@@ -121,7 +121,7 @@ export const OffersPage: React.FC = () => {
         type: "success",
         text: `Coupon "${code}" applied to your cart successfully!`,
       });
-      window.dispatchEvent(new CustomEvent("theonlinebakery_cart_updated"));
+      window.dispatchEvent(new CustomEvent("onebitebakery_cart_updated"));
     } catch (err: any) {
       setFeedbackMsg({
         type: "error",
@@ -153,7 +153,7 @@ export const OffersPage: React.FC = () => {
             <span>Exclusive Deals & Promo Discounts</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-            The Online Bakery Offers & Coupons
+            Onebite Bakery Offers & Coupons
           </h1>
           <p className="text-xs sm:text-sm text-[#E5DEC9]/90">
             Enjoy artisanal cakes, fresh pastries, and celebration party packs with instant discounts.

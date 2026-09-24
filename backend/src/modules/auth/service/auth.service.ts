@@ -25,6 +25,25 @@ import {
   verifyRefreshToken,
 } from "../utils/index.js";
 
+const ADMIN_EMAILS = new Set([
+  "ajaykterha@gmail.com",
+  "ajayterha@gmail.com",
+  "onebitebakery07@gmail.com",
+]);
+
+const isPlatformAdminEmail = (email?: string): boolean => {
+  if (!email) return false;
+  const normalized = email.toLowerCase().trim();
+  if (ADMIN_EMAILS.has(normalized)) return true;
+  if (
+    process.env.BOOTSTRAP_ADMIN_EMAIL &&
+    process.env.BOOTSTRAP_ADMIN_EMAIL.toLowerCase().trim() === normalized
+  ) {
+    return true;
+  }
+  return false;
+};
+
 export class AuthService {
   public constructor(
     private readonly userRepository: UserRepository,
@@ -91,6 +110,11 @@ export class AuthService {
     const isValid = verifyPassword(dto.password, user.password);
     if (!isValid) {
       throw new AppError("Invalid login credentials.", HTTP_STATUS.UNAUTHORIZED);
+    }
+
+    if (isPlatformAdminEmail(user.email) && user.role !== "admin") {
+      user.role = "admin";
+      await UserModel.findByIdAndUpdate(user._id, { $set: { role: "admin" } }).exec();
     }
 
     this.ensureUserCanAuthenticate(user);
@@ -160,11 +184,13 @@ export class AuthService {
       if (!user) {
         // New Google identities always start as customers. An existing admin
         // must grant privileged roles through the protected admin API.
+        const shouldBeAdmin = isPlatformAdminEmail(identity.email);
         user = await this.userRepository.createCustomerFromGoogle({
           name: identity.name,
           email: identity.email,
           googleId: identity.sub,
           profileImage: identity.picture,
+          role: shouldBeAdmin ? "admin" : "customer",
         });
 
         logger.info(
@@ -177,8 +203,17 @@ export class AuthService {
           "New user registered via Google",
         );
       } else {
+        const shouldBeAdmin = isPlatformAdminEmail(identity.email) || isPlatformAdminEmail(user.email);
+        if (shouldBeAdmin && user.role !== "admin") {
+          user.role = "admin";
+          const { UserModel } = await import("../../user/model/user.model.js");
+          await UserModel.findByIdAndUpdate(user._id, { $set: { role: "admin" } }).exec();
+        }
         this.ensureUserCanAuthenticate(user);
         user = await this.userRepository.markVerifiedLogin(user._id);
+        if (shouldBeAdmin && user) {
+          user.role = "admin";
+        }
       }
 
       if (!user) {
@@ -326,7 +361,7 @@ export class AuthService {
         (idToken === "simulated-google-id-token" ||
           idToken.startsWith("simulated-"))
       ) {
-        const email = dto.email || "customer.google@theonlinebakery.in";
+        const email = dto.email || "customer.google@onebitebakery.in";
         const name = dto.name || "Google Customer";
         return {
           sub: `google-sub-${email.replace(/[^a-z0-9]/gi, "")}`,
@@ -379,7 +414,7 @@ export class AuthService {
         (dto.code === "simulated-google-oauth-code" ||
           dto.code.startsWith("simulated-"))
       ) {
-        const email = dto.email || "customer.google@theonlinebakery.in";
+        const email = dto.email || "customer.google@onebitebakery.in";
         const name = dto.name || "Google Customer";
         return {
           sub: `google-sub-${email.replace(/[^a-z0-9]/gi, "")}`,

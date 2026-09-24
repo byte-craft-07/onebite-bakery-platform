@@ -125,7 +125,7 @@ interface BackendOrder {
   deliveryAddress?: OrderDetails["deliveryAddress"];
 }
 
-const LOCAL_ORDERS_KEY = "theonlinebakery_customer_orders_list";
+const LOCAL_ORDERS_KEY = "onebitebakery_customer_orders_list";
 
 const mockOrders: OrderDetails[] = [
   {
@@ -230,7 +230,7 @@ const toOrderDetails = (order: BackendOrder): OrderDetails => {
       return {
         id: item.id ?? item._id ?? `${order.id}-${index}`,
         productId: item.productId ?? "",
-        name: item.name ?? item.productName ?? item.productNameSnapshot ?? "The Online Bakery item",
+        name: item.name ?? item.productName ?? item.productNameSnapshot ?? "Onebite Bakery item",
         image: item.image || (item as any).thumbnailUrl || (item as any).imageUrl || (item as any).imageUrls?.[0] || (item as any).mainImage,
         unitPrice,
         quantity: item.quantity,

@@ -38,9 +38,9 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({
   useEffect(() => {
     fetchBanners();
     const handleUpdate = () => fetchBanners();
-    window.addEventListener("theonlinebakery_banners_updated", handleUpdate);
+    window.addEventListener("onebitebakery_banners_updated", handleUpdate);
     return () => {
-      window.removeEventListener("theonlinebakery_banners_updated", handleUpdate);
+      window.removeEventListener("onebitebakery_banners_updated", handleUpdate);
     };
   }, [fetchBanners]);
 

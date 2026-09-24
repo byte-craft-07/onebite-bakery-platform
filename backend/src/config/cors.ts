@@ -14,6 +14,8 @@ const allowedOrigins =
     ? env.corsOrigins
     : [...env.corsOrigins, ...developmentOrigins];
 
+const normalizedAllowedOrigins = allowedOrigins.map((o) => o.trim().replace(/\/+$/, ""));
+
 export const corsOptions: CorsOptions = {
   credentials: true,
   origin(origin, callback) {
@@ -22,18 +24,20 @@ export const corsOptions: CorsOptions = {
       return;
     }
 
-    if (allowedOrigins.includes(origin)) {
+    const normalizedOrigin = origin.trim().replace(/\/+$/, "");
+
+    if (normalizedAllowedOrigins.includes(normalizedOrigin)) {
       callback(null, true);
       return;
     }
 
     if (env.nodeEnv !== "production") {
       const isDevTunnel =
-        origin.endsWith(".devtunnels.ms") ||
-        origin.endsWith(".ngrok-free.app") ||
-        origin.endsWith(".loca.lt");
+        normalizedOrigin.endsWith(".devtunnels.ms") ||
+        normalizedOrigin.endsWith(".ngrok-free.app") ||
+        normalizedOrigin.endsWith(".loca.lt");
       const isLocalNetworkIp = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(
-        origin,
+        normalizedOrigin,
       );
 
       if (isDevTunnel || isLocalNetworkIp) {
@@ -42,7 +46,7 @@ export const corsOptions: CorsOptions = {
       }
     }
 
-    callback(new Error("CORS origin is not allowed"));
+    callback(null, false);
   },
 };
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the Notification architecture for the The Online Bakery Platform.
+This document defines the Notification architecture for the Onebite Bakery Platform.
 
 The notification system must be provider-independent, event-driven, scalable, and extensible.
 

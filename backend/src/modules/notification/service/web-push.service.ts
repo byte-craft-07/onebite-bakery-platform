@@ -50,7 +50,7 @@ export class WebPushService {
       const generated = webpush.generateVAPIDKeys();
       this.vapidPublicKey = generated.publicKey;
       this.vapidPrivateKey = generated.privateKey;
-      this.vapidSubject = env.vapidSubject || "mailto:admin@theonlinebakery.in";
+      this.vapidSubject = env.vapidSubject || "mailto:admin@onebitebakery.in";
 
       logger.info(
         { publicKey: this.vapidPublicKey },

@@ -56,7 +56,7 @@ describe("Orders, Payments & Favorites Services Tests", () => {
         razorpayKeyId: "rzp_test_mockkey123",
       },
       customerName: "Test Customer",
-      customerEmail: "test@theonlinebakery.in",
+      customerEmail: "test@onebitebakery.in",
       customerPhone: "9876543210",
       onSuccess: vi.fn(),
       onDismiss: vi.fn(),

@@ -13,15 +13,15 @@ export class TemplateRenderer {
     { subject: string; body: string }
   > = {
     "order-created": {
-      subject: "The Online Bakery Order Received - {{orderNumber}}",
+      subject: "Onebite Bakery Order Received - {{orderNumber}}",
       body: "<p>Hello {{customerName}},</p><p>Thank you for your order <strong>{{orderNumber}}</strong>! Subtotal: ₹{{amount}}. We are processing your request.</p>",
     },
     "order-confirmed": {
-      subject: "The Online Bakery Order Confirmed - {{orderNumber}}",
+      subject: "Onebite Bakery Order Confirmed - {{orderNumber}}",
       body: "<p>Hello {{customerName}},</p><p>Your order <strong>{{orderNumber}}</strong> has been confirmed! Estimated ready time: {{deliveryTime}}.</p>",
     },
     "order-status-updated": {
-      subject: "The Online Bakery Order Update - {{orderNumber}}",
+      subject: "Onebite Bakery Order Update - {{orderNumber}}",
       body: "<p>Hello {{customerName}},</p><p>Your order <strong>{{orderNumber}}</strong> is now <strong>{{status}}</strong>.</p>",
     },
     "payment-success": {
@@ -33,7 +33,7 @@ export class TemplateRenderer {
       body: "<p>Hello {{customerName}},</p><p>Your payment attempt for order <strong>{{orderNumber}}</strong> was not successful. Reason: {{failureReason}}.</p>",
     },
     "order-cancelled": {
-      subject: "The Online Bakery Order Cancelled - {{orderNumber}}",
+      subject: "Onebite Bakery Order Cancelled - {{orderNumber}}",
       body: "<p>Hello {{customerName}},</p><p>Your order <strong>{{orderNumber}}</strong> has been cancelled. Reason: {{cancellationReason}}.</p>",
     },
     "custom-cake-update": {
@@ -41,16 +41,16 @@ export class TemplateRenderer {
       body: "<p>Hello {{customerName}},</p><p>There is an update regarding your custom cake request for order <strong>{{orderNumber}}</strong>.</p>",
     },
     "admin-notification": {
-      subject: "The Online Bakery System Notification: {{title}}",
+      subject: "Onebite Bakery System Notification: {{title}}",
       body: "<p>System Alert: {{message}}</p>",
     },
     "admin-broadcast": {
-      subject: "The Online Bakery Announcement: {{title}}",
+      subject: "Onebite Bakery Announcement: {{title}}",
       body: "<p>Hello,</p><p>{{message}}</p>",
     },
     welcome: {
-      subject: "Welcome to The Online Bakery",
-      body: "<p>Hello {{customerName}},</p><p>Welcome to The Online Bakery. We are happy to have you here.</p>",
+      subject: "Welcome to Onebite Bakery",
+      body: "<p>Hello {{customerName}},</p><p>Welcome to Onebite Bakery. We are happy to have you here.</p>",
     },
   };
 

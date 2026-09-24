@@ -108,6 +108,10 @@ export class AuthController {
       const targetPath =
         result.user.role === "admin"
           ? "/admin/dashboard"
+          : result.user.role === "branch_admin"
+          ? "/admin/branch/dashboard"
+          : result.user.role === "delivery_agent"
+          ? "/agent/dashboard"
           : "/customer/dashboard";
       response.redirect(`${frontendUrl}${targetPath}`);
     } catch (err: unknown) {

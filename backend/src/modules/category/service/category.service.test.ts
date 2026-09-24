@@ -22,7 +22,7 @@ const createCategoryDocument = (
     name: "Birthday Cakes",
     slug: "birthday-cakes",
     description: "Fresh birthday cakes.",
-    image: "https://cdn.theonlinebakery.test/birthday-cakes.webp",
+    image: "https://cdn.onebitebakery.test/birthday-cakes.webp",
     displayOrder: 1,
     isActive: true,
     seoTitle: "Birthday Cakes",
@@ -71,7 +71,7 @@ const createService = (
 const createDto = () => ({
   name: "Birthday Cakes",
   description: "Fresh birthday cakes.",
-  image: "https://cdn.theonlinebakery.test/birthday-cakes.webp",
+  image: "https://cdn.onebitebakery.test/birthday-cakes.webp",
   displayOrder: 1,
   isActive: true,
   parentCategory: null,

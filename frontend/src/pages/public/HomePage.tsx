@@ -53,11 +53,11 @@ export const HomePage: React.FC = () => {
     const handleLocationChange = () => {
       fetchHomeData();
     };
-    window.addEventListener("theonlinebakery_review_submitted", fetchHomeData);
-    window.addEventListener("theonlinebakery_location_changed", handleLocationChange);
+    window.addEventListener("onebitebakery_review_submitted", fetchHomeData);
+    window.addEventListener("onebitebakery_location_changed", handleLocationChange);
     return () => {
-      window.removeEventListener("theonlinebakery_review_submitted", fetchHomeData);
-      window.removeEventListener("theonlinebakery_location_changed", handleLocationChange);
+      window.removeEventListener("onebitebakery_review_submitted", fetchHomeData);
+      window.removeEventListener("onebitebakery_location_changed", handleLocationChange);
     };
   }, [currentLocation]);
 
@@ -302,10 +302,10 @@ export const HomePage: React.FC = () => {
         </Link>
       </section>
 
-      {/* Why Choose The Online Bakery */}
+      {/* Why Choose Onebite Bakery */}
       <section className="rounded-3xl bg-[#3B302B] text-[#FFF8EC] p-6 sm:p-10 md:p-16 space-y-8 sm:space-y-10">
         <div className="text-center max-w-2xl mx-auto space-y-2 sm:space-y-3">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#596B58]">Why Choose The Online Bakery?</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#596B58]">Why Choose Onebite Bakery?</h2>
           <p className="text-xs sm:text-sm text-[#E5DEC9]/80">We take pride in baking with uncompromised quality and passion.</p>
         </div>
 

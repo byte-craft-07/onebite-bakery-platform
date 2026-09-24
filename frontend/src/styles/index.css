@@ -17,6 +17,11 @@
   --color-brand-primary: #A8B89A;
   --color-brand-secondary: #596B58;
   --color-brand-accent: #D8BE91;
+
+  --font-bakery-display: 'Titan One', 'Chewy', 'DynaPuff', 'Fredoka', 'Sniglet', cursive, sans-serif;
+  --font-bakery-script: 'Great Vibes', cursive;
+  --font-bakery-retro: 'Berkshire Swash', cursive, serif;
+  --font-bakery-serif: 'Playfair Display', Georgia, serif;
 }
 
 @layer base {
@@ -162,8 +167,9 @@ textarea:focus-visible {
 }
 
 .font-bakery-display {
-  font-family: 'Great Vibes', 'Parisienne', 'Alex Brush', 'Dancing Script', cursive;
-  font-weight: 400;
+  font-family: 'Titan One', 'Chewy', 'DynaPuff', 'Fredoka', 'Sniglet', cursive, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.03em;
 }
 
 .font-bakery-script {

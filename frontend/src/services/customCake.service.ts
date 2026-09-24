@@ -281,8 +281,8 @@ export const FALLBACK_DESIGNS: CustomCakeOption[] = [
   },
 ];
 
-const LOCAL_OPTIONS_KEY = "theonlinebakery_custom_cake_options";
-const LOCAL_INQUIRIES_KEY = "theonlinebakery_custom_cake_inquiries";
+const LOCAL_OPTIONS_KEY = "onebitebakery_custom_cake_options";
+const LOCAL_INQUIRIES_KEY = "onebitebakery_custom_cake_inquiries";
 
 function getLocalOptions(type?: string): CustomCakeOption[] {
   try {

@@ -83,7 +83,7 @@ export const DecorationShopPage: React.FC = () => {
       toast.add("Item Added", `"${item.name}" added to cart.`, { image: item.image });
     }
     setAddedIds((prev) => [...prev, item.id]);
-    window.dispatchEvent(new Event("theonlinebakery_cart_updated"));
+    window.dispatchEvent(new Event("onebitebakery_cart_updated"));
     setTimeout(() => {
       setAddedIds((prev) => prev.filter((id) => id !== item.id));
     }, 2000);

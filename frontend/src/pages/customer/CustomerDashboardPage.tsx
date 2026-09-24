@@ -49,9 +49,9 @@ export const CustomerDashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedRedirect = sessionStorage.getItem("theonlinebakery_auth_redirect");
+    const savedRedirect = sessionStorage.getItem("onebitebakery_auth_redirect");
     if (savedRedirect && savedRedirect !== "/customer/dashboard") {
-      sessionStorage.removeItem("theonlinebakery_auth_redirect");
+      sessionStorage.removeItem("onebitebakery_auth_redirect");
       navigate(savedRedirect, { replace: true });
     }
   }, [navigate]);
@@ -253,7 +253,7 @@ export const CustomerDashboardPage: React.FC = () => {
                 {getGreeting()}, {user?.name || (user?.email ? user.email.split("@")[0] : "Customer")} ❤️
               </h1>
               <p className="text-xs text-[#E5DEC9]/80">
-                {user?.phone ? `+91 ${user.phone}` : user?.email || "The Online Bakery"}
+                {user?.phone ? `+91 ${user.phone}` : user?.email || "Onebite Bakery"}
               </p>
             </div>
           </div>
@@ -406,7 +406,7 @@ export const CustomerDashboardPage: React.FC = () => {
 
         <button
           onClick={() => {
-            const text = encodeURIComponent("Hi The Online Bakery! I need assistance with my account / order.");
+            const text = encodeURIComponent("Hi Onebite Bakery! I need assistance with my account / order.");
             window.open(`https://wa.me/919876543210?text=${text}`, "_blank");
           }}
           className="px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
@@ -423,7 +423,7 @@ export const CustomerDashboardPage: React.FC = () => {
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition-colors cursor-pointer"
         >
           <LogOut className="h-4 w-4" />
-          <span>Log Out of The Online Bakery Account</span>
+          <span>Log Out of Onebite Bakery Account</span>
         </button>
       </div>
     </div>

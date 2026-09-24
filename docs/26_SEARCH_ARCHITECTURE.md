@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the Search architecture for the The Online Bakery Platform.
+This document defines the Search architecture for the Onebite Bakery Platform.
 
 The search system must be scalable, provider-independent, fast, and capable of supporting advanced product discovery without changing business logic.
 

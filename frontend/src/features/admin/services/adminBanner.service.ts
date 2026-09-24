@@ -1,7 +1,7 @@
 import { apiClient } from "@/services/api.client";
 import { type BannerItem, FALLBACK_HERO_BANNERS } from "@/services/banner.service";
 
-const LOCAL_STORAGE_KEY = "theonlinebakery_hero_banners";
+const LOCAL_STORAGE_KEY = "onebitebakery_hero_banners";
 
 export interface BannerPayload {
   title: string;
@@ -34,7 +34,7 @@ const getStoredBanners = (): BannerItem[] => {
 const saveStoredBanners = (banners: BannerItem[]): void => {
   try {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(banners));
-    window.dispatchEvent(new CustomEvent("theonlinebakery_banners_updated"));
+    window.dispatchEvent(new CustomEvent("onebitebakery_banners_updated"));
   } catch (_e) {
     // Ignore
   }

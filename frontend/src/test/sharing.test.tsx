@@ -20,8 +20,8 @@ describe("Sharing Utilities", () => {
     });
 
     it("uses custom base URL when provided", () => {
-      const url = buildProductShareUrl("red-velvet", "https://theonlinebakery.com");
-      expect(url).toBe("https://theonlinebakery.com/products/red-velvet");
+      const url = buildProductShareUrl("red-velvet", "https://onebitebakery.com");
+      expect(url).toBe("https://onebitebakery.com/products/red-velvet");
     });
   });
 
@@ -75,9 +75,9 @@ describe("Sharing Utilities", () => {
         },
       });
 
-      const success = await copyToClipboard("https://theonlinebakery.com/products/cake");
+      const success = await copyToClipboard("https://onebitebakery.com/products/cake");
       expect(success).toBe(true);
-      expect(writeTextMock).toHaveBeenCalledWith("https://theonlinebakery.com/products/cake");
+      expect(writeTextMock).toHaveBeenCalledWith("https://onebitebakery.com/products/cake");
     });
   });
 });

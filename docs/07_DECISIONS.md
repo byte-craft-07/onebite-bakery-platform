@@ -3,7 +3,7 @@
 # PROJECT DECISIONS
 
 This document records every major architectural and business decision
-taken during the development of the The Online Bakery Platform.
+taken during the development of the Onebite Bakery Platform.
 
 Every decision must include the reason behind it.
 
@@ -524,7 +524,7 @@ Reason
 
 The platform is designed as a Celebration Commerce Platform rather than only a Bakery.
 
-This allows The Online Bakery to sell cakes, bakery items, decorations, combos, and future celebration products from one architecture.
+This allows Onebite Bakery to sell cakes, bakery items, decorations, combos, and future celebration products from one architecture.
 
 ---
 

@@ -31,7 +31,7 @@ export interface AddressPayload {
   isDefault?: boolean;
 }
 
-const LOCAL_ADDRESSES_KEY = "theonlinebakery_local_addresses";
+const LOCAL_ADDRESSES_KEY = "onebitebakery_local_addresses";
 
 const getLocalAddresses = (): Address[] => {
   try {

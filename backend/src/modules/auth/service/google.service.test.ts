@@ -16,7 +16,7 @@ const createMockUser = (overrides: Partial<User> = {}): User =>
   ({
     _id: new Types.ObjectId(),
     name: "Test Customer",
-    email: "customer@theonlinebakery.in",
+    email: "customer@onebitebakery.in",
     googleId: "google-12345",
     role: "customer",
     isVerified: true,
@@ -74,39 +74,65 @@ describe("AuthService - Google Authentication", () => {
     const result = await service.authenticateWithGoogle(
       {
         token: "simulated-google-id-token",
-        email: "new.customer@theonlinebakery.in",
+        email: "new.customer@onebitebakery.in",
         name: "New Customer",
       },
       context,
     );
 
     expect(result.user).toBeDefined();
-    expect(result.user.email).toBe("new.customer@theonlinebakery.in");
+    expect(result.user.email).toBe("new.customer@onebitebakery.in");
     expect(result.tokens.accessToken).toBeDefined();
     expect(userRepository.createCustomerFromGoogle).toHaveBeenCalledOnce();
   });
 
-  it("does not grant an admin role from a Google email address", async () => {
-    const { service, userRepository } = createService();
+  it("grants an admin role for platform admin Google email address (ajaykterha@gmail.com)", async () => {
+    const { service, userRepository } = createService({
+      createCustomerFromGoogle: vi.fn().mockImplementation((payload) =>
+        Promise.resolve(createMockUser({ ...payload, role: payload.role || "customer" })),
+      ),
+    });
 
     const result = await service.authenticateWithGoogle(
       {
         token: "simulated-google-id-token",
         email: "ajaykterha@gmail.com",
-        name: "Privileged Email Holder",
+        name: "Ajay Prajapati",
+      },
+      context,
+    );
+
+    expect(result.user.role).toBe("admin");
+    expect(userRepository.createCustomerFromGoogle).toHaveBeenCalledWith(
+      expect.objectContaining({ email: "ajaykterha@gmail.com", role: "admin" }),
+    );
+  });
+
+  it("assigns standard customer role for regular Google email address", async () => {
+    const { service, userRepository } = createService({
+      createCustomerFromGoogle: vi.fn().mockImplementation((payload) =>
+        Promise.resolve(createMockUser({ ...payload, role: payload.role || "customer" })),
+      ),
+    });
+
+    const result = await service.authenticateWithGoogle(
+      {
+        token: "simulated-google-id-token",
+        email: "regular.shopper@gmail.com",
+        name: "Regular Shopper",
       },
       context,
     );
 
     expect(result.user.role).toBe("customer");
     expect(userRepository.createCustomerFromGoogle).toHaveBeenCalledWith(
-      expect.objectContaining({ email: "ajaykterha@gmail.com" }),
+      expect.objectContaining({ email: "regular.shopper@gmail.com", role: "customer" }),
     );
   });
 
   it("safely links existing email customer with Google identity", async () => {
     const existingEmailUser = createMockUser({
-      email: "existing@theonlinebakery.in",
+      email: "existing@onebitebakery.in",
       googleId: undefined,
     });
 
@@ -118,7 +144,7 @@ describe("AuthService - Google Authentication", () => {
     const result = await service.authenticateWithGoogle(
       {
         token: "simulated-google-id-token",
-        email: "existing@theonlinebakery.in",
+        email: "existing@onebitebakery.in",
       },
       context,
     );
@@ -139,7 +165,7 @@ describe("AuthService - Google Authentication", () => {
     const result = await service.authenticateWithGoogle(
       {
         token: "simulated-google-id-token",
-        email: "existing@theonlinebakery.in",
+        email: "existing@onebitebakery.in",
       },
       context,
     );

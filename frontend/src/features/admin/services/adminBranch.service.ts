@@ -61,17 +61,17 @@ export interface UpdateBranchPayload {
   adminCredentials?: Partial<BranchAdminCredentials>;
 }
 
-const LOCAL_BRANCHES_KEY = "theonlinebakery_mock_branches";
+const LOCAL_BRANCHES_KEY = "onebitebakery_mock_branches";
 
 const INITIAL_DEFAULT_BRANCHES: BranchDetails[] = [
   {
     id: "branch_hq_central",
     _id: "branch_hq_central",
-    name: "The Online Bakery Main Store",
+    name: "Onebite Bakery Main Store",
     code: "TOB-HQ",
     type: "MAIN",
     address: {
-      street: "The Online Bakery, N 80°14, terha 25°49'43.3, 54.7\"E",
+      street: "Onebite Bakery, N 80°14, terha 25°49'43.3, 54.7\"E",
       city: "Hamirpur",
       state: "Uttar Pradesh",
       pincode: "210502",
@@ -94,7 +94,7 @@ const INITIAL_DEFAULT_BRANCHES: BranchDetails[] = [
   {
     id: "branch_franchise_banda",
     _id: "branch_franchise_banda",
-    name: "Franchise Banda The Online Bakery",
+    name: "Franchise Banda Onebite Bakery",
     code: "BANDA",
     type: "FRANCHISE",
     address: {
@@ -104,10 +104,10 @@ const INITIAL_DEFAULT_BRANCHES: BranchDetails[] = [
       pincode: "210001",
     },
     phone: "9876543211",
-    email: "banda@theonlinebakery.com",
+    email: "banda@onebitebakery.com",
     managerName: "Rajesh Kumar",
     managerPhone: "9876543210",
-    managerEmail: "rajesh@theonlinebakery.in",
+    managerEmail: "rajesh@onebitebakery.in",
     isActive: true,
     villageCount: 4,
     villages: [
@@ -148,6 +148,23 @@ function persistBranchLocally(branch: BranchDetails) {
   }
 }
 
+const sanitizeBranch = (b: BranchDetails): BranchDetails => {
+  const sanitizeStr = (s?: string) =>
+    s ? s.replace(/The Online Bakery/gi, "Onebite Bakery").replace(/Online Bakery/gi, "Onebite Bakery") : "";
+  return {
+    ...b,
+    id: b.id || b._id || "",
+    name: sanitizeStr(b.name) || "Onebite Bakery",
+    address: {
+      ...b.address,
+      street: sanitizeStr(b.address?.street),
+      city: b.address?.city || "",
+      state: b.address?.state || "",
+      pincode: b.address?.pincode || "",
+    },
+  };
+};
+
 export const adminBranchService = {
   getAllBranches: async (): Promise<BranchDetails[]> => {
     const response = await apiClient.get<{
@@ -155,10 +172,7 @@ export const adminBranchService = {
       data: { branches: BranchDetails[] };
     }>("/branches");
     const list = response.data?.data?.branches || [];
-    return list.map((b) => ({
-      ...b,
-      id: b.id || b._id || "",
-    }));
+    return list.map(sanitizeBranch);
   },
 
   getBranchById: async (id: string): Promise<BranchDetails> => {
@@ -167,10 +181,10 @@ export const adminBranchService = {
       data: { branch: BranchDetails };
     }>(`/branches/${id}`);
     const b = response.data.data.branch;
-    return {
+    return sanitizeBranch({
       ...b,
       id: b.id || b._id || id,
-    };
+    });
   },
 
   createBranch: async (payload: CreateBranchPayload): Promise<BranchDetails> => {

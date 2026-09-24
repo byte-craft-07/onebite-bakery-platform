@@ -19,7 +19,7 @@ import { Badge, Card } from "@/components/ui/DisplayComponents";
 import type { Address } from "@/services/address.service";
 import { cartService } from "@/services/cart.service";
 
-export const getStoreGoogleMapsUrl = (storeQuery = "The Online Bakery terha hamirpur Uttar Pradesh 210502") => {
+export const getStoreGoogleMapsUrl = (storeQuery = "Onebite Bakery terha hamirpur Uttar Pradesh 210502") => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(storeQuery)}`;
 };
 
@@ -29,8 +29,8 @@ export const StorePickupLocationCard: React.FC<{
   phone?: string;
   timing?: string;
 }> = ({
-  branchName = "The Online Bakery Store",
-  address = "The Online Bakery, N 80°14, terha 25°49'43.3, 54.7\"E, hamirpur, Uttar Pradesh 210502",
+  branchName = "Onebite Bakery Store",
+  address = "Onebite Bakery, N 80°14, terha 25°49'43.3, 54.7\"E, hamirpur, Uttar Pradesh 210502",
   phone = "+91 7897671632",
   timing = "Open Daily: 8:00 AM - 10:30 PM",
 }) => {

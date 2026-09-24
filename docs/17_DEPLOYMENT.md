@@ -4,11 +4,11 @@
 
 Project
 
-The Online Bakery Platform
+Onebite Bakery Platform
 
 Brand
 
-The Online Bakery
+Onebite Bakery
 
 Tagline
 
@@ -21,7 +21,7 @@ Version
 Purpose
 
 This document defines the production deployment process
-for the The Online Bakery Platform.
+for the Onebite Bakery Platform.
 
 Deployment must be repeatable, secure, and predictable.
 
@@ -91,15 +91,15 @@ Cloudinary
 
 Production
 
-theonlinebakery.com
+onebitebakery.com
 
 Admin
 
-admin.theonlinebakery.com
+admin.onebitebakery.com
 
 API
 
-api.theonlinebakery.com
+api.onebitebakery.com
 
 ---
 

@@ -18,7 +18,7 @@ const mockBranchResponse: BranchResponse = {
     pincode: "781001",
   },
   phone: "9876543210",
-  email: "main@theonlinebakery.in",
+  email: "main@onebitebakery.in",
   isActive: true,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -68,7 +68,7 @@ describe("BranchController", () => {
           pincode: "781001",
         },
         phone: "9876543210",
-        email: "main@theonlinebakery.in",
+        email: "main@onebitebakery.in",
       },
     } as unknown as Request;
 

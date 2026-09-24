@@ -12,48 +12,47 @@ export const BakeryLogo: React.FC<BakeryLogoProps> = ({
   className = "",
   size = "md",
   showText = true,
-  textColor = "text-[#3B302B]",
 }) => {
-  const sizeClasses = {
+  const emblemSizeClasses = {
     sm: "h-9 w-9 sm:h-10 sm:w-10",
-    md: "h-11 w-11 sm:h-12 sm:w-12 md:h-13 md:w-13",
-    lg: "h-16 w-16 sm:h-18 sm:w-18",
-    xl: "h-20 w-20 sm:h-24 sm:w-24",
+    md: "h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12",
+    lg: "h-14 w-14 sm:h-16 sm:w-16",
+    xl: "h-18 w-18 sm:h-20 sm:w-20",
   };
 
-  const textClasses = {
-    sm: "text-lg sm:text-xl",
-    md: "text-xl sm:text-2xl md:text-3xl",
-    lg: "text-2xl sm:text-3xl md:text-4xl",
-    xl: "text-3xl sm:text-4xl md:text-5xl",
+  const textHeightClasses = {
+    sm: "h-5 sm:h-6 w-auto",
+    md: "h-6 sm:h-7 md:h-8 w-auto",
+    lg: "h-8 sm:h-9 md:h-10 w-auto",
+    xl: "h-10 sm:h-12 md:h-14 w-auto",
   };
 
   return (
     <Link
       to="/"
       className={`group flex items-center gap-2 sm:gap-2.5 select-none transition-transform active:scale-95 ${className}`}
-      aria-label="The Online Bakery Home"
+      aria-label="Onebite Bakery Home"
     >
       {/* SVG Bakery Emblem Logo */}
-      <div className={`relative shrink-0 flex items-center justify-center ${sizeClasses[size]}`}>
+      <div className={`relative shrink-0 flex items-center justify-center ${emblemSizeClasses[size]}`}>
         <img
           src="/logo.svg"
-          alt="The Online Bakery Emblem"
+          alt="Onebite Bakery Emblem"
           className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
           loading="eager"
         />
       </div>
 
-      {/* Brand Name Typography */}
+      {/* Brand Name Typography using exact SVG artwork */}
       {showText && (
-        <div className="flex flex-col text-left leading-tight">
-          <span
-            className={`font-bakery-display ${textClasses[size]} ${textColor} drop-shadow-xs group-hover:text-[#596B58] transition-colors font-normal whitespace-nowrap`}
-            style={{ letterSpacing: "0.01em" }}
-          >
-            The Online Bakery
-          </span>
-          <span className="text-[8px] sm:text-[9px] text-[#596B58] font-medium tracking-wide leading-none hidden sm:block">
+        <div className="flex flex-col text-left justify-center">
+          <img
+            src="/onebite_text_only.svg"
+            alt="ONEBITE BAKERY"
+            className={`${textHeightClasses[size]} object-contain object-left transition-transform duration-300 group-hover:scale-[1.02]`}
+            loading="eager"
+          />
+          <span className="text-[8px] sm:text-[9px] text-[#596B58] font-bold tracking-wider leading-none hidden sm:block mt-0.5">
             Handcrafted with Love &bull; 100% Pure Joy
           </span>
         </div>
@@ -61,4 +60,3 @@ export const BakeryLogo: React.FC<BakeryLogoProps> = ({
     </Link>
   );
 };
-

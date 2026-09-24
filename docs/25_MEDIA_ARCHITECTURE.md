@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the Media Management architecture for the The Online Bakery Platform.
+This document defines the Media Management architecture for the Onebite Bakery Platform.
 
 The system must support secure, scalable, and provider-independent media handling for products, categories, occasions, banners, custom cakes, and future business assets.
 

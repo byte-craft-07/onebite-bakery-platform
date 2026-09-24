@@ -2,8 +2,8 @@ import { apiClient } from "./api.client";
 import { catalogService, type ProductItem } from "./catalog.service";
 import { MOCK_PRODUCTS } from "@/data/mockData";
 
-const FAVORITES_STORAGE_KEY = "theonlinebakery_favorite_ids";
-const FAVORITES_PRODUCTS_KEY = "theonlinebakery_favorite_products_cache";
+const FAVORITES_STORAGE_KEY = "onebitebakery_favorite_ids";
+const FAVORITES_PRODUCTS_KEY = "onebitebakery_favorite_products_cache";
 
 export const favoritesService = {
   getFavoriteIds: (): string[] => {
@@ -125,7 +125,7 @@ export const favoritesService = {
     }
 
     window.dispatchEvent(
-      new CustomEvent("theonlinebakery_favorites_updated", {
+      new CustomEvent("onebitebakery_favorites_updated", {
         detail: { productId, isFavorite: true, product },
       })
     );
@@ -151,7 +151,7 @@ export const favoritesService = {
     localStorage.setItem(FAVORITES_PRODUCTS_KEY, JSON.stringify(map));
 
     window.dispatchEvent(
-      new CustomEvent("theonlinebakery_favorites_updated", {
+      new CustomEvent("onebitebakery_favorites_updated", {
         detail: { productId, isFavorite: false },
       })
     );

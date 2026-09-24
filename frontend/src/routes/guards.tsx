@@ -33,9 +33,9 @@ export const GuestRoute: React.FC = () => {
     if (user.role === "delivery_agent") {
       return <Navigate to="/agent/dashboard" replace />;
     }
-    const rawRedirect = searchParams.get("redirect") || sessionStorage.getItem("theonlinebakery_auth_redirect");
+    const rawRedirect = searchParams.get("redirect") || sessionStorage.getItem("onebitebakery_auth_redirect");
     const redirect = rawRedirect ? (rawRedirect.startsWith("%") ? decodeURIComponent(rawRedirect) : rawRedirect) : "/";
-    sessionStorage.removeItem("theonlinebakery_auth_redirect");
+    sessionStorage.removeItem("onebitebakery_auth_redirect");
     return <Navigate to={redirect} replace />;
   }
 

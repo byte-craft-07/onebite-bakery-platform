@@ -352,23 +352,22 @@ export const AdminMainBranchOrdersPage: React.FC = () => {
       />
 
       {/* Main Table */}
-      {isLoading ? (
-        <AdminTableSkeleton rows={6} columns={9} />
-      ) : (
-        <AdminTable
-          headers={[
-            "ORDER #",
-            "PRODUCT",
-            "CUSTOMER & MOBILE",
-            "DELIVERY TIMING",
-            "DELIVERY ADDRESS",
-            "TOTAL",
-            "PAYMENT",
-            "ORDER STAGE",
-            "ACTIONS",
-          ]}
-        >
-          {filteredOrders.length === 0 ? (
+      <AdminTable
+        headers={[
+          "ORDER #",
+          "PRODUCT",
+          "CUSTOMER & MOBILE",
+          "DELIVERY TIMING",
+          "DELIVERY ADDRESS",
+          "TOTAL",
+          "PAYMENT",
+          "ORDER STAGE",
+          "ACTIONS",
+        ]}
+      >
+        {isLoading ? (
+          <AdminTableSkeleton rows={6} columns={9} />
+        ) : filteredOrders.length === 0 ? (
             <tr>
               <td colSpan={9} className="text-center py-12 text-xs text-gray-400">
                 <div className="flex flex-col items-center justify-center gap-2">
@@ -572,7 +571,6 @@ export const AdminMainBranchOrdersPage: React.FC = () => {
             })
           )}
         </AdminTable>
-      )}
 
       {/* MODAL 1: ORDER DETAILS MODAL */}
       {selectedOrderForModal && (
@@ -726,7 +724,7 @@ export const AdminMainBranchOrdersPage: React.FC = () => {
           <div className="space-y-4 font-mono text-xs">
             <div className="p-4 bg-white border-2 border-dashed border-gray-400 rounded-xl space-y-3 print:border-black" id="kot-slip">
               <div className="text-center border-b border-gray-300 pb-2">
-                <h3 className="font-black text-sm uppercase">THE ONLINE BAKERY</h3>
+                <h3 className="font-black text-sm uppercase">ONEBITE BAKERY</h3>
                 <span className="text-[10px] font-bold text-gray-600 block">*** MAIN BRANCH CENTRAL KITCHEN ***</span>
                 <span className="text-[10px] text-gray-500 block">KITCHEN ORDER TICKET (KOT)</span>
               </div>
@@ -774,7 +772,7 @@ export const AdminMainBranchOrdersPage: React.FC = () => {
               </div>
 
               <div className="text-center text-[10px] text-gray-400 pt-2 border-t border-gray-200">
-                Main Kitchen Dispatch Copy &bull; The Online Bakery
+                Main Kitchen Dispatch Copy &bull; Onebite Bakery
               </div>
             </div>
 

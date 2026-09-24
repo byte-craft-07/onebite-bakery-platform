@@ -47,7 +47,7 @@ describe("Product Discovery Components & Catalog Service Tests", () => {
       </AuthProvider>,
     );
 
-    expect(screen.getAllByText("The Online Bakery")[0]).toBeDefined();
+    expect(screen.getAllByText("Onebite Bakery")[0]).toBeDefined();
     expect(screen.getByText("Quick Links")).toBeDefined();
   });
 

@@ -95,7 +95,7 @@ export const ComboCard: React.FC<{ combo: MockCombo }> = ({ combo }) => {
     }
 
     setIsAdded(true);
-    window.dispatchEvent(new Event("theonlinebakery_cart_updated"));
+    window.dispatchEvent(new Event("onebitebakery_cart_updated"));
     setTimeout(() => {
       setIsAdded(false);
       navigate("/cart");

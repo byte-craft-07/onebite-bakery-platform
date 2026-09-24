@@ -1,10 +1,10 @@
 # Vision
 
-# The Online Bakery Platform
+# Onebite Bakery Platform
 
 Brand
 
-The Online Bakery
+Onebite Bakery
 
 Tagline
 
@@ -12,11 +12,11 @@ Tagline
 
 ## Vision
 
-Build a premium, mobile-first bakery ordering platform that provides customers with the easiest possible ordering experience while giving the The Online Bakery owner complete control over products, orders, and business operations.
+Build a premium, mobile-first bakery ordering platform that provides customers with the easiest possible ordering experience while giving the Onebite Bakery owner complete control over products, orders, and business operations.
 
 This is not just a bakery website.
 
-It is a complete The Online Bakery Management Platform.
+It is a complete Onebite Bakery Management Platform.
 
 ---
 
@@ -54,7 +54,7 @@ A customer should be able to place an order within one minute using only one han
 
 Customer
 
-The Online Bakery Owner
+Onebite Bakery Owner
 
 Future Staff
 

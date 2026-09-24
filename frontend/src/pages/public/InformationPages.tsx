@@ -8,7 +8,7 @@ export const AboutPage: React.FC = () => {
         <span className="text-xs font-bold text-[#596B58] uppercase tracking-wider">Our Story & Craft</span>
         <h1 className="text-4xl font-extrabold text-[#3B302B]">Handcrafted with Passion & Precision</h1>
         <p className="text-sm text-[#7A6E65] max-w-2xl mx-auto leading-relaxed">
-          Founded in 2021, The Online Bakery started with a simple vision: to bring authentic French pâtisserie techniques and artisanal sourdough baking to everyday celebrations.
+          Founded in 2021, Onebite Bakery started with a simple vision: to bring authentic French pâtisserie techniques and artisanal sourdough baking to everyday celebrations.
         </p>
       </div>
 
@@ -68,7 +68,7 @@ export const ContactPage: React.FC = () => {
         <div className="space-y-6 bg-[#3B302B] text-[#FFF8EC] rounded-2xl p-8 shadow-sm">
           <h3 className="text-xl font-bold text-[#596B58]">Store Location & Hours</h3>
           <div className="space-y-4 text-xs text-[#E5DEC9]/80 leading-relaxed">
-            <p><strong>Address:</strong> The Online Bakery, N 80°14, terha 25°49'43.3, 54.7"E, hamirpur, Uttar Pradesh 210502</p>
+            <p><strong>Address:</strong> Onebite Bakery, N 80°14, terha 25°49'43.3, 54.7"E, hamirpur, Uttar Pradesh 210502</p>
             <p><strong>Phone:</strong> +91 7897671632</p>
             <p><strong>Email:</strong> ajaykterha@gmail.com</p>
             <p><strong>Store Pickup Hours:</strong> Monday – Sunday: 8:00 AM – 10:00 PM</p>

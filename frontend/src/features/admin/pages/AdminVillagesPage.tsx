@@ -50,6 +50,7 @@ export const AdminVillagesPage: React.FC = () => {
     try {
       const data = await villageService.getAdminVillages();
       setVillages(data);
+      setErrorMsg(null);
     } catch (_err) {
       setErrorMsg("Failed to load villages.");
     } finally {
@@ -149,8 +150,16 @@ export const AdminVillagesPage: React.FC = () => {
       </div>
 
       {errorMsg ? (
-        <div className="p-4 bg-red-50 text-red-700 text-xs font-semibold rounded-xl border border-red-200">
-          {errorMsg}
+        <div className="p-4 bg-red-50 text-red-700 text-xs font-semibold rounded-xl border border-red-200 flex items-center justify-between">
+          <span>{errorMsg}</span>
+          <button
+            type="button"
+            onClick={() => setErrorMsg(null)}
+            className="text-red-500 hover:text-red-800 font-bold ml-2 text-sm leading-none"
+            aria-label="Dismiss"
+          >
+            &times;
+          </button>
         </div>
       ) : null}
 

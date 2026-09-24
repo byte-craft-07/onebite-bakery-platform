@@ -122,9 +122,9 @@ export interface StoreSettingsPayload {
   isOrderAcceptanceActive: boolean;
 }
 
-const ORDERS_KEY = "theonlinebakery_local_orders";
-const NOTIFS_KEY = "theonlinebakery_local_notifications";
-const LOGS_KEY = "theonlinebakery_local_audit_logs";
+const ORDERS_KEY = "onebitebakery_local_orders";
+const NOTIFS_KEY = "onebitebakery_local_notifications";
+const LOGS_KEY = "onebitebakery_local_audit_logs";
 
 const getStored = <T,>(key: string, defaultVal: T): T => {
   try {
@@ -298,7 +298,7 @@ export const adminOperationsService = {
     setStored(ORDERS_KEY, updated);
 
     try {
-      const custKey = "theonlinebakery_customer_orders_list";
+      const custKey = "onebitebakery_customer_orders_list";
       const raw = localStorage.getItem(custKey);
       if (raw) {
         const list = JSON.parse(raw);
@@ -314,7 +314,7 @@ export const adminOperationsService = {
     adminOperationsService.logAuditAction("CLEAR_TEST_ORDERS", "Cleared local test orders");
     setStored(ORDERS_KEY, []);
     try {
-      localStorage.removeItem("theonlinebakery_customer_orders_list");
+      localStorage.removeItem("onebitebakery_customer_orders_list");
     } catch (_e) {
       // Ignore
     }
@@ -514,7 +514,7 @@ export const adminOperationsService = {
       // Fallback
     }
     return {
-      storeName: "The Online Bakery",
+      storeName: "Onebite Bakery",
       phone: "+91 7897671632",
       email: "ajaykterha@gmail.com",
       gstin: "07AAAAA0000A1Z5",
@@ -538,8 +538,21 @@ export const adminOperationsService = {
 
   getPlatformHealth: async (): Promise<PlatformHealthResponse> => {
     try {
-      const response = await apiClient.get<PlatformHealthResponse>("/health");
-      if (response.data?.status) return response.data;
+      const response = await apiClient.get<{
+        success?: boolean;
+        data?: PlatformHealthResponse;
+        status?: string;
+        timestamp?: string;
+        uptime?: number;
+        memoryUsage?: { rss: number; heapTotal: number; heapUsed: number };
+      }>("/health");
+
+      if (response.data?.data?.status) {
+        return response.data.data;
+      }
+      if (response.data?.status) {
+        return response.data as PlatformHealthResponse;
+      }
     } catch (_err) {
       // Fallback
     }

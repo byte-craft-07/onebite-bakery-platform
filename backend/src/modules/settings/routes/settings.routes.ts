@@ -43,10 +43,10 @@ const getOrCreateSettings = async (): Promise<Settings> => {
 
   return SettingsModel.create({
     singletonKey: "default",
-    bakeryName: "The Online Bakery",
+    bakeryName: "Onebite Bakery",
     phone: "7897671632",
     whatsapp: "7897671632",
-    address: "The Online Bakery, N 80°14, terha 25°49'43.3, 54.7\"E, hamirpur, Uttar Pradesh 210502",
+    address: "Onebite Bakery, N 80°14, terha 25°49'43.3, 54.7\"E, hamirpur, Uttar Pradesh 210502",
     storeTiming: defaultStoreTiming,
     deliveryRadius: 15,
     deliveryCharge: 49,

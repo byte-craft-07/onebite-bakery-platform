@@ -188,7 +188,7 @@ export class CheckoutService {
 
     if (!isDeliveryEnabled && !isPickupEnabled) {
       validationErrors.push(
-        "The Online Bakery is currently offline and not accepting new orders. Please check back during business hours.",
+        "Onebite Bakery is currently offline and not accepting new orders. Please check back during business hours.",
       );
     }
 

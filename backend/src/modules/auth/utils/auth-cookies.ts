@@ -38,9 +38,17 @@ export const setAuthCookies = (
   );
 };
 
+const createCookieClearOptions = (): CookieOptions => ({
+  httpOnly: true,
+  secure: env.nodeEnv === "production",
+  sameSite: "lax",
+  path: "/",
+});
+
 export const clearAuthCookies = (response: Response): void => {
-  response.clearCookie(AUTH_COOKIE_NAMES.ACCESS_TOKEN, { path: "/" });
-  response.clearCookie(AUTH_COOKIE_NAMES.REFRESH_TOKEN, { path: "/" });
+  const options = createCookieClearOptions();
+  response.clearCookie(AUTH_COOKIE_NAMES.ACCESS_TOKEN, options);
+  response.clearCookie(AUTH_COOKIE_NAMES.REFRESH_TOKEN, options);
 };
 
 export const setGoogleOAuthStateCookie = (

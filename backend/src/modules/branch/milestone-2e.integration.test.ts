@@ -20,7 +20,7 @@ describe("Milestone 2E — Central Admin & Branch Admin Operational Control & Se
     isActive: true,
     address: { street: "Alpha St", city: "City A", state: "ST", pincode: "100001" },
     phone: "9876543210",
-    email: "alpha@theonlinebakery.in",
+    email: "alpha@onebitebakery.in",
   };
 
   const branchBDoc = {
@@ -31,7 +31,7 @@ describe("Milestone 2E — Central Admin & Branch Admin Operational Control & Se
     isActive: true,
     address: { street: "Beta St", city: "City B", state: "ST", pincode: "200002" },
     phone: "9876543211",
-    email: "beta@theonlinebakery.in",
+    email: "beta@onebitebakery.in",
   };
 
   beforeEach(() => {

@@ -35,15 +35,33 @@ export const mongoSanitize = (
   next: NextFunction,
 ): void => {
   if (request.body) {
-    request.body = sanitizeValue(request.body) as Sanitizable;
+    const sanitizedBody = sanitizeValue(request.body) as Sanitizable;
+    Object.defineProperty(request, "body", {
+      value: sanitizedBody,
+      configurable: true,
+      enumerable: true,
+      writable: true,
+    });
   }
 
   if (request.params) {
-    request.params = sanitizeValue(request.params) as Record<string, string>;
+    const sanitizedParams = sanitizeValue(request.params) as Record<string, string>;
+    Object.defineProperty(request, "params", {
+      value: sanitizedParams,
+      configurable: true,
+      enumerable: true,
+      writable: true,
+    });
   }
 
   if (request.query) {
-    request.query = sanitizeValue(request.query) as QueryValue;
+    const sanitizedQuery = sanitizeValue(request.query) as QueryValue;
+    Object.defineProperty(request, "query", {
+      value: sanitizedQuery,
+      configurable: true,
+      enumerable: true,
+      writable: true,
+    });
   }
 
   next();

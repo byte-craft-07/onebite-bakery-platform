@@ -2,7 +2,7 @@
 
 ## Our Pledge
 
-We are committed to keeping the The Online Bakery Platform community respectful, welcoming, and professional.
+We are committed to keeping the Onebite Bakery Platform community respectful, welcoming, and professional.
 
 ## Expected Behavior
 

@@ -26,7 +26,7 @@ const createMockBranchDoc = (overrides: Record<string, unknown> = {}) => ({
     landmark: "Clock Tower",
   },
   phone: "9876543210",
-  email: "main@theonlinebakery.in",
+  email: "main@onebitebakery.in",
   managerId: undefined,
   isActive: true,
   createdAt: new Date(),
@@ -85,7 +85,7 @@ describe("BranchService", () => {
         pincode: "781001",
       },
       phone: "9876543210",
-      email: "main@theonlinebakery.in",
+      email: "main@onebitebakery.in",
     };
 
     const res = await service.createBranch(dto, new Types.ObjectId().toString());
@@ -111,7 +111,7 @@ describe("BranchService", () => {
         pincode: "781003",
       },
       phone: "9876543211",
-      email: "fr1@theonlinebakery.in",
+      email: "fr1@onebitebakery.in",
     };
 
     await expect(service.createBranch(dto)).rejects.toBeInstanceOf(AppError);

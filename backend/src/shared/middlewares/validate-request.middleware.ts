@@ -12,17 +12,33 @@ export const validateRequest = (
 ): RequestHandler => {
   return (request, _response, next) => {
     if (schemas.body) {
-      request.body = schemas.body.parse(request.body);
+      const parsedBody = schemas.body.parse(request.body);
+      Object.defineProperty(request, "body", {
+        value: parsedBody,
+        configurable: true,
+        enumerable: true,
+        writable: true,
+      });
     }
 
     if (schemas.params) {
-      request.params = schemas.params.parse(
-        request.params,
-      ) as typeof request.params;
+      const parsedParams = schemas.params.parse(request.params);
+      Object.defineProperty(request, "params", {
+        value: parsedParams,
+        configurable: true,
+        enumerable: true,
+        writable: true,
+      });
     }
 
     if (schemas.query) {
-      request.query = schemas.query.parse(request.query) as typeof request.query;
+      const parsedQuery = schemas.query.parse(request.query);
+      Object.defineProperty(request, "query", {
+        value: parsedQuery,
+        configurable: true,
+        enumerable: true,
+        writable: true,
+      });
     }
 
     next();

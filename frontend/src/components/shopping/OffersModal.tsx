@@ -100,7 +100,7 @@ export const OffersModal: React.FC<OffersModalProps> = ({ isOpen, onClose }) => 
         text: `Coupon "${code}" applied to cart successfully!`,
       });
       toast.update("Promo Code Applied! 🎉", `Coupon "${code}" discount applied to your cart.`);
-      window.dispatchEvent(new CustomEvent("theonlinebakery_cart_updated"));
+      window.dispatchEvent(new CustomEvent("onebitebakery_cart_updated"));
     } catch (err: any) {
       const msg = err?.message || `Coupon "${code}" copied! Enter at checkout.`;
       setFeedbackMsg({

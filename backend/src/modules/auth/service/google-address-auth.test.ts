@@ -24,7 +24,7 @@ const createMockUser = (overrides: Partial<User> = {}): User =>
   ({
     _id: new Types.ObjectId(),
     name: "Ajay Customer",
-    email: "customer@theonlinebakery.in",
+    email: "customer@onebitebakery.in",
     googleId: "google-sub-12345",
     role: "customer",
     isVerified: true,
@@ -57,7 +57,7 @@ describe("Customer Authentication + Address-Based Mobile Number Architecture", (
     it("Google login succeeds for a new customer", async () => {
       const newUser = createMockUser({
         _id: new Types.ObjectId("6aa3ebcda67a0fb724c636c1"),
-        email: "new.google@theonlinebakery.in",
+        email: "new.google@onebitebakery.in",
       });
 
       const userRepository = {
@@ -79,14 +79,14 @@ describe("Customer Authentication + Address-Based Mobile Number Architecture", (
       const result = await authService.authenticateWithGoogle(
         {
           token: "simulated-google-id-token",
-          email: "new.google@theonlinebakery.in",
+          email: "new.google@onebitebakery.in",
           name: "New Google Customer",
         },
         context,
       );
 
       expect(result.user).toBeDefined();
-      expect(result.user.email).toBe("new.google@theonlinebakery.in");
+      expect(result.user.email).toBe("new.google@onebitebakery.in");
       expect(result.tokens.accessToken).toBeDefined();
       expect(result.tokens.refreshToken).toBeDefined();
     });
@@ -94,7 +94,7 @@ describe("Customer Authentication + Address-Based Mobile Number Architecture", (
     it("Existing Google customer logs in and gets a secure session", async () => {
       const existingUser = createMockUser({
         googleId: "google-sub-existing",
-        email: "existing.customer@theonlinebakery.in",
+        email: "existing.customer@onebitebakery.in",
       });
 
       const userRepository = {
@@ -115,7 +115,7 @@ describe("Customer Authentication + Address-Based Mobile Number Architecture", (
       const result = await authService.authenticateWithGoogle(
         {
           token: "simulated-google-id-token",
-          email: "existing.customer@theonlinebakery.in",
+          email: "existing.customer@onebitebakery.in",
         },
         context,
       );

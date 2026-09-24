@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from "react";
+import React, { Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AuthLayout } from "@/layouts/AuthLayout";
@@ -6,6 +6,7 @@ import { PublicLayout } from "@/layouts/PublicLayout";
 import { AdminLayout } from "@/features/admin/layout/AdminLayout";
 import { AdminRoute, GuestRoute, ProtectedRoute } from "@/routes/guards";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
+import { lazyRetry } from "@/utils/lazyRetry";
 
 // Loading Fallback Component with smooth pulse
 const PageLoader: React.FC = () => (
@@ -18,70 +19,70 @@ const PageLoader: React.FC = () => (
 );
 
 // Public Pages (Lazy Loaded)
-const HomePage = lazy(() => import("@/pages/public/HomePage").then((m) => ({ default: m.HomePage })));
-const ProductsListingPage = lazy(() => import("@/pages/public/ProductsListingPage").then((m) => ({ default: m.ProductsListingPage })));
-const ProductDetailsPage = lazy(() => import("@/pages/public/ProductDetailsPage").then((m) => ({ default: m.ProductDetailsPage })));
-const CategoriesPage = lazy(() => import("@/pages/public/CategoriesPage").then((m) => ({ default: m.CategoriesPage })));
-const OccasionsPage = lazy(() => import("@/pages/public/OccasionsPage").then((m) => ({ default: m.OccasionsPage })));
-const CustomCakePage = lazy(() => import("@/pages/public/CustomCakePage").then((m) => ({ default: m.CustomCakePage })));
-const CombosPage = lazy(() => import("@/pages/public/CombosPage").then((m) => ({ default: m.CombosPage })));
-const DecorationShopPage = lazy(() => import("@/pages/public/DecorationShopPage").then((m) => ({ default: m.DecorationShopPage })));
-const OffersPage = lazy(() => import("@/pages/public/OffersPage").then((m) => ({ default: m.OffersPage })));
-const AboutPage = lazy(() => import("@/pages/public/InformationPages").then((m) => ({ default: m.AboutPage })));
-const ContactPage = lazy(() => import("@/pages/public/InformationPages").then((m) => ({ default: m.ContactPage })));
-const CartPage = lazy(() => import("@/pages/customer/CartPage").then((m) => ({ default: m.CartPage })));
-const NotFoundPage = lazy(() => import("@/pages/public/NotFoundPage").then((m) => ({ default: m.NotFoundPage })));
+const HomePage = lazyRetry(() => import("@/pages/public/HomePage").then((m) => ({ default: m.HomePage })));
+const ProductsListingPage = lazyRetry(() => import("@/pages/public/ProductsListingPage").then((m) => ({ default: m.ProductsListingPage })));
+const ProductDetailsPage = lazyRetry(() => import("@/pages/public/ProductDetailsPage").then((m) => ({ default: m.ProductDetailsPage })));
+const CategoriesPage = lazyRetry(() => import("@/pages/public/CategoriesPage").then((m) => ({ default: m.CategoriesPage })));
+const OccasionsPage = lazyRetry(() => import("@/pages/public/OccasionsPage").then((m) => ({ default: m.OccasionsPage })));
+const CustomCakePage = lazyRetry(() => import("@/pages/public/CustomCakePage").then((m) => ({ default: m.CustomCakePage })));
+const CombosPage = lazyRetry(() => import("@/pages/public/CombosPage").then((m) => ({ default: m.CombosPage })));
+const DecorationShopPage = lazyRetry(() => import("@/pages/public/DecorationShopPage").then((m) => ({ default: m.DecorationShopPage })));
+const OffersPage = lazyRetry(() => import("@/pages/public/OffersPage").then((m) => ({ default: m.OffersPage })));
+const AboutPage = lazyRetry(() => import("@/pages/public/InformationPages").then((m) => ({ default: m.AboutPage })));
+const ContactPage = lazyRetry(() => import("@/pages/public/InformationPages").then((m) => ({ default: m.ContactPage })));
+const CartPage = lazyRetry(() => import("@/pages/customer/CartPage").then((m) => ({ default: m.CartPage })));
+const NotFoundPage = lazyRetry(() => import("@/pages/public/NotFoundPage").then((m) => ({ default: m.NotFoundPage })));
 
 // Customer Protected Pages (Lazy Loaded)
-const CustomerDashboardPage = lazy(() => import("@/pages/customer/CustomerDashboardPage").then((m) => ({ default: m.CustomerDashboardPage })));
-const CustomerProfilePage = lazy(() => import("@/pages/customer/CustomerProfilePage").then((m) => ({ default: m.CustomerProfilePage })));
-const CustomerAddressesPage = lazy(() => import("@/pages/customer/CustomerAddressesPage").then((m) => ({ default: m.CustomerAddressesPage })));
-const CustomerCelebrationsPage = lazy(() => import("@/pages/customer/CustomerCelebrationsPage").then((m) => ({ default: m.CustomerCelebrationsPage })));
-const CustomerSupportPage = lazy(() => import("@/pages/customer/CustomerSupportPage").then((m) => ({ default: m.CustomerSupportPage })));
-const OrdersHistoryPage = lazy(() => import("@/pages/customer/OrdersPages").then((m) => ({ default: m.OrdersHistoryPage })));
-const OrderDetailsPage = lazy(() => import("@/pages/customer/OrdersPages").then((m) => ({ default: m.OrderDetailsPage })));
-const FavoritesPage = lazy(() => import("@/pages/customer/FavoritesPage").then((m) => ({ default: m.FavoritesPage })));
-const CustomerNotificationsPage = lazy(() => import("@/pages/customer/CustomerNotificationsPage").then((m) => ({ default: m.CustomerNotificationsPage })));
-const CustomerSettingsPage = lazy(() => import("@/pages/customer/CustomerSettingsPage").then((m) => ({ default: m.CustomerSettingsPage })));
-const CustomerSecurityPage = lazy(() => import("@/pages/customer/CustomerSecurityPage").then((m) => ({ default: m.CustomerSecurityPage })));
-const CheckoutPage = lazy(() => import("@/pages/customer/CheckoutPage").then((m) => ({ default: m.CheckoutPage })));
-const PaymentPage = lazy(() => import("@/pages/customer/PaymentPages").then((m) => ({ default: m.PaymentPage })));
-const OrderSuccessPage = lazy(() => import("@/pages/customer/PaymentPages").then((m) => ({ default: m.OrderSuccessPage })));
-const OrderFailurePage = lazy(() => import("@/pages/customer/PaymentPages").then((m) => ({ default: m.OrderFailurePage })));
+const CustomerDashboardPage = lazyRetry(() => import("@/pages/customer/CustomerDashboardPage").then((m) => ({ default: m.CustomerDashboardPage })));
+const CustomerProfilePage = lazyRetry(() => import("@/pages/customer/CustomerProfilePage").then((m) => ({ default: m.CustomerProfilePage })));
+const CustomerAddressesPage = lazyRetry(() => import("@/pages/customer/CustomerAddressesPage").then((m) => ({ default: m.CustomerAddressesPage })));
+const CustomerCelebrationsPage = lazyRetry(() => import("@/pages/customer/CustomerCelebrationsPage").then((m) => ({ default: m.CustomerCelebrationsPage })));
+const CustomerSupportPage = lazyRetry(() => import("@/pages/customer/CustomerSupportPage").then((m) => ({ default: m.CustomerSupportPage })));
+const OrdersHistoryPage = lazyRetry(() => import("@/pages/customer/OrdersPages").then((m) => ({ default: m.OrdersHistoryPage })));
+const OrderDetailsPage = lazyRetry(() => import("@/pages/customer/OrdersPages").then((m) => ({ default: m.OrderDetailsPage })));
+const FavoritesPage = lazyRetry(() => import("@/pages/customer/FavoritesPage").then((m) => ({ default: m.FavoritesPage })));
+const CustomerNotificationsPage = lazyRetry(() => import("@/pages/customer/CustomerNotificationsPage").then((m) => ({ default: m.CustomerNotificationsPage })));
+const CustomerSettingsPage = lazyRetry(() => import("@/pages/customer/CustomerSettingsPage").then((m) => ({ default: m.CustomerSettingsPage })));
+const CustomerSecurityPage = lazyRetry(() => import("@/pages/customer/CustomerSecurityPage").then((m) => ({ default: m.CustomerSecurityPage })));
+const CheckoutPage = lazyRetry(() => import("@/pages/customer/CheckoutPage").then((m) => ({ default: m.CheckoutPage })));
+const PaymentPage = lazyRetry(() => import("@/pages/customer/PaymentPages").then((m) => ({ default: m.PaymentPage })));
+const OrderSuccessPage = lazyRetry(() => import("@/pages/customer/PaymentPages").then((m) => ({ default: m.OrderSuccessPage })));
+const OrderFailurePage = lazyRetry(() => import("@/pages/customer/PaymentPages").then((m) => ({ default: m.OrderFailurePage })));
 
 // Auth & Status Pages (Lazy Loaded)
-const CustomerAuthContainer = lazy(() => import("@/pages/auth/CustomerAuthContainer").then((m) => ({ default: m.CustomerAuthContainer })));
-const UnauthorizedPage = lazy(() => import("@/pages/auth/StatusPages").then((m) => ({ default: m.UnauthorizedPage })));
-const SessionExpiredPage = lazy(() => import("@/pages/auth/StatusPages").then((m) => ({ default: m.SessionExpiredPage })));
+const CustomerAuthContainer = lazyRetry(() => import("@/pages/auth/CustomerAuthContainer").then((m) => ({ default: m.CustomerAuthContainer })));
+const UnauthorizedPage = lazyRetry(() => import("@/pages/auth/StatusPages").then((m) => ({ default: m.UnauthorizedPage })));
+const SessionExpiredPage = lazyRetry(() => import("@/pages/auth/StatusPages").then((m) => ({ default: m.SessionExpiredPage })));
 
 // Admin Pages (Lazy Loaded)
-const AdminDashboardShell = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminDashboardShell })));
-const AdminMainBranchOrdersPage = lazy(() => import("@/features/admin/pages/AdminMainBranchOrdersPage").then((m) => ({ default: m.AdminMainBranchOrdersPage })));
-const AdminAdminsPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminAdminsPage })));
-const AdminBannersPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminBannersPage })));
-const AdminBranchManagementPage = lazy(() => import("@/features/admin/pages/AdminBranchManagementPage").then((m) => ({ default: m.AdminBranchManagementPage })));
-const AdminBranchMatrixPage = lazy(() => import("@/features/admin/pages/AdminBranchMatrixPage").then((m) => ({ default: m.AdminBranchMatrixPage })));
-const BranchAdminDashboardPage = lazy(() => import("@/features/admin/pages/BranchAdminDashboardPage").then((m) => ({ default: m.BranchAdminDashboardPage })));
-const BranchAdminProductsPage = lazy(() => import("@/features/admin/pages/BranchAdminProductsPage").then((m) => ({ default: m.BranchAdminProductsPage })));
-const BranchAdminOrdersPage = lazy(() => import("@/features/admin/pages/BranchAdminOrdersPage").then((m) => ({ default: m.BranchAdminOrdersPage })));
-const AdminCatalogPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminCatalogPage })));
-const AdminCombosPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminCombosPage })));
-const AdminCustomCakePage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminCustomCakePage })));
-const AdminCategoryPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminCategoryPage })));
-const AdminOccasionPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminOccasionPage })));
-const AdminCouponsPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminCouponsPage })));
-const AdminVillagesPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminVillagesPage })));
-const AdminOrdersPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminOrdersPage })));
-const AdminCustomersPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminCustomersPage })));
-const AdminPaymentsPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminPaymentsPage })));
-const AdminNotificationsPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminNotificationsPage })));
-const AdminMediaPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminMediaPage })));
-const AdminAnalyticsPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminAnalyticsPage })));
-const AdminReportsPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminReportsPage })));
-const AdminSettingsPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminSettingsPage })));
-const AdminLogsPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AdminLogsPage })));
-const AdminSecurityPage = lazy(() => import("@/features/admin/pages/AdminSecurityPage").then((m) => ({ default: m.AdminSecurityPage })));
-const DeliveryAgentDashboardPage = lazy(() => import("@/features/delivery/pages/DeliveryAgentDashboardPage").then((m) => ({ default: m.DeliveryAgentDashboardPage })));
+const AdminDashboardShell = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminDashboardShell })));
+const AdminMainBranchOrdersPage = lazyRetry(() => import("@/features/admin/pages/AdminMainBranchOrdersPage").then((m) => ({ default: m.AdminMainBranchOrdersPage })));
+const AdminAdminsPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminAdminsPage })));
+const AdminBannersPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminBannersPage })));
+const AdminBranchManagementPage = lazyRetry(() => import("@/features/admin/pages/AdminBranchManagementPage").then((m) => ({ default: m.AdminBranchManagementPage })));
+const AdminBranchMatrixPage = lazyRetry(() => import("@/features/admin/pages/AdminBranchMatrixPage").then((m) => ({ default: m.AdminBranchMatrixPage })));
+const BranchAdminDashboardPage = lazyRetry(() => import("@/features/admin/pages/BranchAdminDashboardPage").then((m) => ({ default: m.BranchAdminDashboardPage })));
+const BranchAdminProductsPage = lazyRetry(() => import("@/features/admin/pages/BranchAdminProductsPage").then((m) => ({ default: m.BranchAdminProductsPage })));
+const BranchAdminOrdersPage = lazyRetry(() => import("@/features/admin/pages/BranchAdminOrdersPage").then((m) => ({ default: m.BranchAdminOrdersPage })));
+const AdminCatalogPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminCatalogPage })));
+const AdminCombosPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminCombosPage })));
+const AdminCustomCakePage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminCustomCakePage })));
+const AdminCategoryPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminCategoryPage })));
+const AdminOccasionPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminOccasionPage })));
+const AdminCouponsPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminCouponsPage })));
+const AdminVillagesPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminVillagesPage })));
+const AdminOrdersPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminOrdersPage })));
+const AdminCustomersPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminCustomersPage })));
+const AdminPaymentsPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminPaymentsPage })));
+const AdminNotificationsPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminNotificationsPage })));
+const AdminMediaPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminMediaPage })));
+const AdminAnalyticsPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminAnalyticsPage })));
+const AdminReportsPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminReportsPage })));
+const AdminSettingsPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminSettingsPage })));
+const AdminLogsPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminLogsPage })));
+const AdminSecurityPage = lazyRetry(() => import("@/features/admin/pages/AdminSecurityPage").then((m) => ({ default: m.AdminSecurityPage })));
+const DeliveryAgentDashboardPage = lazyRetry(() => import("@/features/delivery/pages/DeliveryAgentDashboardPage").then((m) => ({ default: m.DeliveryAgentDashboardPage })));
 
 export const AppRoutes: React.FC = () => {
   return (

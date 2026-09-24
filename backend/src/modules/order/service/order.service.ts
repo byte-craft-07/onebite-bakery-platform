@@ -446,31 +446,29 @@ export class OrderService {
     };
 
     const persistOrder = async (session?: ClientSession): Promise<HydratedDocument<Order>> => {
-      if (session) {
-        for (const reservation of inventoryReservations) {
-          const reservedProduct = await ProductModel.findOneAndUpdate(
-            {
-              _id: reservation.productId,
-              isActive: true,
-              isDeleted: false,
-              isAvailable: true,
-              trackInventory: true,
-              allowBackorder: false,
-              stockQuantity: { $gte: reservation.quantity },
-            },
-            { $inc: { stockQuantity: -reservation.quantity } },
-            { new: true, session },
-          ).exec();
+      for (const reservation of inventoryReservations) {
+        const reservedProduct = await ProductModel.findOneAndUpdate(
+          {
+            _id: reservation.productId,
+            isActive: true,
+            isDeleted: false,
+            isAvailable: true,
+            trackInventory: true,
+            allowBackorder: false,
+            stockQuantity: { $gte: reservation.quantity },
+          },
+          { $inc: { stockQuantity: -reservation.quantity } },
+          { new: true, ...(session ? { session } : {}) },
+        ).exec();
 
-          if (!reservedProduct) {
-            throw new AppError(
-              "One or more products are no longer in stock.",
-              HTTP_STATUS.UNPROCESSABLE_ENTITY,
-              [],
-              true,
-              APP_ERROR_CODES.PRODUCT_INVALID_AVAILABILITY,
-            );
-          }
+        if (!reservedProduct) {
+          throw new AppError(
+            "One or more products are no longer in stock.",
+            HTTP_STATUS.UNPROCESSABLE_ENTITY,
+            [],
+            true,
+            APP_ERROR_CODES.PRODUCT_INVALID_AVAILABILITY,
+          );
         }
       }
 

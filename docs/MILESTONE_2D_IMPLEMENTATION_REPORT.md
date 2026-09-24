@@ -23,9 +23,9 @@
 ## D. Frontend Changes
 - **[auth.service.ts](file:///c:/Users/ajayk/OneDrive/Desktop/new/bakery-platform/frontend/src/services/auth.service.ts)**: Exposed `getStoredLocation` and persisted active location in `localStorage`.
 - **[catalog.service.ts](file:///c:/Users/ajayk/OneDrive/Desktop/new/bakery-platform/frontend/src/services/catalog.service.ts)**: Included `villageId` in `searchProducts` and `getProductBySlug` requests.
-- **[ProductsListingPage.tsx](file:///c:/Users/ajayk/OneDrive/Desktop/new/bakery-platform/frontend/src/pages/public/ProductsListingPage.tsx)**: Subscribed to `theonlinebakery_location_changed` event to auto-refetch catalog on location update.
+- **[ProductsListingPage.tsx](file:///c:/Users/ajayk/OneDrive/Desktop/new/bakery-platform/frontend/src/pages/public/ProductsListingPage.tsx)**: Subscribed to `onebitebakery_location_changed` event to auto-refetch catalog on location update.
 - **[ProductDetailsPage.tsx](file:///c:/Users/ajayk/OneDrive/Desktop/new/bakery-platform/frontend/src/pages/public/ProductDetailsPage.tsx)**: Displayed location availability banner and disabled Add to Cart button when product is unserviced.
-- **[Navbar.tsx](file:///c:/Users/ajayk/OneDrive/Desktop/new/bakery-platform/frontend/src/components/navigation/Navbar.tsx)**: Subscribed to `theonlinebakery_open_location_modal` custom event.
+- **[Navbar.tsx](file:///c:/Users/ajayk/OneDrive/Desktop/new/bakery-platform/frontend/src/components/navigation/Navbar.tsx)**: Subscribed to `onebitebakery_open_location_modal` custom event.
 
 ## E. Location Resolution
 - Servicing branch resolution is derived server-side via `BranchService.resolveBranchForVillage(villageId)`.

@@ -2,7 +2,7 @@
   "name": "bakery-platform-backend",
   "version": "0.1.0",
   "private": true,
-  "description": "Backend foundation for the The Online Bakery Platform.",
+  "description": "Backend foundation for the Onebite Bakery Platform.",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
@@ -11,6 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest run src",
+    "db:ensure-indexes": "tsx src/db/ensure-indexes.ts",
     "db:ensure-payment-indexes": "tsx src/db/ensure-payment-indexes.ts",
     "db:bootstrap-admin": "tsx src/db/bootstrap-admin.ts"
   },

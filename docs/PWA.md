@@ -1,7 +1,7 @@
-# The Online Bakery — Progressive Web App (PWA) Documentation
+# Onebite Bakery — Progressive Web App (PWA) Documentation
 
 ## 1. Overview & Vision
-The Online Bakery Progressive Web App (PWA) converts the existing customer-facing e-commerce storefront, admin dashboard, and delivery agent portal into an installable, mobile-first, and network-resilient application.
+Onebite Bakery Progressive Web App (PWA) converts the existing customer-facing e-commerce storefront, admin dashboard, and delivery agent portal into an installable, mobile-first, and network-resilient application.
 
 The PWA functions as both:
 1. **Standard Website**: Accessible through any modern desktop and mobile browser at `https://your-domain.com`.
@@ -13,7 +13,7 @@ The PWA functions as both:
 
 ```text
 ┌────────────────────────────────────────────────────────┐
-│                   The Online Bakery                    │
+│                   Onebite Bakery                    │
 │                 Progressive Web App                    │
 └────────────────────────────────────────────────────────┘
           │                                 │
@@ -51,8 +51,8 @@ The manifest is located at `/manifest.webmanifest` (with a `/manifest.json` comp
 
 ```json
 {
-  "name": "The Online Bakery",
-  "short_name": "Online Bakery",
+  "name": "Onebite Bakery",
+  "short_name": "Onebite Bakery",
   "description": "Order handcrafted cakes, fresh pastries, custom celebratory cakes and party supplies online.",
   "start_url": "/",
   "scope": "/",
@@ -153,7 +153,7 @@ Official brand assets located in `/icons/`:
 | **Sensitive APIs** | `/api/auth/*`, `/api/admin/*`, `/api/payment/*`, `/api/checkout/*`, `/api/orders/*`, `/api/customer/*`, `/socket.io/*` | **Network-Only (Strict)** | **Never cached** in Service Worker. Returns 503 offline JSON when network is unavailable |
 
 ### Cache Versioning
-- Cache prefix: `theonlinebakery-pwa-v1`
+- Cache prefix: `onebitebakery-pwa-v1`
 - Old caches are automatically purged during the `activate` event.
 - When an update is deployed, the client receives an `updatefound` event and displays a clean "New version available! [Refresh]" toast.
 - Clicking refresh sends `{ type: 'SKIP_WAITING' }` to activate immediately.

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the payment architecture for The Online Bakery Platform.
+This document defines the payment architecture for Onebite Bakery Platform.
 
 The payment system must be provider-independent, secure, scalable, and future-ready.
 

@@ -118,7 +118,7 @@ export const AdminCustomersPage: React.FC = () => {
                 <td className="px-4 py-3">
                   {validWaPhone ? (
                     <a
-                      href={`https://wa.me/${validWaPhone}?text=${encodeURIComponent(`Hello ${usr.name}, greetings from The Online Bakery!`)}`}
+                      href={`https://wa.me/${validWaPhone}?text=${encodeURIComponent(`Hello ${usr.name}, greetings from Onebite Bakery!`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold text-xs transition-all hover:shadow-xs group cursor-pointer"
@@ -457,7 +457,7 @@ export const AdminAnalyticsPage: React.FC = () => {
 
 export const AdminSettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<StoreSettingsPayload>({
-    storeName: "The Online Bakery",
+    storeName: "Onebite Bakery",
     phone: "+91 7897671632",
     email: "ajaykterha@gmail.com",
     gstin: "07AAAAA0000A1Z5",
@@ -476,7 +476,7 @@ export const AdminSettingsPage: React.FC = () => {
     adminOperationsService.getSettings().then((res) => {
       if (res) {
         setSettings({
-          storeName: res.storeName || "The Online Bakery",
+          storeName: res.storeName || "Onebite Bakery",
           phone: res.phone || "+91 7897671632",
           email: res.email || "ajaykterha@gmail.com",
           gstin: res.gstin || "07AAAAA0000A1Z5",

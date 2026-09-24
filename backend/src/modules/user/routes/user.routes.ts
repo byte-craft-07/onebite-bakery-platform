@@ -421,7 +421,7 @@ userRouter.post(
     if (user) {
       // User exists -> Upgrade role
       user.role = role;
-      if (name && (!user.name || user.name === "The Online Bakery Customer")) {
+      if (name && (!user.name || user.name === "Onebite Bakery Customer")) {
         user.name = name;
       }
       if (email && !user.email) {

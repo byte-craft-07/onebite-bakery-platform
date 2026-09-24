@@ -107,14 +107,14 @@ export const ProductDetailsPage: React.FC = () => {
       }
     };
 
-    window.addEventListener("theonlinebakery_review_submitted", handleRatingUpdate);
-    window.addEventListener("theonlinebakery_order_rated", handleRatingUpdate);
-    window.addEventListener("theonlinebakery_favorites_updated", handleFavUpdate);
+    window.addEventListener("onebitebakery_review_submitted", handleRatingUpdate);
+    window.addEventListener("onebitebakery_order_rated", handleRatingUpdate);
+    window.addEventListener("onebitebakery_favorites_updated", handleFavUpdate);
 
     return () => {
-      window.removeEventListener("theonlinebakery_review_submitted", handleRatingUpdate);
-      window.removeEventListener("theonlinebakery_order_rated", handleRatingUpdate);
-      window.removeEventListener("theonlinebakery_favorites_updated", handleFavUpdate);
+      window.removeEventListener("onebitebakery_review_submitted", handleRatingUpdate);
+      window.removeEventListener("onebitebakery_order_rated", handleRatingUpdate);
+      window.removeEventListener("onebitebakery_favorites_updated", handleFavUpdate);
     };
   }, [product]);
 
@@ -153,7 +153,7 @@ export const ProductDetailsPage: React.FC = () => {
   useEffect(() => {
     if (!product || typeof document === "undefined") return;
     const originalTitle = document.title;
-    document.title = `${product.name} | The Online Bakery`;
+    document.title = `${product.name} | Onebite Bakery`;
 
     const setMeta = (property: string, content: string) => {
       let element = document.querySelector(`meta[property="${property}"], meta[name="${property}"]`);
@@ -165,20 +165,20 @@ export const ProductDetailsPage: React.FC = () => {
       element.setAttribute("content", content);
     };
 
-    setMeta("og:title", `${product.name} | The Online Bakery`);
+    setMeta("og:title", `${product.name} | Onebite Bakery`);
     setMeta(
       "og:description",
-      product.description || `Order freshly baked ${product.name} online from The Online Bakery.`,
+      product.description || `Order freshly baked ${product.name} online from Onebite Bakery.`,
     );
     setMeta("og:image", activeImageUrl || FALLBACK_PRODUCT_IMAGE);
     if (typeof window !== "undefined") {
       setMeta("og:url", window.location.href);
     }
     setMeta("twitter:card", "summary_large_image");
-    setMeta("twitter:title", `${product.name} | The Online Bakery`);
+    setMeta("twitter:title", `${product.name} | Onebite Bakery`);
     setMeta(
       "twitter:description",
-      product.description || `Order freshly baked ${product.name} online from The Online Bakery.`,
+      product.description || `Order freshly baked ${product.name} online from Onebite Bakery.`,
     );
     setMeta("twitter:image", activeImageUrl || FALLBACK_PRODUCT_IMAGE);
 
@@ -324,7 +324,7 @@ export const ProductDetailsPage: React.FC = () => {
         },
         itemTotal: product.price * quantity,
       };
-      sessionStorage.setItem("theonlinebakery_direct_order_item", JSON.stringify(directItem));
+      sessionStorage.setItem("onebitebakery_direct_order_item", JSON.stringify(directItem));
       navigate("/checkout?direct=1");
     } finally {
       setIsOrderingNow(false);
@@ -546,7 +546,7 @@ export const ProductDetailsPage: React.FC = () => {
               <span>⚠️ यह प्रोडक्ट अभी स्टॉक में उपलब्ध नहीं है (Out of Stock)।</span>
               <button
                 type="button"
-                onClick={() => window.dispatchEvent(new CustomEvent("theonlinebakery_open_location_modal"))}
+                onClick={() => window.dispatchEvent(new CustomEvent("onebitebakery_open_location_modal"))}
                 className="underline font-bold hover:text-red-950 cursor-pointer shrink-0"
               >
                 Change Location

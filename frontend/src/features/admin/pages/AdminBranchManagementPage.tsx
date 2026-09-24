@@ -318,7 +318,7 @@ export const AdminBranchManagementPage: React.FC = () => {
             </h1>
           </div>
           <p className="text-xs text-[#7A6E65] mt-1">
-            Manage The Online Bakery Main and Franchise branches, service areas, and branch admin assignments.
+            Manage Onebite Bakery Main and Franchise branches, service areas, and branch admin assignments.
           </p>
         </div>
 
@@ -534,7 +534,7 @@ export const AdminBranchManagementPage: React.FC = () => {
                 <label className="text-xs font-bold text-[#3B302B]">Official Email *</label>
                 <input
                   type="email"
-                  placeholder="banda@theonlinebakery.com"
+                  placeholder="banda@onebitebakery.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full h-10 px-3 rounded-xl border border-[#E5DEC9] text-xs bg-white focus:outline-none focus:border-[#596B58]"
@@ -635,7 +635,7 @@ export const AdminBranchManagementPage: React.FC = () => {
                     <label className="text-xs font-bold text-[#3B302B]">Admin Login Email (Optional)</label>
                     <input
                       type="email"
-                      placeholder="e.g. rajesh@theonlinebakery.in"
+                      placeholder="e.g. rajesh@onebitebakery.in"
                       value={adminCreds.email}
                       onChange={(e) => setAdminCreds({ ...adminCreds, email: e.target.value })}
                       className="w-full h-9 px-3 rounded-xl border border-[#E5DEC9] text-xs bg-white focus:outline-none focus:border-[#596B58]"
@@ -836,7 +836,7 @@ export const AdminBranchManagementPage: React.FC = () => {
                     <label className="text-xs font-bold text-[#3B302B]">Admin Login Email</label>
                     <input
                       type="email"
-                      placeholder="e.g. rajesh@theonlinebakery.in"
+                      placeholder="e.g. rajesh@onebitebakery.in"
                       value={editAdminCreds.email}
                       onChange={(e) => setEditAdminCreds({ ...editAdminCreds, email: e.target.value })}
                       className="w-full h-9 px-3 rounded-xl border border-[#E5DEC9] text-xs bg-white focus:outline-none focus:border-[#596B58]"

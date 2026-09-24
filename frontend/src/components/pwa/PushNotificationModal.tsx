@@ -20,9 +20,9 @@ export const PushNotificationModal: React.FC = () => {
       }
     };
 
-    window.addEventListener("theonlinebakery_prompt_push_permission", handlePrompt);
+    window.addEventListener("onebitebakery_prompt_push_permission", handlePrompt);
     return () => {
-      window.removeEventListener("theonlinebakery_prompt_push_permission", handlePrompt);
+      window.removeEventListener("onebitebakery_prompt_push_permission", handlePrompt);
     };
   }, [setShowPushModal]);
 

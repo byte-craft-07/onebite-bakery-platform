@@ -1,4 +1,4 @@
-# THE ONLINE BAKERY — MILESTONE 2F IMPLEMENTATION REPORT
+# ONEBITE BAKERY — MILESTONE 2F IMPLEMENTATION REPORT
 
 ## A. Audit Findings
 - **Order Lifecycle State Machine**: Pre-existing `VALID_STATUS_TRANSITIONS` map was enforced in `OrderService.adminUpdateOrderStatus` and extended to ensure `OUT_FOR_DELIVERY` requires an assigned delivery agent for home delivery orders.

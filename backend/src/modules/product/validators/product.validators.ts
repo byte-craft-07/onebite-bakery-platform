@@ -55,7 +55,7 @@ const productSchemaBase = z.object({
   name: z.string().trim().min(1).max(160),
   slug: slugSchema.optional(),
   shortDescription: z.string().trim().min(1).max(300).optional(),
-  description: z.string().trim().min(1).max(2000).optional().default("Freshly baked artisanal delight from The Online Bakery."),
+  description: z.string().trim().min(1).max(2000).optional().default("Freshly baked artisanal delight from Onebite Bakery."),
   categoryId: optionalObjectIdSchema,
   occasionIds: z.array(objectIdSchema).default([]),
   productType: z.enum(PRODUCT_TYPES).default("NORMAL"),

@@ -30,9 +30,9 @@ export const FavoritesPage: React.FC = () => {
       loadFavorites(false);
     };
 
-    window.addEventListener("theonlinebakery_favorites_updated", handleFavUpdated);
+    window.addEventListener("onebitebakery_favorites_updated", handleFavUpdated);
     return () => {
-      window.removeEventListener("theonlinebakery_favorites_updated", handleFavUpdated);
+      window.removeEventListener("onebitebakery_favorites_updated", handleFavUpdated);
     };
   }, []);
 

@@ -24,7 +24,7 @@ export const googleAuthService = {
     });
 
     const user = response.data.data.user;
-    localStorage.setItem("theonlinebakery_user", JSON.stringify(user));
+    localStorage.setItem("onebitebakery_user", JSON.stringify(user));
 
     return { user };
   },

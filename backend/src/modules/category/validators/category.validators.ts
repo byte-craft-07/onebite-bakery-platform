@@ -8,7 +8,17 @@ const slugSchema = z
   .string()
   .trim()
   .toLowerCase()
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be URL safe.");
+  .transform((val) =>
+    val
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, ""),
+  )
+  .pipe(
+    z
+      .string()
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be URL safe.")
+      .optional(),
+  );
 
 const parentCategorySchema = z
   .union([objectIdSchema, z.null()])
@@ -23,7 +33,7 @@ const seoKeywordsSchema = z
 export const createCategorySchema = z.object({
   name: z.string().trim().min(1).max(120),
   slug: slugSchema.optional(),
-  description: z.string().trim().min(1).max(1000).optional().default("Fresh artisanal category from The Online Bakery."),
+  description: z.string().trim().min(1).max(1000).optional().default("Fresh artisanal category from Onebite Bakery."),
   image: z.string().trim().min(1).optional().default("https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80"),
   icon: z.string().trim().min(1).max(120).optional(),
   displayOrder: z.number().int().min(0).default(0),

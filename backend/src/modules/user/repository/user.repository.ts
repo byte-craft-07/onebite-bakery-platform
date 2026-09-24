@@ -31,13 +31,14 @@ export class UserRepository extends BaseRepository<User> {
     email: string;
     name: string;
     profileImage?: string;
+    role?: User["role"];
   }): Promise<HydratedDocument<User>> {
     return this.create({
       name: payload.name,
       email: payload.email.toLowerCase(),
       googleId: payload.googleId,
       profileImage: payload.profileImage,
-      role: "customer",
+      role: payload.role ?? "customer",
       isVerified: true,
       status: "active",
       lastLogin: new Date(),

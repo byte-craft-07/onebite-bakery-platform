@@ -41,7 +41,7 @@ export const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, currentLocation, logout } = useAuth();
-  const { isStandalone, promptInstall } = usePWA();
+  const { isStandalone, promptInstall, setShowInstallModal } = usePWA();
 
   const syncCartCount = async () => {
     try {
@@ -60,9 +60,9 @@ export const Navbar: React.FC = () => {
     };
 
     const checkShouldOpenLocation = () => {
-      const shouldOpen = localStorage.getItem("theonlinebakery_open_location_after_login");
+      const shouldOpen = localStorage.getItem("onebitebakery_open_location_after_login");
       if (shouldOpen === "true") {
-        localStorage.removeItem("theonlinebakery_open_location_after_login");
+        localStorage.removeItem("onebitebakery_open_location_after_login");
         if (!location.pathname.includes("checkout")) {
           setIsLocationModalOpen(true);
         }
@@ -75,14 +75,14 @@ export const Navbar: React.FC = () => {
       setIsLocationModalOpen(true);
     };
 
-    window.addEventListener("theonlinebakery_cart_updated", handleCartUpdate);
+    window.addEventListener("onebitebakery_cart_updated", handleCartUpdate);
     window.addEventListener("storage", handleCartUpdate);
-    window.addEventListener("theonlinebakery_open_location_modal", handleOpenLocationModal);
+    window.addEventListener("onebitebakery_open_location_modal", handleOpenLocationModal);
 
     return () => {
-      window.removeEventListener("theonlinebakery_cart_updated", handleCartUpdate);
+      window.removeEventListener("onebitebakery_cart_updated", handleCartUpdate);
       window.removeEventListener("storage", handleCartUpdate);
-      window.removeEventListener("theonlinebakery_open_location_modal", handleOpenLocationModal);
+      window.removeEventListener("onebitebakery_open_location_modal", handleOpenLocationModal);
     };
   }, [location.pathname, isAuthenticated]);
 
@@ -213,7 +213,7 @@ export const Navbar: React.FC = () => {
                 type="button"
                 onClick={promptInstall}
                 className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl bg-[#596B58]/10 hover:bg-[#596B58]/20 text-[#596B58] text-xs font-bold transition-all border border-[#596B58]/20 cursor-pointer shadow-2xs whitespace-nowrap"
-                title="Install The Online Bakery App"
+                title="Install Onebite Bakery App"
               >
                 <Download className="h-4 w-4 text-[#596B58]" />
                 <span className="hidden xl:inline">Install App</span>
@@ -410,7 +410,7 @@ export const Navbar: React.FC = () => {
                   className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#A8B89A]/20 hover:text-[#596B58] transition-colors"
                 >
                   <Info className="h-4 w-4 text-[#596B58]" />
-                  <span>About The Online Bakery</span>
+                  <span>About Onebite Bakery</span>
                 </Link>
 
                 <div className="pt-2 border-t border-[#E5DEC9] space-y-2">
@@ -475,9 +475,12 @@ export const Navbar: React.FC = () => {
                   {!isStandalone && (
                     <button
                       type="button"
-                      onClick={() => {
-                        promptInstall();
+                      onClick={async () => {
                         setIsMobileMenuOpen(false);
+                        const installed = await promptInstall();
+                        if (!installed) {
+                          setShowInstallModal(true);
+                        }
                       }}
                       className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-[#FFF8EC] border border-[#D8BE91] text-[#596B58] font-bold hover:bg-[#A8B89A]/20 transition-colors text-left text-xs cursor-pointer"
                     >

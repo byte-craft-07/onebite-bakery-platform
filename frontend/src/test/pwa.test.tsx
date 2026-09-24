@@ -137,4 +137,41 @@ describe("PWA Context and Components", () => {
     expect(screen.queryByText(/Install on Android/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Install app on your/i)).not.toBeInTheDocument();
   });
+
+  it("opens InstallAppModal and allows adding mobile shortcut and downloading desktop shortcut", async () => {
+    const { InstallAppModal } = await import("@/components/pwa/InstallAppModal");
+
+    const TestInstallerOpener: React.FC = () => {
+      const { setShowInstallModal } = usePWA();
+      return <button data-testid="btn-open-install-modal" onClick={() => setShowInstallModal(true)}>Open Install Modal</button>;
+    };
+
+    render(
+      <PWAProvider>
+        <TestInstallerOpener />
+        <InstallAppModal />
+      </PWAProvider>
+    );
+
+    expect(screen.queryByText(/Add App Shortcut/i)).not.toBeInTheDocument();
+
+    // Open modal
+    fireEvent.click(screen.getByTestId("btn-open-install-modal"));
+    expect(screen.getByText(/Add App Shortcut/i)).toBeInTheDocument();
+    expect(screen.getByText(/Add to Phone Home Screen/i)).toBeInTheDocument();
+    expect(screen.getByText(/Download Desktop Shortcut/i)).toBeInTheDocument();
+
+    // Trigger Desktop shortcut download
+    fireEvent.click(screen.getByText(/Download Desktop Shortcut/i));
+    expect(screen.getByText(/Shortcut Downloaded!/i)).toBeInTheDocument();
+
+    // Trigger Phone shortcut
+    await act(async () => {
+      fireEvent.click(screen.getByText(/Add to Phone Home Screen/i));
+    });
+
+    // Close modal
+    fireEvent.click(screen.getByText(/Close/i));
+    expect(screen.queryByText(/Add App Shortcut/i)).not.toBeInTheDocument();
+  });
 });

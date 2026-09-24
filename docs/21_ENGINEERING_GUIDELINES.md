@@ -1,6 +1,6 @@
 # 21_ENGINEERING_GUIDEL
 
-# The Online Bakery Platform
+# Onebite Bakery Platform
 
 ## Purpose
 
@@ -14,7 +14,7 @@ No implementation should violate them without explicit approval.
 
 # Project Vision
 
-The Online Bakery is not only a bakery website.
+Onebite Bakery is not only a bakery website.
 
 It is a Celebration Commerce Platform.
 

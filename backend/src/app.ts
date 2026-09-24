@@ -66,6 +66,16 @@ export const createApp = (): Application => {
   app.use(hpp());
   app.use(compression());
 
+  // Top-level liveness/readiness probes for cloud orchestrators (Render, Railway, AWS ALB, K8s)
+  app.get(["/health", "/healthz", "/ping"], (_req, res) => {
+    res.status(200).json({
+      status: "ok",
+      app: "Onebite Bakery Platform",
+      environment: env.nodeEnv,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   app.use(env.apiPrefix, apiRoutes);
   app.use(notFoundHandler);
   app.use(errorHandler);

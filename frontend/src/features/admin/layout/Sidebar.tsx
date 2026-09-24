@@ -99,11 +99,11 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
               <div className="h-8 w-8 shrink-0 flex items-center justify-center">
                 <img
                   src="/logo.svg"
-                  alt="The Online Bakery"
+                  alt="Onebite Bakery"
                   className="w-full h-full object-contain"
                 />
               </div>
-              <span className="text-xl font-extrabold text-[#596B58] tracking-tight group-hover:text-amber-400 transition-colors">The Online Bakery</span>
+              <span className="text-xl font-extrabold text-[#596B58] tracking-tight group-hover:text-amber-400 transition-colors">Onebite Bakery</span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/10 text-white uppercase">
                 Admin
               </span>
@@ -162,7 +162,7 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
           </button>
 
           <p className="text-[10px] text-center text-[#E5DEC9]/50">
-            The Online Bakery Platform Engine &bull; v1.0.0
+            Onebite Bakery Platform Engine &bull; v1.0.0
           </p>
         </div>
       </aside>

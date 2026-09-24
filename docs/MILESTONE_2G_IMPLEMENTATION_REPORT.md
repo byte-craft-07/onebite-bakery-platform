@@ -1,4 +1,4 @@
-# THE ONLINE BAKERY — MILESTONE 2G IMPLEMENTATION REPORT
+# ONEBITE BAKERY — MILESTONE 2G IMPLEMENTATION REPORT
 
 ## A. Audit Findings
 - **Delivery Agent Execution Architecture**: Built delivery execution engine supporting `GET /api/v1/delivery-agent/dashboard`, `GET /api/v1/delivery-agent/orders`, `GET /api/v1/delivery-agent/orders/:orderId`, `POST /api/v1/delivery-agent/orders/:orderId/start`, and `POST /api/v1/delivery-agent/orders/:orderId/complete`.

@@ -66,7 +66,7 @@ class SocketService {
     this.socket.on("connect", () => {
       this.isConnecting = false;
       // Dispatch custom browser event for UI status if needed
-      window.dispatchEvent(new CustomEvent("theonlinebakery_socket_connected"));
+      window.dispatchEvent(new CustomEvent("onebitebakery_socket_connected"));
     });
 
     this.socket.on("connect_error", (error) => {

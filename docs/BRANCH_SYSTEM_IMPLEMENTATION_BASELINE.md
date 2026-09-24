@@ -1,4 +1,4 @@
-# THE ONLINE BAKERY — BRANCH SYSTEM IMPLEMENTATION BASELINE
+# ONEBITE BAKERY — BRANCH SYSTEM IMPLEMENTATION BASELINE
 
 Date of Audit: 2026-08-29  
 Repository Baseline: `bakery-platform`  
@@ -8,7 +8,7 @@ Environment: Node.js v24+ / TypeScript 5.7+ / Mongoose 8.x / React 19 / Vite 8.x
 
 ## 1. Current Architecture
 
-The The Online Bakery Platform currently operates as a single-store / centralized e-commerce system. The system features a clear separation of concerns between backend services (`backend/`) and single-page frontend application (`frontend/`).
+Onebite Bakery Platform currently operates as a single-store / centralized e-commerce system. The system features a clear separation of concerns between backend services (`backend/`) and single-page frontend application (`frontend/`).
 
 ```
                               [ CUSTOMER / ADMIN ]
@@ -395,7 +395,7 @@ MILESTONE 5: End-to-End Verification & Production Readiness
 
 3. **Cart, Checkout & Order Branch Enforcement**:
    - `cartService.addItem` and `checkoutService.validateCheckout` validate product availability and stock against the customer's active branch.
-   - Revalidates cart items on customer location change (`theonlinebakery_location_changed`).
+   - Revalidates cart items on customer location change (`onebitebakery_location_changed`).
    - `OrderModel` captures an immutable `branchId` and `branchSnapshot` (`branchId`, `name`, `code`, `type`) at creation time.
    - Order placement atomically decrements inventory in `BranchProductModel` (or global `ProductModel` fallback).
    - Preserves `My Orders` (`GET /orders`) querying strictly by `customerId`, independent of past or current customer shopping location.
@@ -450,7 +450,7 @@ MILESTONE 5: End-to-End Verification & Production Readiness
 
 4. **Cart & Checkout Location Revalidation**:
    - `CheckoutService.getCheckoutSummary` and `validateCheckout` check branch availability and stock server-side.
-   - Frontend refetches catalog and cart upon `theonlinebakery_location_changed` events.
+   - Frontend refetches catalog and cart upon `onebitebakery_location_changed` events.
 
 5. **Immutable Order Branch & Location Snapshots**:
    - Order creation captures server-side immutable `branchId`, `branchSnapshot`, and `locationSnapshot`.

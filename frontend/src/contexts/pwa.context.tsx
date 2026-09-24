@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { downloadAndroidApk, downloadWindowsInstaller, downloadWebShortcut } from "@/utils/appInstaller";
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -25,6 +26,9 @@ export interface PWAContextValue {
   showPushModal: boolean;
   setShowPushModal: (show: boolean) => void;
   promptInstall: () => Promise<boolean>;
+  downloadApk: () => Promise<{ success: boolean; fileName: string }>;
+  downloadDesktopInstaller: () => { success: boolean; fileName: string };
+  downloadWebShortcut: () => { success: boolean; fileName: string };
   applyUpdate: () => void;
   dismissInstallBanner: () => void;
   isInstallBannerDismissed: boolean;
@@ -32,7 +36,7 @@ export interface PWAContextValue {
 
 const PWAContext = createContext<PWAContextValue | null>(null);
 
-const DISMISSED_INSTALL_KEY = "theonlinebakery_pwa_install_dismissed";
+const DISMISSED_INSTALL_KEY = "onebitebakery_pwa_install_dismissed";
 
 export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isOnline, setIsOnline] = useState<boolean>(() =>
@@ -152,7 +156,7 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setIsInstalled(true);
       setDeferredPrompt(null);
       (window as unknown as { __PWA_PROMPT__?: null }).__PWA_PROMPT__ = null;
-      console.log("[PWA] The Online Bakery was successfully installed!");
+      console.log("[PWA] Onebite Bakery was successfully installed!");
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -290,6 +294,9 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         showPushModal,
         setShowPushModal,
         promptInstall,
+        downloadApk: downloadAndroidApk,
+        downloadDesktopInstaller: downloadWindowsInstaller,
+        downloadWebShortcut: downloadWebShortcut,
         applyUpdate,
         dismissInstallBanner,
         isInstallBannerDismissed,

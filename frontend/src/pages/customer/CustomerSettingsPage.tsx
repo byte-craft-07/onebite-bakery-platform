@@ -21,7 +21,7 @@ import { usePWA } from "@/hooks/usePWA";
 
 export const CustomerSettingsPage: React.FC = () => {
   const { user } = useAuth();
-  const { isStandalone, isInstallable, promptInstall, setShowPushModal } = usePWA();
+  const { isStandalone, isInstallable, promptInstall, setShowInstallModal, setShowPushModal } = usePWA();
 
   const [smsNotifs, setSmsNotifs] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
@@ -190,16 +190,21 @@ export const CustomerSettingsPage: React.FC = () => {
                 <div className="space-y-0.5">
                   <span className="text-xs font-extrabold text-[#3B302B] flex items-center gap-1.5">
                     <Download className="h-3.5 w-3.5 text-[#596B58]" />
-                    <span>Install The Online Bakery App</span>
+                    <span>Install Onebite Bakery App</span>
                   </span>
                   <span className="text-[11px] text-[#7A6E65] block">
-                    Install as a standalone app on your home screen for faster checkout and offline access.
+                    Install as a standalone app or download the native installer file for Android / PC.
                   </span>
                 </div>
                 <Button
                   type="button"
                   size="sm"
-                  onClick={promptInstall}
+                  onClick={async () => {
+                    const installed = await promptInstall();
+                    if (!installed) {
+                      setShowInstallModal(true);
+                    }
+                  }}
                   className="shrink-0 bg-[#596B58] text-white text-xs font-bold"
                 >
                   Install App

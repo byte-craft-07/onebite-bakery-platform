@@ -19,7 +19,7 @@ export const CustomerAuthContainer: React.FC = () => {
 
     const redirectParam = searchParams.get("redirect");
     if (redirectParam) {
-      sessionStorage.setItem("theonlinebakery_auth_redirect", redirectParam);
+      sessionStorage.setItem("onebitebakery_auth_redirect", redirectParam);
     }
 
     const errorParam = searchParams.get("error");
@@ -134,4 +134,4 @@ export const CustomerAuthContainer: React.FC = () => {
   );
 };
 
-
+export default CustomerAuthContainer;

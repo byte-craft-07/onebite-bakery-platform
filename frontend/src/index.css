@@ -156,3 +156,8 @@ textarea:focus-visible {
   scrollbar-color: #D8BE91 #FFF8EC;
 }
 
+.font-bakery-display {
+  font-family: 'Titan One', 'Chewy', 'DynaPuff', 'Fredoka', 'Sniglet', cursive, sans-serif !important;
+  font-weight: 700 !important;
+}
+

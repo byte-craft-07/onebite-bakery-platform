@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the contribution guidelines for the The Online Bakery Platform.
+This document defines the contribution guidelines for the Onebite Bakery Platform.
 
 It ensures that every contributor follows the same architecture, coding standards, documentation process, and engineering practices.
 

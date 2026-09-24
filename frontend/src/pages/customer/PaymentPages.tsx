@@ -82,8 +82,8 @@ export const PaymentPage: React.FC = () => {
       setStatusMsg("Opening UPI payment...");
       await razorpayService.openPaymentModal({
         payment: initRes,
-        customerName: "The Online Bakery Customer",
-        customerEmail: "customer@theonlinebakery.com",
+        customerName: "Onebite Bakery Customer",
+        customerEmail: "customer@onebitebakery.com",
         customerPhone: "7897671632",
         onSuccess: async () => {
           setStatusMsg("Payment received. Waiting for secure backend confirmation...");

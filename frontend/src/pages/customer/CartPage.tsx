@@ -33,11 +33,11 @@ export const CartPage: React.FC = () => {
       fetchCart(false);
     };
 
-    window.addEventListener("theonlinebakery_cart_updated", handleCartUpdated);
-    window.addEventListener("theonlinebakery_location_changed", handleCartUpdated);
+    window.addEventListener("onebitebakery_cart_updated", handleCartUpdated);
+    window.addEventListener("onebitebakery_location_changed", handleCartUpdated);
     return () => {
-      window.removeEventListener("theonlinebakery_cart_updated", handleCartUpdated);
-      window.removeEventListener("theonlinebakery_location_changed", handleCartUpdated);
+      window.removeEventListener("onebitebakery_cart_updated", handleCartUpdated);
+      window.removeEventListener("onebitebakery_location_changed", handleCartUpdated);
     };
   }, []);
 

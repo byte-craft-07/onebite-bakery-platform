@@ -32,7 +32,7 @@ export interface CartResponse {
   discountAmount?: number;
 }
 
-const LOCAL_STORAGE_KEY = "theonlinebakery_local_cart";
+const LOCAL_STORAGE_KEY = "onebitebakery_local_cart";
 
 const DEFAULT_FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
@@ -181,7 +181,7 @@ const saveLocalCart = (cart: CartResponse, dispatchEvent = true): CartResponse =
     // Ignore
   }
   if (dispatchEvent && typeof window !== "undefined") {
-    window.dispatchEvent(new Event("theonlinebakery_cart_updated"));
+    window.dispatchEvent(new Event("onebitebakery_cart_updated"));
   }
   return normalized;
 };
@@ -342,7 +342,7 @@ export const cartService = {
     }
     localStorage.removeItem(LOCAL_STORAGE_KEY);
     if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("theonlinebakery_cart_updated"));
+      window.dispatchEvent(new Event("onebitebakery_cart_updated"));
     }
   },
 
@@ -443,7 +443,7 @@ export const cartService = {
       }>("/cart/coupon");
       if (response.data?.data?.cart) {
         if (typeof window !== "undefined") {
-          window.dispatchEvent(new Event("theonlinebakery_cart_updated"));
+          window.dispatchEvent(new Event("onebitebakery_cart_updated"));
         }
         return normalizeCartResponse(response.data.data.cart);
       }

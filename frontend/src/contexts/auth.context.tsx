@@ -21,8 +21,8 @@ export interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const USER_STORAGE_KEY = "theonlinebakery_user";
-const LOCAL_LOCATION_KEY = "theonlinebakery_active_location";
+const USER_STORAGE_KEY = "onebitebakery_user";
+const LOCAL_LOCATION_KEY = "onebitebakery_active_location";
 
 const normalizeUser = (u: UserProfileResponse | null): UserProfileResponse | null => {
   return u ? { ...u } : null;
@@ -75,19 +75,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         window.location.pathname.includes("checkout");
 
       if (!sessionUser.currentLocation && !isCheckoutPage) {
-        localStorage.setItem("theonlinebakery_open_location_after_login", "true");
+        localStorage.setItem("onebitebakery_open_location_after_login", "true");
         setTimeout(() => {
-          window.dispatchEvent(new CustomEvent("theonlinebakery_open_location_modal"));
+          window.dispatchEvent(new CustomEvent("onebitebakery_open_location_modal"));
         }, 50);
       } else {
-        localStorage.removeItem("theonlinebakery_open_location_after_login");
+        localStorage.removeItem("onebitebakery_open_location_after_login");
       }
 
       // Prompt push notification permission on login if supported and permission is default
       if (PushNotificationService.isSupported() && typeof Notification !== "undefined") {
         if (Notification.permission === "default") {
           setTimeout(() => {
-            window.dispatchEvent(new CustomEvent("theonlinebakery_prompt_push_permission"));
+            window.dispatchEvent(new CustomEvent("onebitebakery_prompt_push_permission"));
           }, 800);
         } else if (Notification.permission === "granted") {
           void PushNotificationService.autoSyncSubscriptionIfGranted();
@@ -126,8 +126,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setGuestLocation(newLoc);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
       localStorage.setItem(LOCAL_LOCATION_KEY, JSON.stringify(newLoc));
-      localStorage.setItem("theonlinebakery_current_location", JSON.stringify(newLoc));
-      window.dispatchEvent(new CustomEvent("theonlinebakery_location_changed", { detail: newLoc }));
+      localStorage.setItem("onebitebakery_current_location", JSON.stringify(newLoc));
+      window.dispatchEvent(new CustomEvent("onebitebakery_location_changed", { detail: newLoc }));
       return newLoc;
     } else {
       // Guest local location selection
@@ -142,8 +142,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       setGuestLocation(guestLoc);
       localStorage.setItem(LOCAL_LOCATION_KEY, JSON.stringify(guestLoc));
-      localStorage.setItem("theonlinebakery_current_location", JSON.stringify(guestLoc));
-      window.dispatchEvent(new CustomEvent("theonlinebakery_location_changed", { detail: guestLoc }));
+      localStorage.setItem("onebitebakery_current_location", JSON.stringify(guestLoc));
+      window.dispatchEvent(new CustomEvent("onebitebakery_location_changed", { detail: guestLoc }));
       return guestLoc;
     }
   };
@@ -151,12 +151,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearClientData = () => {
     setUser(null);
     localStorage.removeItem(USER_STORAGE_KEY);
-    localStorage.removeItem("theonlinebakery_local_cart");
-    localStorage.removeItem("theonlinebakery_customer_orders_list");
-    localStorage.removeItem("theonlinebakery_local_addresses");
-    localStorage.removeItem("theonlinebakery_local_celebrations");
-    localStorage.removeItem("theonlinebakery_local_tickets");
-    localStorage.removeItem("theonlinebakery_local_customer_notifs");
+    localStorage.removeItem("onebitebakery_local_cart");
+    localStorage.removeItem("onebitebakery_customer_orders_list");
+    localStorage.removeItem("onebitebakery_local_addresses");
+    localStorage.removeItem("onebitebakery_local_celebrations");
+    localStorage.removeItem("onebitebakery_local_tickets");
+    localStorage.removeItem("onebitebakery_local_customer_notifs");
   };
 
   const logout = async () => {

@@ -523,7 +523,7 @@ export const AdminCustomCakePage: React.FC = () => {
                       {/* Direct WhatsApp Quick Connect */}
                       <a
                         href={`https://wa.me/91${inq.customerPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                          `Hi ${inq.customerName}, regarding your Custom Cake Inquiry #${inq.inquiryNumber} at The Online Bakery: ${
+                          `Hi ${inq.customerName}, regarding your Custom Cake Inquiry #${inq.inquiryNumber} at Onebite Bakery: ${
                             inq.adminRecommendation?.quotedPrice
                               ? `We can prepare your custom ${inq.tiers}-tier cake for ₹${inq.adminRecommendation.quotedPrice}. ${inq.adminRecommendation.message || ""}`
                               : `We received your custom cake query and reference request! Let's finalize your design and date.`

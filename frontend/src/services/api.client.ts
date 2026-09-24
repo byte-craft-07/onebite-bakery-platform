@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 import { ENV } from "@/config/env.config";
+import { toast } from "@/contexts/toast.context";
 
 export const apiClient = axios.create({
   baseURL: ENV.API_BASE_URL,
@@ -10,7 +11,7 @@ export const apiClient = axios.create({
   },
 });
 
-const GUEST_SESSION_KEY = "theonlinebakery_guest_session_id";
+const GUEST_SESSION_KEY = "onebitebakery_guest_session_id";
 
 export const getOrCreateGuestSessionId = (): string => {
   try {
@@ -32,7 +33,7 @@ apiClient.interceptors.request.use(
     config.headers.set("x-session-id", getOrCreateGuestSessionId());
 
     try {
-      const activeRaw = localStorage.getItem("theonlinebakery_active_location") || localStorage.getItem("theonlinebakery_current_location");
+      const activeRaw = localStorage.getItem("onebitebakery_active_location") || localStorage.getItem("onebitebakery_current_location");
       if (activeRaw) {
         const loc = JSON.parse(activeRaw);
         if (loc?.villageId) config.headers.set("x-village-id", loc.villageId);
@@ -74,11 +75,29 @@ const isAuthLifecycleRequest = (url?: string): boolean => {
   ].some((authPath) => url.includes(authPath));
 };
 
+/**
+ * Track whether we've already shown a global toast for a particular status code
+ * within a short window, to avoid spamming the user with duplicate notifications.
+ */
+const recentGlobalToasts = new Map<number, number>();
+const TOAST_DEBOUNCE_MS = 3000;
+
+const shouldShowGlobalToast = (status: number): boolean => {
+  const now = Date.now();
+  const lastShown = recentGlobalToasts.get(status);
+  if (lastShown && now - lastShown < TOAST_DEBOUNCE_MS) {
+    return false;
+  }
+  recentGlobalToasts.set(status, now);
+  return true;
+};
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+    // ── 401 Unauthorized: Attempt silent token refresh ──
     if (
       error.response?.status === 401 &&
       originalRequest &&
@@ -105,6 +124,54 @@ apiClient.interceptors.response.use(
         return Promise.reject(refreshErr);
       } finally {
         isRefreshing = false;
+      }
+    }
+
+    // ── 403 Forbidden: Notify about missing permissions ──
+    if (error.response?.status === 403 && shouldShowGlobalToast(403)) {
+      toast.error(
+        "Access Denied",
+        "You don't have permission to perform this action.",
+      );
+    }
+
+    // ── 429 Rate Limited: Ask user to slow down ──
+    if (error.response?.status === 429 && shouldShowGlobalToast(429)) {
+      toast.info(
+        "Too Many Requests",
+        "Please wait a moment before trying again.",
+      );
+    }
+
+    // ── 500+ Server Errors: Notify about server issues ──
+    if (
+      error.response &&
+      error.response.status >= 500 &&
+      shouldShowGlobalToast(error.response.status)
+    ) {
+      toast.error(
+        "Server Error",
+        "Something went wrong on our end. Please try again later.",
+      );
+    }
+
+    // ── Network / Timeout Errors (no response at all) ──
+    if (!error.response && shouldShowGlobalToast(0)) {
+      if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
+        toast.error(
+          "Request Timeout",
+          "The server is taking too long. Please try again.",
+        );
+      } else if (!navigator.onLine) {
+        toast.info(
+          "You're Offline",
+          "Please check your internet connection.",
+        );
+      } else {
+        toast.error(
+          "Connection Error",
+          "Unable to reach the server. Please try again later.",
+        );
       }
     }
 

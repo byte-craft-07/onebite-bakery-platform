@@ -68,8 +68,8 @@ export const authService = {
       }>("/users/location", payload);
       const loc = response.data.data.currentLocation;
       if (loc) {
-        localStorage.setItem("theonlinebakery_current_location", JSON.stringify(loc));
-        localStorage.setItem("theonlinebakery_active_location", JSON.stringify(loc));
+        localStorage.setItem("onebitebakery_current_location", JSON.stringify(loc));
+        localStorage.setItem("onebitebakery_active_location", JSON.stringify(loc));
         return loc;
       }
     } catch (_err) {
@@ -85,8 +85,8 @@ export const authService = {
       district: payload.district,
       pincode: matched ? matched.pincode : "781001",
     };
-    localStorage.setItem("theonlinebakery_current_location", JSON.stringify(fallbackLoc));
-    localStorage.setItem("theonlinebakery_active_location", JSON.stringify(fallbackLoc));
+    localStorage.setItem("onebitebakery_current_location", JSON.stringify(fallbackLoc));
+    localStorage.setItem("onebitebakery_active_location", JSON.stringify(fallbackLoc));
     return fallbackLoc;
   },
 
@@ -97,19 +97,19 @@ export const authService = {
     }>("/users/location");
     const loc = response.data.data.currentLocation;
     if (loc) {
-      localStorage.setItem("theonlinebakery_current_location", JSON.stringify(loc));
-      localStorage.setItem("theonlinebakery_active_location", JSON.stringify(loc));
+      localStorage.setItem("onebitebakery_current_location", JSON.stringify(loc));
+      localStorage.setItem("onebitebakery_active_location", JSON.stringify(loc));
     }
     return loc;
   },
 
   getStoredLocation: (): CustomerLocationResponse | null => {
     try {
-      const activeRaw = localStorage.getItem("theonlinebakery_active_location");
+      const activeRaw = localStorage.getItem("onebitebakery_active_location");
       if (activeRaw) return JSON.parse(activeRaw);
-      const currentRaw = localStorage.getItem("theonlinebakery_current_location");
+      const currentRaw = localStorage.getItem("onebitebakery_current_location");
       if (currentRaw) return JSON.parse(currentRaw);
-      const userRaw = localStorage.getItem("theonlinebakery_user");
+      const userRaw = localStorage.getItem("onebitebakery_user");
       if (userRaw) {
         const u = JSON.parse(userRaw);
         if (u?.currentLocation) return u.currentLocation;

@@ -85,7 +85,7 @@ export const adminCouponsService = {
   },
 };
 
-const LOCAL_COUPONS_KEY = "theonlinebakery_mock_coupons";
+const LOCAL_COUPONS_KEY = "onebitebakery_mock_coupons";
 
 const INITIAL_MOCK_COUPONS: AdminCoupon[] = [
   {

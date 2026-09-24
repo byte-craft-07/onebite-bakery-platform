@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the Analytics architecture for the The Online Bakery Platform.
+This document defines the Analytics architecture for the Onebite Bakery Platform.
 
 The analytics system must provide meaningful business insights while remaining completely independent from business logic.
 

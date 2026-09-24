@@ -4,12 +4,14 @@ import { Outlet } from "react-router-dom";
 import { Footer } from "@/components/navigation/Footer";
 import { Navbar } from "@/components/navigation/Navbar";
 import { GlobalTooltip } from "@/components/ui/GlobalTooltip";
+import { SectionErrorBoundary } from "@/components/common/SectionErrorBoundary";
 import {
   OfflineBanner,
   PwaInstallPrompt,
   IosInstallModal,
   PwaUpdateToast,
   PushNotificationModal,
+  InstallAppModal,
 } from "@/components/pwa";
 
 export const PublicLayout: React.FC = () => {
@@ -19,12 +21,15 @@ export const PublicLayout: React.FC = () => {
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-8 pb-28 lg:pb-8">
-        <Outlet />
+        <SectionErrorBoundary sectionName="page">
+          <Outlet />
+        </SectionErrorBoundary>
       </main>
 
       <Footer />
       <PwaInstallPrompt />
       <IosInstallModal />
+      <InstallAppModal />
       <PwaUpdateToast />
       <PushNotificationModal />
       <GlobalTooltip />

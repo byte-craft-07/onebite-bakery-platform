@@ -179,7 +179,7 @@ describe("PaymentService", () => {
     ).rejects.toBeInstanceOf(AppError);
   });
 
-  it("verifies payment signature without marking the order paid before webhook confirmation", async () => {
+  it("verifies payment signature and captures payment", async () => {
     const mockOrderDoc = createMockOrderDocument();
     vi.spyOn(OrderModel, "findById").mockImplementation(() => ({
       exec: vi.fn().mockResolvedValue(mockOrderDoc),
@@ -197,12 +197,12 @@ describe("PaymentService", () => {
     expect(response.success).toBe(true);
     expect(paymentRepository.updateStatus).toHaveBeenCalledWith(
       paymentId,
-      "AUTHORIZED",
-      { providerPaymentId: "pay_rzp_mock_999" },
+      "CAPTURED",
+      { providerPaymentId: "pay_rzp_mock_999", paymentMethod: "UPI" },
     );
-    expect(response.paymentStatus).toBe("AUTHORIZED");
-    expect(mockOrderDoc.paymentStatus).toBe("PROCESSING");
-    expect(mockOrderDoc.orderStatus).toBe("PENDING");
+    expect(response.paymentStatus).toBe("CAPTURED");
+    expect(mockOrderDoc.paymentStatus).toBe("SUCCESS");
+    expect(mockOrderDoc.orderStatus).toBe("CONFIRMED");
     expect(mockOrderDoc.save).toHaveBeenCalledOnce();
   });
 

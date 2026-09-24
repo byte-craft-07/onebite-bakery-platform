@@ -732,7 +732,7 @@ export const CustomCakePage: React.FC = () => {
               </div>
             </div>
 
-            {/* The Online Bakery Quality Assurance Card */}
+            {/* Onebite Bakery Quality Assurance Card */}
             <div className="p-4 rounded-2xl bg-[#FFF8EC]/60 border border-[#596B58]/20 text-xs space-y-2 text-[#7A6E65]">
               <div className="flex items-center gap-2 font-bold text-[#3B302B]">
                 <ShieldCheck className="h-4 w-4 text-[#596B58]" />
@@ -782,7 +782,7 @@ export const CustomCakePage: React.FC = () => {
               <div className="pt-2 space-y-3">
                 <a
                   href={`https://wa.me/919876543210?text=${encodeURIComponent(
-                    `Hi The Online Bakery! I just submitted custom cake inquiry #${inquirySuccessTicket.inquiryNumber} for "${inquirySuccessTicket.customerName}". Query: ${inquirySuccessTicket.queryText}`,
+                    `Hi Onebite Bakery! I just submitted custom cake inquiry #${inquirySuccessTicket.inquiryNumber} for "${inquirySuccessTicket.customerName}". Query: ${inquirySuccessTicket.queryText}`,
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"

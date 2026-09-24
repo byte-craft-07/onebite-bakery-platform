@@ -2,7 +2,7 @@
 
 ## Project
 
-The Online Bakery Platform
+Onebite Bakery Platform
 
 ---
 

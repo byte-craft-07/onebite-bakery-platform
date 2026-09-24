@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the backup, restore, and disaster recovery strategy for the The Online Bakery Platform.
+This document defines the backup, restore, and disaster recovery strategy for the Onebite Bakery Platform.
 
 The objective is to minimize data loss, reduce downtime, and ensure business continuity in the event of hardware failures, software failures, accidental deletion, cyber attacks, or operational mistakes.
 

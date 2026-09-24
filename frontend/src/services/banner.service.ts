@@ -58,7 +58,7 @@ export const FALLBACK_HERO_BANNERS: BannerItem[] = [
   },
 ];
 
-const LOCAL_STORAGE_KEY = "theonlinebakery_hero_banners";
+const LOCAL_STORAGE_KEY = "onebitebakery_hero_banners";
 
 export const bannerService = {
   getStoredBannersSync: (placement: string = "home_hero"): BannerItem[] => {

@@ -86,11 +86,11 @@ export class ProductService {
     const product = await this.productRepository.create({
       ...this.toWritePayload(dto),
       name: dto.name,
-      description: dto.description || "Freshly baked artisanal delight from The Online Bakery.",
+      description: dto.description || "Freshly baked artisanal delight from Onebite Bakery.",
       thumbnailUrl: mainImg,
       imageUrls: dto.imageUrls && dto.imageUrls.length > 0 ? dto.imageUrls : [mainImg],
       seoTitle: dto.seoTitle || dto.name,
-      seoDescription: dto.seoDescription || (dto.description ? dto.description.slice(0, 150) : `${dto.name} from The Online Bakery`),
+      seoDescription: dto.seoDescription || (dto.description ? dto.description.slice(0, 150) : `${dto.name} from Onebite Bakery`),
       slug,
       categoryId,
       occasionIds,

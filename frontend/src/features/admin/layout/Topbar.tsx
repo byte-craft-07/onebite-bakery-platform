@@ -72,8 +72,8 @@ export const Topbar: React.FC<{ onMenuToggle: () => void }> = ({ onMenuToggle })
       setSoundSettings(getSoundSettings());
     };
 
-    window.addEventListener("theonlinebakery_refresh_notifications", handleRefresh);
-    window.addEventListener("theonlinebakery_sound_settings_changed", handleSoundChange);
+    window.addEventListener("onebitebakery_refresh_notifications", handleRefresh);
+    window.addEventListener("onebitebakery_sound_settings_changed", handleSoundChange);
 
     // Initialize Web Push status
     const checkPushStatus = async () => {
@@ -92,8 +92,8 @@ export const Topbar: React.FC<{ onMenuToggle: () => void }> = ({ onMenuToggle })
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener("theonlinebakery_refresh_notifications", handleRefresh);
-      window.removeEventListener("theonlinebakery_sound_settings_changed", handleSoundChange);
+      window.removeEventListener("onebitebakery_refresh_notifications", handleRefresh);
+      window.removeEventListener("onebitebakery_sound_settings_changed", handleSoundChange);
     };
   }, []);
 

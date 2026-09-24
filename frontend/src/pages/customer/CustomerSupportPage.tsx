@@ -34,7 +34,7 @@ const FAQS = [
   },
   {
     q: "What if my delivery location is in an outer village or rural route?",
-    a: "The Online Bakery delivers to all registered regional village routes. You can verify your village by clicking the Location selector in the top bar.",
+    a: "Onebite Bakery delivers to all registered regional village routes. You can verify your village by clicking the Location selector in the top bar.",
   },
   {
     q: "What is the cancellation and refund policy?",
@@ -75,7 +75,7 @@ export const CustomerSupportPage: React.FC = () => {
 
   const handleWhatsAppHelp = () => {
     const text = encodeURIComponent(
-      "Hi The Online Bakery! I need assistance regarding my account / order.",
+      "Hi Onebite Bakery! I need assistance regarding my account / order.",
     );
     window.open(`https://wa.me/917897671632?text=${text}`, "_blank");
   };
@@ -192,7 +192,7 @@ export const CustomerSupportPage: React.FC = () => {
                 {t.status === "RESOLVED" ? (
                   <div className="text-xs text-green-700 font-semibold flex items-center gap-1.5 pt-1">
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    <span>Issue verified and resolved by The Online Bakery Customer Support.</span>
+                    <span>Issue verified and resolved by Onebite Bakery Customer Support.</span>
                   </div>
                 ) : (
                   <div className="text-xs text-amber-700 font-medium pt-1">

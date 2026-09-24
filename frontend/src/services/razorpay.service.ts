@@ -26,7 +26,7 @@ export interface RazorpayPaymentSuccessPayload {
 }
 
 interface RazorpayCheckoutInstance {
-  on(eventName: "payment.failed", handler: () => void): void;
+  on(eventName: "payment.failed", handler: (response?: any) => void): void;
   open(): void;
 }
 
@@ -192,23 +192,32 @@ export const razorpayService = {
 
     const validOrderId = isRealRazorpayOrderId(razorpayOrder.id) ? razorpayOrder.id : undefined;
 
+    const resolvedKey =
+      razorpayOrder.keyId ||
+      configuredRazorpayKeyId ||
+      (!import.meta.env.PROD ? "rzp_test_TLZEmewy1XtSK9" : "");
+
+    if (!resolvedKey) {
+      throw new Error("Razorpay Key ID is not configured. Please set VITE_RAZORPAY_KEY_ID in production environment.");
+    }
+
     const rzpOptions: RazorpayCheckoutOptions = {
-      key: razorpayOrder.keyId || configuredRazorpayKeyId || "",
+      key: resolvedKey,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency || "INR",
-      name: "The Online Bakery Platform",
-      description: `UPI payment for order #${options.payment.orderId.slice(-6).toUpperCase()}`,
+      name: "Onebite Bakery Platform",
+      description: `Payment for order #${options.payment.orderId.slice(-6).toUpperCase()}`,
       image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=150&q=80",
       order_id: validOrderId,
       prefill: {
-        name: options.customerName || "The Online Bakery Customer",
-        email: options.customerEmail || "ajaykterha@gmail.com",
+        name: options.customerName || "Onebite Bakery Customer",
+        email: options.customerEmail || "customer@onebitebakery.com",
         contact: options.customerPhone || "7897671632",
       },
       readonly: {
-        contact: true,
-        email: true,
-        name: true,
+        contact: false,
+        email: false,
+        name: false,
       },
       theme: {
         color: "#596B58",
@@ -217,7 +226,7 @@ export const razorpayService = {
         display: {
           blocks: {
             upi: {
-              name: "Pay via UPI",
+              name: "Pay using UPI",
               instruments: [
                 {
                   method: "upi",
@@ -232,10 +241,16 @@ export const razorpayService = {
         },
       },
       handler: async (response: RazorpayPaymentSuccessPayload) => {
-        const verifyRes = await razorpayService.verifyPayment(options.payment.orderId, response);
-        if (verifyRes.verified) {
-          options.onSuccess(response);
-        } else {
+        try {
+          const verifyRes = await razorpayService.verifyPayment(options.payment.orderId, response);
+          if (verifyRes.verified) {
+            options.onSuccess(response);
+          } else {
+            console.error("Razorpay verification failed on server:", verifyRes);
+            options.onDismiss?.();
+          }
+        } catch (err) {
+          console.error("Razorpay verification call error:", err);
           options.onDismiss?.();
         }
       },
@@ -250,18 +265,21 @@ export const razorpayService = {
 
     try {
       if (!window.Razorpay) {
+        console.error("Razorpay SDK not loaded on window.");
         options.onDismiss?.();
         return;
       }
 
       const rzp = new window.Razorpay(rzpOptions);
-      rzp.on("payment.failed", () => {
+      rzp.on("payment.failed", (res: unknown) => {
+        console.warn("Razorpay payment failed callback:", res);
         if (options.onDismiss) {
           options.onDismiss();
         }
       });
       rzp.open();
-    } catch {
+    } catch (err) {
+      console.error("Razorpay modal open error:", err);
       if (options.onDismiss) {
         options.onDismiss();
       }

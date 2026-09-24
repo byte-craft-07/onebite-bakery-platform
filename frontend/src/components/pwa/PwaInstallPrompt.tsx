@@ -10,6 +10,7 @@ export const PwaInstallPrompt: React.FC = () => {
     isInstallBannerDismissed,
     dismissInstallBanner,
     promptInstall,
+    setShowInstallModal,
   } = usePWA();
 
   const [visible, setVisible] = useState(false);
@@ -37,6 +38,9 @@ export const PwaInstallPrompt: React.FC = () => {
       const installed = await promptInstall();
       if (installed) {
         setVisible(false);
+      } else {
+        setShowInstallModal(true);
+        setVisible(false);
       }
     } finally {
       setInstalling(false);
@@ -58,7 +62,7 @@ export const PwaInstallPrompt: React.FC = () => {
         <div className="h-11 w-11 rounded-xl bg-[#596B58] text-white flex items-center justify-center shrink-0 shadow-sm overflow-hidden p-1">
           <img
             src="/icons/pwa-192x192.png"
-            alt="The Online Bakery"
+            alt="Onebite Bakery"
             className="h-full w-full object-contain rounded-lg"
             onError={(e) => {
               // fallback to cake emoji/icon if image fails
@@ -69,7 +73,7 @@ export const PwaInstallPrompt: React.FC = () => {
 
         <div className="flex-1 min-w-0 pr-4">
           <div className="flex items-center gap-1.5">
-            <h3 className="text-sm font-bold text-[#3B302B] truncate">Install The Online Bakery</h3>
+            <h3 className="text-sm font-bold text-[#3B302B] truncate">Install Onebite Bakery</h3>
             <Sparkles className="h-3.5 w-3.5 text-[#D8BE91] shrink-0" />
           </div>
           <p className="text-xs text-[#7A6E65] mt-0.5 leading-snug">

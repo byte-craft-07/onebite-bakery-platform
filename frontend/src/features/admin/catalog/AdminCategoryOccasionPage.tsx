@@ -12,6 +12,25 @@ import {
 import { MediaUploader } from "./MediaUploader";
 import { adminCatalogService } from "../services/adminCatalog.service";
 
+const cleanSlug = (text: string): string => {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+};
+
+const extractErrorMessage = (err: any, fallback: string): string => {
+  if (err?.response?.data?.errors && Array.isArray(err.response.data.errors)) {
+    const errorDetails = err.response.data.errors
+      .map((e: any) => e.message || e.msg)
+      .filter(Boolean)
+      .join(", ");
+    if (errorDetails) return errorDetails;
+  }
+  return err?.response?.data?.message || err?.message || fallback;
+};
+
 export const AdminCategoryPage: React.FC = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,6 +38,7 @@ export const AdminCategoryPage: React.FC = () => {
   const [editingCat, setEditingCat] = useState<any | null>(null);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [isManualSlug, setIsManualSlug] = useState(false);
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,6 +61,7 @@ export const AdminCategoryPage: React.FC = () => {
     setEditingCat(null);
     setName("");
     setSlug("");
+    setIsManualSlug(false);
     setDescription("");
     setImageUrl("");
     setErrorMsg(null);
@@ -51,10 +72,23 @@ export const AdminCategoryPage: React.FC = () => {
     setEditingCat(cat);
     setName(cat.name || "");
     setSlug(cat.slug || "");
+    setIsManualSlug(true);
     setDescription(cat.description || "");
     setImageUrl(cat.image || cat.bannerImage || "");
     setErrorMsg(null);
     setIsModalOpen(true);
+  };
+
+  const handleNameChange = (val: string) => {
+    setName(val);
+    if (!isManualSlug) {
+      setSlug(cleanSlug(val));
+    }
+  };
+
+  const handleSlugChange = (val: string) => {
+    setIsManualSlug(true);
+    setSlug(val);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,10 +98,12 @@ export const AdminCategoryPage: React.FC = () => {
     setIsSubmitting(true);
     setErrorMsg(null);
 
+    const formattedSlug = cleanSlug(slug || name);
+
     const payload = {
       name: name.trim(),
-      slug: slug.trim() || name.trim().toLowerCase().replace(/\s+/g, "-"),
-      description: description.trim() || `${name.trim()} category from The Online Bakery.`,
+      slug: formattedSlug || cleanSlug(name),
+      description: description.trim() || `${name.trim()} category from Onebite Bakery.`,
       image: imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80",
     };
 
@@ -80,8 +116,7 @@ export const AdminCategoryPage: React.FC = () => {
       await fetchCategories();
       setIsModalOpen(false);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Failed to save category.";
-      setErrorMsg(msg);
+      setErrorMsg(extractErrorMessage(err, "Failed to save category."));
     } finally {
       setIsSubmitting(false);
     }
@@ -162,8 +197,8 @@ export const AdminCategoryPage: React.FC = () => {
             </div>
           ) : null}
 
-          <Input label="Category Name" placeholder="Cupcakes & Muffins" value={name} onChange={(e) => setName(e.target.value)} required />
-          <Input label="URL Slug" placeholder="cupcakes-muffins" value={slug} onChange={(e) => setSlug(e.target.value)} />
+          <Input label="Category Name" placeholder="Cupcakes & Muffins" value={name} onChange={(e) => handleNameChange(e.target.value)} required />
+          <Input label="URL Slug" placeholder="cupcakes-muffins" value={slug} onChange={(e) => handleSlugChange(e.target.value)} />
           <div>
             <label className="block text-xs font-bold text-[#3B302B] mb-1">Description</label>
             <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-3 rounded-lg border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58]" />
@@ -185,6 +220,7 @@ export const AdminOccasionPage: React.FC = () => {
   const [editingOcc, setEditingOcc] = useState<any | null>(null);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [isManualSlug, setIsManualSlug] = useState(false);
   const [tagline, setTagline] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -207,6 +243,7 @@ export const AdminOccasionPage: React.FC = () => {
     setEditingOcc(null);
     setName("");
     setSlug("");
+    setIsManualSlug(false);
     setTagline("");
     setImageUrl("");
     setErrorMsg(null);
@@ -217,10 +254,23 @@ export const AdminOccasionPage: React.FC = () => {
     setEditingOcc(occ);
     setName(occ.name || "");
     setSlug(occ.slug || "");
+    setIsManualSlug(true);
     setTagline(occ.tagline || occ.description || "");
     setImageUrl(occ.bannerImage || occ.image || "");
     setErrorMsg(null);
     setIsModalOpen(true);
+  };
+
+  const handleNameChange = (val: string) => {
+    setName(val);
+    if (!isManualSlug) {
+      setSlug(cleanSlug(val));
+    }
+  };
+
+  const handleSlugChange = (val: string) => {
+    setIsManualSlug(true);
+    setSlug(val);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -230,9 +280,11 @@ export const AdminOccasionPage: React.FC = () => {
     setIsSubmitting(true);
     setErrorMsg(null);
 
+    const formattedSlug = cleanSlug(slug || name);
+
     const payload = {
       name: name.trim(),
-      slug: slug.trim() || name.trim().toLowerCase().replace(/\s+/g, "-"),
+      slug: formattedSlug || cleanSlug(name),
       tagline: tagline.trim(),
       description: tagline.trim() || `${name.trim()} celebration occasion cakes and desserts`,
       bannerImage: imageUrl || "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=800&q=80",
@@ -247,8 +299,7 @@ export const AdminOccasionPage: React.FC = () => {
       await fetchOccasions();
       setIsModalOpen(false);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Failed to save occasion.";
-      setErrorMsg(msg);
+      setErrorMsg(extractErrorMessage(err, "Failed to save occasion."));
     } finally {
       setIsSubmitting(false);
     }
@@ -329,8 +380,8 @@ export const AdminOccasionPage: React.FC = () => {
             </div>
           ) : null}
 
-          <Input label="Occasion Name" placeholder="Baby Shower Celebrations" value={name} onChange={(e) => setName(e.target.value)} required />
-          <Input label="URL Slug" placeholder="baby-shower" value={slug} onChange={(e) => setSlug(e.target.value)} />
+          <Input label="Occasion Name" placeholder="Baby Shower Celebrations" value={name} onChange={(e) => handleNameChange(e.target.value)} required />
+          <Input label="URL Slug" placeholder="baby-shower" value={slug} onChange={(e) => handleSlugChange(e.target.value)} />
           <Input label="Tagline" placeholder="Delicate pastel theme cakes for new beginnings" value={tagline} onChange={(e) => setTagline(e.target.value)} />
           <MediaUploader value={imageUrl} onChange={setImageUrl} entityType="OCCASION" />
           <Button type="submit" className="w-full text-white bg-[#596B58] hover:bg-[#495948] h-11 font-bold rounded-xl" isLoading={isSubmitting}>

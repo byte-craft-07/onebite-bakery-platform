@@ -19,7 +19,7 @@ export const seedDevelopmentData = async (): Promise<void> => {
         { phone: "9999999999" },
         { email: "ajaykterha@gmail.com" },
         { email: "ajayterha@gmail.com" },
-        { email: "theonlinebakery07@gmail.com" },
+        { email: "onebitebakery07@gmail.com" },
       ],
     });
     if (!existingAdmin) {
@@ -46,7 +46,7 @@ export const seedDevelopmentData = async (): Promise<void> => {
       await UserModel.create({
         name: "Bakery Customer",
         phone: "9876543210",
-        email: "customer@theonlinebakery.local",
+        email: "customer@onebitebakery.local",
         role: "customer",
         isVerified: true,
         status: "active",
@@ -92,7 +92,7 @@ export const seedDevelopmentData = async (): Promise<void> => {
           slug: "pastries-tarts",
           description: "Individual dessert pastries & fruit tarts",
           image: "https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?auto=format&fit=crop&w=600&q=80",
-          seoTitle: "Pastries & Tarts - The Online Bakery",
+          seoTitle: "Pastries & Tarts - Onebite Bakery",
           seoDescription: "Fresh pastries and fruit tarts",
           seoKeywords: ["pastries", "tarts"],
           searchableText: "pastries tarts individual dessert",
@@ -105,7 +105,7 @@ export const seedDevelopmentData = async (): Promise<void> => {
           slug: "fresh-breads",
           description: "Artisan sourdough & whole wheat bakery breads",
           image: "https://images.unsplash.com/photo-1589367920969-ab8e050bbb04?auto=format&fit=crop&w=600&q=80",
-          seoTitle: "Fresh Breads - The Online Bakery",
+          seoTitle: "Fresh Breads - Onebite Bakery",
           seoDescription: "Artisan sourdough and fresh bakery breads",
           seoKeywords: ["breads", "sourdough"],
           searchableText: "fresh breads sourdough whole wheat",
@@ -118,7 +118,7 @@ export const seedDevelopmentData = async (): Promise<void> => {
           slug: "cookies-biscuits",
           description: "Freshly baked butter cookies & biscotti",
           image: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=600&q=80",
-          seoTitle: "Cookies & Biscuits - The Online Bakery",
+          seoTitle: "Cookies & Biscuits - Onebite Bakery",
           seoDescription: "Freshly baked butter cookies and biscotti",
           seoKeywords: ["cookies", "biscuits"],
           searchableText: "cookies biscuits butter cookies biscotti",
@@ -131,7 +131,7 @@ export const seedDevelopmentData = async (): Promise<void> => {
           slug: "combos-hampers",
           description: "Curated celebration hampers & combo boxes",
           image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80",
-          seoTitle: "Combos & Hampers - The Online Bakery",
+          seoTitle: "Combos & Hampers - Onebite Bakery",
           seoDescription: "Curated celebration hampers and combo boxes",
           seoKeywords: ["combos", "hampers", "gifts"],
           searchableText: "combos hampers celebration gift boxes",
@@ -231,11 +231,11 @@ export const seedDevelopmentData = async (): Promise<void> => {
     if (branchCount === 0) {
       const branches = await BranchModel.insertMany([
         {
-          name: "The Online Bakery Main Store",
+          name: "Onebite Bakery Main Store",
           code: "TOB-HQ",
           type: "MAIN",
           address: {
-            street: "The Online Bakery, N 80°14, terha 25°49'43.3, 54.7\"E",
+            street: "Onebite Bakery, N 80°14, terha 25°49'43.3, 54.7\"E",
             city: "Hamirpur",
             state: "Uttar Pradesh",
             pincode: "210502",
@@ -264,7 +264,7 @@ export const seedDevelopmentData = async (): Promise<void> => {
         { name: "Sumerpur", district: "Hamirpur", pincode: "210502", branchId: centralBranch?._id, isActive: true },
         { name: "Maudaha", district: "Hamirpur", pincode: "210507", branchId: centralBranch?._id, isActive: true },
       ]);
-      logger.info("All Default Villages seeded and linked to Main Branch (The Online Bakery Main Store)");
+      logger.info("All Default Villages seeded and linked to Main Branch (Onebite Bakery Main Store)");
     } else {
       const mainBranch =
         (await BranchModel.findOne({ type: "MAIN", isActive: true })) ||

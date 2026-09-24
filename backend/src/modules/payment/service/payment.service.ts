@@ -242,18 +242,22 @@ export class PaymentService {
       );
     }
 
-    await this.paymentRepository.updateStatus(payment._id, "AUTHORIZED", {
+    await this.paymentRepository.updateStatus(payment._id, "CAPTURED", {
       providerPaymentId: dto.razorpayPaymentId,
+      paymentMethod: "UPI",
     });
 
-    order.paymentStatus = "PROCESSING";
+    order.paymentStatus = "SUCCESS";
+    if (order.orderStatus === "PENDING") {
+      order.orderStatus = "CONFIRMED";
+    }
     await order.save();
 
     return {
       success: true,
       paymentId: payment._id.toString(),
       orderId: order._id.toString(),
-      paymentStatus: "AUTHORIZED",
+      paymentStatus: "CAPTURED",
       message: "Payment signature verified successfully.",
     };
   }

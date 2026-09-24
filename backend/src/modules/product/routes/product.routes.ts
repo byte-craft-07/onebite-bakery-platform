@@ -77,6 +77,12 @@ productRouter.get(
 );
 
 productRouter.get(
+  "/admin/shares/stats",
+  ...ownerOnly,
+  asyncHandler(productController.getShareStats),
+);
+
+productRouter.get(
   "/admin/:id",
   ...ownerOnly,
   validateRequest({ params: productIdParamSchema }),
@@ -88,6 +94,20 @@ productRouter.get(
   ...ownerOnly,
   validateRequest({ params: productIdParamSchema }),
   asyncHandler(productController.getInventory),
+);
+
+productRouter.get(
+  "/id/:id",
+  validateRequest({ params: productIdParamSchema }),
+  cacheResponse({ ttlSeconds: 300, tags: ["products"] }),
+  asyncHandler(productController.getById),
+);
+
+productRouter.get(
+  "/by-id/:id",
+  validateRequest({ params: productIdParamSchema }),
+  cacheResponse({ ttlSeconds: 300, tags: ["products"] }),
+  asyncHandler(productController.getById),
 );
 
 productRouter.post(
@@ -154,12 +174,6 @@ productRouter.post(
   "/share-event",
   validateRequest({ body: recordProductShareSchema }),
   asyncHandler(productController.recordShare),
-);
-
-productRouter.get(
-  "/admin/shares/stats",
-  ...ownerOnly,
-  asyncHandler(productController.getShareStats),
 );
 
 productRouter.get(

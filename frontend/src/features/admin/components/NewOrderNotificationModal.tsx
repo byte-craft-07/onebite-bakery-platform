@@ -43,9 +43,9 @@ export const NewOrderNotificationModal: React.FC<NewOrderNotificationModalProps>
     const handleSettingsChange = () => {
       setSoundEnabledState(getSoundSettings().soundEnabled);
     };
-    window.addEventListener("theonlinebakery_sound_settings_changed", handleSettingsChange);
+    window.addEventListener("onebitebakery_sound_settings_changed", handleSettingsChange);
     return () => {
-      window.removeEventListener("theonlinebakery_sound_settings_changed", handleSettingsChange);
+      window.removeEventListener("onebitebakery_sound_settings_changed", handleSettingsChange);
     };
   }, []);
 

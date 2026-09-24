@@ -30,7 +30,7 @@ interface CustomerNotification {
   isRead: boolean;
 }
 
-const READ_STORAGE_KEY = "theonlinebakery_read_notification_ids";
+const READ_STORAGE_KEY = "onebitebakery_read_notification_ids";
 
 const getString = (
   payload: Record<string, unknown>,
@@ -71,7 +71,7 @@ const toCustomerNotification = (
   const title =
     getString(notification.payload, "title") ||
     notification.subject ||
-    "The Online Bakery notification";
+    "Onebite Bakery notification";
   const message =
     getString(notification.payload, "message") ||
     getString(notification.payload, "status") ||

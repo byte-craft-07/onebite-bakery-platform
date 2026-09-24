@@ -66,9 +66,9 @@ export const ProductsListingPage: React.FC = () => {
       fetchProducts();
     };
 
-    window.addEventListener("theonlinebakery_location_changed", handleLocationChange);
+    window.addEventListener("onebitebakery_location_changed", handleLocationChange);
     return () => {
-      window.removeEventListener("theonlinebakery_location_changed", handleLocationChange);
+      window.removeEventListener("onebitebakery_location_changed", handleLocationChange);
     };
   }, [searchQuery, selectedCategory, currentPage, currentLocation, slug]);
 

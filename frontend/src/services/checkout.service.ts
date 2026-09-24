@@ -226,7 +226,7 @@ export const checkoutService = {
     try {
       if (payload.directItem) {
         // Save current cart backup so cart items are NOT lost
-        originalLocalCartJson = localStorage.getItem("theonlinebakery_local_cart");
+        originalLocalCartJson = localStorage.getItem("onebitebakery_local_cart");
         // Clear backend cart first so stale items are not mixed
         try {
           await apiClient.delete("/cart");
@@ -257,7 +257,7 @@ export const checkoutService = {
           subtotal: payload.directItem.itemTotal,
           itemCount: payload.directItem.quantity,
         };
-        localStorage.setItem("theonlinebakery_local_cart", JSON.stringify(tempCart));
+        localStorage.setItem("onebitebakery_local_cart", JSON.stringify(tempCart));
 
         try {
           await apiClient.post("/cart/items", {
@@ -309,15 +309,15 @@ export const checkoutService = {
       if (payload.directItem) {
         // RESTORE original cart so cart items remain safe!
         if (originalLocalCartJson) {
-          localStorage.setItem("theonlinebakery_local_cart", originalLocalCartJson);
+          localStorage.setItem("onebitebakery_local_cart", originalLocalCartJson);
         } else {
-          localStorage.removeItem("theonlinebakery_local_cart");
+          localStorage.removeItem("onebitebakery_local_cart");
         }
-        sessionStorage.removeItem("theonlinebakery_direct_order_item");
-        window.dispatchEvent(new Event("theonlinebakery_cart_updated"));
+        sessionStorage.removeItem("onebitebakery_direct_order_item");
+        window.dispatchEvent(new Event("onebitebakery_cart_updated"));
       } else {
         await cartService.clearCart();
-        window.dispatchEvent(new Event("theonlinebakery_cart_updated"));
+        window.dispatchEvent(new Event("onebitebakery_cart_updated"));
       }
       return response.data.data.order;
     }

@@ -1,4 +1,4 @@
-# The Online Bakery - Authentication
+# Onebite Bakery - Authentication
 
 ## Google Sign-In and Server-Side Sessions
 
@@ -39,7 +39,7 @@ the deployed backend callback route.
 ```env
 GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_CALLBACK_URL=https://theonlinebakery.in/api/v1/auth/google/callback
+GOOGLE_CALLBACK_URL=https://onebitebakery.in/api/v1/auth/google/callback
 ```
 
 The OAuth state cookie is validated before a callback is accepted. Configure

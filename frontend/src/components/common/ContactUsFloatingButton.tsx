@@ -6,7 +6,7 @@ export const ContactUsFloatingButton: React.FC = () => {
 
   const handleWhatsApp = () => {
     const text = encodeURIComponent(
-      "Hi The Online Bakery! I have a question or need assistance with my bakery order."
+      "Hi Onebite Bakery! I have a question or need assistance with my bakery order."
     );
     window.open(`https://wa.me/917897671632?text=${text}`, "_blank");
     setIsOpen(false);

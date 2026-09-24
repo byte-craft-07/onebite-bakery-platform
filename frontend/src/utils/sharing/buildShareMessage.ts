@@ -34,17 +34,17 @@ export function buildShareMessage(
   const cat = product.categoryName?.toLowerCase() || "";
 
   let emoji = "🍰";
-  let leadText = `Check out this delicious ${name} from The Online Bakery!`;
+  let leadText = `Check out this delicious ${name} from Onebite Bakery!`;
 
   if (type === "CUSTOM_CAKE" || cat.includes("custom") || cat.includes("birthday")) {
     emoji = "🎂";
-    leadText = `Looking for a handcrafted celebration cake? Check out "${name}" from The Online Bakery!`;
+    leadText = `Looking for a handcrafted celebration cake? Check out "${name}" from Onebite Bakery!`;
   } else if (type === "COMBO" || cat.includes("combo") || cat.includes("party")) {
     emoji = "🎉";
-    leadText = `This "${name}" celebration combo from The Online Bakery looks perfect for our special party!`;
+    leadText = `This "${name}" celebration combo from Onebite Bakery looks perfect for our special party!`;
   } else if (cat.includes("pastr") || cat.includes("dessert") || cat.includes("tart")) {
     emoji = "🧁";
-    leadText = `Check out this freshly baked ${name} from The Online Bakery!`;
+    leadText = `Check out this freshly baked ${name} from Onebite Bakery!`;
   }
 
   // Multi-line full message suitable for WhatsApp / Telegram / Clipboard
@@ -61,8 +61,8 @@ export function buildShareMessage(
   const fullMessage = messageLines.join("\n\n");
 
   return {
-    title: `The Online Bakery — ${name}`,
-    text: `Check out this delicious ${name} from The Online Bakery 🍰`,
+    title: `Onebite Bakery — ${name}`,
+    text: `Check out this delicious ${name} from Onebite Bakery 🍰`,
     fullMessage,
     url: productUrl,
     priceText: price,

@@ -31,7 +31,7 @@ export const CustomerProfilePage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState(user?.name || "Bakery Customer");
-  const [email, setEmail] = useState(user?.email || "customer@theonlinebakery.local");
+  const [email, setEmail] = useState(user?.email || "customer@onebitebakery.local");
   const [profileImage, setProfileImage] = useState(user?.profileImage || "");
   const [defaultAddress, setDefaultAddress] = useState<Address | null>(null);
   const [isSaving, setIsSaving] = useState(false);

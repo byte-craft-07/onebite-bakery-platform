@@ -6,6 +6,8 @@ import type { RequestContext } from "../../../shared/types/request-context.types
 import { AddressModel } from "../../address/index.js";
 import type { CartResponse, CartService } from "../../cart/index.js";
 import { CategoryModel } from "../../category/index.js";
+import { CouponModel } from "../../coupon/index.js";
+import { OccasionModel } from "../../occasion/index.js";
 import { ProductModel, type Product } from "../../product/index.js";
 import { SettingsModel } from "../../settings/index.js";
 import { OrderModel, type Order } from "../model/index.js";
@@ -34,8 +36,8 @@ const createMockProduct = (overrides: Partial<Product> = {}): Product =>
     price: 500,
     costPrice: 300,
     taxCategory: "STANDARD_5",
-    imageUrls: ["https://cdn.theonlinebakery.test/chocolate.webp"],
-    thumbnailUrl: "https://cdn.theonlinebakery.test/chocolate-thumb.webp",
+    imageUrls: ["https://cdn.onebitebakery.test/chocolate.webp"],
+    thumbnailUrl: "https://cdn.onebitebakery.test/chocolate-thumb.webp",
     stockQuantity: 10,
     lowStockThreshold: 2,
     trackInventory: true,
@@ -232,11 +234,25 @@ describe("OrderService", () => {
       exec: vi.fn().mockResolvedValue(createMockProduct()),
     } as unknown as ReturnType<typeof ProductModel.findOne>));
 
+    vi.spyOn(ProductModel, "findOneAndUpdate").mockImplementation(() => ({
+      exec: vi.fn().mockResolvedValue(createMockProduct()),
+    } as unknown as ReturnType<typeof ProductModel.findOneAndUpdate>));
+
     vi.spyOn(CategoryModel, "findById").mockImplementation(() => ({
       lean: () => ({
         exec: vi.fn().mockResolvedValue({ name: "Cakes" }),
       }),
     } as unknown as ReturnType<typeof CategoryModel.findById>));
+
+    vi.spyOn(OccasionModel, "findById").mockImplementation(() => ({
+      lean: () => ({
+        exec: vi.fn().mockResolvedValue({ name: "Birthday" }),
+      }),
+    } as unknown as ReturnType<typeof OccasionModel.findById>));
+
+    vi.spyOn(CouponModel, "findOneAndUpdate").mockImplementation(() => ({
+      exec: vi.fn().mockResolvedValue({ code: "SAVE10", usedCount: 1 }),
+    } as unknown as ReturnType<typeof CouponModel.findOneAndUpdate>));
 
     vi.spyOn(SettingsModel, "findOne").mockImplementation(() => ({
       lean: () => ({

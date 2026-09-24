@@ -6,6 +6,7 @@ import { socketService, type NewOrderEventPayload } from "@/services/socket.serv
 import { playOrderNotificationSound, getSoundSettings } from "@/utils/sound.util";
 import { PushNotificationModal } from "@/components/pwa/PushNotificationModal";
 import { NewOrderNotificationModal } from "../components/NewOrderNotificationModal";
+import { AdminErrorBoundary } from "../components/AdminErrorBoundary";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
@@ -36,13 +37,13 @@ export const AdminLayout: React.FC = () => {
         void playOrderNotificationSound();
 
         // Notify Topbar and other listening admin views to refresh unread badge and order table
-        window.dispatchEvent(new CustomEvent("theonlinebakery_refresh_notifications"));
-        window.dispatchEvent(new CustomEvent("theonlinebakery_new_order_received", { detail: newOrder }));
+        window.dispatchEvent(new CustomEvent("onebitebakery_refresh_notifications"));
+        window.dispatchEvent(new CustomEvent("onebitebakery_new_order_received", { detail: newOrder }));
       });
 
       const unsubscribeReconnect = socketService.onReconnect(() => {
         // Reconnected: refresh missed notifications
-        window.dispatchEvent(new CustomEvent("theonlinebakery_refresh_notifications"));
+        window.dispatchEvent(new CustomEvent("onebitebakery_refresh_notifications"));
       });
 
       return () => {
@@ -70,7 +71,9 @@ export const AdminLayout: React.FC = () => {
         <Topbar onMenuToggle={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)} />
 
         <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
-          <Outlet />
+          <AdminErrorBoundary>
+            <Outlet />
+          </AdminErrorBoundary>
         </main>
       </div>
 

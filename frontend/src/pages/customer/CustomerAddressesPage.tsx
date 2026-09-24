@@ -315,7 +315,7 @@ export const CustomerAddressesPage: React.FC = () => {
             <div className="space-y-1">
               <label className="text-xs font-bold text-[#3B302B] flex items-center justify-between">
                 <span>Select Village / Area *</span>
-                <span className="text-[10px] text-[#596B58]">The Online Bakery Delivery Network</span>
+                <span className="text-[10px] text-[#596B58]">Onebite Bakery Delivery Network</span>
               </label>
               <select
                 value={form.village}

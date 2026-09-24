@@ -17,12 +17,12 @@ export const Footer: React.FC = () => {
             <div className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 flex items-center justify-center">
               <img
                 src="/logo.svg"
-                alt="The Online Bakery Logo"
+                alt="Onebite Bakery Logo"
                 className="w-full h-full object-contain"
               />
             </div>
             <div className="space-y-0.5">
-              <h3 className="text-xl sm:text-2xl font-extrabold text-[#D8BE91]">The Online Bakery</h3>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-[#D8BE91]">Onebite Bakery</h3>
               <p className="text-[11px] font-extrabold text-[#FFF8EC]/90 tracking-wider">
                 हर जश्न का पहला निवाला &bull; 100% Pure Joy
               </p>
@@ -90,7 +90,7 @@ export const Footer: React.FC = () => {
           <h4 className="text-sm font-bold text-[#D8BE91] uppercase tracking-wider">Store Location</h4>
           <div className="flex items-start gap-2.5">
             <MapPin className="h-4 w-4 text-[#D8BE91] shrink-0 mt-0.5" />
-            <span>The Online Bakery, N 80°14, terha 25°49'43.3, 54.7"E, hamirpur, Uttar Pradesh 210502</span>
+            <span>Onebite Bakery, N 80°14, terha 25°49'43.3, 54.7"E, hamirpur, Uttar Pradesh 210502</span>
           </div>
           <div className="flex items-center gap-2.5">
             <Phone className="h-4 w-4 text-[#D8BE91] shrink-0" />
@@ -108,7 +108,7 @@ export const Footer: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 pt-12 mt-12 border-t border-white/10 text-center text-xs text-[#FFF8EC]/60">
-        <p>&copy; {new Date().getFullYear()} The Online Bakery Platform &bull; हर जश्न का पहला निवाला। (Pure Joy in Every Single Bite). All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} Onebite Bakery Platform &bull; हर जश्न का पहला निवाला। (Pure Joy in Every Single Bite). All rights reserved.</p>
       </div>
 
       <RatingModal

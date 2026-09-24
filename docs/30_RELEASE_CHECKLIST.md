@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the mandatory release process for the The Online Bakery Platform.
+This document defines the mandatory release process for the Onebite Bakery Platform.
 
 Every deployment—whether Development, Staging, or Production—must follow this checklist to ensure quality, security, stability, and rollback readiness.
 

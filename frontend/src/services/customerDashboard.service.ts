@@ -5,9 +5,9 @@ import { favoritesService } from "./favorites.service";
 import { orderService, type OrderDetails } from "./order.service";
 import { reviewService } from "./review.service";
 
-const CELEBRATION_KEY = "theonlinebakery_local_celebrations";
-const TICKETS_KEY = "theonlinebakery_local_tickets";
-const NOTIFS_KEY = "theonlinebakery_local_customer_notifs";
+const CELEBRATION_KEY = "onebitebakery_local_celebrations";
+const TICKETS_KEY = "onebitebakery_local_tickets";
+const NOTIFS_KEY = "onebitebakery_local_customer_notifs";
 
 export interface CelebrationItem {
   id: string;

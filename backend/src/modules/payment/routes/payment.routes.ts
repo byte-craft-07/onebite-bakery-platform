@@ -152,13 +152,6 @@ paymentRouter.post(
 );
 
 paymentRouter.get(
-  "/:id",
-  requireAuth,
-  validateRequest({ params: paymentIdParamSchema }),
-  asyncHandler(paymentController.getPaymentDetails),
-);
-
-paymentRouter.get(
   "/admin",
   requireAuth,
   requireRoles(["admin"]),
@@ -185,6 +178,13 @@ paymentRouter.get(
       data: { payments: formatted },
     });
   }),
+);
+
+paymentRouter.get(
+  "/:id",
+  requireAuth,
+  validateRequest({ params: paymentIdParamSchema }),
+  asyncHandler(paymentController.getPaymentDetails),
 );
 
 paymentRouter.post("/webhook", asyncHandler(paymentController.handleWebhook));
