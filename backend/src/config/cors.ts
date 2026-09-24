@@ -26,7 +26,10 @@ export const corsOptions: CorsOptions = {
 
     const normalizedOrigin = origin.trim().replace(/\/+$/, "");
 
-    if (normalizedAllowedOrigins.includes(normalizedOrigin)) {
+    if (
+      normalizedAllowedOrigins.includes("*") ||
+      normalizedAllowedOrigins.includes(normalizedOrigin)
+    ) {
       callback(null, true);
       return;
     }
