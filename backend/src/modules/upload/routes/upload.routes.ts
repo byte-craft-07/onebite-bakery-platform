@@ -5,6 +5,8 @@ import { validateRequest } from "../../../shared/middlewares/validate-request.mi
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { UploadController } from "../controller/index.js";
 import { uploadSingleFile } from "../middlewares/upload.middleware.js";
+import { env } from "../../../config/env.js";
+import { CloudinaryStorageProvider, LocalStorageProvider } from "../providers/index.js";
 import { MediaRepository } from "../repository/index.js";
 import { UploadService } from "../service/index.js";
 import {
@@ -16,7 +18,11 @@ import {
 export const uploadRouter = Router();
 
 const mediaRepository = new MediaRepository();
-const uploadService = new UploadService(mediaRepository);
+const storageProvider =
+  env.cloudinaryCloudName && env.cloudinaryApiKey && env.cloudinaryApiSecret
+    ? new CloudinaryStorageProvider()
+    : new LocalStorageProvider();
+const uploadService = new UploadService(mediaRepository, storageProvider);
 const uploadController = new UploadController(uploadService);
 const ownerOnly = [requireAuth, requireRoles(["admin"])] as const;
 

@@ -14,6 +14,12 @@ const environment = {
   MONGODB_URI: process.env.MONGODB_URI ?? process.env.MONGO_URI,
   RAZORPAY_KEY_SECRET:
     process.env.RAZORPAY_KEY_SECRET ?? process.env.RAZORPAY_SECRET,
+  CLOUDINARY_CLOUD_NAME:
+    process.env.CLOUDINARY_CLOUD_NAME ?? process.env.CLOUDINARY_NAME,
+  CLOUDINARY_API_KEY:
+    process.env.CLOUDINARY_API_KEY ?? process.env.CLOUDINARY_KEY,
+  CLOUDINARY_API_SECRET:
+    process.env.CLOUDINARY_API_SECRET ?? process.env.CLOUDINARY_SECRET,
 };
 
 const envSchema = z.object({
@@ -56,6 +62,9 @@ const envSchema = z.object({
   VAPID_PUBLIC_KEY: z.string().min(1).optional(),
   VAPID_PRIVATE_KEY: z.string().min(1).optional(),
   VAPID_SUBJECT: z.string().default("mailto:admin@onebitebakery.in"),
+  CLOUDINARY_CLOUD_NAME: z.string().min(1).optional(),
+  CLOUDINARY_API_KEY: z.string().min(1).optional(),
+  CLOUDINARY_API_SECRET: z.string().min(1).optional(),
   REQUIRE_DATABASE_CONNECTION: z.enum(["true", "false"]).optional(),
   REQUIRE_MONGODB_TRANSACTIONS: z.enum(["true", "false"]).optional(),
 });
@@ -173,4 +182,7 @@ export const env = {
   vapidPublicKey: parsedEnv.data.VAPID_PUBLIC_KEY,
   vapidPrivateKey: parsedEnv.data.VAPID_PRIVATE_KEY,
   vapidSubject: parsedEnv.data.VAPID_SUBJECT,
+  cloudinaryCloudName: parsedEnv.data.CLOUDINARY_CLOUD_NAME,
+  cloudinaryApiKey: parsedEnv.data.CLOUDINARY_API_KEY,
+  cloudinaryApiSecret: parsedEnv.data.CLOUDINARY_API_SECRET,
 } as const;
