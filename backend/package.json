@@ -14,7 +14,8 @@
     "db:ensure-indexes": "tsx src/db/ensure-indexes.ts",
     "db:ensure-payment-indexes": "tsx src/db/ensure-payment-indexes.ts",
     "db:bootstrap-admin": "tsx src/db/bootstrap-admin.ts",
-    "db:cleanup": "tsx src/db/cleanup-database.ts"
+    "db:cleanup": "tsx src/db/cleanup-database.ts",
+    "test:db": "node test-connection.cjs"
   },
   "dependencies": {
     "@types/compression": "^1.7.5",
