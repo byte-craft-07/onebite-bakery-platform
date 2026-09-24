@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import { AuthProvider } from "@/contexts/auth.context";
+import { AuthCallbackPage } from "@/pages/auth/AuthCallbackPage";
 import { CustomerAuthContainer } from "@/pages/auth/CustomerAuthContainer";
 import { SessionExpiredPage, UnauthorizedPage } from "@/pages/auth/StatusPages";
 import { authService } from "@/services/auth.service";
@@ -66,5 +67,18 @@ describe("Customer Authentication & Login Tests", () => {
     const img = container.querySelector("img");
     expect(img).toBeDefined();
     expect(img?.getAttribute("src")).toBe("https://example.com/avatar.jpg");
+  });
+
+  it("renders AuthCallbackPage with loading state", () => {
+    render(
+      <AuthProvider>
+        <MemoryRouter initialEntries={["/auth/callback?token=test_token&refreshToken=test_refresh"]}>
+          <AuthCallbackPage />
+        </MemoryRouter>
+      </AuthProvider>,
+    );
+
+    expect(screen.getByText("One Bite Bakery")).toBeDefined();
+    expect(screen.getByText("Completing secure sign-in...")).toBeDefined();
   });
 });

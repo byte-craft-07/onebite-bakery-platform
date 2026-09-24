@@ -33,6 +33,15 @@ apiClient.interceptors.request.use(
     config.headers.set("x-session-id", getOrCreateGuestSessionId());
 
     try {
+      const token = localStorage.getItem("onebitebakery_token");
+      if (token && !config.headers.get("Authorization")) {
+        config.headers.set("Authorization", `Bearer ${token}`);
+      }
+    } catch (_err) {
+      // Ignore
+    }
+
+    try {
       const activeRaw = localStorage.getItem("onebitebakery_active_location") || localStorage.getItem("onebitebakery_current_location");
       if (activeRaw) {
         const loc = JSON.parse(activeRaw);
@@ -116,11 +125,35 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await apiClient.post("/auth/refresh");
+        const storedRefreshToken = localStorage.getItem("onebitebakery_refresh_token");
+        const refreshRes = await apiClient.post<{
+          success: boolean;
+          data?: {
+            tokens?: { accessToken?: string; refreshToken?: string };
+            user?: unknown;
+          };
+        }>("/auth/refresh", {
+          refreshToken: storedRefreshToken || undefined,
+        });
+
+        const newAccessToken = refreshRes.data?.data?.tokens?.accessToken;
+        const newRefreshToken = refreshRes.data?.data?.tokens?.refreshToken;
+        if (newAccessToken) {
+          localStorage.setItem("onebitebakery_token", newAccessToken);
+          if (originalRequest.headers) {
+            originalRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
+          }
+        }
+        if (newRefreshToken) {
+          localStorage.setItem("onebitebakery_refresh_token", newRefreshToken);
+        }
+
         processQueue(null);
         return apiClient(originalRequest);
       } catch (refreshErr) {
         processQueue(refreshErr as Error);
+        localStorage.removeItem("onebitebakery_token");
+        localStorage.removeItem("onebitebakery_refresh_token");
         return Promise.reject(refreshErr);
       } finally {
         isRefreshing = false;

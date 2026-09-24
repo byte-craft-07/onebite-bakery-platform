@@ -26,12 +26,23 @@ export const authService = {
   loginWithPassword: async (identifier: string, password: string): Promise<UserProfileResponse> => {
     const response = await apiClient.post<{
       success: boolean;
-      data: { user: UserProfileResponse };
+      data: {
+        user: UserProfileResponse;
+        tokens?: { accessToken?: string; refreshToken?: string };
+      };
     }>("/auth/login-password", {
       identifier: identifier.trim(),
       password,
     });
-    return response.data.data.user;
+    const { user, tokens } = response.data.data;
+    if (tokens?.accessToken) {
+      localStorage.setItem("onebitebakery_token", tokens.accessToken);
+    }
+    if (tokens?.refreshToken) {
+      localStorage.setItem("onebitebakery_refresh_token", tokens.refreshToken);
+    }
+    localStorage.setItem("onebitebakery_user", JSON.stringify(user));
+    return user;
   },
 
   getCurrentUser: async () => {
@@ -43,10 +54,17 @@ export const authService = {
   },
   logout: async () => {
     try {
-      const response = await apiClient.post<{ success: boolean }>("/auth/logout");
+      const refreshToken = localStorage.getItem("onebitebakery_refresh_token");
+      const response = await apiClient.post<{ success: boolean }>("/auth/logout", {
+        refreshToken: refreshToken || undefined,
+      });
       return response.data;
     } catch (_err) {
       return { success: true };
+    } finally {
+      localStorage.removeItem("onebitebakery_token");
+      localStorage.removeItem("onebitebakery_refresh_token");
+      localStorage.removeItem("onebitebakery_user");
     }
   },
 
@@ -56,6 +74,10 @@ export const authService = {
       return response.data;
     } catch (_err) {
       return { success: true };
+    } finally {
+      localStorage.removeItem("onebitebakery_token");
+      localStorage.removeItem("onebitebakery_refresh_token");
+      localStorage.removeItem("onebitebakery_user");
     }
   },
 

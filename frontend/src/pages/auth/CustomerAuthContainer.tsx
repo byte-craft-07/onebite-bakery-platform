@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle, Loader2, RefreshCw, ShieldCheck, X } from "lucide-react";
 
 import { useAuth } from "@/contexts/auth.context";
+import { authService } from "@/services/auth.service";
 import { googleAuthService } from "@/services/googleAuth.service";
 
 export const CustomerAuthContainer: React.FC = () => {
@@ -17,6 +18,26 @@ export const CustomerAuthContainer: React.FC = () => {
     // Preload Google Identity Services SDK in background
     googleAuthService.loadGoogleScript().catch(() => null);
 
+    const tokenParam = searchParams.get("token");
+    if (tokenParam) {
+      const refreshTokenParam = searchParams.get("refreshToken");
+      const redirectParam = searchParams.get("redirect") || "/customer/dashboard";
+      localStorage.setItem("onebitebakery_token", tokenParam);
+      if (refreshTokenParam) {
+        localStorage.setItem("onebitebakery_refresh_token", refreshTokenParam);
+      }
+      authService.getCurrentUser().then((u) => {
+        if (u) {
+          login(u, {
+            accessToken: tokenParam,
+            refreshToken: refreshTokenParam || undefined,
+          });
+          navigate(redirectParam, { replace: true });
+        }
+      }).catch(() => null);
+      return;
+    }
+
     const redirectParam = searchParams.get("redirect");
     if (redirectParam) {
       sessionStorage.setItem("onebitebakery_auth_redirect", redirectParam);
@@ -30,7 +51,7 @@ export const CustomerAuthContainer: React.FC = () => {
     } else if (errorParam === "google_failed") {
       setApiError("Google Sign-In failed. Please click below to try again.");
     }
-  }, [searchParams]);
+  }, [searchParams, login, navigate]);
 
   const handleGoogleLogin = () => {
     try {

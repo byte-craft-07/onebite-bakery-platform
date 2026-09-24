@@ -15,7 +15,10 @@ export const googleAuthService = {
   ): Promise<GoogleAuthResponse> {
     const response = await apiClient.post<{
       success: boolean;
-      data: { user: UserProfileResponse };
+      data: {
+        user: UserProfileResponse;
+        tokens?: { accessToken?: string; refreshToken?: string };
+      };
     }>("/auth/google", {
       credential: idToken,
       email: payload?.email,
@@ -23,7 +26,13 @@ export const googleAuthService = {
       picture: payload?.picture,
     });
 
-    const user = response.data.data.user;
+    const { user, tokens } = response.data.data;
+    if (tokens?.accessToken) {
+      localStorage.setItem("onebitebakery_token", tokens.accessToken);
+    }
+    if (tokens?.refreshToken) {
+      localStorage.setItem("onebitebakery_refresh_token", tokens.refreshToken);
+    }
     localStorage.setItem("onebitebakery_user", JSON.stringify(user));
 
     return { user };
@@ -35,7 +44,21 @@ export const googleAuthService = {
   redirectToGoogleOAuth(): void {
     const backendBaseUrl =
       import.meta.env.VITE_API_BASE_URL || "/api/v1";
-    window.location.href = `${backendBaseUrl}/auth/google`;
+    const currentOrigin =
+      typeof window !== "undefined" ? window.location.origin : "";
+    const redirectParam =
+      typeof sessionStorage !== "undefined"
+        ? sessionStorage.getItem("onebitebakery_auth_redirect") || ""
+        : "";
+
+    const url = new URL(`${backendBaseUrl}/auth/google`);
+    if (currentOrigin) {
+      url.searchParams.set("origin", currentOrigin);
+    }
+    if (redirectParam) {
+      url.searchParams.set("redirect", redirectParam);
+    }
+    window.location.href = url.toString();
   },
 
   /**

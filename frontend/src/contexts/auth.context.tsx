@@ -11,7 +11,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   role: "customer" | "admin" | "branch_admin" | "delivery_agent" | null;
   currentLocation: CustomerLocationResponse | null;
-  login: (user: UserProfileResponse) => void;
+  login: (user: UserProfileResponse, tokens?: { accessToken?: string; refreshToken?: string }) => void;
   updateUser: (partial: Partial<UserProfileResponse>) => void;
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
@@ -52,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         void PushNotificationService.autoSyncSubscriptionIfGranted();
         return;
       }
+      clearClientData();
     } catch (_err) {
       clearClientData();
     } finally {
@@ -64,11 +65,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshSession();
   }, []);
 
-  const login = (sessionUser: UserProfileResponse) => {
+  const login = (
+    sessionUser: UserProfileResponse,
+    tokens?: { accessToken?: string; refreshToken?: string },
+  ) => {
     const normalized = normalizeUser(sessionUser);
     setUser(normalized);
     try {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized));
+      if (tokens?.accessToken) {
+        localStorage.setItem("onebitebakery_token", tokens.accessToken);
+      }
+      if (tokens?.refreshToken) {
+        localStorage.setItem("onebitebakery_refresh_token", tokens.refreshToken);
+      }
 
       const isCheckoutPage =
         typeof window !== "undefined" &&
@@ -151,6 +161,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearClientData = () => {
     setUser(null);
     localStorage.removeItem(USER_STORAGE_KEY);
+    localStorage.removeItem("onebitebakery_token");
+    localStorage.removeItem("onebitebakery_refresh_token");
     localStorage.removeItem("onebitebakery_local_cart");
     localStorage.removeItem("onebitebakery_customer_orders_list");
     localStorage.removeItem("onebitebakery_local_addresses");

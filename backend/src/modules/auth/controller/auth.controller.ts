@@ -41,6 +41,7 @@ export class AuthController {
       message: AUTH_RESPONSE_MESSAGES.AUTHENTICATED,
       data: {
         user: result.user,
+        tokens: result.tokens,
       },
     });
   };
@@ -58,17 +59,48 @@ export class AuthController {
 
     return sendSuccess(response, {
       message: AUTH_RESPONSE_MESSAGES.AUTHENTICATED,
-      data: { user: result.user },
+      data: {
+        user: result.user,
+        tokens: result.tokens,
+      },
     });
   };
 
   public googleRedirect = async (
-    _request: Request,
+    request: Request,
     response: Response,
   ): Promise<void> => {
-    const state = randomBytes(32).toString("base64url");
-    const redirectUrl = this.authService.getGoogleAuthUrl(state);
-    setGoogleOAuthStateCookie(response, state);
+    const rawNonce = randomBytes(32).toString("base64url");
+    const requestedOrigin = request.query?.origin as string | undefined;
+    const requestedRedirect = request.query?.redirect as string | undefined;
+
+    let matchedOrigin: string | undefined;
+    if (requestedOrigin) {
+      const match = env.corsOrigins.find(
+        (o) => o.toLowerCase() === requestedOrigin.toLowerCase(),
+      );
+      if (match) {
+        matchedOrigin = match;
+      }
+    }
+
+    let stateString = rawNonce;
+    if (matchedOrigin || requestedRedirect) {
+      try {
+        stateString = Buffer.from(
+          JSON.stringify({
+            nonce: rawNonce,
+            origin: matchedOrigin,
+            redirect: requestedRedirect,
+          }),
+        ).toString("base64url");
+      } catch {
+        stateString = rawNonce;
+      }
+    }
+
+    const redirectUrl = this.authService.getGoogleAuthUrl(stateString);
+    setGoogleOAuthStateCookie(response, rawNonce);
     response.redirect(redirectUrl);
   };
 
@@ -84,7 +116,9 @@ export class AuthController {
       AUTH_COOKIE_NAMES.GOOGLE_OAUTH_STATE,
     );
 
-    const frontendUrl = env.corsOrigins[0] || "http://localhost:5173";
+    const parsedState = this.parseState(state);
+    const frontendUrl =
+      parsedState.origin || env.corsOrigins[0] || "http://localhost:5173";
     clearGoogleOAuthStateCookie(response);
 
     if (!this.isValidGoogleOAuthState(state, expectedState)) {
@@ -106,14 +140,21 @@ export class AuthController {
       setAuthCookies(response, result.tokens);
 
       const targetPath =
-        result.user.role === "admin"
+        parsedState.redirect ||
+        (result.user.role === "admin"
           ? "/admin/dashboard"
           : result.user.role === "branch_admin"
           ? "/admin/branch/dashboard"
           : result.user.role === "delivery_agent"
           ? "/agent/dashboard"
-          : "/customer/dashboard";
-      response.redirect(`${frontendUrl}${targetPath}`);
+          : "/customer/dashboard");
+
+      const callbackUrl = new URL(`${frontendUrl}/auth/callback`);
+      callbackUrl.searchParams.set("token", result.tokens.accessToken);
+      callbackUrl.searchParams.set("refreshToken", result.tokens.refreshToken);
+      callbackUrl.searchParams.set("redirect", targetPath);
+
+      response.redirect(callbackUrl.toString());
     } catch (err: unknown) {
       logger.error(
         { error: err instanceof Error ? err.message : String(err) },
@@ -142,10 +183,7 @@ export class AuthController {
     request: Request,
     response: Response,
   ): Promise<Response> => {
-    const refreshToken = this.getCookie(
-      request,
-      AUTH_COOKIE_NAMES.REFRESH_TOKEN,
-    );
+    const refreshToken = this.getRefreshTokenFromRequest(request);
     const result = await this.authService.refreshSession(
       refreshToken,
       createRequestContext(request),
@@ -155,7 +193,10 @@ export class AuthController {
 
     return sendSuccess(response, {
       message: AUTH_RESPONSE_MESSAGES.REFRESHED,
-      data: { user: result.user },
+      data: {
+        user: result.user,
+        tokens: result.tokens,
+      },
     });
   };
 
@@ -163,9 +204,11 @@ export class AuthController {
     request: Request,
     response: Response,
   ): Promise<Response> => {
-    await this.authService.logout(
-      this.getOptionalCookie(request, AUTH_COOKIE_NAMES.REFRESH_TOKEN),
-    );
+    const refreshToken =
+      this.getOptionalCookie(request, AUTH_COOKIE_NAMES.REFRESH_TOKEN) ||
+      (request.body as { refreshToken?: string } | undefined)?.refreshToken;
+
+    await this.authService.logout(refreshToken);
 
     clearAuthCookies(response);
 
@@ -192,6 +235,29 @@ export class AuthController {
     });
   };
 
+  private getRefreshTokenFromRequest(request: Request): string {
+    const cookieToken = this.getOptionalCookie(
+      request,
+      AUTH_COOKIE_NAMES.REFRESH_TOKEN,
+    );
+    if (cookieToken) return cookieToken;
+
+    const bodyToken = (request.body as { refreshToken?: string } | undefined)
+      ?.refreshToken;
+    if (bodyToken && typeof bodyToken === "string") return bodyToken;
+
+    const headerToken = request.headers["x-refresh-token"];
+    if (headerToken && typeof headerToken === "string") return headerToken;
+
+    throw new AppError(
+      AUTH_RESPONSE_MESSAGES.INVALID_REFRESH_TOKEN,
+      HTTP_STATUS.UNAUTHORIZED,
+      [],
+      true,
+      APP_ERROR_CODES.INVALID_REFRESH_TOKEN,
+    );
+  }
+
   private getCookie(request: Request, name: string): string {
     const value = this.getOptionalCookie(request, name);
 
@@ -215,6 +281,26 @@ export class AuthController {
     return typeof value === "string" ? value : undefined;
   }
 
+  private parseState(state: unknown): {
+    nonce: string;
+    origin?: string;
+    redirect?: string;
+  } {
+    if (typeof state !== "string") {
+      return { nonce: "" };
+    }
+    try {
+      const decoded = Buffer.from(state, "base64url").toString("utf-8");
+      const parsed = JSON.parse(decoded);
+      if (parsed && typeof parsed.nonce === "string") {
+        return parsed;
+      }
+    } catch {
+      // not JSON
+    }
+    return { nonce: state };
+  }
+
   private isValidGoogleOAuthState(
     submittedState: unknown,
     expectedState: string | undefined,
@@ -223,7 +309,10 @@ export class AuthController {
       return false;
     }
 
-    const submitted = Buffer.from(submittedState);
+    const parsed = this.parseState(submittedState);
+    const submittedNonce = parsed.nonce;
+
+    const submitted = Buffer.from(submittedNonce);
     const expected = Buffer.from(expectedState);
 
     return (

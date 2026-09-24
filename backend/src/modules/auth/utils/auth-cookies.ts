@@ -5,22 +5,26 @@ import { AUTH_COOKIE_NAMES } from "../constants/index.js";
 import type { AuthTokens } from "../types/index.js";
 
 const createCookieOptions = (maxAge: number): CookieOptions => {
+  const isProd = env.nodeEnv === "production";
   return {
     httpOnly: true,
-    secure: env.nodeEnv === "production",
-    sameSite: "lax",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
     maxAge,
     path: "/",
   };
 };
 
-const createGoogleOAuthStateCookieOptions = (): CookieOptions => ({
-  httpOnly: true,
-  secure: env.nodeEnv === "production",
-  sameSite: "lax",
-  maxAge: 10 * 60 * 1000,
-  path: `${env.apiPrefix}/auth/google`,
-});
+const createGoogleOAuthStateCookieOptions = (): CookieOptions => {
+  const isProd = env.nodeEnv === "production";
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+    maxAge: 10 * 60 * 1000,
+    path: `${env.apiPrefix}/auth/google`,
+  };
+};
 
 export const setAuthCookies = (
   response: Response,
@@ -38,12 +42,15 @@ export const setAuthCookies = (
   );
 };
 
-const createCookieClearOptions = (): CookieOptions => ({
-  httpOnly: true,
-  secure: env.nodeEnv === "production",
-  sameSite: "lax",
-  path: "/",
-});
+const createCookieClearOptions = (): CookieOptions => {
+  const isProd = env.nodeEnv === "production";
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+    path: "/",
+  };
+};
 
 export const clearAuthCookies = (response: Response): void => {
   const options = createCookieClearOptions();

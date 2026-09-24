@@ -52,6 +52,7 @@ const OrderFailurePage = lazyRetry(() => import("@/pages/customer/PaymentPages")
 
 // Auth & Status Pages (Lazy Loaded)
 const CustomerAuthContainer = lazyRetry(() => import("@/pages/auth/CustomerAuthContainer").then((m) => ({ default: m.CustomerAuthContainer })));
+const AuthCallbackPage = lazyRetry(() => import("@/pages/auth/AuthCallbackPage").then((m) => ({ default: m.AuthCallbackPage })));
 const UnauthorizedPage = lazyRetry(() => import("@/pages/auth/StatusPages").then((m) => ({ default: m.UnauthorizedPage })));
 const SessionExpiredPage = lazyRetry(() => import("@/pages/auth/StatusPages").then((m) => ({ default: m.SessionExpiredPage })));
 
@@ -139,6 +140,7 @@ export const AppRoutes: React.FC = () => {
           </Route>
 
           {/* Guest Auth Routes & Aliases */}
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/auth" element={<GuestRoute />}>
             <Route element={<AuthLayout />}>
               <Route index element={<CustomerAuthContainer />} />
