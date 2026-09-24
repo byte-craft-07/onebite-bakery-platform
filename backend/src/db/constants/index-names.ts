@@ -35,6 +35,7 @@ export const INDEX_NAMES = {
   MEDIA_MIME_TYPE: "media_mime_type",
   CART_CUSTOMER_UNIQUE: "carts_customer_unique",
   CART_SESSION_UNIQUE: "carts_session_unique",
+  CART_UPDATED_AT_TTL: "carts_updated_at_ttl",
   ORDER_NUMBER_UNIQUE: "orders_order_number_unique",
   ORDER_CUSTOMER: "orders_customer",
   ORDER_STATUS: "orders_status",

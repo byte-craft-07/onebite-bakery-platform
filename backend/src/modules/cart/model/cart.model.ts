@@ -270,6 +270,15 @@ cartSchema.index(
   },
 );
 
+// Automatically remove abandoned carts after 30 days of inactivity
+cartSchema.index(
+  { updatedAt: 1 },
+  {
+    expireAfterSeconds: 30 * 24 * 60 * 60,
+    name: INDEX_NAMES.CART_UPDATED_AT_TTL,
+  },
+);
+
 export const CartModel = model<Cart>(
   "Cart",
   cartSchema,

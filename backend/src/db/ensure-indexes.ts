@@ -10,6 +10,8 @@ import { CouponModel } from "../modules/coupon/model/coupon.model.js";
 import { BannerModel } from "../modules/banner/model/banner.model.js";
 import { CustomCakeInquiryModel } from "../modules/custom-cake/model/custom-cake-inquiry.model.js";
 import { CustomCakeOptionModel } from "../modules/custom-cake/model/custom-cake-option.model.js";
+import { ComboModel } from "../modules/combo/model/combo.model.js";
+import { CartModel } from "../modules/cart/model/cart.model.js";
 import { RefreshTokenModel } from "../modules/auth/model/refresh-token.model.js";
 import { logger } from "../shared/utils/logger.js";
 
@@ -23,9 +25,11 @@ const modelsToEnsure = [
   { name: "Payment", model: PaymentModel },
   { name: "Coupon", model: CouponModel },
   { name: "Banner", model: BannerModel },
+  { name: "Combo", model: ComboModel },
   { name: "CustomCakeInquiry", model: CustomCakeInquiryModel },
   { name: "CustomCakeOption", model: CustomCakeOptionModel },
   { name: "RefreshToken", model: RefreshTokenModel },
+  { name: "Cart", model: CartModel },
 ];
 
 export const ensureAllDatabaseIndexes = async (): Promise<void> => {
