@@ -102,9 +102,9 @@ export const AdminCustomCakePage: React.FC = () => {
   const fetchFlavors = async () => {
     try {
       const data = await customCakeService.adminGetOptions("FLAVOR");
-      setFlavors(data && data.length > 0 ? data : FALLBACK_FLAVORS);
+      setFlavors(Array.isArray(data) ? data : []);
     } catch {
-      setFlavors(FALLBACK_FLAVORS);
+      setFlavors([]);
     }
   };
 
@@ -112,9 +112,9 @@ export const AdminCustomCakePage: React.FC = () => {
   const fetchDesigns = async () => {
     try {
       const data = await customCakeService.adminGetOptions("DESIGN");
-      setDesigns(data && data.length > 0 ? data : FALLBACK_DESIGNS);
+      setDesigns(Array.isArray(data) ? data : []);
     } catch {
-      setDesigns(FALLBACK_DESIGNS);
+      setDesigns([]);
     }
   };
 

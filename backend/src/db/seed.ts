@@ -6,11 +6,7 @@ import { UserModel } from "../modules/user/model/user.model.js";
 import { BannerModel } from "../modules/banner/model/banner.model.js";
 import { logger } from "../shared/utils/logger.js";
 
-export const seedDevelopmentData = async (): Promise<void> => {
-  if (env.nodeEnv !== "development") {
-    return;
-  }
-
+export const seedInitialData = async (_force: boolean = false): Promise<void> => {
   try {
     // 1. Seed Admin & Customer Users
     const existingAdmin = await UserModel.findOne({
@@ -519,4 +515,6 @@ export const seedDevelopmentData = async (): Promise<void> => {
     logger.warn({ error }, "Skipping dev database seed due to error");
   }
 };
+
+export const seedDevelopmentData = seedInitialData;
 

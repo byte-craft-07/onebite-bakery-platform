@@ -23,28 +23,19 @@ export interface VillagePayload {
 
 const LOCAL_VILLAGES_KEY = "onebitebakery_local_villages";
 
-const DEFAULT_VILLAGES: Village[] = [
-  { id: "v1", name: "Terha", district: "Hamirpur", pincode: "210502", isActive: true, deliveryCharge: 49, freeDeliveryThreshold: 799 },
-  { id: "v2", name: "Hamirpur Town", district: "Hamirpur", pincode: "210502", isActive: true, deliveryCharge: 49, freeDeliveryThreshold: 799 },
-  { id: "v3", name: "Kurara", district: "Hamirpur", pincode: "210502", isActive: true, deliveryCharge: 49, freeDeliveryThreshold: 799 },
-  { id: "v4", name: "Sumerpur", district: "Hamirpur", pincode: "210502", isActive: true, deliveryCharge: 49, freeDeliveryThreshold: 799 },
-  { id: "v5", name: "Maudaha", district: "Hamirpur", pincode: "210507", isActive: true, deliveryCharge: 49, freeDeliveryThreshold: 799 },
-];
-
 const getLocalVillages = (): Village[] => {
   try {
     const raw = localStorage.getItem(LOCAL_VILLAGES_KEY);
-    if (raw) {
+    if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     }
   } catch (_err) {
     // Ignore
   }
-  localStorage.setItem(LOCAL_VILLAGES_KEY, JSON.stringify(DEFAULT_VILLAGES));
-  return DEFAULT_VILLAGES;
+  return [];
 };
 
 const saveLocalVillages = (list: Village[]) => {
@@ -62,11 +53,11 @@ export const villageService = {
         success: boolean;
         data: { districts: string[] };
       }>("/villages/districts");
-      if (response.data?.data?.districts && response.data.data.districts.length > 0) {
+      if (response.data?.data?.districts) {
         return response.data.data.districts;
       }
     } catch (_err) {
-      // Fallback for offline mode
+      // Fallback for offline mode only
     }
     const local = getLocalVillages().filter((v) => v.isActive);
     const uniqueDistricts = Array.from(new Set(local.map((v) => v.district))).sort();
@@ -88,7 +79,7 @@ export const villageService = {
         return mapped;
       }
     } catch (_err) {
-      // Fallback for offline mode
+      // Fallback for offline mode only
     }
     let list = getLocalVillages().filter((v) => v.isActive);
     if (district) {
@@ -108,13 +99,11 @@ export const villageService = {
           ...v,
           id: v.id || v._id?.toString() || String(v._id),
         }));
-        if (mapped.length > 0) {
-          saveLocalVillages(mapped);
-          return mapped;
-        }
+        saveLocalVillages(mapped);
+        return mapped;
       }
     } catch (_err) {
-      // Graceful fallback to local mock data
+      // Graceful fallback to local cached data only if API fails
     }
     return getLocalVillages();
   },

@@ -29,6 +29,8 @@ import {
 } from "./modules/index.js";
 
 import { deliveryAgentRouter } from "./modules/delivery/routes/delivery-agent.routes.js";
+import { requireAuth, requireRoles } from "./modules/auth/index.js";
+import { asyncHandler } from "./shared/utils/async-handler.js";
 import { ROUTES } from "./shared/constants/routes.js";
 
 export const apiRoutes = Router();
@@ -60,5 +62,17 @@ apiRoutes.use(ROUTES.DELIVERY_AGENT, deliveryAgentRouter);
 apiRoutes.use(ROUTES.CUSTOM_CAKE, customCakeRouter);
 apiRoutes.use(ROUTES.COMBOS, comboRouter);
 apiRoutes.use(ROUTES.BANNER, bannerRouter);
+
+// Admin-only on-demand baseline seeding
+apiRoutes.post(
+  "/system/seed",
+  requireAuth,
+  requireRoles(["admin"]),
+  asyncHandler(async (_req, res) => {
+    const { seedInitialData } = await import("./db/seed.js");
+    await seedInitialData(true);
+    res.json({ success: true, message: "Baseline system data seeded successfully." });
+  }),
+);
 
 

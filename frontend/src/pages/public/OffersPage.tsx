@@ -88,13 +88,9 @@ export const OffersPage: React.FC = () => {
     try {
       const serverCoupons = await adminCouponsService.getCoupons();
       const activeServerCoupons = serverCoupons.filter((c) => c.isActive);
-      if (activeServerCoupons.length > 0) {
-        setCoupons(activeServerCoupons);
-      } else {
-        setCoupons(DEFAULT_OFFERS);
-      }
+      setCoupons(activeServerCoupons);
     } catch {
-      setCoupons(DEFAULT_OFFERS);
+      setCoupons([]);
     } finally {
       setIsLoading(false);
     }

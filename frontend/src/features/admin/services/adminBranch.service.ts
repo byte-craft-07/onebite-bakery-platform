@@ -122,15 +122,14 @@ const INITIAL_DEFAULT_BRANCHES: BranchDetails[] = [
 function getStoredBranches(): BranchDetails[] {
   try {
     const raw = localStorage.getItem(LOCAL_BRANCHES_KEY);
-    if (raw) {
+    if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) return parsed;
     }
   } catch (_e) {
     // Ignore
   }
-  localStorage.setItem(LOCAL_BRANCHES_KEY, JSON.stringify(INITIAL_DEFAULT_BRANCHES));
-  return INITIAL_DEFAULT_BRANCHES;
+  return [];
 }
 
 function persistBranchLocally(branch: BranchDetails) {

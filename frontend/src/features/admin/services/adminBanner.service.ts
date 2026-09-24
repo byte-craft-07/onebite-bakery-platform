@@ -21,14 +21,14 @@ export interface BannerPayload {
 const getStoredBanners = (): BannerItem[] => {
   try {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored) {
+    if (stored !== null) {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) return parsed;
     }
   } catch (_e) {
     // Ignore
   }
-  return [...FALLBACK_HERO_BANNERS];
+  return [];
 };
 
 const saveStoredBanners = (banners: BannerItem[]): void => {

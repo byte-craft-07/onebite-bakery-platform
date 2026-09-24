@@ -113,8 +113,8 @@ export const catalogService = {
         },
       });
 
-      const rawProducts = response.data?.data?.products || response.data?.data?.items || [];
-      if (Array.isArray(rawProducts) && rawProducts.length > 0) {
+      const rawProducts = response.data?.data?.products || response.data?.data?.items;
+      if (Array.isArray(rawProducts)) {
         const branchTitle = villageName ? `${villageName} (${district || ""})` : district;
         const mappedProducts = rawProducts.map((p: any) => {
           const mainImg =
@@ -156,7 +156,7 @@ export const catalogService = {
         };
       }
     } catch (_err) {
-      // Fallback to local catalog items
+      // Fallback to local catalog items only when network fails
     }
 
     let list = [...fallbackProducts];
@@ -316,19 +316,21 @@ export const catalogService = {
 
   getCategories: async (): Promise<CategoryItem[]> => {
     let categories: CategoryItem[] = [];
+    let isApiSuccessful = false;
     try {
       const response = await apiClient.get<{
         success: boolean;
         data: { categories: CategoryItem[] };
       }>("/categories");
-      if (response.data?.data?.categories && response.data.data.categories.length > 0) {
+      if (response.data?.data?.categories) {
         categories = response.data.data.categories;
+        isApiSuccessful = true;
       }
     } catch (_err) {
       // Fallback
     }
 
-    if (categories.length === 0) {
+    if (!isApiSuccessful) {
       categories = MOCK_CATEGORIES.map((c) => ({
         id: c.id,
         name: c.name,
@@ -383,19 +385,21 @@ export const catalogService = {
 
   getOccasions: async (): Promise<OccasionItem[]> => {
     let occasions: OccasionItem[] = [];
+    let isApiSuccessful = false;
     try {
       const response = await apiClient.get<{
         success: boolean;
         data: { occasions: OccasionItem[] };
       }>("/occasions");
-      if (response.data?.data?.occasions && response.data.data.occasions.length > 0) {
+      if (response.data?.data?.occasions) {
         occasions = response.data.data.occasions;
+        isApiSuccessful = true;
       }
     } catch (_err) {
       // Fallback
     }
 
-    if (occasions.length === 0) {
+    if (!isApiSuccessful) {
       occasions = MOCK_OCCASIONS.map((o) => ({
         id: o.id,
         name: o.name,

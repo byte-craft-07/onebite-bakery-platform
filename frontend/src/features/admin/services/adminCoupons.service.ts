@@ -135,14 +135,14 @@ const INITIAL_MOCK_COUPONS: AdminCoupon[] = [
 function getLocalCoupons(): AdminCoupon[] {
   try {
     const raw = localStorage.getItem(LOCAL_COUPONS_KEY);
-    if (raw) {
-      return JSON.parse(raw);
+    if (raw !== null) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
     }
   } catch (_e) {
     // Ignore
   }
-  localStorage.setItem(LOCAL_COUPONS_KEY, JSON.stringify(INITIAL_MOCK_COUPONS));
-  return INITIAL_MOCK_COUPONS;
+  return [];
 }
 
 function saveLocalCoupon(coupon: AdminCoupon) {

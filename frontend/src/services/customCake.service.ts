@@ -427,7 +427,7 @@ export const customCakeService = {
         success: boolean;
         data: { options: CustomCakeOption[] };
       }>("/custom-cake/admin/options", { params: { type } });
-      if (response.data?.data?.options && response.data.data.options.length > 0) {
+      if (response.data?.data?.options) {
         return response.data.data.options;
       }
     } catch (_err) {
