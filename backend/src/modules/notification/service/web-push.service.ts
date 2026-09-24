@@ -37,35 +37,53 @@ export class WebPushService {
     private readonly pushSubscriptionRepository = new PushSubscriptionRepository(),
     vapidKeys?: { publicKey: string; privateKey: string; subject: string },
   ) {
-    if (vapidKeys) {
-      this.vapidPublicKey = vapidKeys.publicKey;
-      this.vapidPrivateKey = vapidKeys.privateKey;
-      this.vapidSubject = vapidKeys.subject;
-    } else if (env.vapidPublicKey && env.vapidPrivateKey) {
-      this.vapidPublicKey = env.vapidPublicKey;
-      this.vapidPrivateKey = env.vapidPrivateKey;
-      this.vapidSubject = env.vapidSubject;
-    } else {
-      // In development / test environment, auto-generate standard VAPID keypair for zero-config onboarding
-      const generated = webpush.generateVAPIDKeys();
-      this.vapidPublicKey = generated.publicKey;
-      this.vapidPrivateKey = generated.privateKey;
-      this.vapidSubject = env.vapidSubject || "mailto:admin@onebitebakery.in";
+    const sanitizeSubject = (sub?: string): string => {
+      const clean = (sub || "mailto:admin@onebitebakery.in").trim();
+      if (!clean.startsWith("mailto:") && !clean.startsWith("https://") && !clean.startsWith("http://")) {
+        return `mailto:${clean}`;
+      }
+      return clean;
+    };
 
-      logger.info(
-        { publicKey: this.vapidPublicKey },
-        "Auto-generated development VAPID keypair for Web Push",
-      );
+    const cleanKey = (key?: string): string => (key || "").trim().replace(/^['"]|['"]$/g, "");
+
+    let pubKey = cleanKey(vapidKeys?.publicKey || env.vapidPublicKey);
+    let privKey = cleanKey(vapidKeys?.privateKey || env.vapidPrivateKey);
+    let subject = sanitizeSubject(vapidKeys?.subject || env.vapidSubject);
+
+    if (!pubKey || !privKey) {
+      const generated = webpush.generateVAPIDKeys();
+      pubKey = generated.publicKey;
+      privKey = generated.privateKey;
+      subject = sanitizeSubject(env.vapidSubject);
     }
 
     try {
-      webpush.setVapidDetails(
-        this.vapidSubject,
-        this.vapidPublicKey,
-        this.vapidPrivateKey,
+      webpush.setVapidDetails(subject, pubKey, privKey);
+      this.vapidPublicKey = pubKey;
+      this.vapidPrivateKey = privKey;
+      this.vapidSubject = subject;
+    } catch (err: unknown) {
+      logger.warn(
+        { error: err instanceof Error ? err.message : String(err) },
+        "Configured VAPID details were invalid, falling back to auto-generated keys",
       );
-    } catch (err) {
-      logger.error({ error: err }, "Failed to configure Web Push VAPID details");
+      try {
+        const generated = webpush.generateVAPIDKeys();
+        const fallbackSubject = "mailto:admin@onebitebakery.in";
+        webpush.setVapidDetails(fallbackSubject, generated.publicKey, generated.privateKey);
+        this.vapidPublicKey = generated.publicKey;
+        this.vapidPrivateKey = generated.privateKey;
+        this.vapidSubject = fallbackSubject;
+      } catch (fallbackErr: unknown) {
+        this.vapidPublicKey = "";
+        this.vapidPrivateKey = "";
+        this.vapidSubject = "";
+        logger.error(
+          { error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr) },
+          "Failed to configure Web Push VAPID details",
+        );
+      }
     }
   }
 
