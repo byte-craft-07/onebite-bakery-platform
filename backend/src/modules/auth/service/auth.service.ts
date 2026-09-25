@@ -138,8 +138,17 @@ export class AuthService {
       "User authenticated with Password",
     );
 
+    let defaultAddress = null;
+    try {
+      defaultAddress = await AddressModel.findOne({ userId: user._id })
+        .sort({ isDefault: -1, createdAt: -1 })
+        .exec();
+    } catch {
+      // Address lookup fallback
+    }
+
     return {
-      user: this.toAuthenticatedUser(user),
+      user: this.toAuthenticatedUser(user, defaultAddress),
       tokens,
     };
   }
@@ -232,8 +241,17 @@ export class AuthService {
 
       await this.createRefreshSession(user._id, deviceId, tokens, context);
 
+      let defaultAddress = null;
+      try {
+        defaultAddress = await AddressModel.findOne({ userId: user._id })
+          .sort({ isDefault: -1, createdAt: -1 })
+          .exec();
+      } catch {
+        // Address lookup fallback
+      }
+
       return {
-        user: this.toAuthenticatedUser(user),
+        user: this.toAuthenticatedUser(user, defaultAddress),
         tokens,
       };
     } catch (error: unknown) {
@@ -316,8 +334,17 @@ export class AuthService {
       "Refresh token rotated",
     );
 
+    let defaultAddress = null;
+    try {
+      defaultAddress = await AddressModel.findOne({ userId: user._id })
+        .sort({ isDefault: -1, createdAt: -1 })
+        .exec();
+    } catch {
+      // Address lookup fallback
+    }
+
     return {
-      user: this.toAuthenticatedUser(user),
+      user: this.toAuthenticatedUser(user, defaultAddress),
       tokens,
     };
   }

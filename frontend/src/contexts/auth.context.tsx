@@ -160,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearClientData = () => {
     setUser(null);
+    setGuestLocation(null);
     localStorage.removeItem(USER_STORAGE_KEY);
     localStorage.removeItem("onebitebakery_token");
     localStorage.removeItem("onebitebakery_refresh_token");
@@ -169,6 +170,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem("onebitebakery_local_celebrations");
     localStorage.removeItem("onebitebakery_local_tickets");
     localStorage.removeItem("onebitebakery_local_customer_notifs");
+    localStorage.removeItem(LOCAL_LOCATION_KEY);
+    localStorage.removeItem("onebitebakery_current_location");
   };
 
   const logout = async () => {
@@ -195,7 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return user?.role === requiredRole;
   };
 
-  const activeLocation = user?.currentLocation ?? guestLocation;
+  const activeLocation = user ? (user.currentLocation || null) : guestLocation;
 
   return (
     <AuthContext.Provider

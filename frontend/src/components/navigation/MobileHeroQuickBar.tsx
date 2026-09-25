@@ -66,10 +66,10 @@ export const MobileHeroQuickBar: React.FC = () => {
               <div className="p-1 rounded-lg bg-[#596B58] text-[#FFF8EC] shrink-0 group-hover:scale-110 transition-transform">
                 <MapPin className="h-3.5 w-3.5" />
               </div>
-              <span className="font-bold text-xs text-[#3B302B] truncate text-left">
+              <span className={`font-bold text-xs truncate text-left ${currentLocation?.villageName ? "text-[#3B302B]" : "text-amber-800"}`}>
                 {currentLocation?.villageName
                   ? `${currentLocation.villageName}${currentLocation.district ? `, ${currentLocation.district}` : ""}`
-                  : "Select Delivery Village"}
+                  : "Select Delivery Address"}
               </span>
             </div>
             <ChevronDown className="h-4 w-4 text-[#7A6E65] shrink-0 ml-1 group-hover:translate-y-0.5 transition-transform" />

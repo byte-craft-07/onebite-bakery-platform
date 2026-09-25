@@ -11,7 +11,7 @@ import { addressService, type Address } from "@/services/address.service";
 import { villageService, type Village } from "@/services/village.service";
 
 export const CustomerAddressesPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateCurrentLocation } = useAuth();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [villages, setVillages] = useState<Village[]>([]);
@@ -94,6 +94,18 @@ export const CustomerAddressesPage: React.FC = () => {
       });
 
       setAddresses((prev) => [...prev, created]);
+
+      if (created.isDefault || addresses.length === 0) {
+        const matched = villages.find(
+          (v) =>
+            (created.village && v.name.toLowerCase() === created.village.toLowerCase()) ||
+            (created.city && v.name.toLowerCase() === created.city.toLowerCase()),
+        );
+        if (matched) {
+          void updateCurrentLocation(matched.id, matched.district);
+        }
+      }
+
       setIsAddModalOpen(false);
       setForm({
         name: user?.name || "",
@@ -138,6 +150,17 @@ export const CustomerAddressesPage: React.FC = () => {
       await addressService.setDefaultAddress(id);
       const updated = await addressService.getAddresses();
       setAddresses(updated);
+      const target = updated.find((a) => a.id === id);
+      if (target) {
+        const matched = villages.find(
+          (v) =>
+            (target.village && v.name.toLowerCase() === target.village.toLowerCase()) ||
+            (target.city && v.name.toLowerCase() === target.city.toLowerCase()),
+        );
+        if (matched) {
+          void updateCurrentLocation(matched.id, matched.district);
+        }
+      }
       setStatusMsg({ type: "success", text: "Default delivery address updated." });
       toast.update("Default Address Updated", "Your default delivery location has been set.");
       setTimeout(() => setStatusMsg(null), 2500);

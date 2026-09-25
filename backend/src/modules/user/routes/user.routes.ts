@@ -145,7 +145,7 @@ userRouter.get(
       throw new AppError("User account not found.", HTTP_STATUS.NOT_FOUND);
     }
 
-    const currentLocation = user.currentLocation
+    let currentLocation = user.currentLocation
       ? {
           villageId: user.currentLocation.villageId.toString(),
           villageName: user.currentLocation.villageName,
@@ -153,6 +153,36 @@ userRouter.get(
           pincode: user.currentLocation.pincode,
         }
       : null;
+
+    if (!currentLocation) {
+      try {
+        const defaultAddr = await AddressModel.findOne({ userId: user._id })
+          .sort({ isDefault: -1, createdAt: -1 })
+          .exec();
+        if (defaultAddr && defaultAddr.village) {
+          const vDoc = await VillageModel.findOne({
+            name: new RegExp(`^${defaultAddr.village.trim()}$`, "i"),
+          }).exec();
+          if (vDoc) {
+            currentLocation = {
+              villageId: vDoc._id.toString(),
+              villageName: vDoc.name,
+              district: vDoc.district,
+              pincode: vDoc.pincode,
+            };
+            user.currentLocation = {
+              villageId: vDoc._id,
+              villageName: vDoc.name,
+              district: vDoc.district,
+              pincode: vDoc.pincode,
+            };
+            await user.save();
+          }
+        }
+      } catch {
+        // Safe fallback
+      }
+    }
 
     res.json({
       success: true,

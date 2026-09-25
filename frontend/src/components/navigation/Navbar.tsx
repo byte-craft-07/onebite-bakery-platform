@@ -168,8 +168,8 @@ export const Navbar: React.FC = () => {
               <MapPin className="h-3.5 w-3.5 text-[#596B58] shrink-0 group-hover:scale-110 transition-transform" />
               <div className="flex flex-col text-left leading-tight">
                 <span className="text-[9px] text-[#7A6E65] font-semibold leading-none">Deliver to:</span>
-                <span className="font-bold text-[#3B302B] max-w-[90px] xl:max-w-[120px] truncate text-[11px]">
-                  {currentLocation?.villageName || "Select Location"}
+                <span className={`font-bold max-w-[90px] xl:max-w-[120px] truncate text-[11px] ${currentLocation?.villageName ? "text-[#3B302B]" : "text-amber-800"}`}>
+                  {currentLocation?.villageName || "Select Address"}
                 </span>
               </div>
               <ChevronDown className="h-3 w-3 text-[#7A6E65] ml-0.5 shrink-0" />

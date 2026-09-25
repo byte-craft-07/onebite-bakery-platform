@@ -94,7 +94,7 @@ const getCheckoutErrorMessage = (err: unknown, fallback: string): string => {
 };
 
 export const CheckoutPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateCurrentLocation } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -977,6 +977,17 @@ export const CheckoutPage: React.FC = () => {
                         onSelect={(id) => {
                           setSelectedAddressId(id);
                           setErrorMsg(null);
+                          const addr = addresses.find((a) => a.id === id);
+                          if (addr) {
+                            const matched = villages.find(
+                              (v) =>
+                                (addr.village && v.name.toLowerCase() === addr.village.toLowerCase()) ||
+                                (addr.city && v.name.toLowerCase() === addr.city.toLowerCase()),
+                            );
+                            if (matched) {
+                              void updateCurrentLocation(matched.id, matched.district);
+                            }
+                          }
                         }}
                       />
                     ) : (

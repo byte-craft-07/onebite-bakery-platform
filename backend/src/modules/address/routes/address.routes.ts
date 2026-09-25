@@ -10,6 +10,7 @@ import { validateRequest } from "../../../shared/middlewares/validate-request.mi
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { AddressModel, type Address } from "../model/index.js";
 import { UserModel } from "../../user/model/index.js";
+import { VillageModel } from "../../village/model/village.model.js";
 
 export const addressRouter = Router();
 
@@ -162,6 +163,28 @@ addressRouter.post(
       }
     }
 
+    if (isDefault && payload.village) {
+      try {
+        const vDoc = await VillageModel.findOne({
+          name: new RegExp(`^${payload.village.trim()}$`, "i"),
+        }).exec();
+        if (vDoc) {
+          await UserModel.findByIdAndUpdate(userId, {
+            $set: {
+              currentLocation: {
+                villageId: vDoc._id,
+                villageName: vDoc.name,
+                district: vDoc.district,
+                pincode: vDoc.pincode,
+              },
+            },
+          }).exec();
+        }
+      } catch {
+        // Safe fallback
+      }
+    }
+
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: { address: toAddressResponse(address) },
@@ -220,6 +243,28 @@ addressRouter.put(
       }
     }
 
+    if (address.isDefault && address.village) {
+      try {
+        const vDoc = await VillageModel.findOne({
+          name: new RegExp(`^${address.village.trim()}$`, "i"),
+        }).exec();
+        if (vDoc) {
+          await UserModel.findByIdAndUpdate(userId, {
+            $set: {
+              currentLocation: {
+                villageId: vDoc._id,
+                villageName: vDoc.name,
+                district: vDoc.district,
+                pincode: vDoc.pincode,
+              },
+            },
+          }).exec();
+        }
+      } catch {
+        // Safe fallback
+      }
+    }
+
     res.json({ success: true, data: { address: toAddressResponse(address) } });
   }),
 );
@@ -234,6 +279,28 @@ addressRouter.patch(
     await AddressModel.updateMany({ userId }, { $set: { isDefault: false } }).exec();
     address.isDefault = true;
     await address.save();
+
+    if (address.village) {
+      try {
+        const vDoc = await VillageModel.findOne({
+          name: new RegExp(`^${address.village.trim()}$`, "i"),
+        }).exec();
+        if (vDoc) {
+          await UserModel.findByIdAndUpdate(userId, {
+            $set: {
+              currentLocation: {
+                villageId: vDoc._id,
+                villageName: vDoc.name,
+                district: vDoc.district,
+                pincode: vDoc.pincode,
+              },
+            },
+          }).exec();
+        }
+      } catch {
+        // Safe fallback
+      }
+    }
 
     res.json({ success: true, data: { address: toAddressResponse(address) } });
   }),
@@ -257,6 +324,36 @@ addressRouter.delete(
       if (nextDefault) {
         nextDefault.isDefault = true;
         await nextDefault.save();
+
+        if (nextDefault.village) {
+          try {
+            const vDoc = await VillageModel.findOne({
+              name: new RegExp(`^${nextDefault.village.trim()}$`, "i"),
+            }).exec();
+            if (vDoc) {
+              await UserModel.findByIdAndUpdate(userId, {
+                $set: {
+                  currentLocation: {
+                    villageId: vDoc._id,
+                    villageName: vDoc.name,
+                    district: vDoc.district,
+                    pincode: vDoc.pincode,
+                  },
+                },
+              }).exec();
+            }
+          } catch {
+            // Safe fallback
+          }
+        }
+      } else {
+        try {
+          await UserModel.findByIdAndUpdate(userId, {
+            $unset: { currentLocation: 1 },
+          }).exec();
+        } catch {
+          // Safe fallback
+        }
       }
     }
 
