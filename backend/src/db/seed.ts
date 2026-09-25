@@ -265,15 +265,13 @@ export const seedInitialData = async (_force: boolean = false): Promise<void> =>
       ]);
       const centralBranch = branches.find((b) => b.type === "MAIN" || b.code === "TOB-HQ") || branches[0];
 
-      await VillageModel.deleteMany({});
-      await VillageModel.insertMany([
-        { name: "Terha", district: "Hamirpur", pincode: "210502", branchId: centralBranch?._id, isActive: true },
-        { name: "Hamirpur Main", district: "Hamirpur", pincode: "210502", branchId: centralBranch?._id, isActive: true },
-        { name: "Kurara", district: "Hamirpur", pincode: "210502", branchId: centralBranch?._id, isActive: true },
-        { name: "Sumerpur", district: "Hamirpur", pincode: "210502", branchId: centralBranch?._id, isActive: true },
-        { name: "Maudaha", district: "Hamirpur", pincode: "210507", branchId: centralBranch?._id, isActive: true },
-      ]);
-      logger.info("All Default Villages seeded and linked to Main Branch (Onebite Bakery Main Store)");
+      const villageCount = await VillageModel.countDocuments();
+      if (villageCount === 0) {
+        await VillageModel.insertMany([
+          { name: "Terha", district: "Hamirpur", pincode: "210502", branchId: centralBranch?._id, isActive: true },
+        ]);
+        logger.info("Default Village Terha seeded and linked to Main Branch");
+      }
     } else {
       const mainBranch =
         (await BranchModel.findOne({ type: "MAIN", isActive: true })) ||
@@ -296,33 +294,6 @@ export const seedInitialData = async (_force: boolean = false): Promise<void> =>
         if (rajaBranch && rajaBranch.type !== "FRANCHISE") {
           rajaBranch.type = "FRANCHISE";
           await rajaBranch.save();
-        }
-
-        // Seed default core villages ONLY if they do not exist yet (never overwrite admin's manual assignments)
-        const defaultVillageNames = ["Terha", "Hamirpur Main", "Kurara", "Sumerpur", "Maudaha", "Magura"];
-        for (const vName of defaultVillageNames) {
-          const vDoc = await VillageModel.findOne({ name: new RegExp(`^${vName}$`, "i") });
-          if (!vDoc) {
-            await VillageModel.create({
-              name: vName,
-              district: "Hamirpur",
-              pincode: vName === "Maudaha" || vName === "Magura" ? "210507" : "210502",
-              branchId: mainBranch._id,
-              isActive: true,
-            });
-          }
-        }
-
-        // Seed Raypur village only if it does not exist
-        const raypurDoc = await VillageModel.findOne({ name: /^Raypur$/i });
-        if (!raypurDoc) {
-          await VillageModel.create({
-            name: "Raypur",
-            district: "Hamirpur",
-            pincode: "210502",
-            branchId: rajaBranch ? rajaBranch._id : mainBranch._id,
-            isActive: true,
-          });
         }
       }
     }
