@@ -76,7 +76,9 @@ export const CustomerAuthContainer: React.FC = () => {
       setApiError("Google authentication was cancelled. Please try again.");
     } else if (errorParam === "google_invalid_state") {
       setApiError(
-        "Google Sign-In verification expired or was invalid on localhost. Please use the Password / Test Login below.",
+        isLocalhost
+          ? "Google Sign-In verification expired or was invalid on localhost. Please use the Password / Test Login below."
+          : "Google Sign-In verification expired or was invalid. Please try again.",
       );
     } else if (errorParam === "google_failed") {
       setApiError("Google Sign-In failed. Please click below to try again.");
@@ -245,122 +247,125 @@ export const CustomerAuthContainer: React.FC = () => {
           </span>
         </button>
 
-        {/* Divider */}
-        <div className="relative flex py-2 items-center">
-          <div className="flex-grow border-t border-[#333333]"></div>
-          <span className="flex-shrink mx-3 text-[11px] font-semibold tracking-wider text-[#737373] uppercase">
-            OR SIGN IN WITH PASSWORD
-          </span>
-          <div className="flex-grow border-t border-[#333333]"></div>
-        </div>
-
-        {/* Option 2: Password Form */}
-        <form onSubmit={handlePasswordLogin} className="space-y-3.5">
-          <div>
-            <label className="block text-xs font-medium text-[#c0c0c0] mb-1.5">
-              Phone Number or Email
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#777]">
-                <Phone className="h-4 w-4" />
-              </span>
-              <input
-                type="text"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="e.g. 7897671632 or ajay@gmail.com"
-                className="w-full h-11 pl-10 pr-3 rounded-xl bg-[#272727] border border-[#3b3b3b] text-white text-sm placeholder:text-[#666] focus:outline-none focus:border-amber-400/80 transition-colors"
-                autoComplete="username"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-[#c0c0c0] mb-1.5">
-              Password
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#777]">
-                <Lock className="h-4 w-4" />
-              </span>
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                className="w-full h-11 pl-10 pr-10 rounded-xl bg-[#272727] border border-[#3b3b3b] text-white text-sm placeholder:text-[#666] focus:outline-none focus:border-amber-400/80 transition-colors"
-                autoComplete="current-password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#777] hover:text-white transition-colors cursor-pointer"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isPasswordLoading || isGoogleLoading}
-            className="w-full h-11 rounded-xl bg-[#D4A373] hover:bg-[#c29160] text-black text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 shadow-md hover:scale-[1.01]"
-          >
-            {isPasswordLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-black" />
-            ) : (
-              <KeyRound className="h-4 w-4 text-black" />
-            )}
-            <span>{isPasswordLoading ? "Signing in..." : "Sign In with Password"}</span>
-          </button>
-        </form>
-
-        {/* Quick Test / Development Logins - ONLY shown on localhost */}
+        {/* Password Form & Quick Logins - ONLY visible on Localhost (not in production) */}
         {isLocalhost && (
-          <div className="pt-3 border-t border-[#2e2e2e]">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold text-amber-300 flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                1-Click Quick Test Login (Localhost Only)
+          <>
+            {/* Divider */}
+            <div className="relative flex py-2 items-center">
+              <div className="flex-grow border-t border-[#333333]"></div>
+              <span className="flex-shrink mx-3 text-[11px] font-semibold tracking-wider text-[#737373] uppercase">
+                OR SIGN IN WITH PASSWORD
               </span>
+              <div className="flex-grow border-t border-[#333333]"></div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin("7897671632", "Admin@123")}
-                disabled={isPasswordLoading || isGoogleLoading}
-                className="p-2.5 rounded-xl bg-[#262626] hover:bg-[#323232] border border-[#3a3a3a] hover:border-amber-500/50 text-left transition-all cursor-pointer group"
-              >
-                <div className="flex items-center gap-1.5 text-xs font-bold text-white group-hover:text-amber-300">
-                  <ShieldCheck className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                  <span>Admin Login</span>
+            {/* Option 2: Password Form */}
+            <form onSubmit={handlePasswordLogin} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-medium text-[#c0c0c0] mb-1.5">
+                  Phone Number or Email
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#777]">
+                    <Phone className="h-4 w-4" />
+                  </span>
+                  <input
+                    type="text"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder="e.g. 7897671632 or ajay@gmail.com"
+                    className="w-full h-11 pl-10 pr-3 rounded-xl bg-[#272727] border border-[#3b3b3b] text-white text-sm placeholder:text-[#666] focus:outline-none focus:border-amber-400/80 transition-colors"
+                    autoComplete="username"
+                  />
                 </div>
-                <div className="text-[10px] text-[#8e8e8e] mt-0.5 truncate">
-                  7897671632 (Full Access)
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[#c0c0c0] mb-1.5">
+                  Password
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#777]">
+                    <Lock className="h-4 w-4" />
+                  </span>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="w-full h-11 pl-10 pr-10 rounded-xl bg-[#272727] border border-[#3b3b3b] text-white text-sm placeholder:text-[#666] focus:outline-none focus:border-amber-400/80 transition-colors"
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#777] hover:text-white transition-colors cursor-pointer"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
-              </button>
+              </div>
 
               <button
-                type="button"
-                onClick={() => handleQuickLogin("9876543210", "Customer@123")}
+                type="submit"
                 disabled={isPasswordLoading || isGoogleLoading}
-                className="p-2.5 rounded-xl bg-[#262626] hover:bg-[#323232] border border-[#3a3a3a] hover:border-amber-500/50 text-left transition-all cursor-pointer group"
+                className="w-full h-11 rounded-xl bg-[#D4A373] hover:bg-[#c29160] text-black text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 shadow-md hover:scale-[1.01]"
               >
-                <div className="flex items-center gap-1.5 text-xs font-bold text-white group-hover:text-amber-300">
-                  <UserCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                  <span>Customer Login</span>
-                </div>
-                <div className="text-[10px] text-[#8e8e8e] mt-0.5 truncate">
-                  9876543210 (Cart/Orders)
-                </div>
+                {isPasswordLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-black" />
+                ) : (
+                  <KeyRound className="h-4 w-4 text-black" />
+                )}
+                <span>{isPasswordLoading ? "Signing in..." : "Sign In with Password"}</span>
               </button>
+            </form>
+
+            {/* Quick Test / Development Logins */}
+            <div className="pt-3 border-t border-[#2e2e2e]">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-amber-300 flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                  1-Click Quick Test Login (Localhost Only)
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin("7897671632", "Admin@123")}
+                  disabled={isPasswordLoading || isGoogleLoading}
+                  className="p-2.5 rounded-xl bg-[#262626] hover:bg-[#323232] border border-[#3a3a3a] hover:border-amber-500/50 text-left transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-white group-hover:text-amber-300">
+                    <ShieldCheck className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                    <span>Admin Login</span>
+                  </div>
+                  <div className="text-[10px] text-[#8e8e8e] mt-0.5 truncate">
+                    7897671632 (Full Access)
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin("9876543210", "Customer@123")}
+                  disabled={isPasswordLoading || isGoogleLoading}
+                  className="p-2.5 rounded-xl bg-[#262626] hover:bg-[#323232] border border-[#3a3a3a] hover:border-amber-500/50 text-left transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-white group-hover:text-amber-300">
+                    <UserCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                    <span>Customer Login</span>
+                  </div>
+                  <div className="text-[10px] text-[#8e8e8e] mt-0.5 truncate">
+                    9876543210 (Cart/Orders)
+                  </div>
+                </button>
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
 
