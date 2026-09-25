@@ -6,6 +6,8 @@ import type { TimestampedDocument } from "../../../db/types/base-document.types.
 
 export interface Review extends TimestampedDocument {
   _id: Types.ObjectId;
+  userId?: Types.ObjectId;
+  userEmail?: string;
   customerName: string;
   avatar?: string;
   rating: number;
@@ -22,17 +24,29 @@ export interface Review extends TimestampedDocument {
 
 const reviewSchema = new Schema<Review>(
   {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: undefined,
+      index: true,
+    },
+    userEmail: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      default: undefined,
+      index: true,
+    },
     customerName: {
       type: String,
       required: true,
       trim: true,
       maxlength: 120,
-      default: "Verified Customer",
     },
     avatar: {
       type: String,
       trim: true,
-      default: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+      default: undefined,
     },
     rating: {
       type: Number,

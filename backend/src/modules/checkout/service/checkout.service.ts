@@ -182,7 +182,7 @@ export class CheckoutService {
       .exec();
 
     const minHomeDeliveryAmount =
-      settings?.delivery?.minimumHomeDeliveryAmount ?? 300;
+      settings?.delivery?.minimumHomeDeliveryAmount ?? 0;
     const isDeliveryEnabled = settings?.isDeliveryEnabled ?? true;
     const isPickupEnabled = settings?.isPickupEnabled ?? true;
 
@@ -321,6 +321,7 @@ export class CheckoutService {
       homeDeliveryEligible,
       pickupEligible,
       minimumHomeDeliveryAmount: minHomeDeliveryAmount,
+      freeDeliveryThreshold,
       ...(query.deliveryMethod ? { selectedDeliveryMethod: query.deliveryMethod } : {}),
       ...(selectedAddress ? { selectedAddress } : {}),
       validationErrors,

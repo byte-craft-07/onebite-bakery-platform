@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, Check, Gift, ShoppingBag, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
-import { MOCK_COMBOS } from "@/data/mockData";
 import { cartService } from "@/services/cart.service";
 import { comboService, type Combo } from "@/services/combo.service";
 import { toast } from "@/contexts/toast.context";
@@ -20,13 +19,9 @@ export const CombosPage: React.FC = () => {
     const fetchCombos = async () => {
       try {
         const data = await comboService.getCombos();
-        if (data && data.length > 0) {
-          setCombos(data);
-        } else {
-          setCombos(MOCK_COMBOS as any);
-        }
+        setCombos(data || []);
       } catch (_err) {
-        setCombos(MOCK_COMBOS as any);
+        setCombos([]);
       } finally {
         setIsLoading(false);
       }

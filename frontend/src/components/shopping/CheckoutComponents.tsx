@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { Badge, Card } from "@/components/ui/DisplayComponents";
+import { CustomSelect } from "@/components/ui/FormControls";
 import type { Address } from "@/services/address.service";
 import { cartService } from "@/services/cart.service";
 
@@ -90,40 +91,86 @@ export const StorePickupLocationCard: React.FC<{
 export const DeliverySelector: React.FC<{
   fulfillmentType: "HOME_DELIVERY" | "STORE_PICKUP";
   onChange: (type: "HOME_DELIVERY" | "STORE_PICKUP") => void;
-}> = ({ fulfillmentType, onChange }) => {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-      <button
-        type="button"
-        onClick={() => onChange("HOME_DELIVERY")}
-        className={`p-4 rounded-2xl border text-left flex flex-col gap-1.5 sm:gap-2 transition-all cursor-pointer ${
-          fulfillmentType === "HOME_DELIVERY"
-            ? "border-[#596B58] bg-[#FFF8EC] text-[#596B58] shadow-xs ring-2 ring-[#596B58]/30"
-            : "border-[#E5DEC9] bg-white text-[#3B302B] hover:border-[#596B58]/60"
-        }`}
-      >
-        <div className="flex items-center gap-2">
-          <Truck className="h-5 w-5" />
-          <span className="font-bold text-sm">Home Delivery</span>
-        </div>
-        <span className="text-xs opacity-80 text-[#7A6E65]">Fresh delivery straight to doorstep</span>
-      </button>
+  homeDeliveryEligible?: boolean;
+  minimumHomeDeliveryAmount?: number;
+  subtotal?: number;
+}> = ({
+  fulfillmentType,
+  onChange,
+  homeDeliveryEligible = true,
+  minimumHomeDeliveryAmount = 300,
+  subtotal = 0,
+}) => {
+  const isBelowMin = !homeDeliveryEligible && subtotal > 0 && subtotal < minimumHomeDeliveryAmount;
+  const remaining = Math.max(0, minimumHomeDeliveryAmount - subtotal);
 
-      <button
-        type="button"
-        onClick={() => onChange("STORE_PICKUP")}
-        className={`p-4 rounded-2xl border text-left flex flex-col gap-1.5 sm:gap-2 transition-all cursor-pointer ${
-          fulfillmentType === "STORE_PICKUP"
-            ? "border-[#596B58] bg-[#FFF8EC] text-[#596B58] shadow-xs ring-2 ring-[#596B58]/30"
-            : "border-[#E5DEC9] bg-white text-[#3B302B] hover:border-[#596B58]/60"
-        }`}
-      >
-        <div className="flex items-center gap-2">
-          <Building className="h-5 w-5" />
-          <span className="font-bold text-sm">Store Pickup</span>
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <button
+          type="button"
+          onClick={() => onChange("HOME_DELIVERY")}
+          className={`p-4 rounded-2xl border text-left flex flex-col gap-1.5 sm:gap-2 transition-all cursor-pointer relative ${
+            fulfillmentType === "HOME_DELIVERY"
+              ? "border-[#596B58] bg-[#FFF8EC] text-[#596B58] shadow-xs ring-2 ring-[#596B58]/30"
+              : "border-[#E5DEC9] bg-white text-[#3B302B] hover:border-[#596B58]/60"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Truck className="h-5 w-5" />
+              <span className="font-bold text-sm">Home Delivery</span>
+            </div>
+            {isBelowMin ? (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
+                Min ₹{minimumHomeDeliveryAmount}
+              </span>
+            ) : null}
+          </div>
+          <span className="text-xs opacity-80 text-[#7A6E65]">Fresh delivery straight to doorstep</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onChange("STORE_PICKUP")}
+          className={`p-4 rounded-2xl border text-left flex flex-col gap-1.5 sm:gap-2 transition-all cursor-pointer relative ${
+            fulfillmentType === "STORE_PICKUP"
+              ? "border-[#596B58] bg-[#FFF8EC] text-[#596B58] shadow-xs ring-2 ring-[#596B58]/30"
+              : "border-[#E5DEC9] bg-white text-[#3B302B] hover:border-[#596B58]/60"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Building className="h-5 w-5" />
+              <span className="font-bold text-sm">Store Pickup</span>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-300">
+              No Min Order
+            </span>
+          </div>
+          <span className="text-xs opacity-80 text-[#7A6E65]">Collect from main bakery counter</span>
+        </button>
+      </div>
+
+      {fulfillmentType === "HOME_DELIVERY" && isBelowMin ? (
+        <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="space-y-0.5">
+            <p className="font-bold text-amber-950 flex items-center gap-1.5">
+              <span>⚠️ Minimum Order for Home Delivery: ₹{minimumHomeDeliveryAmount}</span>
+            </p>
+            <p className="text-[11px] text-amber-800">
+              Your cart subtotal is <strong>₹{subtotal}</strong>. Add <strong>₹{remaining}</strong> more to qualify for Home Delivery, or switch to <strong>Store Pickup</strong> to order right now!
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange("STORE_PICKUP")}
+            className="px-3.5 py-1.5 bg-[#596B58] hover:bg-[#495948] text-white rounded-lg text-xs font-bold shrink-0 transition-colors cursor-pointer"
+          >
+            Switch to Store Pickup
+          </button>
         </div>
-        <span className="text-xs opacity-80 text-[#7A6E65]">Collect from main bakery counter</span>
-      </button>
+      ) : null}
     </div>
   );
 };
@@ -190,7 +237,20 @@ export const CheckoutSummary: React.FC<{
     totalAmount: number;
   };
   onCouponChanged?: () => void;
-}> = ({ pricing, onCouponChanged }) => {
+  deliveryThreshold?: {
+    minDeliveryAmount?: number;
+    freeDeliveryThreshold?: number;
+    isEligibleForDelivery?: boolean;
+  };
+  fulfillmentType?: "HOME_DELIVERY" | "STORE_PICKUP";
+  onSwitchToPickup?: () => void;
+}> = ({
+  pricing,
+  onCouponChanged,
+  deliveryThreshold,
+  fulfillmentType = "HOME_DELIVERY",
+  onSwitchToPickup,
+}) => {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<number>(pricing.discountAmount || 0);
@@ -321,10 +381,10 @@ export const CheckoutSummary: React.FC<{
             <span>-₹{effectiveDiscount}</span>
           </div>
         ) : null}
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <span>Delivery Fee</span>
           <span className="font-bold text-[#3B302B]">
-            {pricing.deliveryFee === 0 ? <span className="text-[#596B58]">FREE</span> : `₹${pricing.deliveryFee}`}
+            {pricing.deliveryFee === 0 ? <span className="text-[#596B58] bg-[#FFF8EC] px-2 py-0.5 rounded font-bold">FREE</span> : `₹${pricing.deliveryFee}`}
           </span>
         </div>
       </div>
@@ -333,6 +393,108 @@ export const CheckoutSummary: React.FC<{
         <span className="text-sm font-bold text-[#3B302B]">Total Amount</span>
         <span className="text-2xl font-extrabold text-[#596B58]">₹{effectiveTotal}</span>
       </div>
+
+      {/* Dynamic Delivery Remaining Amount & Savings Status */}
+      {fulfillmentType === "HOME_DELIVERY" ? (
+        <div className="mt-2 pt-3 border-t border-dashed border-[#E5DEC9] space-y-2.5">
+          {(() => {
+            const minDelivery = deliveryThreshold?.minDeliveryAmount ?? 0;
+            const isBelowMin = minDelivery > 0 && pricing.subtotal < minDelivery;
+            const remainingForMin = Math.max(0, minDelivery - pricing.subtotal);
+
+            const freeThreshold = deliveryThreshold?.freeDeliveryThreshold ?? 350;
+            const remainingForFree = Math.max(0, freeThreshold - pricing.subtotal);
+            const freePercent = Math.min(100, Math.round((pricing.subtotal / freeThreshold) * 100));
+
+            if (isBelowMin) {
+              return (
+                <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl space-y-2 text-xs text-amber-950 shadow-2xs">
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="flex items-center gap-1.5 text-amber-900">
+                      <Truck className="h-4 w-4 text-amber-700 shrink-0" />
+                      <span>Home Delivery Min Order</span>
+                    </span>
+                    <span className="text-amber-800 font-extrabold">₹{pricing.subtotal} / ₹{minDelivery}</span>
+                  </div>
+                  <div className="w-full bg-amber-200/80 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-amber-600 h-full rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(100, Math.round((pricing.subtotal / minDelivery) * 100))}%` }}
+                    />
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5">
+                    <p className="text-[11px] text-amber-900">
+                      Home delivery ke liye <strong>₹{remainingForMin}</strong> aur jodein.
+                    </p>
+                    {onSwitchToPickup ? (
+                      <button
+                        type="button"
+                        onClick={onSwitchToPickup}
+                        className="text-[10px] font-bold text-[#596B58] underline hover:text-[#495948] shrink-0 text-left cursor-pointer"
+                      >
+                        Pickup चुने (No Min Order)
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            }
+
+            if (pricing.deliveryFee > 0 && remainingForFree > 0) {
+              return (
+                <div className="p-3 bg-[#FFF8EC] border border-[#596B58]/25 rounded-xl space-y-2 text-xs text-[#3B302B] shadow-2xs">
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="flex items-center gap-1.5 text-[#596B58]">
+                      <Truck className="h-4 w-4 text-[#596B58] shrink-0" />
+                      <span>Free Home Delivery Tracker</span>
+                    </span>
+                    <span className="text-[#596B58] font-extrabold text-[11px]">
+                      Add ₹{remainingForFree} more
+                    </span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-[#596B58] h-full rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${freePercent}%` }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-[#7A6E65]">
+                    <span>Subtotal: <strong>₹{pricing.subtotal}</strong></span>
+                    <span className="text-[#596B58] font-bold">Free at ₹{freeThreshold}</span>
+                  </div>
+
+                  <div className="p-2 bg-white rounded-lg border border-[#E5DEC9] text-[11px] text-[#596B58] font-semibold flex items-center justify-between">
+                    <span>
+                      🎉 <strong>₹{remainingForFree}</strong> aur jodein aur payein <strong>FREE Delivery</strong>!
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div className="p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs text-emerald-900 flex items-center gap-2 shadow-2xs">
+                <Sparkles className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span className="font-bold">
+                  🎉 Badhai ho! Aapko <strong>FREE Home Delivery</strong> mil rahi hai!
+                </span>
+              </div>
+            );
+          })()}
+        </div>
+      ) : (
+        <div className="mt-2 pt-3 border-t border-dashed border-[#E5DEC9]">
+          <div className="p-2.5 bg-[#FFF8EC] border border-[#596B58]/25 rounded-xl text-xs text-[#596B58] flex items-center gap-2">
+            <Building className="h-4 w-4 shrink-0" />
+            <span className="font-semibold">
+              Store Pickup selected &bull; Zero Delivery Fee &amp; Instant Counter Collection!
+            </span>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };
@@ -483,17 +645,14 @@ export const DeliveryTimingSelector: React.FC<{
                 <Clock className="h-3.5 w-3.5 text-[#596B58]" />
                 <span>Preferred Time Slot *</span>
               </label>
-              <select
+              <CustomSelect
                 value={scheduledTimeSlot || TIME_SLOTS[2]}
-                onChange={(e) => onTimeSlotChange(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5DEC9] bg-white text-xs font-semibold text-[#3B302B] outline-none focus:border-[#596B58] focus:ring-1 focus:ring-[#596B58] cursor-pointer"
-              >
-                {TIME_SLOTS.map((slot) => (
-                  <option key={slot} value={slot}>
-                    {slot}
-                  </option>
-                ))}
-              </select>
+                onChange={onTimeSlotChange}
+                options={TIME_SLOTS.map((slot) => ({
+                  value: slot,
+                  label: slot,
+                }))}
+              />
               <p className="text-[10px] text-[#7A6E65]">
                 Our delivery partner will arrive within this designated window.
               </p>

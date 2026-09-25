@@ -3,7 +3,7 @@ import { Plus, Tag, Ticket, Trash2, CheckCircle, XCircle } from "lucide-react";
 
 import { Badge, Modal } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/FormControls";
+import { CustomSelect, Input } from "@/components/ui/FormControls";
 import {
   AdminPageHeader,
   AdminStatCard,
@@ -292,15 +292,15 @@ export const AdminCouponsPage: React.FC = () => {
             />
 
             <div>
-              <label className="block text-xs font-bold text-[#3B302B] mb-1">Discount Type *</label>
-              <select
+              <CustomSelect
+                label="Discount Type *"
                 value={discountType}
-                onChange={(e) => setDiscountType(e.target.value as "PERCENTAGE" | "FLAT")}
-                className="w-full p-2.5 rounded-lg border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58] bg-white font-medium"
-              >
-                <option value="PERCENTAGE">Percentage Discount (%)</option>
-                <option value="FLAT">Flat Amount Discount (₹)</option>
-              </select>
+                onChange={(val) => setDiscountType(val as "PERCENTAGE" | "FLAT")}
+                options={[
+                  { value: "PERCENTAGE", label: "Percentage Discount (%)" },
+                  { value: "FLAT", label: "Flat Amount Discount (₹)" },
+                ]}
+              />
             </div>
           </div>
 

@@ -43,9 +43,18 @@ export interface MockReview {
   id: string;
   name: string;
   customerName?: string;
+  userEmail?: string;
+  userId?: string;
   rating: number;
+  qualityRating?: number;
+  tasteRating?: number;
   comment: string;
   productName?: string;
+  productId?: string;
+  orderId?: string;
+  tags?: string[];
+  isVerified?: boolean;
+  isActive?: boolean;
   date?: string;
   createdAt?: string;
   avatar: string;

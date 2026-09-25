@@ -17,7 +17,7 @@ import {
 
 import { Badge, Card, Modal } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/FormControls";
+import { CustomSelect, Input } from "@/components/ui/FormControls";
 import {
   customerDashboardService,
   type SupportTicket,
@@ -262,19 +262,19 @@ export const CustomerSupportPage: React.FC = () => {
           />
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[#3B302B]">Category *</label>
-            <select
+            <CustomSelect
+              label="Category *"
               value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5DEC9] bg-white text-[#3B302B] focus:outline-none focus:border-[#596B58]"
-            >
-              <option value="Order Support">Order Support & Status</option>
-              <option value="Delivery Issue">Delivery Timing / Address Issue</option>
-              <option value="Payment & Refunds">Payment & Refund Inquiries</option>
-              <option value="Cake Quality">Cake Taste & Quality Feedback</option>
-              <option value="Custom Cake Design">Custom Cake Design Query</option>
-              <option value="General Inquiry">Other Account Inquiry</option>
-            </select>
+              onChange={(val) => setForm({ ...form, category: val })}
+              options={[
+                { value: "Order Support", label: "Order Support & Status" },
+                { value: "Delivery Issue", label: "Delivery Timing / Address Issue" },
+                { value: "Payment & Refunds", label: "Payment & Refund Inquiries" },
+                { value: "Cake Quality", label: "Cake Taste & Quality Feedback" },
+                { value: "Custom Cake Design", label: "Custom Cake Design Query" },
+                { value: "General Inquiry", label: "Other Account Inquiry" },
+              ]}
+            />
           </div>
 
           <div className="space-y-1">

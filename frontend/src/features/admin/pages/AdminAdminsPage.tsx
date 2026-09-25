@@ -25,7 +25,7 @@ import {
 
 import { Badge, Card, Modal, Skeleton } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/FormControls";
+import { CustomSelect, Input } from "@/components/ui/FormControls";
 import {
   adminOperationsService,
   type AdminMember,
@@ -263,16 +263,16 @@ export const AdminAdminsPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <select
+          <div className="w-full sm:w-48">
+            <CustomSelect
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-3 py-2 text-xs rounded-xl border border-[#E5DEC9] bg-white text-[#3B302B] font-semibold focus:outline-none focus:border-[#596B58]"
-            >
-              <option value="ALL">All Roles</option>
-              <option value="admin">Central Admins Only</option>
-              <option value="branch_admin">Branch Admins Only</option>
-            </select>
+              onChange={(val) => setRoleFilter(val)}
+              options={[
+                { value: "ALL", label: "All Roles" },
+                { value: "admin", label: "Central Admins Only" },
+                { value: "branch_admin", label: "Branch Admins Only" },
+              ]}
+            />
           </div>
         </div>
       </Card>
@@ -505,34 +505,30 @@ export const AdminAdminsPage: React.FC = () => {
           </p>
 
           <div>
-            <label className="block text-xs font-bold text-[#3B302B] mb-1">
-              Admin Access Level / Role
-            </label>
-            <select
-              {...form.register("role")}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5DEC9] bg-white text-[#3B302B] font-semibold focus:outline-none focus:border-[#596B58]"
-            >
-              <option value="admin">👑 Central Super Admin (Full Control: Orders, Catalog, Admins, Settings)</option>
-              <option value="branch_admin">🏪 Branch Admin (Branch-specific Orders & Inventory)</option>
-            </select>
+            <CustomSelect
+              label="Admin Access Level / Role"
+              value={form.watch("role")}
+              onChange={(val) => form.setValue("role", val as "admin" | "branch_admin", { shouldValidate: true })}
+              options={[
+                { value: "admin", label: "👑 Central Super Admin (Full Control: Orders, Catalog, Admins, Settings)" },
+                { value: "branch_admin", label: "🏪 Branch Admin (Branch-specific Orders & Inventory)" },
+              ]}
+            />
           </div>
 
           {selectedRole === "branch_admin" && (
             <div>
-              <label className="block text-xs font-bold text-[#3B302B] mb-1">
-                Assign Branch Store
-              </label>
-              <select
-                {...form.register("branchId")}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5DEC9] bg-white text-[#3B302B] font-semibold focus:outline-none focus:border-[#596B58]"
-              >
-                <option value="">Select Branch Store...</option>
-                {branches.map((b) => (
-                  <option key={b.id || b._id} value={b.id || b._id}>
-                    {b.name} ({b.code}) - {b.address?.city || "Bakery"}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect
+                label="Assign Branch Store"
+                value={form.watch("branchId") || ""}
+                onChange={(val) => form.setValue("branchId", val, { shouldValidate: true })}
+                placeholder="Select Branch Store..."
+                searchable={branches.length > 5}
+                options={branches.map((b) => ({
+                  value: b.id || b._id || "",
+                  label: `${b.name} (${b.code}) - ${b.address?.city || "Bakery"}`,
+                }))}
+              />
             </div>
           )}
 

@@ -6,6 +6,8 @@ import { UserModel } from "../modules/user/model/user.model.js";
 import { BannerModel } from "../modules/banner/model/banner.model.js";
 import { logger } from "../shared/utils/logger.js";
 
+import { hashPassword } from "../modules/auth/utils/password.js";
+
 export const seedInitialData = async (_force: boolean = false): Promise<void> => {
   try {
     // 1. Seed Admin & Customer Users
@@ -18,12 +20,15 @@ export const seedInitialData = async (_force: boolean = false): Promise<void> =>
         { email: "onebitebakery07@gmail.com" },
       ],
     });
+    const isFirstRun = !existingAdmin;
+    const defaultAdminHash = hashPassword("Admin@123");
     if (!existingAdmin) {
       await UserModel.create({
         name: "Ajay Prajapati",
         phone: "7897671632",
         email: "ajaykterha@gmail.com",
         role: "admin",
+        password: defaultAdminHash,
         isVerified: true,
         status: "active",
         lastLogin: new Date(),
@@ -34,21 +39,29 @@ export const seedInitialData = async (_force: boolean = false): Promise<void> =>
       existingAdmin.phone = "7897671632";
       existingAdmin.email = "ajaykterha@gmail.com";
       existingAdmin.role = "admin";
+      if (!existingAdmin.password) {
+        existingAdmin.password = defaultAdminHash;
+      }
       await existingAdmin.save();
     }
 
     const existingCustomer = await UserModel.findOne({ phone: "9876543210" });
+    const defaultCustomerHash = hashPassword("Customer@123");
     if (!existingCustomer) {
       await UserModel.create({
         name: "Bakery Customer",
         phone: "9876543210",
         email: "customer@onebitebakery.local",
         role: "customer",
+        password: defaultCustomerHash,
         isVerified: true,
         status: "active",
         lastLogin: new Date(),
       });
       logger.info("Bakery Customer seeded (phone: 9876543210)");
+    } else if (!existingCustomer.password) {
+      existingCustomer.password = defaultCustomerHash;
+      await existingCustomer.save();
     }
 
     // 2. Seed & Clean Duplicate Categories
@@ -316,7 +329,7 @@ export const seedInitialData = async (_force: boolean = false): Promise<void> =>
 
     // 6. Seed Default Hero Banners / Posters
     const bannerCount = await BannerModel.countDocuments();
-    if (bannerCount === 0) {
+    if ((bannerCount === 0 && isFirstRun) || _force) {
       await BannerModel.insertMany([
         {
           title: "Handcrafted Delights for Every Celebration",
@@ -381,7 +394,7 @@ export const seedInitialData = async (_force: boolean = false): Promise<void> =>
     // 7. Seed Combos & Celebration Hampers
     const { ComboModel } = await import("../modules/combo/model/combo.model.js");
     const comboCount = await ComboModel.countDocuments();
-    if (comboCount === 0) {
+    if ((comboCount === 0 && isFirstRun) || _force) {
       await ComboModel.insertMany([
         {
           title: "Deluxe Party Celebration Box",
@@ -416,7 +429,7 @@ export const seedInitialData = async (_force: boolean = false): Promise<void> =>
     // 8. Seed Custom Cake Options (Flavors, Designs, Shapes)
     const { CustomCakeOptionModel } = await import("../modules/custom-cake/model/custom-cake-option.model.js");
     const customOptionCount = await CustomCakeOptionModel.countDocuments();
-    if (customOptionCount === 0) {
+    if ((customOptionCount === 0 && isFirstRun) || _force) {
       await CustomCakeOptionModel.insertMany([
         {
           name: "Belgian Dark Chocolate Ganache",
@@ -473,7 +486,7 @@ export const seedInitialData = async (_force: boolean = false): Promise<void> =>
     // 9. Seed Initial Verified Reviews
     const { ReviewModel } = await import("../modules/review/model/review.model.js");
     const reviewCount = await ReviewModel.countDocuments();
-    if (reviewCount === 0) {
+    if ((reviewCount === 0 && isFirstRun) || _force) {
       await ReviewModel.insertMany([
         {
           customerName: "Ananya Sharma",

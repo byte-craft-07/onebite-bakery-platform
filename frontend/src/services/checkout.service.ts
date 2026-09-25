@@ -36,6 +36,7 @@ export interface CheckoutPreviewResponse {
   };
   deliveryThreshold: {
     minDeliveryAmount: number;
+    freeDeliveryThreshold?: number;
     isEligibleForDelivery: boolean;
   };
 }
@@ -68,10 +69,12 @@ export const checkoutService = {
     }
 
     let backendPreview: CheckoutPreviewResponse | null = null;
+    let backendFreeThreshold: number | undefined;
+    let backendMinDelivery: number | undefined;
     try {
       const response = await apiClient.get<{
         success: boolean;
-        data: { checkout: CheckoutPreviewResponse };
+        data: any;
       }>("/checkout", {
         params: {
           deliveryMethod: fulfillmentType,
@@ -79,8 +82,20 @@ export const checkoutService = {
           villageName,
         },
       });
-      if (response.data?.data?.checkout && response.data.data.checkout.pricing?.subtotal > 0) {
-        backendPreview = response.data.data.checkout;
+      const summaryData = response.data?.data?.checkout || response.data?.data;
+      if (summaryData?.pricing?.subtotal > 0) {
+        backendPreview = {
+          fulfillmentType,
+          items: summaryData.items,
+          pricing: summaryData.pricing,
+          deliveryThreshold: {
+            minDeliveryAmount: summaryData.minimumHomeDeliveryAmount ?? 0,
+            freeDeliveryThreshold: summaryData.freeDeliveryThreshold,
+            isEligibleForDelivery: summaryData.homeDeliveryEligible ?? true,
+          },
+        };
+        backendFreeThreshold = summaryData.freeDeliveryThreshold;
+        backendMinDelivery = summaryData.minimumHomeDeliveryAmount;
       }
     } catch {
       // Ignore API failure in local dev
@@ -118,7 +133,7 @@ export const checkoutService = {
     }
 
     let storeSettings = {
-      minOrderValue: 299,
+      minOrderValue: 0,
       freeDeliveryThreshold: 799,
       standardDeliveryCharge: 49,
       taxRatePercent: 5,
@@ -130,7 +145,7 @@ export const checkoutService = {
       const fetched = await adminOperationsService.getSettings();
       if (fetched) {
         storeSettings = {
-          minOrderValue: fetched.minOrderValue ?? 299,
+          minOrderValue: fetched.minOrderValue ?? 0,
           freeDeliveryThreshold: fetched.freeDeliveryThreshold ?? 799,
           standardDeliveryCharge: fetched.standardDeliveryCharge ?? 49,
           taxRatePercent: fetched.taxRatePercent ?? 5,
@@ -159,8 +174,8 @@ export const checkoutService = {
       }
     }
 
-    const minDeliveryAmount = storeSettings.minOrderValue;
-    const freeDeliveryThreshold = villageFreeThreshold ?? storeSettings.freeDeliveryThreshold;
+    const minDeliveryAmount = backendMinDelivery ?? storeSettings.minOrderValue ?? 0;
+    const freeDeliveryThreshold = backendFreeThreshold ?? villageFreeThreshold ?? storeSettings.freeDeliveryThreshold ?? 350;
     const standardFee =
       villageDeliveryCharge !== undefined
         ? villageDeliveryCharge
@@ -190,6 +205,7 @@ export const checkoutService = {
       },
       deliveryThreshold: {
         minDeliveryAmount,
+        freeDeliveryThreshold,
         isEligibleForDelivery: subtotal >= minDeliveryAmount || fulfillmentType === "STORE_PICKUP",
       },
     };

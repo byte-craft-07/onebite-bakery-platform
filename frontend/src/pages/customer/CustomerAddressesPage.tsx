@@ -4,7 +4,7 @@ import { ArrowLeft, CheckCircle2, Home, MapPin, Plus, Trash2, Building, AlertCir
 
 import { Badge, Card, EmptyState, Modal, Skeleton } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/FormControls";
+import { CustomSelect, Input } from "@/components/ui/FormControls";
 import { useAuth } from "@/contexts/auth.context";
 import { toast } from "@/contexts/toast.context";
 import { addressService, type Address } from "@/services/address.service";
@@ -317,19 +317,16 @@ export const CustomerAddressesPage: React.FC = () => {
                 <span>Select Village / Area *</span>
                 <span className="text-[10px] text-[#596B58]">Onebite Bakery Delivery Network</span>
               </label>
-              <select
+              <CustomSelect
                 value={form.village}
-                onChange={(e) => handleVillageChange(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5DEC9] bg-white text-[#3B302B] focus:outline-none focus:border-[#596B58]"
-                required
-              >
-                <option value="">-- Select Village / Area --</option>
-                {villages.map((v) => (
-                  <option key={v.id} value={v.name}>
-                    {v.name} ({v.district})
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => handleVillageChange(val)}
+                placeholder="-- Select Village / Area --"
+                searchable={villages.length > 5}
+                options={villages.map((v) => ({
+                  value: v.name,
+                  label: `${v.name} (${v.district})`,
+                }))}
+              />
             </div>
 
             <Input

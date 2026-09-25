@@ -6,7 +6,7 @@ import { CategoryCard, ComboCard, OccasionCard, ReviewCard } from "@/components/
 import { ProductCard } from "@/components/cards/ProductCard";
 import { Button } from "@/components/ui/Button";
 import { RatingModal } from "@/components/review/RatingModal";
-import { MOCK_COMBOS, MOCK_PRODUCTS, type MockReview } from "@/data/mockData";
+import { type MockReview } from "@/data/mockData";
 import { catalogService, type CategoryItem, type OccasionItem, type ProductItem } from "@/services/catalog.service";
 import { comboService, type Combo } from "@/services/combo.service";
 import { useAuth } from "@/contexts/auth.context";
@@ -35,14 +35,17 @@ export const HomePage: React.FC = () => {
         reviewService.getReviews(),
         comboService.getCombos().catch(() => []),
       ]);
-      setCategories(catList);
-      setAllProducts(prodRes.products.length > 0 ? prodRes.products : (MOCK_PRODUCTS as unknown as ProductItem[]));
-      setOccasions(occList);
-      setReviews(revList);
-      setCombos(comboList && comboList.length > 0 ? comboList : (MOCK_COMBOS as unknown as Combo[]));
+      setCategories(catList || []);
+      setAllProducts(prodRes?.products || []);
+      setOccasions(occList || []);
+      setReviews(revList || []);
+      setCombos(comboList || []);
     } catch (_err) {
-      setAllProducts(MOCK_PRODUCTS as unknown as ProductItem[]);
-      setCombos(MOCK_COMBOS as unknown as Combo[]);
+      setCategories([]);
+      setAllProducts([]);
+      setOccasions([]);
+      setReviews([]);
+      setCombos([]);
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +69,7 @@ export const HomePage: React.FC = () => {
   const avgRating =
     reviews.length > 0
       ? (reviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0) / reviews.length).toFixed(1)
-      : "4.9";
+      : null;
 
   // Filtered Products for the dynamic tab
   const filteredProducts = allProducts.filter((p) => {
@@ -132,20 +135,26 @@ export const HomePage: React.FC = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-          {categories.map((category) => (
-            <CategoryCard
-              key={category.id}
-              category={{
-                id: category.id,
-                name: category.name,
-                slug: category.slug,
-                image: category.image || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
-                itemCount: category.itemCount || 1,
-              }}
-            />
-          ))}
-        </div>
+        {categories.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            {categories.map((category) => (
+              <CategoryCard
+                key={category.id}
+                category={{
+                  id: category.id,
+                  name: category.name,
+                  slug: category.slug,
+                  image: category.image || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
+                  itemCount: category.itemCount || 1,
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-[#E5DEC9] p-6 text-center text-xs sm:text-sm text-[#7A6E65]">
+            No categories available.
+          </div>
+        )}
       </section>
 
       {/* All Products Showcase with Interactive Category Pills */}
@@ -184,81 +193,93 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-          {filteredProducts.slice(0, 8).map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
+        {filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            {filteredProducts.slice(0, 8).map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-[#E5DEC9] p-8 text-center text-xs sm:text-sm text-[#7A6E65]">
+            No products available in this section.
+          </div>
+        )}
 
-        <div className="text-center pt-2">
-          <Link to="/products">
-            <Button variant="outline" size="lg" className="w-full sm:w-auto border-[#596B58] text-[#596B58] hover:bg-[#FFF8EC]">
-              <span>Explore All {allProducts.length}+ Products</span>
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </Link>
-        </div>
+        {allProducts.length > 0 && (
+          <div className="text-center pt-2">
+            <Link to="/products">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto border-[#596B58] text-[#596B58] hover:bg-[#FFF8EC]">
+                <span>Explore All {allProducts.length}+ Products</span>
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </Link>
+          </div>
+        )}
       </section>
 
       {/* Party Decoration Accessories Dedicated Section */}
-      <section className="space-y-4 sm:space-y-8 rounded-3xl bg-gradient-to-r from-amber-50/70 via-orange-50/50 to-amber-50/70 border border-[#E5DEC9] p-4 sm:p-10">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#596B58]/10 text-[#596B58] text-xs font-bold uppercase tracking-wider mb-1 sm:mb-2">
-              <PartyPopper className="h-3.5 w-3.5" />
-              <span>Party Ready Accessories</span>
+      {decorationProducts.length > 0 && (
+        <section className="space-y-4 sm:space-y-8 rounded-3xl bg-gradient-to-r from-amber-50/70 via-orange-50/50 to-amber-50/70 border border-[#E5DEC9] p-4 sm:p-10">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#596B58]/10 text-[#596B58] text-xs font-bold uppercase tracking-wider mb-1 sm:mb-2">
+                <PartyPopper className="h-3.5 w-3.5" />
+                <span>Party Ready Accessories</span>
+              </div>
+              <h2 className="text-xl sm:text-3xl font-extrabold text-[#3B302B]">
+                Celebration Party Decorations
+              </h2>
+              <p className="text-[11px] sm:text-sm text-[#7A6E65] mt-0.5 sm:mt-1">
+                Metallic candles, custom cake toppers, pastel balloons, and confetti poppers
+              </p>
             </div>
-            <h2 className="text-xl sm:text-3xl font-extrabold text-[#3B302B]">
-              Celebration Party Decorations
-            </h2>
-            <p className="text-[11px] sm:text-sm text-[#7A6E65] mt-0.5 sm:mt-1">
-              Metallic candles, custom cake toppers, pastel balloons, and confetti poppers
-            </p>
+            <Link
+              to="/decorations"
+              className="text-xs sm:text-sm font-bold text-[#596B58] hover:underline flex items-center gap-1 shrink-0"
+            >
+              <span>Open Party Shop</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-          <Link
-            to="/decorations"
-            className="text-xs sm:text-sm font-bold text-[#596B58] hover:underline flex items-center gap-1 shrink-0"
-          >
-            <span>Open Party Shop</span>
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-          {(decorationProducts.length > 0 ? decorationProducts : allProducts.slice(4, 8)).slice(0, 4).map((item) => (
-            <ProductCard key={item.id} product={item} />
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            {decorationProducts.slice(0, 4).map((item) => (
+              <ProductCard key={item.id} product={item} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Celebration Occasions */}
-      <section className="space-y-4 sm:space-y-8">
-        <div className="flex items-end justify-between gap-2">
-          <div>
-            <h2 className="text-xl sm:text-3xl font-extrabold text-[#3B302B]">Baking for Occasions</h2>
-            <p className="text-[11px] sm:text-sm text-[#7A6E65] mt-0.5 sm:mt-1">Custom tier designs tailored for your milestone events</p>
+      {occasions.length > 0 && (
+        <section className="space-y-4 sm:space-y-8">
+          <div className="flex items-end justify-between gap-2">
+            <div>
+              <h2 className="text-xl sm:text-3xl font-extrabold text-[#3B302B]">Baking for Occasions</h2>
+              <p className="text-[11px] sm:text-sm text-[#7A6E65] mt-0.5 sm:mt-1">Custom tier designs tailored for your milestone events</p>
+            </div>
+            <Link to="/occasions" className="text-xs sm:text-sm font-bold text-[#596B58] hover:underline flex items-center gap-1 shrink-0">
+              <span>View All</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-          <Link to="/occasions" className="text-xs sm:text-sm font-bold text-[#596B58] hover:underline flex items-center gap-1 shrink-0">
-            <span>View All</span>
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-          {occasions.map((occasion) => (
-            <OccasionCard
-              key={occasion.id}
-              occasion={{
-                id: occasion.id,
-                name: occasion.name,
-                slug: occasion.slug,
-                image: occasion.image || "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=600&q=80",
-                tagline: occasion.tagline || "Artisanal celebration cakes.",
-              }}
-            />
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            {occasions.map((occasion) => (
+              <OccasionCard
+                key={occasion.id}
+                occasion={{
+                  id: occasion.id,
+                  name: occasion.name,
+                  slug: occasion.slug,
+                  image: occasion.image || "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=600&q=80",
+                  tagline: occasion.tagline || "Artisanal celebration cakes.",
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Combo Collection */}
       <section className="space-y-6 sm:space-y-8">
@@ -273,11 +294,17 @@ export const HomePage: React.FC = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-          {combos.map((combo) => (
-            <ComboCard key={combo.id} combo={combo} />
-          ))}
-        </div>
+        {combos.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+            {combos.map((combo) => (
+              <ComboCard key={combo.id} combo={combo} />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-[#E5DEC9] p-8 text-center text-xs sm:text-sm text-[#7A6E65]">
+            No combos available at this time.
+          </div>
+        )}
       </section>
 
       {/* Custom Cake Studio Callout Banner */}
@@ -357,15 +384,23 @@ export const HomePage: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center text-amber-500">
-                <Star className="h-5 w-5 fill-current" />
+            {avgRating ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center text-amber-500">
+                  <Star className="h-5 w-5 fill-current" />
+                </div>
+                <span className="text-lg font-extrabold text-[#3B302B]">{avgRating} / 5.0</span>
+                <span className="text-xs font-semibold text-[#7A6E65]">({reviews.length} Verified Customer Reviews)</span>
               </div>
-              <span className="text-lg font-extrabold text-[#3B302B]">{avgRating} / 5.0</span>
-              <span className="text-xs font-semibold text-[#7A6E65]">({reviews.length}+ Verified Customer Reviews)</span>
-            </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                  Customer Reviews
+                </span>
+              </div>
+            )}
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">What Our Customers Say</h2>
-            <p className="text-xs sm:text-sm text-[#7A6E65]">Live moving testimonials from celebrations across our delivery villages.</p>
+            <p className="text-xs sm:text-sm text-[#7A6E65]">Live testimonials from celebrations across our delivery villages.</p>
           </div>
 
           <Button
@@ -381,7 +416,7 @@ export const HomePage: React.FC = () => {
         {reviews.length > 0 ? (
           <div className="relative w-full overflow-hidden py-4 -my-4 mask-linear-gradient">
             <div className="animate-marquee-auto-move gap-6 flex items-center py-2">
-              {[...reviews, ...reviews, ...reviews].map((review, idx) => (
+              {[...reviews, ...(reviews.length < 5 ? reviews : []), ...(reviews.length < 3 ? reviews : [])].map((review, idx) => (
                 <div key={`${review.id}-${idx}`} className="w-[300px] sm:w-[360px] shrink-0">
                   <ReviewCard review={review} />
                 </div>
@@ -389,7 +424,24 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
         ) : (
-          <p className="text-center text-sm text-[#7A6E65] py-8">No customer reviews yet. Be the first to share your celebration experience!</p>
+          <div className="py-10 px-6 rounded-3xl bg-[#FFF8EC]/60 border border-dashed border-[#E5DEC9] text-center space-y-3 my-2">
+            <div className="h-12 w-12 rounded-full bg-[#596B58]/10 text-[#596B58] flex items-center justify-center mx-auto border border-[#596B58]/20">
+              <Sparkles className="h-6 w-6 text-[#596B58]" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base sm:text-lg font-bold text-[#3B302B]">It has no reviews yet</h3>
+              <p className="text-xs text-[#7A6E65] max-w-md mx-auto">
+                No customer reviews have been posted yet. Be the first to share your celebration experience!
+              </p>
+            </div>
+            <Button
+              onClick={() => setIsRatingModalOpen(true)}
+              className="font-bold text-xs"
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+              <span>Write the First Review</span>
+            </Button>
+          </div>
         )}
       </section>
 

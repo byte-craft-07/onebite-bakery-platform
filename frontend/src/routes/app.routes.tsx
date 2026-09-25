@@ -31,6 +31,7 @@ const OffersPage = lazyRetry(() => import("@/pages/public/OffersPage").then((m) 
 const AboutPage = lazyRetry(() => import("@/pages/public/InformationPages").then((m) => ({ default: m.AboutPage })));
 const ContactPage = lazyRetry(() => import("@/pages/public/InformationPages").then((m) => ({ default: m.ContactPage })));
 const CartPage = lazyRetry(() => import("@/pages/customer/CartPage").then((m) => ({ default: m.CartPage })));
+const RazorpayDemoPage = lazyRetry(() => import("@/pages/public/RazorpayDemoPage").then((m) => ({ default: m.RazorpayDemoPage })));
 const NotFoundPage = lazyRetry(() => import("@/pages/public/NotFoundPage").then((m) => ({ default: m.NotFoundPage })));
 
 // Customer Protected Pages (Lazy Loaded)
@@ -75,6 +76,7 @@ const AdminCouponsPage = lazyRetry(() => import("@/features/admin").then((m) => 
 const AdminVillagesPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminVillagesPage })));
 const AdminOrdersPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminOrdersPage })));
 const AdminCustomersPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminCustomersPage })));
+const AdminReviewsPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminReviewsPage })));
 const AdminPaymentsPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminPaymentsPage })));
 const AdminNotificationsPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminNotificationsPage })));
 const AdminMediaPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminMediaPage })));
@@ -106,6 +108,8 @@ export const AppRoutes: React.FC = () => {
             <Route path="offers" element={<OffersPage />} />
             <Route path="about" element={<AboutPage />} />
             <Route path="contact" element={<ContactPage />} />
+            <Route path="payment-demo" element={<RazorpayDemoPage />} />
+            <Route path="razorpay-test" element={<RazorpayDemoPage />} />
 
             {/* Cart Route */}
             <Route path="cart" element={<CartPage />} />
@@ -182,6 +186,7 @@ export const AppRoutes: React.FC = () => {
               <Route path="villages" element={<AdminVillagesPage />} />
               <Route path="orders" element={<AdminOrdersPage />} />
               <Route path="customers" element={<AdminCustomersPage />} />
+              <Route path="reviews" element={<AdminReviewsPage />} />
               <Route path="payments" element={<AdminPaymentsPage />} />
               <Route path="notifications" element={<AdminNotificationsPage />} />
               <Route path="media" element={<AdminMediaPage />} />

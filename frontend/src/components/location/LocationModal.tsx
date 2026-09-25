@@ -3,6 +3,7 @@ import { MapPin, X, Check, Navigation } from "lucide-react";
 import { useAuth } from "@/contexts/auth.context";
 import { villageService, type Village } from "@/services/village.service";
 import { Button } from "@/components/ui/Button";
+import { CustomSelect } from "@/components/ui/FormControls";
 
 interface LocationModalProps {
   isOpen: boolean;
@@ -120,7 +121,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({ isOpen, onClose })
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto min-h-[380px] pb-8">
           {currentLocation ? (
             <div className="p-3.5 bg-white border border-[#E5DEC9] rounded-xl flex items-center gap-3">
               <Navigation className="h-5 w-5 text-[#596B58] shrink-0" />
@@ -149,50 +150,41 @@ export const LocationModal: React.FC<LocationModalProps> = ({ isOpen, onClose })
 
           {/* District Dropdown */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-[#3B302B]">
-              1. Select District
-            </label>
-            <select
+            <CustomSelect
+              label="1. Select District"
               value={selectedDistrict}
-              onChange={(e) => setSelectedDistrict(e.target.value)}
+              onChange={(val) => setSelectedDistrict(val)}
               disabled={isLoadingDistricts}
-              className="w-full h-11 px-3.5 rounded-xl border border-[#E5DEC9] bg-white text-xs font-medium text-[#3B302B] focus:outline-none focus:border-[#596B58] transition-colors cursor-pointer"
-            >
-              {isLoadingDistricts ? (
-                <option value="">Loading districts...</option>
-              ) : (
-                districts.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))
-              )}
-            </select>
+              placeholder={isLoadingDistricts ? "Loading districts..." : "Select District"}
+              options={districts.map((d) => ({
+                value: d,
+                label: d,
+              }))}
+            />
           </div>
 
           {/* Village Dropdown */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-[#3B302B]">
-              2. Select Village / Service Area
-            </label>
-            <select
+            <CustomSelect
+              label="2. Select Village / Service Area"
               value={selectedVillageId}
-              onChange={(e) => setSelectedVillageId(e.target.value)}
+              onChange={(val) => setSelectedVillageId(val)}
               disabled={isLoadingVillages || !selectedDistrict}
-              className="w-full h-11 px-3.5 rounded-xl border border-[#E5DEC9] bg-white text-xs font-medium text-[#3B302B] focus:outline-none focus:border-[#596B58] transition-colors cursor-pointer"
-            >
-              {isLoadingVillages ? (
-                <option value="">Loading villages...</option>
-              ) : villages.length === 0 ? (
-                <option value="">No active villages in this district</option>
-              ) : (
-                villages.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name} ({v.pincode})
-                  </option>
-                ))
-              )}
-            </select>
+              placeholder={
+                isLoadingVillages
+                  ? "Loading villages..."
+                  : !selectedDistrict
+                  ? "First select a district"
+                  : villages.length === 0
+                  ? "No active villages in this district"
+                  : "Select Village / Service Area"
+              }
+              searchable={villages.length > 5}
+              options={villages.map((v) => ({
+                value: v.id,
+                label: `${v.name} (${v.pincode})`,
+              }))}
+            />
           </div>
 
           {/* Footer Action Buttons */}

@@ -195,10 +195,11 @@ export const razorpayService = {
     const resolvedKey =
       razorpayOrder.keyId ||
       configuredRazorpayKeyId ||
-      (!import.meta.env.PROD ? "rzp_test_TLZEmewy1XtSK9" : "");
+      (import.meta.env.VITE_RAZORPAY_KEY_ID as string | undefined) ||
+      "";
 
     if (!resolvedKey) {
-      throw new Error("Razorpay Key ID is not configured. Please set VITE_RAZORPAY_KEY_ID in production environment.");
+      throw new Error("Razorpay Key ID is not configured. Please set VITE_RAZORPAY_KEY_ID in environment.");
     }
 
     const rzpOptions: RazorpayCheckoutOptions = {
@@ -284,5 +285,37 @@ export const razorpayService = {
         options.onDismiss();
       }
     }
+  },
+
+  /**
+   * Create standard Razorpay order on backend (POST /api/create-order or /api/v1/create-order)
+   * Amount in paise (minimum 100 paise)
+   */
+  async createOrder(params: { amount: number; currency?: string; receipt?: string }) {
+    const response = await apiClient.post<{
+      order_id: string;
+      amount: number;
+      currency: string;
+      key_id?: string;
+    }>("/create-order", params);
+    return response.data;
+  },
+
+  /**
+   * Verify standard Razorpay payment signature on backend (POST /api/verify-payment or /api/v1/verify-payment)
+   * Algorithm: HMAC-SHA256(order_id + "|" + payment_id, KEY_SECRET)
+   */
+  async verifyPaymentSignature(params: {
+    order_id: string;
+    payment_id: string;
+    razorpay_signature: string;
+  }) {
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      order_id?: string;
+      payment_id?: string;
+    }>("/verify-payment", params);
+    return response.data;
   },
 };

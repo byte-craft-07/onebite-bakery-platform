@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/FormControls";
+import { CustomSelect, Input } from "@/components/ui/FormControls";
 import {
   customCakeService,
   type CustomCakeOption,
@@ -362,18 +362,20 @@ export const AdminCustomCakePage: React.FC = () => {
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <span className="text-xs text-[#7A6E65] font-bold">Status:</span>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="p-2 rounded-xl border border-[#E5DEC9] text-xs font-semibold bg-white outline-none focus:border-[#596B58]"
-              >
-                <option value="ALL">All Statuses</option>
-                <option value="PENDING">Pending Review</option>
-                <option value="REVIEWED">Chef Reviewed</option>
-                <option value="QUOTED">Quoted / Recommended</option>
-                <option value="ACCEPTED">Accepted</option>
-                <option value="REJECTED">Declined</option>
-              </select>
+              <div className="w-48">
+                <CustomSelect
+                  value={statusFilter}
+                  onChange={(val) => setStatusFilter(val)}
+                  options={[
+                    { value: "ALL", label: "All Statuses" },
+                    { value: "PENDING", label: "Pending Review" },
+                    { value: "REVIEWED", label: "Chef Reviewed" },
+                    { value: "QUOTED", label: "Quoted / Recommended" },
+                    { value: "ACCEPTED", label: "Accepted" },
+                    { value: "REJECTED", label: "Declined" },
+                  ]}
+                />
+              </div>
 
               <Button size="sm" variant="outline" onClick={fetchInquiries}>
                 Filter
@@ -786,18 +788,18 @@ export const AdminCustomCakePage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#3B302B] mb-1">Inquiry Status</label>
-                  <select
+                  <CustomSelect
+                    label="Inquiry Status"
                     value={recommendStatus}
-                    onChange={(e) => setRecommendStatus(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-[#E5DEC9] text-xs font-semibold bg-white outline-none focus:border-[#596B58]"
-                  >
-                    <option value="PENDING">Pending Review</option>
-                    <option value="REVIEWED">Chef Reviewed</option>
-                    <option value="QUOTED">Quoted / Recommended</option>
-                    <option value="ACCEPTED">Accepted by Client</option>
-                    <option value="REJECTED">Declined</option>
-                  </select>
+                    onChange={(val) => setRecommendStatus(val)}
+                    options={[
+                      { value: "PENDING", label: "Pending Review" },
+                      { value: "REVIEWED", label: "Chef Reviewed" },
+                      { value: "QUOTED", label: "Quoted / Recommended" },
+                      { value: "ACCEPTED", label: "Accepted by Client" },
+                      { value: "REJECTED", label: "Declined" },
+                    ]}
+                  />
                 </div>
 
                 <Input
@@ -893,17 +895,17 @@ export const AdminCustomCakePage: React.FC = () => {
                   required
                 />
                 <div>
-                  <label className="block text-xs font-bold text-[#3B302B] mb-1">Category</label>
-                  <select
+                  <CustomSelect
+                    label="Category"
                     value={flavorForm.category}
-                    onChange={(e) => setFlavorForm({ ...flavorForm, category: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#E5DEC9] text-xs font-semibold bg-white outline-none focus:border-[#596B58]"
-                  >
-                    <option value="Signature Classics">Signature Classics</option>
-                    <option value="Chocolate Indulgence">Chocolate Indulgence</option>
-                    <option value="Fruit & Exotic">Fruit & Exotic</option>
-                    <option value="Luxury Nuts">Luxury Nuts</option>
-                  </select>
+                    onChange={(val) => setFlavorForm({ ...flavorForm, category: val })}
+                    options={[
+                      { value: "Signature Classics", label: "Signature Classics" },
+                      { value: "Chocolate Indulgence", label: "Chocolate Indulgence" },
+                      { value: "Fruit & Exotic", label: "Fruit & Exotic" },
+                      { value: "Luxury Nuts", label: "Luxury Nuts" },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -975,18 +977,18 @@ export const AdminCustomCakePage: React.FC = () => {
                   required
                 />
                 <div>
-                  <label className="block text-xs font-bold text-[#3B302B] mb-1">Category</label>
-                  <select
+                  <CustomSelect
+                    label="Category"
                     value={designForm.category}
-                    onChange={(e) => setDesignForm({ ...designForm, category: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#E5DEC9] text-xs font-semibold bg-white outline-none focus:border-[#596B58]"
-                  >
-                    <option value="Celebration">Celebration</option>
-                    <option value="Luxury Celebration">Luxury Celebration</option>
-                    <option value="Trendy & Aesthetic">Trendy & Aesthetic</option>
-                    <option value="Weddings & Anniversaries">Weddings & Anniversaries</option>
-                    <option value="Kids & Fun">Kids & Fun</option>
-                  </select>
+                    onChange={(val) => setDesignForm({ ...designForm, category: val })}
+                    options={[
+                      { value: "Celebration", label: "Celebration" },
+                      { value: "Luxury Celebration", label: "Luxury Celebration" },
+                      { value: "Trendy & Aesthetic", label: "Trendy & Aesthetic" },
+                      { value: "Weddings & Anniversaries", label: "Weddings & Anniversaries" },
+                      { value: "Kids & Fun", label: "Kids & Fun" },
+                    ]}
+                  />
                 </div>
               </div>
 

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { AlertCircle, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { CustomSelect } from "@/components/ui/FormControls";
 
 // AdminCard
 export const AdminCard: React.FC<{ title?: string; children: React.ReactNode; className?: string }> = ({ title, children, className = "" }) => (
@@ -108,36 +109,41 @@ export const AdminToolbar: React.FC<{
   onSearchChange?: (val: string) => void;
   filterOptions?: { label: string; value: string }[];
   onFilterChange?: (val: string) => void;
+  filterValue?: string;
   actions?: React.ReactNode;
-}> = ({ searchPlaceholder = "Search records...", onSearchChange, filterOptions, onFilterChange, actions }) => (
-  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 p-4 bg-white border border-[#E5DEC9] rounded-2xl">
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto flex-1">
-      <div className="relative w-full sm:w-80">
-        <Search className="absolute left-3.5 top-3 h-4 w-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder={searchPlaceholder}
-          onChange={(e) => onSearchChange?.(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 rounded-xl border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58]"
-        />
-      </div>
+}> = ({ searchPlaceholder = "Search records...", onSearchChange, filterOptions, onFilterChange, filterValue, actions }) => {
+  const [selectedFilter, setSelectedFilter] = React.useState(filterValue || (filterOptions?.[0]?.value ?? ""));
 
-      {filterOptions && filterOptions.length > 0 ? (
-        <select
-          onChange={(e) => onFilterChange?.(e.target.value)}
-          className="px-3 py-2 rounded-xl border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58] bg-white text-[#3B302B]"
-        >
-          {filterOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      ) : null}
+  return (
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 p-4 bg-white border border-[#E5DEC9] rounded-2xl">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto flex-1">
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3.5 top-3 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder={searchPlaceholder}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-xl border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58]"
+          />
+        </div>
+
+        {filterOptions && filterOptions.length > 0 ? (
+          <div className="w-full sm:w-48">
+            <CustomSelect
+              value={filterValue !== undefined ? filterValue : selectedFilter}
+              onChange={(val) => {
+                setSelectedFilter(val);
+                onFilterChange?.(val);
+              }}
+              options={filterOptions}
+            />
+          </div>
+        ) : null}
+      </div>
+      {actions ? <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">{actions}</div> : null}
     </div>
-    {actions ? <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">{actions}</div> : null}
-  </div>
-);
+  );
+};
 
 // AdminTable
 export const AdminTable: React.FC<{

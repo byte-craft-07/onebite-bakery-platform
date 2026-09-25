@@ -1,7 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Banknote, CheckCircle2, Download, FileText, Plus, QrCode, ShieldCheck, ShoppingBag, Zap } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Banknote,
+  Calendar,
+  Check,
+  CheckCircle2,
+  Clock,
+  Download,
+  Edit2,
+  FileText,
+  Lock,
+  Plus,
+  QrCode,
+  ShieldCheck,
+  ShoppingBag,
+  Truck,
+  Zap,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -19,7 +37,7 @@ import { useAuth } from "@/contexts/auth.context";
 import { toast } from "@/contexts/toast.context";
 import { Button } from "@/components/ui/Button";
 import { Card, Modal, Skeleton } from "@/components/ui/DisplayComponents";
-import { Input } from "@/components/ui/FormControls";
+import { CustomSelect, Input } from "@/components/ui/FormControls";
 import { addressService, type Address } from "@/services/address.service";
 import { authService } from "@/services/auth.service";
 import { cartService } from "@/services/cart.service";
@@ -115,6 +133,10 @@ export const CheckoutPage: React.FC = () => {
 
   const [isAddAddressModalOpen, setIsAddAddressModalOpen] = useState(false);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
+
+  // Multi-step checkout state (1: Delivery & Address, 2: Delivery Timing, 3: Review & Payment)
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+  const [isItemsExpanded, setIsItemsExpanded] = useState<boolean>(false);
 
   const addressForm = useForm<InlineAddressData>({
     resolver: zodResolver(inlineAddressSchema),
@@ -304,6 +326,93 @@ export const CheckoutPage: React.FC = () => {
     return orderService.getOrderById(orderId);
   };
 
+  const selectedAddr = addresses.find((address) => address.id === selectedAddressId);
+
+  const validateStep1 = (): boolean => {
+    setErrorMsg(null);
+    if (fulfillmentType === "HOME_DELIVERY") {
+      if (
+        checkoutPreview?.deliveryThreshold &&
+        !checkoutPreview.deliveryThreshold.isEligibleForDelivery
+      ) {
+        const min = checkoutPreview.deliveryThreshold.minDeliveryAmount;
+        const subtotal = checkoutPreview?.pricing?.subtotal || 0;
+        const remaining = Math.max(0, min - subtotal);
+        const msg = `Home Delivery ke liye minimum order ₹${min} hona zaroori hai. Cart me ₹${remaining} aur jodein ya Store Pickup chunein.`;
+        setErrorMsg(msg);
+        toast.error("Minimum Order Not Met", msg);
+        return false;
+      }
+
+      if (!selectedAddressId) {
+        if (addresses.length === 0) {
+          setIsAddAddressModalOpen(true);
+          return false;
+        }
+        setErrorMsg("Please select a delivery address for Home Delivery.");
+        toast.error("Address Required", "Please select a delivery address.");
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const validateStep2 = (): boolean => {
+    setErrorMsg(null);
+    const effectiveTimingType = hasCustomCake ? "SCHEDULED" : timingType;
+    if (effectiveTimingType === "SCHEDULED" && !scheduledDate) {
+      setErrorMsg("Please select a delivery date.");
+      toast.error("Date Required", "Please select a delivery date.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleNextStep = () => {
+    if (currentStep === 1) {
+      if (validateStep1()) {
+        setCurrentStep(2);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } else if (currentStep === 2) {
+      if (validateStep2()) {
+        setCurrentStep(3);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+  };
+
+  const handlePrevStep = () => {
+    setErrorMsg(null);
+    if (currentStep === 3) {
+      setCurrentStep(2);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (currentStep === 2) {
+      setCurrentStep(1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const goToStep = (step: 1 | 2 | 3) => {
+    if (step === currentStep) return;
+    if (step < currentStep) {
+      setCurrentStep(step);
+      setErrorMsg(null);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    if (step === 2) {
+      if (validateStep1()) {
+        setCurrentStep(2);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } else if (step === 3) {
+      if (validateStep1() && validateStep2()) {
+        setCurrentStep(3);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+  };
 
   const handlePlaceOrder = async () => {
     setErrorMsg(null);
@@ -312,6 +421,20 @@ export const CheckoutPage: React.FC = () => {
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       setErrorMsg("You are currently offline. Please connect to the internet to place your order.");
       toast.error("Offline", "An active internet connection is required to complete checkout.");
+      return;
+    }
+
+    if (
+      fulfillmentType === "HOME_DELIVERY" &&
+      checkoutPreview?.deliveryThreshold &&
+      !checkoutPreview.deliveryThreshold.isEligibleForDelivery
+    ) {
+      const min = checkoutPreview.deliveryThreshold.minDeliveryAmount;
+      const subtotal = checkoutPreview.pricing?.subtotal || 0;
+      const remaining = Math.max(0, min - subtotal);
+      const msg = `Home Delivery ke liye minimum order ₹${min} hona zaroori hai. Cart me ₹${remaining} aur jodein ya Store Pickup chunein.`;
+      setErrorMsg(msg);
+      toast.error("Minimum Order Not Met", msg);
       return;
     }
 
@@ -578,22 +701,31 @@ export const CheckoutPage: React.FC = () => {
     );
   }
 
+  const payableAmount = checkoutPreview?.pricing
+    ? Math.round(checkoutPreview.pricing.totalAmount * 100) / 100
+    : 0;
+  const minDelivery = checkoutPreview?.deliveryThreshold?.minDeliveryAmount ?? 0;
+  const subtotal = checkoutPreview?.pricing?.subtotal || 0;
+  const isBelowMin = fulfillmentType === "HOME_DELIVERY" && minDelivery > 0 && subtotal < minDelivery;
+  const remainingForMin = Math.max(0, minDelivery - subtotal);
+
   return (
-    <div className="space-y-8 pb-16 max-w-5xl mx-auto">
+    <div className="space-y-6 pb-28 sm:pb-16 max-w-5xl mx-auto">
+      {/* Top Bar: Return to Cart & Direct Checkout badge */}
       <div className="flex items-center justify-between">
         <Link
           to="/cart"
           onClick={() => {
             sessionStorage.removeItem("onebitebakery_direct_order_item");
           }}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58]"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Return to Cart</span>
         </Link>
 
         {directItem ? (
-          <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1.5">
+          <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1.5 shadow-2xs">
             <Zap className="h-3.5 w-3.5 text-[#596B58] fill-current" />
             <span>Instant Single-Item Checkout</span>
           </span>
@@ -603,7 +735,6 @@ export const CheckoutPage: React.FC = () => {
       {directItem ? (
         <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs shadow-2xs">
           <div className="flex items-center gap-3.5 text-amber-900">
-            {/* Product Image Thumbnail */}
             <div className="relative h-14 w-14 rounded-xl overflow-hidden bg-amber-100 border border-amber-300 shrink-0 shadow-2xs">
               <img
                 src={directItem.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80"}
@@ -647,13 +778,127 @@ export const CheckoutPage: React.FC = () => {
         </div>
       ) : null}
 
-      <h1 className="text-3xl font-extrabold text-[#3B302B]">
-        {directItem ? "Direct Order Review" : "Checkout & Order Review"}
-      </h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">
+          {directItem ? "Direct Order Checkout" : "Checkout & Order Review"}
+        </h1>
+        <span className="text-xs font-bold text-[#596B58] bg-[#FFF8EC] border border-[#596B58]/20 px-3 py-1 rounded-full w-fit">
+          Step {currentStep} of 3: {currentStep === 1 ? "Delivery Method & Address" : currentStep === 2 ? "Delivery Timing" : "Review & Payment"}
+        </span>
+      </div>
+
+      {/* Multi-Step Checkout Navigation Bar */}
+      <div className="bg-white rounded-2xl border border-[#E5DEC9] p-2 sm:p-3 shadow-2xs">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
+          {/* Step 1 Pill */}
+          <button
+            type="button"
+            onClick={() => goToStep(1)}
+            className={`flex items-center justify-center sm:justify-start gap-2 p-2 sm:p-3 rounded-xl transition-all cursor-pointer text-left ${
+              currentStep === 1
+                ? "bg-[#596B58] text-white shadow-xs font-bold ring-2 ring-[#596B58]/30"
+                : currentStep > 1
+                ? "bg-emerald-50 text-emerald-900 border border-emerald-200 hover:bg-emerald-100"
+                : "bg-gray-50 text-gray-500 hover:bg-gray-100 border border-transparent"
+            }`}
+          >
+            <div
+              className={`h-6 w-6 sm:h-7 sm:w-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                currentStep === 1
+                  ? "bg-white text-[#596B58]"
+                  : currentStep > 1
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-200 text-gray-600"
+              }`}
+            >
+              {currentStep > 1 ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : "1"}
+            </div>
+            <div className="hidden sm:block min-w-0">
+              <p className="text-xs font-bold leading-tight truncate">1. Delivery Mode</p>
+              <p className={`text-[10px] truncate ${currentStep === 1 ? "text-emerald-100" : "text-[#7A6E65]"}`}>
+                {fulfillmentType === "HOME_DELIVERY" ? "Home Delivery" : "Store Pickup"}
+              </p>
+            </div>
+            <span className="sm:hidden text-xs font-bold truncate">1. Delivery</span>
+          </button>
+
+          {/* Step 2 Pill */}
+          <button
+            type="button"
+            onClick={() => goToStep(2)}
+            className={`flex items-center justify-center sm:justify-start gap-2 p-2 sm:p-3 rounded-xl transition-all cursor-pointer text-left ${
+              currentStep === 2
+                ? "bg-[#596B58] text-white shadow-xs font-bold ring-2 ring-[#596B58]/30"
+                : currentStep > 2
+                ? "bg-emerald-50 text-emerald-900 border border-emerald-200 hover:bg-emerald-100"
+                : "bg-gray-50 text-gray-500 hover:bg-gray-100 border border-transparent"
+            }`}
+          >
+            <div
+              className={`h-6 w-6 sm:h-7 sm:w-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                currentStep === 2
+                  ? "bg-white text-[#596B58]"
+                  : currentStep > 2
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-200 text-gray-600"
+              }`}
+            >
+              {currentStep > 2 ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : "2"}
+            </div>
+            <div className="hidden sm:block min-w-0">
+              <p className="text-xs font-bold leading-tight truncate">2. Delivery Timing</p>
+              <p className={`text-[10px] truncate ${currentStep === 2 ? "text-emerald-100" : "text-[#7A6E65]"}`}>
+                {timingType === "INSTANT" && !hasCustomCake ? "Instant (30-45m)" : "Scheduled Slot"}
+              </p>
+            </div>
+            <span className="sm:hidden text-xs font-bold truncate">2. Timing</span>
+          </button>
+
+          {/* Step 3 Pill */}
+          <button
+            type="button"
+            onClick={() => goToStep(3)}
+            className={`flex items-center justify-center sm:justify-start gap-2 p-2 sm:p-3 rounded-xl transition-all cursor-pointer text-left ${
+              currentStep === 3
+                ? "bg-[#596B58] text-white shadow-xs font-bold ring-2 ring-[#596B58]/30"
+                : "bg-gray-50 text-gray-500 hover:bg-gray-100 border border-transparent"
+            }`}
+          >
+            <div
+              className={`h-6 w-6 sm:h-7 sm:w-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                currentStep === 3
+                  ? "bg-white text-[#596B58]"
+                  : "bg-gray-200 text-gray-600"
+              }`}
+            >
+              3
+            </div>
+            <div className="hidden sm:block min-w-0">
+              <p className="text-xs font-bold leading-tight truncate">3. Review &amp; Pay</p>
+              <p className={`text-[10px] truncate ${currentStep === 3 ? "text-emerald-100" : "text-[#7A6E65]"}`}>
+                {paymentMethod === "UPI" ? "UPI Payment" : "Cash on Delivery"}
+              </p>
+            </div>
+            <span className="sm:hidden text-xs font-bold truncate">3. Payment</span>
+          </button>
+        </div>
+      </div>
 
       {errorMsg ? (
-        <div className="p-4 bg-amber-50 text-amber-800 text-xs font-semibold rounded-xl border border-amber-200">
-          {errorMsg}
+        <div className="p-4 bg-amber-50 text-amber-900 text-xs font-semibold rounded-xl border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <span>{errorMsg}</span>
+          {errorMsg.toLowerCase().includes("home delivery") ? (
+            <button
+              type="button"
+              onClick={() => {
+                setFulfillmentType("STORE_PICKUP");
+                setErrorMsg(null);
+              }}
+              className="px-3 py-1.5 bg-[#596B58] hover:bg-[#495948] text-white rounded-lg text-xs font-bold shrink-0 transition-colors cursor-pointer"
+            >
+              Switch to Store Pickup
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -689,162 +934,577 @@ export const CheckoutPage: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          {/* Left Options */}
+          {/* Active Step Content */}
           <div className="lg:col-span-2 space-y-6">
-          <Card className="space-y-4">
-            <h3 className="text-lg font-bold text-[#3B302B]">1. Fulfillment Method</h3>
-            <DeliverySelector fulfillmentType={fulfillmentType} onChange={setFulfillmentType} />
-          </Card>
+            {/* STEP 1: Delivery Mode & Address */}
+            {currentStep === 1 && (
+              <div className="space-y-6 animate-in fade-in duration-200">
+                <Card className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#E5DEC9] pb-3">
+                    <h3 className="text-lg font-bold text-[#3B302B] flex items-center gap-2">
+                      <Truck className="h-5 w-5 text-[#596B58]" />
+                      <span>1. Choose Delivery Method</span>
+                    </h3>
+                    <span className="text-xs font-semibold text-[#7A6E65]">Step 1 of 3</span>
+                  </div>
 
-          {fulfillmentType === "HOME_DELIVERY" ? (
-            <Card className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-[#3B302B]">2. Delivery Address</h3>
-                <Button size="sm" variant="outline" onClick={() => setIsAddAddressModalOpen(true)}>
-                  <Plus className="h-4 w-4 mr-1.5" />
-                  <span>Add New Address</span>
-                </Button>
+                  <DeliverySelector
+                    fulfillmentType={fulfillmentType}
+                    onChange={setFulfillmentType}
+                    homeDeliveryEligible={checkoutPreview?.deliveryThreshold?.isEligibleForDelivery}
+                    minimumHomeDeliveryAmount={checkoutPreview?.deliveryThreshold?.minDeliveryAmount}
+                    subtotal={checkoutPreview?.pricing?.subtotal}
+                  />
+                </Card>
+
+                {fulfillmentType === "HOME_DELIVERY" ? (
+                  <Card className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-[#E5DEC9] pb-3">
+                      <div>
+                        <h3 className="text-lg font-bold text-[#3B302B]">Select Delivery Address</h3>
+                        <p className="text-xs text-[#7A6E65]">Where should we deliver your freshly baked items?</p>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => setIsAddAddressModalOpen(true)}>
+                        <Plus className="h-4 w-4 mr-1.5" />
+                        <span>Add Address</span>
+                      </Button>
+                    </div>
+
+                    {addresses.length > 0 ? (
+                      <AddressSelector
+                        addresses={addresses}
+                        selectedAddressId={selectedAddressId}
+                        onSelect={(id) => {
+                          setSelectedAddressId(id);
+                          setErrorMsg(null);
+                        }}
+                      />
+                    ) : (
+                      <div className="p-6 bg-[#FFF8EC] rounded-2xl border-2 border-dashed border-[#E5DEC9] text-center space-y-3">
+                        <p className="text-xs text-[#7A6E65]">No delivery address found for home delivery.</p>
+                        <Button size="sm" onClick={() => setIsAddAddressModalOpen(true)}>
+                          <Plus className="h-4 w-4 mr-1.5" />
+                          <span>Create Delivery Address Now</span>
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
+                ) : (
+                  <Card className="space-y-4">
+                    <div className="border-b border-[#E5DEC9] pb-3">
+                      <h3 className="text-lg font-bold text-[#3B302B]">Store Pickup Counter &amp; Map Directions</h3>
+                      <p className="text-xs text-[#7A6E65]">Pick up fresh from our bakery counter with zero delivery fee!</p>
+                    </div>
+                    <StorePickupLocationCard />
+                  </Card>
+                )}
+
+                {/* Step 1 Actions */}
+                <div className="pt-2 flex items-center justify-end gap-3">
+                  {isBelowMin ? (
+                    <Button
+                      onClick={handleNextStep}
+                      className="w-full sm:w-auto px-6 h-12 shadow-md bg-amber-600 hover:bg-amber-700"
+                    >
+                      <span>Add ₹{remainingForMin} More for Home Delivery</span>
+                      <ArrowRight className="h-4 w-4 ml-1.5" />
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleNextStep}
+                      className="w-full sm:w-auto px-6 h-12 shadow-md"
+                    >
+                      <span>Continue to Delivery Timing</span>
+                      <ArrowRight className="h-4 w-4 ml-1.5" />
+                    </Button>
+                  )}
+                </div>
               </div>
+            )}
 
-              {addresses.length > 0 ? (
-                <AddressSelector
-                  addresses={addresses}
-                  selectedAddressId={selectedAddressId}
-                  onSelect={setSelectedAddressId}
-                />
-              ) : (
-                <div className="p-6 bg-[#FFF8EC] rounded-2xl border-2 border-dashed border-[#E5DEC9] text-center space-y-3">
-                  <p className="text-xs text-[#7A6E65]">No delivery address found for home delivery.</p>
-                  <Button size="sm" onClick={() => setIsAddAddressModalOpen(true)}>
-                    <Plus className="h-4 w-4 mr-1.5" />
-                    <span>Create Delivery Address Now</span>
+            {/* STEP 2: Delivery Timing */}
+            {currentStep === 2 && (
+              <div className="space-y-6 animate-in fade-in duration-200">
+                {/* Step 1 Summary Pill */}
+                <div className="p-3.5 bg-white rounded-2xl border border-[#E5DEC9] flex items-center justify-between text-xs shadow-2xs">
+                  <div className="flex items-center gap-2.5 text-[#3B302B] min-w-0">
+                    <Truck className="h-4 w-4 text-[#596B58] shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-bold text-xs truncate">
+                        {fulfillmentType === "HOME_DELIVERY" ? "Home Delivery to:" : "Store Pickup:"}
+                      </p>
+                      <p className="text-[11px] text-[#7A6E65] truncate">
+                        {fulfillmentType === "HOME_DELIVERY"
+                          ? `${selectedAddr?.name || "Customer"}, ${selectedAddr?.village || selectedAddr?.district || "Address"}`
+                          : "Onebite Bakery terha hamirpur main counter"}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => goToStep(1)}
+                    className="text-xs font-bold text-[#596B58] hover:underline flex items-center gap-1 cursor-pointer shrink-0 ml-2"
+                  >
+                    <Edit2 className="h-3 w-3" />
+                    <span>Change</span>
+                  </button>
+                </div>
+
+                <Card className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#E5DEC9] pb-3">
+                    <div>
+                      <h3 className="text-lg font-bold text-[#3B302B] flex items-center gap-2">
+                        <Clock className="h-5 w-5 text-[#596B58]" />
+                        <span>2. Delivery Timing Preference</span>
+                      </h3>
+                      <p className="text-xs text-[#7A6E65]">Select when you want to receive or pick up your order</p>
+                    </div>
+                    <span className="text-xs font-semibold text-[#7A6E65]">Step 2 of 3</span>
+                  </div>
+
+                  <DeliveryTimingSelector
+                    hasCustomCake={hasCustomCake}
+                    timingType={timingType}
+                    onTimingTypeChange={setTimingType}
+                    scheduledDate={scheduledDate}
+                    onDateChange={setScheduledDate}
+                    scheduledTimeSlot={scheduledTimeSlot}
+                    onTimeSlotChange={setScheduledTimeSlot}
+                  />
+                </Card>
+
+                {/* Step 2 Actions */}
+                <div className="pt-2 flex items-center justify-between gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={handlePrevStep}
+                    className="px-5 h-12 border-[#E5DEC9]"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-1.5" />
+                    <span>Back to Delivery</span>
+                  </Button>
+
+                  <Button
+                    onClick={handleNextStep}
+                    className="px-6 h-12 shadow-md"
+                  >
+                    <span>Continue to Review &amp; Payment</span>
+                    <ArrowRight className="h-4 w-4 ml-1.5" />
                   </Button>
                 </div>
-              )}
-            </Card>
-          ) : (
-            <Card className="space-y-4">
-              <h3 className="text-lg font-bold text-[#3B302B]">2. Store Pickup Location & Map Directions</h3>
-              <StorePickupLocationCard />
-            </Card>
-          )}
-
-          <Card className="space-y-4">
-            <h3 className="text-lg font-bold text-[#3B302B]">3. Delivery Timing Preference</h3>
-            <DeliveryTimingSelector
-              hasCustomCake={hasCustomCake}
-              timingType={timingType}
-              onTimingTypeChange={setTimingType}
-              scheduledDate={scheduledDate}
-              onDateChange={setScheduledDate}
-              scheduledTimeSlot={scheduledTimeSlot}
-              onTimeSlotChange={setScheduledTimeSlot}
-            />
-          </Card>
-
-          <Card className="space-y-4">
-            <h3 className="text-lg font-bold text-[#3B302B]">4. Payment Method</h3>
-            <div className="space-y-3">
-              {/* Option 1: UPI */}
-              <div
-                onClick={() => setPaymentMethod("UPI")}
-                className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 ${
-                  paymentMethod === "UPI"
-                    ? "border-[#596B58] bg-[#FFF8EC]/60 shadow-xs"
-                    : "border-[#E5DEC9] bg-white hover:border-gray-300"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="payment-method"
-                  checked={paymentMethod === "UPI"}
-                  onChange={() => setPaymentMethod("UPI")}
-                  className="mt-1 text-[#596B58]"
-                />
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 font-bold text-sm text-[#3B302B]">
-                    <QrCode className="h-4 w-4 text-[#596B58]" />
-                    <span>Pay with UPI</span>
-                  </div>
-                  <p className="text-xs text-[#7A6E65]">
-                    Google Pay, PhonePe, Paytm, BHIM, and other UPI apps through Razorpay.
-                  </p>
-                </div>
               </div>
+            )}
 
-              {/* Option 2: Cash on Delivery */}
-              <div
-                onClick={() => setPaymentMethod("COD")}
-                className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 ${
-                  paymentMethod === "COD"
-                    ? "border-[#596B58] bg-[#FFF8EC]/60 shadow-xs"
-                    : "border-[#E5DEC9] bg-white hover:border-gray-300"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="payment-method"
-                  checked={paymentMethod === "COD"}
-                  onChange={() => setPaymentMethod("COD")}
-                  className="mt-1 text-[#596B58]"
-                />
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 font-bold text-sm text-[#3B302B]">
-                    <Banknote className="h-4 w-4 text-[#27AE60]" />
-                    <span>Cash on Delivery (COD)</span>
-                    <span className="text-[10px] bg-green-100 text-green-800 font-semibold px-2 py-0.5 rounded-full">
-                      Pay at Doorstep
+            {/* STEP 3: Review & Payment */}
+            {currentStep === 3 && (
+              <div className="space-y-6 animate-in fade-in duration-200">
+                {/* Summary of Step 1 & Step 2 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3.5 bg-white rounded-2xl border border-[#E5DEC9] flex items-center justify-between text-xs shadow-2xs">
+                    <div className="flex items-center gap-2.5 text-[#3B302B] min-w-0">
+                      <Truck className="h-4 w-4 text-[#596B58] shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-bold text-xs truncate">
+                          {fulfillmentType === "HOME_DELIVERY" ? "Home Delivery" : "Store Pickup"}
+                        </p>
+                        <p className="text-[11px] text-[#7A6E65] truncate">
+                          {fulfillmentType === "HOME_DELIVERY"
+                            ? `${selectedAddr?.name || "Customer"}, ${selectedAddr?.village || selectedAddr?.district || ""}`
+                            : "Bakery Main Counter"}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => goToStep(1)}
+                      className="text-xs font-bold text-[#596B58] hover:underline shrink-0 ml-2 cursor-pointer flex items-center gap-1"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                      <span>Edit</span>
+                    </button>
+                  </div>
+
+                  <div className="p-3.5 bg-white rounded-2xl border border-[#E5DEC9] flex items-center justify-between text-xs shadow-2xs">
+                    <div className="flex items-center gap-2.5 text-[#3B302B] min-w-0">
+                      <Clock className="h-4 w-4 text-[#596B58] shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-bold text-xs truncate">
+                          {timingType === "INSTANT" && !hasCustomCake ? "Instant Delivery" : "Scheduled Slot"}
+                        </p>
+                        <p className="text-[11px] text-[#7A6E65] truncate">
+                          {timingType === "INSTANT" && !hasCustomCake
+                            ? "Within 30-45 mins"
+                            : `${scheduledDate ? new Date(scheduledDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "Scheduled"} (${scheduledTimeSlot})`}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => goToStep(2)}
+                      className="text-xs font-bold text-[#596B58] hover:underline shrink-0 ml-2 cursor-pointer flex items-center gap-1"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                      <span>Edit</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Payment Method Card */}
+                <Card className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#E5DEC9] pb-3">
+                    <div>
+                      <h3 className="text-lg font-bold text-[#3B302B] flex items-center gap-2">
+                        <QrCode className="h-5 w-5 text-[#596B58]" />
+                        <span>3. Choose Payment Method</span>
+                      </h3>
+                      <p className="text-xs text-[#7A6E65]">Select your preferred payment method</p>
+                    </div>
+                    <span className="text-xs font-semibold text-[#7A6E65]">Step 3 of 3</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {/* Option 1: UPI */}
+                    <div
+                      onClick={() => setPaymentMethod("UPI")}
+                      className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3.5 ${
+                        paymentMethod === "UPI"
+                          ? "border-[#596B58] bg-[#FFF8EC]/60 shadow-xs ring-2 ring-[#596B58]/30"
+                          : "border-[#E5DEC9] bg-white hover:border-gray-300"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="payment-method"
+                        checked={paymentMethod === "UPI"}
+                        onChange={() => setPaymentMethod("UPI")}
+                        className="mt-1 text-[#596B58] accent-[#596B58]"
+                      />
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 font-bold text-sm text-[#3B302B]">
+                          <QrCode className="h-4 w-4 text-[#596B58]" />
+                          <span>Pay with UPI</span>
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded-full">
+                            Fast &amp; Instant
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#7A6E65]">
+                          Google Pay, PhonePe, Paytm, BHIM, and other UPI apps securely through Razorpay.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Option 2: Cash on Delivery */}
+                    <div
+                      onClick={() => setPaymentMethod("COD")}
+                      className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3.5 ${
+                        paymentMethod === "COD"
+                          ? "border-[#596B58] bg-[#FFF8EC]/60 shadow-xs ring-2 ring-[#596B58]/30"
+                          : "border-[#E5DEC9] bg-white hover:border-gray-300"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="payment-method"
+                        checked={paymentMethod === "COD"}
+                        onChange={() => setPaymentMethod("COD")}
+                        className="mt-1 text-[#596B58] accent-[#596B58]"
+                      />
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 font-bold text-sm text-[#3B302B]">
+                          <Banknote className="h-4 w-4 text-[#27AE60]" />
+                          <span>Cash on Delivery (COD)</span>
+                          <span className="text-[10px] bg-green-100 text-green-800 font-semibold px-2 py-0.5 rounded-full">
+                            Pay at Doorstep
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#7A6E65]">
+                          Pay cash when your order is delivered to your address or collected at the bakery store.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Collapsible Items in Order (Mobile & Review) */}
+                <div className="p-4 bg-white rounded-2xl border border-[#E5DEC9] space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsItemsExpanded((prev) => !prev)}
+                    className="w-full flex items-center justify-between text-xs font-bold text-[#3B302B] cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2">
+                      <ShoppingBag className="h-4 w-4 text-[#596B58]" />
+                      <span>Items in Order ({directItem ? 1 : checkoutPreview?.items?.length || 0})</span>
                     </span>
-                  </div>
-                  <p className="text-xs text-[#7A6E65]">
-                    Pay cash when your order is delivered to your address or collected at store.
-                  </p>
+                    <span className="text-[#596B58] text-[11px] font-bold">
+                      {isItemsExpanded ? "Hide Items ▲" : "View Items ▼"}
+                    </span>
+                  </button>
+
+                  {isItemsExpanded && (
+                    <div className="pt-2 divide-y divide-[#E5DEC9]/60 max-h-56 overflow-y-auto">
+                      {directItem ? (
+                        <div className="py-2.5 flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <img
+                              src={directItem.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80"}
+                              alt={directItem.name}
+                              className="h-10 w-10 rounded-lg object-cover shrink-0 border border-[#E5DEC9]"
+                            />
+                            <div className="min-w-0">
+                              <p className="font-bold truncate text-[#3B302B]">{directItem.name}</p>
+                              <p className="text-[10px] text-[#7A6E65]">Qty: {directItem.quantity}</p>
+                            </div>
+                          </div>
+                          <span className="font-extrabold text-[#3B302B]">₹{directItem.itemTotal}</span>
+                        </div>
+                      ) : (
+                        (checkoutPreview?.items || []).map((item, idx) => (
+                          <div key={idx} className="py-2.5 flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {item.image && (
+                                <img
+                                  src={item.image}
+                                  alt={item.name}
+                                  className="h-10 w-10 rounded-lg object-cover shrink-0 border border-[#E5DEC9]"
+                                />
+                              )}
+                              <div className="min-w-0">
+                                <p className="font-bold truncate text-[#3B302B]">{item.name}</p>
+                                <p className="text-[10px] text-[#7A6E65]">Qty: {item.quantity}</p>
+                              </div>
+                            </div>
+                            <span className="font-extrabold text-[#3B302B]">₹{item.itemTotal}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {/* Mobile-Only Order Summary in Step 3 */}
+                <div className="block lg:hidden space-y-4">
+                  <CheckoutSummary
+                    pricing={
+                      checkoutPreview?.pricing || {
+                        subtotal: 0,
+                        deliveryFee: 0,
+                        taxAmount: 0,
+                        discountAmount: 0,
+                        totalAmount: 0,
+                      }
+                    }
+                    onCouponChanged={fetchAddressesAndPreview}
+                    deliveryThreshold={checkoutPreview?.deliveryThreshold}
+                    fulfillmentType={fulfillmentType}
+                    onSwitchToPickup={() => setFulfillmentType("STORE_PICKUP")}
+                  />
+                </div>
+
+                {/* Step 3 Navigation Buttons */}
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={handlePrevStep}
+                    className="w-full sm:w-auto px-5 h-12 border-[#E5DEC9]"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-1.5" />
+                    <span>Back to Delivery Timing</span>
+                  </Button>
+
+                  {isBelowMin ? (
+                    <Button
+                      onClick={handlePlaceOrder}
+                      className="w-full sm:w-auto px-6 h-12 shadow-md bg-amber-600 hover:bg-amber-700"
+                    >
+                      <span>Add ₹{remainingForMin} More for Home Delivery</span>
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handlePlaceOrder}
+                      isLoading={isPlacingOrder}
+                      className="w-full sm:w-auto px-6 h-12 shadow-md"
+                    >
+                      <Lock className="h-4 w-4 mr-1.5" />
+                      <span>
+                        {paymentMethod === "COD"
+                          ? `Place Order Rs. ${payableAmount} (COD)`
+                          : `Pay Rs. ${payableAmount} with UPI`}
+                      </span>
+                    </Button>
+                  )}
+                </div>
+
+                <p className="text-[11px] text-gray-400 text-center flex items-center justify-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4 text-[#27AE60]" />
+                  <span>
+                    {paymentMethod === "COD"
+                      ? "100% verified order. Pay cash upon delivery."
+                      : "100% secure UPI payment processed securely by Razorpay."}
+                  </span>
+                </p>
               </div>
-            </div>
-          </Card>
-        </div>
+            )}
+          </div>
 
-        {/* Right Summary */}
-        <div className="space-y-4">
-          <CheckoutSummary
-            pricing={
-              checkoutPreview?.pricing || {
-                subtotal: 0,
-                deliveryFee: 0,
-                taxAmount: 0,
-                discountAmount: 0,
-                totalAmount: 0,
+          {/* Desktop Right Summary (Sticky) */}
+          <div className="hidden lg:block lg:col-span-1 space-y-4">
+            <CheckoutSummary
+              pricing={
+                checkoutPreview?.pricing || {
+                  subtotal: 0,
+                  deliveryFee: 0,
+                  taxAmount: 0,
+                  discountAmount: 0,
+                  totalAmount: 0,
+                }
               }
-            }
-            onCouponChanged={fetchAddressesAndPreview}
-          />
+              onCouponChanged={fetchAddressesAndPreview}
+              deliveryThreshold={checkoutPreview?.deliveryThreshold}
+              fulfillmentType={fulfillmentType}
+              onSwitchToPickup={() => setFulfillmentType("STORE_PICKUP")}
+            />
 
-          {(() => {
-            const payableAmount = checkoutPreview?.pricing
-              ? Math.round(checkoutPreview.pricing.totalAmount * 100) / 100
-              : 0;
-            return (
-              <Button onClick={handlePlaceOrder} isLoading={isPlacingOrder} className="w-full h-12 shadow-md">
+            {/* Desktop Dynamic Step Action Button */}
+            {currentStep === 1 && (
+              <Button
+                onClick={handleNextStep}
+                className="w-full h-12 shadow-md"
+              >
+                <span>Continue to Delivery Timing</span>
+                <ArrowRight className="h-4 w-4 ml-1.5" />
+              </Button>
+            )}
+
+            {currentStep === 2 && (
+              <Button
+                onClick={handleNextStep}
+                className="w-full h-12 shadow-md"
+              >
+                <span>Continue to Review &amp; Payment</span>
+                <ArrowRight className="h-4 w-4 ml-1.5" />
+              </Button>
+            )}
+
+            {currentStep === 3 && (
+              <>
+                {isBelowMin ? (
+                  <Button
+                    onClick={handlePlaceOrder}
+                    className="w-full h-12 shadow-md bg-amber-600 hover:bg-amber-700"
+                  >
+                    <span>Add ₹{remainingForMin} More for Home Delivery</span>
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handlePlaceOrder}
+                    isLoading={isPlacingOrder}
+                    className="w-full h-12 shadow-md"
+                  >
+                    <span>
+                      {paymentMethod === "COD"
+                        ? `Place Order Rs. ${payableAmount} (COD)`
+                        : `Pay Rs. ${payableAmount} with UPI`}
+                    </span>
+                  </Button>
+                )}
+              </>
+            )}
+
+            {fulfillmentType === "HOME_DELIVERY" && checkoutPreview?.deliveryThreshold ? (
+              (() => {
+                const freeThreshold = checkoutPreview.deliveryThreshold.freeDeliveryThreshold ?? 350;
+                const remainingForFree = Math.max(0, freeThreshold - subtotal);
+
+                if (isBelowMin) {
+                  return (
+                    <div className="p-2.5 bg-amber-50 border border-amber-300 rounded-xl text-[11px] text-amber-900 text-center font-bold">
+                      ⚠️ Home Delivery ke liye minimum order ₹{minDelivery} hai (₹{remainingForMin} baaki hai).
+                    </div>
+                  );
+                }
+
+                if (checkoutPreview.pricing?.deliveryFee > 0 && remainingForFree > 0) {
+                  return (
+                    <div className="p-2.5 bg-[#FFF8EC] border border-[#596B58]/25 rounded-xl text-[11px] text-[#596B58] text-center font-bold">
+                      🚚 ₹{remainingForFree} aur add karein aur delivery charge (₹{checkoutPreview.pricing.deliveryFee}) FREE payein!
+                    </div>
+                  );
+                }
+
+                return null;
+              })()
+            ) : null}
+
+            <p className="text-[11px] text-gray-400 text-center flex items-center justify-center gap-1">
+              <ShieldCheck className="h-3.5 w-3.5 text-[#27AE60]" />
+              <span>
+                {paymentMethod === "COD"
+                  ? "100% verified order. Pay cash upon delivery."
+                  : "100% secure UPI payment through Razorpay."}
+              </span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Sticky Bottom Bar: 1-Click Action without Scrolling */}
+      {!isLoading && (directItem || (checkoutPreview?.items && checkoutPreview.items.length > 0)) && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E5DEC9] p-3 sm:p-4 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#7A6E65]">
+              Total (Step {currentStep}/3)
+            </p>
+            <p className="text-lg font-extrabold text-[#596B58] leading-tight">
+              ₹{payableAmount}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {currentStep > 1 && (
+              <button
+                type="button"
+                onClick={handlePrevStep}
+                className="px-3 py-2.5 rounded-xl border border-[#E5DEC9] bg-[#FFF8EC] text-xs font-bold text-[#3B302B] hover:bg-amber-100 transition-colors cursor-pointer"
+                title="Previous Step"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            )}
+
+            {currentStep === 1 && (
+              <Button
+                onClick={handleNextStep}
+                className="px-4 py-2.5 text-xs font-bold shadow-sm"
+              >
+                <span>Next: Timing</span>
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            )}
+
+            {currentStep === 2 && (
+              <Button
+                onClick={handleNextStep}
+                className="px-4 py-2.5 text-xs font-bold shadow-sm"
+              >
+                <span>Next: Payment</span>
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            )}
+
+            {currentStep === 3 && (
+              <Button
+                onClick={handlePlaceOrder}
+                isLoading={isPlacingOrder}
+                className="px-4 py-2.5 text-xs font-bold shadow-sm"
+              >
                 <span>
-                  {paymentMethod === "COD"
-                    ? `Place Order Rs. ${payableAmount} (COD)`
-                    : `Pay Rs. ${payableAmount} with UPI`}
+                  {paymentMethod === "COD" ? "Place COD" : `Pay ₹${payableAmount}`}
                 </span>
               </Button>
-            );
-          })()}
-
-          <p className="text-[11px] text-gray-400 text-center flex items-center justify-center gap-1">
-            <ShieldCheck className="h-3.5 w-3.5 text-[#27AE60]" />
-            <span>
-              {paymentMethod === "COD"
-                ? "100% verified order. Pay cash upon delivery."
-                : "100% secure UPI payment through Razorpay."}
-            </span>
-          </p>
+            )}
+          </div>
         </div>
-      </div>
       )}
 
       {/* Inline Create Address Modal */}
@@ -866,29 +1526,24 @@ export const CheckoutPage: React.FC = () => {
                 <span>Village (Select Village) *</span>
                 <span className="text-[10px] text-[#596B58]">Choose from list</span>
               </label>
-              <select
-                {...addressForm.register("village")}
-                onChange={(e) => {
-                  const selectedName = e.target.value;
-                  addressForm.setValue("village", selectedName);
+              <CustomSelect
+                value={addressForm.watch("village")}
+                onChange={(selectedName) => {
+                  addressForm.setValue("village", selectedName, { shouldValidate: true });
                   const matched = villages.find((v) => v.name === selectedName);
                   if (matched) {
-                    addressForm.setValue("district", matched.district);
-                    addressForm.setValue("pincode", matched.pincode);
+                    addressForm.setValue("district", matched.district, { shouldValidate: true });
+                    addressForm.setValue("pincode", matched.pincode, { shouldValidate: true });
                   }
                 }}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5DEC9] bg-white text-[#3B302B] focus:outline-none focus:border-[#596B58]"
-              >
-                <option value="">-- Choose Village --</option>
-                {villages.map((v) => (
-                  <option key={v.id} value={v.name}>
-                    {v.name} ({v.district})
-                  </option>
-                ))}
-              </select>
-              {addressForm.formState.errors.village?.message ? (
-                <p className="text-[11px] text-red-500 font-medium">{addressForm.formState.errors.village.message}</p>
-              ) : null}
+                placeholder="-- Choose Village --"
+                searchable={villages.length > 5}
+                options={villages.map((v) => ({
+                  value: v.name,
+                  label: `${v.name} (${v.district})`,
+                }))}
+                error={addressForm.formState.errors.village?.message}
+              />
             </div>
 
             <Input label="Pincode *" placeholder="110001" maxLength={6} {...addressForm.register("pincode")} error={addressForm.formState.errors.pincode?.message} />

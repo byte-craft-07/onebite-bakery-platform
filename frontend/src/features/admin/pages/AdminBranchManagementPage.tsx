@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge, Card, Skeleton } from "@/components/ui/DisplayComponents";
+import { CustomSelect } from "@/components/ui/FormControls";
 import {
   adminBranchService,
   type BranchDetails,
@@ -345,25 +346,29 @@ export const AdminBranchManagementPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-          <select
-            value={selectedTypeFilter}
-            onChange={(e) => setSelectedTypeFilter(e.target.value)}
-            className="h-9 px-2.5 rounded-xl border border-[#E5DEC9] text-xs font-bold text-[#3B302B] bg-[#FFF8EC] focus:outline-none focus:border-[#596B58] cursor-pointer"
-          >
-            <option value="ALL">All Types</option>
-            <option value="MAIN">MAIN</option>
-            <option value="FRANCHISE">FRANCHISE</option>
-          </select>
+          <div className="w-36">
+            <CustomSelect
+              value={selectedTypeFilter}
+              onChange={(val) => setSelectedTypeFilter(val)}
+              options={[
+                { value: "ALL", label: "All Types" },
+                { value: "MAIN", label: "MAIN" },
+                { value: "FRANCHISE", label: "FRANCHISE" },
+              ]}
+            />
+          </div>
 
-          <select
-            value={selectedStatusFilter}
-            onChange={(e) => setSelectedStatusFilter(e.target.value)}
-            className="h-9 px-2.5 rounded-xl border border-[#E5DEC9] text-xs font-bold text-[#3B302B] bg-[#FFF8EC] focus:outline-none focus:border-[#596B58] cursor-pointer"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-          </select>
+          <div className="w-36">
+            <CustomSelect
+              value={selectedStatusFilter}
+              onChange={(val) => setSelectedStatusFilter(val)}
+              options={[
+                { value: "ALL", label: "All Statuses" },
+                { value: "ACTIVE", label: "Active" },
+                { value: "INACTIVE", label: "Inactive" },
+              ]}
+            />
+          </div>
         </div>
       </div>
 
@@ -507,15 +512,15 @@ export const AdminBranchManagementPage: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#3B302B]">Branch Type *</label>
-                  <select
+                  <CustomSelect
+                    label="Branch Type *"
                     value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value as "MAIN" | "FRANCHISE" })}
-                    className="w-full h-10 px-3 rounded-xl border border-[#E5DEC9] text-xs bg-white focus:outline-none focus:border-[#596B58]"
-                  >
-                    <option value="FRANCHISE">FRANCHISE</option>
-                    <option value="MAIN">MAIN BRANCH</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, type: val as "MAIN" | "FRANCHISE" })}
+                    options={[
+                      { value: "FRANCHISE", label: "FRANCHISE" },
+                      { value: "MAIN", label: "MAIN BRANCH" },
+                    ]}
+                  />
                 </div>
 
                 <div className="space-y-1">
@@ -710,15 +715,15 @@ export const AdminBranchManagementPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#3B302B]">Branch Type *</label>
-                  <select
+                  <CustomSelect
+                    label="Branch Type *"
                     value={editFormData.type}
-                    onChange={(e) => setEditFormData({ ...editFormData, type: e.target.value as "MAIN" | "FRANCHISE" })}
-                    className="w-full h-10 px-3 rounded-xl border border-[#E5DEC9] text-xs bg-white focus:outline-none focus:border-[#596B58]"
-                  >
-                    <option value="FRANCHISE">FRANCHISE</option>
-                    <option value="MAIN">MAIN BRANCH</option>
-                  </select>
+                    onChange={(val) => setEditFormData({ ...editFormData, type: val as "MAIN" | "FRANCHISE" })}
+                    options={[
+                      { value: "FRANCHISE", label: "FRANCHISE" },
+                      { value: "MAIN", label: "MAIN BRANCH" },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -901,31 +906,32 @@ export const AdminBranchManagementPage: React.FC = () => {
                   Assign Active Village
                 </label>
                 <div className="flex items-center gap-2">
-                  <select
-                    value={selectedVillageId}
-                    onChange={(e) => setSelectedVillageId(e.target.value)}
-                    className="w-full h-9 px-2.5 rounded-lg border border-[#E5DEC9] text-xs bg-white focus:outline-none focus:border-[#596B58]"
-                  >
-                    <option value="">Select a village to assign...</option>
-                    {unassignedVillages
-                      .filter(
-                        (v) =>
-                          !selectedBranch.villages?.some(
-                            (assigned: any) =>
-                              (assigned.id || assigned._id?.toString() || assigned._id) ===
-                              (v.id || (v as any)._id?.toString() || (v as any)._id),
-                          ),
-                      )
-                      .map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.name} ({v.district})
-                        </option>
-                      ))}
-                  </select>
+                  <div className="flex-1">
+                    <CustomSelect
+                      value={selectedVillageId}
+                      onChange={(val) => setSelectedVillageId(val)}
+                      placeholder="Select a village to assign..."
+                      searchable={true}
+                      options={unassignedVillages
+                        .filter(
+                          (v) =>
+                            !selectedBranch.villages?.some(
+                              (assigned: any) =>
+                                (assigned.id || assigned._id?.toString() || assigned._id) ===
+                                (v.id || (v as any)._id?.toString() || (v as any)._id),
+                            ),
+                        )
+                        .map((v) => ({
+                          value: v.id,
+                          label: `${v.name} (${v.district})`,
+                        }))}
+                    />
+                  </div>
                   <Button
                     size="sm"
                     onClick={handleAssignVillage}
                     disabled={!selectedVillageId}
+                    className="h-11"
                   >
                     Assign
                   </Button>

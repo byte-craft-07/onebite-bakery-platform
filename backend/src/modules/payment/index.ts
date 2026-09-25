@@ -19,6 +19,7 @@ export type {
 } from "./provider/index.js";
 export { PaymentRepository } from "./repository/index.js";
 export { paymentRouter } from "./routes/index.js";
+export { razorpayStandardRouter } from "./routes/razorpay-standard.routes.js";
 export { PaymentService } from "./service/index.js";
 export type {
   CreatePaymentResponse,

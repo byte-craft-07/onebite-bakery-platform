@@ -56,7 +56,9 @@ export const PerOrderRatingModal: React.FC<PerOrderRatingModalProps> = ({
     if (isOpen && order) {
       setIsSuccess(false);
       setErrorMsg(null);
-      setCustomerName(user?.name || order.customerName || "Verified Customer");
+      const userEmail = user?.email?.trim().toLowerCase() || "";
+      const shrunkEmail = userEmail ? userEmail.split("@")[0] : "";
+      setCustomerName(shrunkEmail || user?.name || order.customerName || "Customer");
       setOverallRating(5);
       setDeliveryRating(5);
       setOverallComment("");
@@ -150,9 +152,13 @@ export const PerOrderRatingModal: React.FC<PerOrderRatingModalProps> = ({
         };
       });
 
+      const userEmail = user?.email?.trim().toLowerCase() || "";
+      const shrunkEmail = userEmail ? userEmail.split("@")[0] : "";
+      const finalName = customerName.trim() || shrunkEmail || user?.name || "Customer";
+
       await reviewService.addOrderQualityRating({
         orderId: order.id,
-        name: customerName.trim() || "Verified Customer",
+        name: finalName,
         overallRating,
         deliveryRating,
         overallComment: overallComment.trim(),

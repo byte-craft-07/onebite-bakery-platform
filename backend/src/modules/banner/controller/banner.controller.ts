@@ -7,6 +7,7 @@ export class BannerController {
 
   getActiveBanners = async (req: Request, res: Response): Promise<void> => {
     try {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       const placement = (req.query.placement as string) || "home_hero";
       const banners = await this.service.getActiveBanners(placement);
       res.status(200).json({

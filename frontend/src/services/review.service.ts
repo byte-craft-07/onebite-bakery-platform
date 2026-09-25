@@ -1,4 +1,4 @@
-import { MOCK_PRODUCTS, MOCK_REVIEWS, type MockProduct, type MockReview } from "@/data/mockData";
+import { type MockReview } from "@/data/mockData";
 import { apiClient } from "./api.client";
 
 const LOCAL_REVIEWS_KEY = "onebitebakery_local_reviews";
@@ -36,7 +36,19 @@ export interface OrderRatingPayload {
   items: ItemQualityRating[];
 }
 
+export interface AdminReviewsParams {
+  search?: string;
+  rating?: number;
+  status?: string;
+  limit?: number;
+  skip?: number;
+}
+
 export const reviewService = {
+  /**
+   * Fetches real reviews from the backend database.
+   * If there are no reviews in database, returns [] (STRICTLY NO MOCK FALLBACK).
+   */
   getReviews: async (): Promise<MockReview[]> => {
     try {
       const response = await apiClient.get<{
@@ -44,38 +56,53 @@ export const reviewService = {
         data: { reviews: MockReview[] };
       }>("/reviews");
       const fetched = response.data?.data?.reviews || (response.data as any)?.reviews;
-      if (fetched && fetched.length > 0) {
+      if (Array.isArray(fetched)) {
         return fetched;
       }
     } catch (_err) {
-      // Ignore API errors and fallback to local storage
+      // Ignore API errors
     }
 
+    // Check temporary local storage only for reviews submitted in current local session
     try {
       const stored = localStorage.getItem(LOCAL_REVIEWS_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       }
     } catch (_e) {
       // Ignore
     }
 
-    return MOCK_REVIEWS;
+    return [];
   },
 
+  /**
+   * Submit a new review (Requires login).
+   */
   addReview: async (payload: ReviewPayload): Promise<MockReview> => {
+    const reviewerName = payload.name || "Customer";
+    const dynamicAvatar =
+      payload.avatar && payload.avatar.startsWith("http") && !payload.avatar.includes("unsplash.com/photo-1534528741775-53994a69daeb")
+        ? payload.avatar
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(reviewerName)}&background=596B58&color=fff&bold=true`;
+
     const newReview: MockReview = {
       id: `rev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      name: payload.name || "Verified Customer",
-      customerName: payload.name || "Verified Customer",
+      name: reviewerName,
+      customerName: reviewerName,
       rating: payload.rating,
       comment: payload.comment,
       productName: payload.productName,
+      productId: payload.productId,
+      orderId: payload.orderId,
       date: new Date().toISOString(),
       createdAt: new Date().toISOString(),
-      avatar:
-        payload.avatar ||
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+      avatar: dynamicAvatar,
+      isVerified: true,
+      isActive: true,
     };
 
     if (payload.orderId && payload.productName) {
@@ -91,9 +118,17 @@ export const reviewService = {
     }
 
     try {
-      await apiClient.post<{ review: MockReview }>("/reviews", payload);
-    } catch (_err) {
-      // Ignore API error and persist locally
+      const res = await apiClient.post<{ success: boolean; data: { review: MockReview } }>("/reviews", payload);
+      if (res.data?.data?.review) {
+        const serverReview = res.data.data.review;
+        window.dispatchEvent(new Event("onebitebakery_review_submitted"));
+        return serverReview;
+      }
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        throw new Error("Authentication required. Please log in to submit a review.");
+      }
+      throw err;
     }
 
     try {
@@ -108,11 +143,15 @@ export const reviewService = {
     return newReview;
   },
 
+  /**
+   * Submit ratings per order items (Requires login).
+   */
   addOrderQualityRating: async (payload: OrderRatingPayload): Promise<MockReview[]> => {
-    const createdReviews: MockReview[] = [];
-    const reviewerName = payload.name || "Verified Customer";
+    const reviewerName = payload.name || "Customer";
+    const dynamicAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(reviewerName)}&background=596B58&color=fff&bold=true`;
 
-    // 1. Add review for each item in the order
+    const createdReviews: MockReview[] = [];
+
     for (const item of payload.items) {
       const itemReview: MockReview = {
         id: `rev-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -121,27 +160,32 @@ export const reviewService = {
         rating: item.qualityRating || item.rating || 5,
         comment: item.comment || (item.tags && item.tags.length > 0 ? item.tags.join(" • ") : "Outstanding quality and taste!"),
         productName: item.productName,
+        productId: item.productId,
+        orderId: payload.orderId,
         date: new Date().toISOString(),
         createdAt: new Date().toISOString(),
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+        avatar: dynamicAvatar,
+        isVerified: true,
+        isActive: true,
       };
       createdReviews.push(itemReview);
 
       reviewService.markItemAsRated(payload.orderId, item.productName, item);
     }
 
-    // 2. Submit batch to API
     try {
       await apiClient.post("/reviews/batch", {
         orderId: payload.orderId,
         customerName: reviewerName,
         items: payload.items,
       });
-    } catch (_err) {
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        throw new Error("Authentication required. Please log in to submit a review.");
+      }
       // Fallback
     }
 
-    // 3. Update local reviews
     try {
       const existing = await reviewService.getReviews();
       const updated = [...createdReviews, ...existing];
@@ -201,7 +245,10 @@ export const reviewService = {
     }
   },
 
-    getProductRating: (product: {
+  /**
+   * Calculate live rating from real reviews.
+   */
+  getProductRating: (product: {
     id?: string;
     name?: string;
     slug?: string;
@@ -221,7 +268,6 @@ export const reviewService = {
 
       const matchedRatings: number[] = [];
 
-      // Check reviews list
       reviews.forEach((r) => {
         const rProd = (r.productName || r.product_name || "").toLowerCase().trim();
         const rProdId = (r.productId || "").toLowerCase().trim();
@@ -236,7 +282,6 @@ export const reviewService = {
         }
       });
 
-      // Check per-order rated items map
       Object.values(ratedItemsMap).forEach((item: any) => {
         const itemProd = (item.productName || "").toLowerCase().trim();
         const itemProdId = (item.productId || "").toLowerCase().trim();
@@ -251,21 +296,27 @@ export const reviewService = {
         }
       });
 
-      // Curated baseline ratings (5, 5, 5, 4) -> 4 reviews, 4.8 avg
-      const baseRatings = [5, 5, 5, 4];
-      const allRatings = [...matchedRatings, ...baseRatings];
-      const totalRatingsCount = allRatings.length;
-      const averageRating = allRatings.reduce((sum, v) => sum + v, 0) / totalRatingsCount;
+      if (matchedRatings.length > 0) {
+        const averageRating = matchedRatings.reduce((sum, v) => sum + v, 0) / matchedRatings.length;
+        return {
+          rating: Math.round(averageRating * 10) / 10,
+          reviewCount: matchedRatings.length,
+        };
+      }
 
+      // If no real ratings exist, return 0 reviews
       return {
-        rating: Math.round(averageRating * 10) / 10,
-        reviewCount: totalRatingsCount,
+        rating: 0,
+        reviewCount: 0,
       };
     } catch (_e) {
-      return { rating: 4.8, reviewCount: 4 };
+      return { rating: 0, reviewCount: 0 };
     }
   },
 
+  /**
+   * Only returns real reviews matching the product. Strictly no fake reviews.
+   */
   getProductReviews: async (product: {
     id?: string;
     name?: string;
@@ -276,7 +327,7 @@ export const reviewService = {
     const pSlug = (product.slug || "").toLowerCase().trim();
 
     const allReviews = await reviewService.getReviews();
-    const userMatched = allReviews.filter((r) => {
+    return allReviews.filter((r) => {
       const rProd = (r.productName || (r as any).product_name || "").toLowerCase().trim();
       const rProdId = ((r as any).productId || "").toLowerCase().trim();
       return (
@@ -285,57 +336,39 @@ export const reviewService = {
         (pSlug && rProd && pSlug.includes(rProd))
       );
     });
+  },
 
-    const itemTitle = product.name || "bakery item";
+  /**
+   * Admin: Get all reviews from Database (both active and hidden)
+   */
+  getAdminReviews: async (params?: AdminReviewsParams): Promise<{ reviews: MockReview[]; total: number }> => {
+    try {
+      const response = await apiClient.get<{
+        success: boolean;
+        data: { reviews: MockReview[]; total: number };
+      }>("/reviews/admin/all", { params });
+      return response.data?.data || { reviews: [], total: 0 };
+    } catch (_err) {
+      return { reviews: [], total: 0 };
+    }
+  },
 
-    // Curated authentic verified reviews for the product
-    const curatedVerifiedReviews: MockReview[] = [
-      {
-        id: `curated-1-${product.id || "p1"}`,
-        name: "Ananya Sharma",
-        customerName: "Ananya Sharma",
-        rating: 5,
-        comment: `Super fresh and delicious ${itemTitle}! Perfectly prepared with high quality ingredients and delivered in pristine condition. Everyone at home loved it!`,
-        productName: product.name,
-        date: "2 days ago",
-        createdAt: new Date(Date.now() - 172800000).toISOString(),
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
-      },
-      {
-        id: `curated-2-${product.id || "p1"}`,
-        name: "Rohan Verma",
-        customerName: "Rohan Verma",
-        rating: 5,
-        comment: "Best 100% eggless artisanal bakery in town! Soft, fresh layers and rich authentic flavor. Highly recommended!",
-        productName: product.name,
-        date: "5 days ago",
-        createdAt: new Date(Date.now() - 432000000).toISOString(),
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
-      },
-      {
-        id: `curated-3-${product.id || "p1"}`,
-        name: "Priya Patel",
-        customerName: "Priya Patel",
-        rating: 5,
-        comment: "On-time doorstep delivery and exact presentation as shown. Freshly prepared and very hygienic!",
-        productName: product.name,
-        date: "1 week ago",
-        createdAt: new Date(Date.now() - 604800000).toISOString(),
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
-      },
-      {
-        id: `curated-4-${product.id || "p1"}`,
-        name: "Vikram Malhotra",
-        customerName: "Vikram Malhotra",
-        rating: 4,
-        comment: "Great quality and very tasty. Melt-in-the-mouth texture and perfect sweetness. Arrived chilled and ready to enjoy.",
-        productName: product.name,
-        date: "2 weeks ago",
-        createdAt: new Date(Date.now() - 1209600000).toISOString(),
-        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80",
-      },
-    ];
+  /**
+   * Admin: Toggle visibility (active/hidden) of review
+   */
+  toggleReviewStatus: async (id: string): Promise<{ id: string; isActive: boolean }> => {
+    const response = await apiClient.patch<{
+      success: boolean;
+      data: { id: string; isActive: boolean };
+    }>(`/reviews/admin/${id}/toggle-status`);
+    return response.data?.data;
+  },
 
-    return [...userMatched, ...curatedVerifiedReviews];
+  /**
+   * Admin: Delete review permanently
+   */
+  deleteReview: async (id: string): Promise<boolean> => {
+    const response = await apiClient.delete<{ success: boolean; message: string }>(`/reviews/admin/${id}`);
+    return response.data?.success ?? true;
   },
 };

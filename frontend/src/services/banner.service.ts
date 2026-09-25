@@ -19,44 +19,7 @@ export interface BannerItem {
   updatedAt?: string;
 }
 
-export const FALLBACK_HERO_BANNERS: BannerItem[] = [
-  {
-    id: "poster-1",
-    title: "Artisanal Celebration Cakes & Belgian Truffle",
-    desktopImage: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=1600&h=650&q=85",
-    mobileImage: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&h=450&q=85",
-    linkUrl: "/products",
-    displayOrder: 1,
-    isActive: true,
-  },
-  {
-    id: "poster-2",
-    title: "Custom 3D & Tier Designer Cakes Studio",
-    desktopImage: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=1600&h=650&q=85",
-    mobileImage: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=800&h=450&q=85",
-    linkUrl: "/custom-cake",
-    displayOrder: 2,
-    isActive: true,
-  },
-  {
-    id: "poster-3",
-    title: "Fresh Artisanal Breads & French Pastries",
-    desktopImage: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1600&h=650&q=85",
-    mobileImage: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&h=450&q=85",
-    linkUrl: "/categories",
-    displayOrder: 3,
-    isActive: true,
-  },
-  {
-    id: "poster-4",
-    title: "Celebration Party Combos & Sparkler Hamper",
-    desktopImage: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=1600&h=650&q=85",
-    mobileImage: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=800&h=450&q=85",
-    linkUrl: "/combos",
-    displayOrder: 4,
-    isActive: true,
-  },
-];
+export const FALLBACK_HERO_BANNERS: BannerItem[] = [];
 
 const LOCAL_STORAGE_KEY = "onebitebakery_hero_banners";
 
@@ -64,21 +27,19 @@ export const bannerService = {
   getStoredBannersSync: (placement: string = "home_hero"): BannerItem[] => {
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
+      if (stored !== null) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           const active = parsed.filter(
             (b: BannerItem) => b.isActive && (!placement || !b.placement || b.placement === placement)
           );
-          if (active.length > 0) {
-            return active.sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
-          }
+          return active.sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
         }
       }
     } catch (_err) {
       // Ignore
     }
-    return FALLBACK_HERO_BANNERS;
+    return [];
   },
 
   getActiveBanners: async (placement: string = "home_hero"): Promise<BannerItem[]> => {
@@ -88,7 +49,7 @@ export const bannerService = {
         data: { banners: any[] };
       }>("/banners", { params: { placement } });
 
-      if (res.data?.data?.banners && res.data.data.banners.length > 0) {
+      if (res.data?.success && Array.isArray(res.data?.data?.banners)) {
         const list = res.data.data.banners.map((b) => ({
           ...b,
           id: b._id || b.id,
@@ -101,9 +62,10 @@ export const bannerService = {
         return list;
       }
     } catch (_err) {
-      // Fallback
+      // Network or API error fallback to local storage
     }
 
     return bannerService.getStoredBannersSync(placement);
   },
 };
+

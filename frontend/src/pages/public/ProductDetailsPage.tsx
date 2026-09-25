@@ -576,13 +576,21 @@ export const ProductDetailsPage: React.FC = () => {
                 className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#3B302B] hover:text-[#596B58] transition-colors cursor-pointer group"
                 title="Click to read all verified customer reviews"
               >
-                <span className="font-black text-sm sm:text-base text-[#111111]">{liveRatingData.rating.toFixed(1)}</span>
-                <div className="flex items-center text-[#108A00]">
-                  <Star className="h-4 w-4 fill-current" />
-                </div>
-                <span className="text-gray-500 font-semibold group-hover:underline">
-                  ({liveRatingData.reviewCount} Reviews)
-                </span>
+                {liveRatingData.reviewCount > 0 ? (
+                  <>
+                    <span className="font-black text-sm sm:text-base text-[#111111]">{liveRatingData.rating.toFixed(1)}</span>
+                    <div className="flex items-center text-[#108A00]">
+                      <Star className="h-4 w-4 fill-current" />
+                    </div>
+                    <span className="text-gray-500 font-semibold group-hover:underline">
+                      ({liveRatingData.reviewCount} Reviews)
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-lg font-bold">
+                    No reviews yet
+                  </span>
+                )}
               </a>
 
               <span className="text-gray-300">•</span>
@@ -788,148 +796,192 @@ export const ProductDetailsPage: React.FC = () => {
         </div>
 
         {/* Rating Breakdown & Highlights Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Left Score Box */}
-          <div className="p-6 rounded-3xl bg-[#FFF8EC] border border-[#E5DEC9] text-center space-y-3 flex flex-col items-center justify-center shadow-xs">
-            <span className="text-5xl sm:text-6xl font-black text-[#3B302B] tracking-tight">
-              {liveRatingData.rating.toFixed(1)}
-            </span>
-            <div className="flex items-center gap-1 text-[#108A00]">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="h-5 w-5 fill-current" />
-              ))}
+        {productReviews.length === 0 ? (
+          <div className="py-12 px-6 rounded-3xl bg-[#FFF8EC]/60 border border-dashed border-[#E5DEC9] text-center space-y-3.5 my-4">
+            <div className="h-14 w-14 rounded-full bg-[#596B58]/10 text-[#596B58] flex items-center justify-center mx-auto border border-[#596B58]/20">
+              <Star className="h-7 w-7 text-[#596B58]" />
             </div>
-            <p className="text-xs text-[#7A6E65] font-bold">
-              Based on {liveRatingData.reviewCount} verified ratings
-            </p>
-            <span className="inline-block text-[11px] bg-green-100 text-green-800 font-extrabold px-3 py-1 rounded-full">
-              98% of customers recommend this cake
-            </span>
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-[#3B302B]">It has no reviews yet</h3>
+              <p className="text-xs text-[#7A6E65] max-w-md mx-auto">
+                No customer has reviewed {product.name} yet. Be the first to share your celebration experience!
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsRatingModalOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#596B58] hover:bg-[#495948] text-white font-bold text-xs shadow-md transition-colors cursor-pointer"
+            >
+              <Star className="h-4 w-4 fill-current text-amber-200" />
+              <span>Write the First Review</span>
+            </button>
           </div>
-
-          {/* Center Distribution Bars */}
-          <div className="p-6 rounded-3xl bg-white border border-[#E5DEC9] space-y-2.5 flex flex-col justify-center shadow-xs md:col-span-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#7A6E65] mb-1">
-              Rating Breakdown
-            </h3>
-            {[
-              { stars: "5 Star", count: productReviews.filter((r) => r.rating === 5).length },
-              { stars: "4 Star", count: productReviews.filter((r) => r.rating === 4).length },
-              { stars: "3 Star", count: productReviews.filter((r) => r.rating === 3).length },
-              { stars: "2 Star", count: productReviews.filter((r) => r.rating === 2).length },
-              { stars: "1 Star", count: productReviews.filter((r) => r.rating === 1).length },
-            ].map((bar) => {
-              const total = productReviews.length || 1;
-              const pct = Math.round((bar.count / total) * 100);
-              return (
-                <div key={bar.stars} className="flex items-center gap-3 text-xs">
-                  <span className="w-12 font-bold text-gray-700 text-[11px]">{bar.stars}</span>
-                  <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-[#108A00] transition-all duration-500"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <span className="w-12 text-right text-gray-500 text-[11px]">
-                    {pct}% ({bar.count})
-                  </span>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Left Score Box */}
+              <div className="p-6 rounded-3xl bg-[#FFF8EC] border border-[#E5DEC9] text-center space-y-3 flex flex-col items-center justify-center shadow-xs">
+                <span className="text-5xl sm:text-6xl font-black text-[#3B302B] tracking-tight">
+                  {liveRatingData.rating.toFixed(1)}
+                </span>
+                <div className="flex items-center gap-1 text-[#108A00]">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-current" />
+                  ))}
                 </div>
-              );
-            })}
-          </div>
-        </div>
+                <p className="text-xs text-[#7A6E65] font-bold">
+                  Based on {liveRatingData.reviewCount} verified ratings
+                </p>
+                <span className="inline-block text-[11px] bg-green-100 text-green-800 font-extrabold px-3 py-1 rounded-full">
+                  100% verified customer ratings
+                </span>
+              </div>
 
-        {/* Reviews List with Filter Tabs */}
-        <div className="space-y-4 pt-4">
-          <div className="flex items-center justify-between gap-3 border-b border-[#E5DEC9] pb-3">
-            <div className="flex items-center gap-2">
-              {[
-                { id: "ALL", label: `All Reviews (${productReviews.length})` },
-                { id: "5_STAR", label: "5 Stars Only" },
-                { id: "4_STAR", label: "4 Stars" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setReviewFilter(tab.id as any)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-                    reviewFilter === tab.id
-                      ? "bg-[#3B302B] text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+              {/* Center Distribution Bars */}
+              <div className="p-6 rounded-3xl bg-white border border-[#E5DEC9] space-y-2.5 flex flex-col justify-center shadow-xs md:col-span-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#7A6E65] mb-1">
+                  Rating Breakdown
+                </h3>
+                {[
+                  { stars: "5 Star", count: productReviews.filter((r) => r.rating === 5).length },
+                  { stars: "4 Star", count: productReviews.filter((r) => r.rating === 4).length },
+                  { stars: "3 Star", count: productReviews.filter((r) => r.rating === 3).length },
+                  { stars: "2 Star", count: productReviews.filter((r) => r.rating === 2).length },
+                  { stars: "1 Star", count: productReviews.filter((r) => r.rating === 1).length },
+                ].map((bar) => {
+                  const total = productReviews.length || 1;
+                  const pct = Math.round((bar.count / total) * 100);
+                  return (
+                    <div key={bar.stars} className="flex items-center gap-3 text-xs">
+                      <span className="w-12 font-bold text-gray-700 text-[11px]">{bar.stars}</span>
+                      <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-[#108A00] transition-all duration-500"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="w-12 text-right text-gray-500 text-[11px]">
+                        {pct}% ({bar.count})
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <span className="text-xs text-gray-500 font-medium hidden sm:inline">
-              Showing {filteredReviews.length} real reviews
-            </span>
-          </div>
+            {/* Reviews List with Filter Tabs */}
+            <div className="space-y-4 pt-4">
+              <div className="flex items-center justify-between gap-3 border-b border-[#E5DEC9] pb-3">
+                <div className="flex items-center gap-2">
+                  {[
+                    { id: "ALL", label: `All Reviews (${productReviews.length})` },
+                    { id: "5_STAR", label: "5 Stars Only" },
+                    { id: "4_STAR", label: "4 Stars" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setReviewFilter(tab.id as any)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                        reviewFilter === tab.id
+                          ? "bg-[#3B302B] text-white"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredReviews.map((rev) => (
-              <div
-                key={rev.id}
-                className="p-5 rounded-2xl bg-white border border-[#E5DEC9] shadow-2xs space-y-3 flex flex-col justify-between"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <img
-                        src={getOptimizedImageUrl(rev.avatar, { width: 80, height: 80, quality: 75 })}
-                        alt={rev.name || rev.customerName}
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=75";
-                        }}
-                        className="h-9 w-9 rounded-full object-cover border border-amber-200 shadow-2xs"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-extrabold text-[#3B302B]">
-                            {rev.name || rev.customerName || "Verified Customer"}
-                          </span>
-                          <span className="inline-flex items-center text-[10px] text-green-700 bg-green-50 border border-green-200 px-1.5 py-0.2 rounded-md font-bold">
-                            ✓ Verified Buyer
-                          </span>
+                <span className="text-xs text-gray-500 font-medium hidden sm:inline">
+                  Showing {filteredReviews.length} real reviews
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredReviews.map((rev) => {
+                  const rawName = (rev as any).customerName || rev.name;
+                  const displayName =
+                    rawName && rawName !== "Verified Customer"
+                      ? rawName
+                      : rev.userEmail
+                        ? rev.userEmail.split("@")[0]
+                        : "Customer";
+
+                  const isUnsplashStock = rev.avatar && (
+                    rev.avatar.includes("unsplash.com/photo-1534528741775-53994a69daeb") ||
+                    rev.avatar.includes("unsplash.com/photo-1494790108377-be9c29b29330") ||
+                    rev.avatar.includes("unsplash.com/photo-1507003211169-0a1dd7228f2d")
+                  );
+
+                  const avatarSrc = !rev.avatar || isUnsplashStock
+                    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=596B58&color=fff&bold=true`
+                    : getOptimizedImageUrl(rev.avatar, { width: 80, height: 80, quality: 75 });
+
+                  return (
+                    <div
+                      key={rev.id}
+                      className="p-5 rounded-2xl bg-white border border-[#E5DEC9] shadow-2xs space-y-3 flex flex-col justify-between"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <img
+                              src={avatarSrc}
+                              alt={displayName}
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=596B58&color=fff&bold=true`;
+                              }}
+                              className="h-9 w-9 rounded-full object-cover border border-[#596B58]/30 shadow-2xs"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-extrabold text-[#3B302B]">
+                                  {displayName}
+                                </span>
+                                <span className="inline-flex items-center text-[10px] text-green-700 bg-green-50 border border-green-200 px-1.5 py-0.2 rounded-md font-bold">
+                                  ✓ Verified Buyer
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-gray-400">
+                                {rev.date || "Verified Order"}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Star Rating Badge */}
+                          <div className="flex items-center gap-0.5 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 text-[#108A00] font-black text-xs">
+                            <span>{rev.rating}</span>
+                            <Star className="h-3 w-3 fill-current" />
+                          </div>
                         </div>
-                        <span className="text-[10px] text-gray-400">
-                          {rev.date || "Verified Order"}
-                        </span>
+
+                        <p className="text-xs text-[#3B302B] leading-relaxed pt-1">
+                          "{rev.comment}"
+                        </p>
+                      </div>
+
+                      <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
+                        <span>Product: {product.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleHelpfulClick(rev.id)}
+                          className="hover:text-[#596B58] flex items-center gap-1 font-semibold transition-colors cursor-pointer"
+                        >
+                          <span>👍 Helpful</span>
+                          {helpfulMap[rev.id] ? <span>({helpfulMap[rev.id]})</span> : null}
+                        </button>
                       </div>
                     </div>
-
-                    {/* Star Rating Badge */}
-                    <div className="flex items-center gap-0.5 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 text-[#108A00] font-black text-xs">
-                      <span>{rev.rating}</span>
-                      <Star className="h-3 w-3 fill-current" />
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-[#3B302B] leading-relaxed pt-1">
-                    "{rev.comment}"
-                  </p>
-                </div>
-
-                <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
-                  <span>Product: {product.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleHelpfulClick(rev.id)}
-                    className="hover:text-[#596B58] flex items-center gap-1 font-semibold transition-colors cursor-pointer"
-                  >
-                    <span>👍 Helpful</span>
-                    {helpfulMap[rev.id] ? <span>({helpfulMap[rev.id]})</span> : null}
-                  </button>
-                </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          </>
+        )}
       </section>
 
       {/* Rating Modal */}

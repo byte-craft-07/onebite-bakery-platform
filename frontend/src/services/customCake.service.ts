@@ -375,11 +375,11 @@ export const customCakeService = {
         success: boolean;
         data: { options: CustomCakeOption[] };
       }>("/custom-cake/options", { params: { type } });
-      if (response.data?.data?.options && response.data.data.options.length > 0) {
+      if (response.data?.success && Array.isArray(response.data?.data?.options)) {
         return response.data.data.options;
       }
     } catch (_err) {
-      // Return local stored options
+      // Return local stored options on network failure
     }
     return getLocalOptions(type);
   },

@@ -1,6 +1,5 @@
 import { apiClient } from "./api.client";
 import { catalogService, type ProductItem } from "./catalog.service";
-import { MOCK_PRODUCTS } from "@/data/mockData";
 
 const FAVORITES_STORAGE_KEY = "onebitebakery_favorite_ids";
 const FAVORITES_PRODUCTS_KEY = "onebitebakery_favorite_products_cache";
@@ -40,7 +39,12 @@ export const favoritesService = {
       }>("/favorites");
 
       const favs = response.data?.data?.favorites || [];
-      if (Array.isArray(favs) && favs.length > 0) {
+      if (Array.isArray(favs)) {
+        if (favs.length === 0) {
+          localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify([]));
+          return [];
+        }
+
         const productList: ProductItem[] = [];
 
         for (const item of favs) {
@@ -61,46 +65,24 @@ export const favoritesService = {
           }
         }
 
-        if (productList.length > 0) {
-          const ids = productList.map((p) => p.id);
-          localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(ids));
-          const newMap = { ...localMap };
-          productList.forEach((p) => {
-            newMap[p.id] = p;
-          });
-          localStorage.setItem(FAVORITES_PRODUCTS_KEY, JSON.stringify(newMap));
-          return productList;
-        }
+        const ids = productList.map((p) => p.id);
+        localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(ids));
+        const newMap = { ...localMap };
+        productList.forEach((p) => {
+          newMap[p.id] = p;
+        });
+        localStorage.setItem(FAVORITES_PRODUCTS_KEY, JSON.stringify(newMap));
+        return productList;
       }
     } catch (_err) {
       // Use local storage
     }
 
-    // Local fallback
+    // Local fallback using real cached products
     const fallbackList: ProductItem[] = [];
     for (const id of localIds) {
       if (localMap[id]) {
         fallbackList.push(localMap[id]);
-      } else {
-        const mockMatch = MOCK_PRODUCTS.find((p) => p.id === id);
-        if (mockMatch) {
-          fallbackList.push({
-            id: mockMatch.id,
-            name: mockMatch.name,
-            slug: mockMatch.slug,
-            description: mockMatch.description,
-            productType: "NORMAL",
-            price: mockMatch.price,
-            compareAtPrice: mockMatch.compareAtPrice,
-            sku: mockMatch.id,
-            isEggless: mockMatch.isEggless,
-            isAvailable: true,
-            isBestseller: mockMatch.isBestseller,
-            mainImage: mockMatch.image,
-            rating: mockMatch.rating,
-            reviewCount: mockMatch.reviewCount,
-          });
-        }
       }
     }
 

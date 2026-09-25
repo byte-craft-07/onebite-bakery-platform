@@ -13,6 +13,7 @@ import { corsOptions } from "./config/cors.js";
 import { env } from "./config/env.js";
 import { globalRateLimitOptions } from "./config/rate-limit.js";
 import { apiRoutes } from "./routes.js";
+import { razorpayStandardRouter } from "./modules/payment/index.js";
 import { errorHandler } from "./shared/middlewares/error-handler.middleware.js";
 import { mongoSanitize } from "./shared/middlewares/mongo-sanitize.middleware.js";
 import { notFoundHandler } from "./shared/middlewares/not-found.middleware.js";
@@ -75,6 +76,10 @@ export const createApp = (): Application => {
       timestamp: new Date().toISOString(),
     });
   });
+
+  // Razorpay Standard Checkout endpoints (/api/create-order, /api/verify-payment, etc.)
+  app.use("/api", razorpayStandardRouter);
+  app.use(env.apiPrefix, razorpayStandardRouter);
 
   app.use(env.apiPrefix, apiRoutes);
   app.use(notFoundHandler);

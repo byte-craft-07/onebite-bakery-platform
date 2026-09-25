@@ -28,7 +28,7 @@ import { getOptimizedImageUrl } from "@/utils/cdn.utils";
 
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/contexts/toast.context";
-import { Input } from "@/components/ui/FormControls";
+import { CustomSelect, Input } from "@/components/ui/FormControls";
 import { cartService } from "@/services/cart.service";
 import {
   customCakeService,
@@ -845,35 +845,35 @@ export const CustomCakePage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#3B302B] mb-1">Occasion / Event</label>
-                  <select
+                  <CustomSelect
+                    label="Occasion / Event"
                     value={inqOccasion}
-                    onChange={(e) => setInqOccasion(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-[#E5DEC9] text-xs font-semibold bg-white outline-none focus:border-[#596B58]"
-                  >
-                    <option value="Birthday Celebration">Birthday Celebration</option>
-                    <option value="Wedding / Engagement">Wedding / Engagement</option>
-                    <option value="Anniversary">Anniversary</option>
-                    <option value="Baby Shower / Reveal">Baby Shower / Gender Reveal</option>
-                    <option value="Kids Theme Party">Kids Theme Party</option>
-                    <option value="Corporate / Milestone">Corporate / Milestone</option>
-                    <option value="Other Celebration">Other Celebration</option>
-                  </select>
+                    onChange={(val) => setInqOccasion(val)}
+                    options={[
+                      { value: "Birthday Celebration", label: "Birthday Celebration" },
+                      { value: "Wedding / Engagement", label: "Wedding / Engagement" },
+                      { value: "Anniversary", label: "Anniversary" },
+                      { value: "Baby Shower / Reveal", label: "Baby Shower / Gender Reveal" },
+                      { value: "Kids Theme Party", label: "Kids Theme Party" },
+                      { value: "Corporate / Milestone", label: "Corporate / Milestone" },
+                      { value: "Other Celebration", label: "Other Celebration" },
+                    ]}
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#3B302B] mb-1">Expected Budget Range</label>
-                  <select
+                  <CustomSelect
+                    label="Expected Budget Range"
                     value={inqBudget}
-                    onChange={(e) => setInqBudget(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-[#E5DEC9] text-xs font-semibold bg-white outline-none focus:border-[#596B58]"
-                  >
-                    <option value="Under ₹1,000">Under ₹1,000</option>
-                    <option value="₹1,000 - ₹2,000">₹1,000 - ₹2,000</option>
-                    <option value="₹2,000 - ₹4,000">₹2,000 - ₹4,000</option>
-                    <option value="₹4,000 - ₹8,000">₹4,000 - ₹8,000</option>
-                    <option value="₹8,000+ Luxury">₹8,000+ Luxury Tiered</option>
-                  </select>
+                    onChange={(val) => setInqBudget(val)}
+                    options={[
+                      { value: "Under ₹1,000", label: "Under ₹1,000" },
+                      { value: "₹1,000 - ₹2,000", label: "₹1,000 - ₹2,000" },
+                      { value: "₹2,000 - ₹4,000", label: "₹2,000 - ₹4,000" },
+                      { value: "₹4,000 - ₹8,000", label: "₹4,000 - ₹8,000" },
+                      { value: "₹8,000+ Luxury", label: "₹8,000+ Luxury Tiered" },
+                    ]}
+                  />
                 </div>
 
                 <div>

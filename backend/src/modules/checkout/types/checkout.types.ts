@@ -29,6 +29,7 @@ export interface CheckoutSummaryResponse {
   homeDeliveryEligible: boolean;
   pickupEligible: boolean;
   minimumHomeDeliveryAmount: number;
+  freeDeliveryThreshold?: number;
   selectedDeliveryMethod?: DeliveryMethod;
   selectedAddress?: Record<string, unknown>;
   validationErrors: string[];

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Check, Heart, Sparkles, Star, ThumbsUp, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Check, Heart, Lock, Sparkles, Star, ThumbsUp, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/contexts/auth.context";
@@ -47,22 +48,31 @@ export const RatingModal: React.FC<RatingModalProps> = ({
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Derive shrunk email name
+  const userEmail = user?.email?.trim().toLowerCase() || "";
+  const shrunkEmail = userEmail ? userEmail.split("@")[0] : (user?.name || "");
+
   useEffect(() => {
     if (isOpen) {
       setIsSuccess(false);
       setErrorMsg(null);
       setRating(5);
       setHoverRating(null);
-      setName(user?.name || (user?.email ? user.email.split("@")[0] : "") || "");
+      // Default name to shrunk email or username
+      setName(shrunkEmail || user?.name || "");
       setProductName(initialProductName);
       setComment("");
       setSelectedTags([]);
     }
-  }, [isOpen, initialProductName, user]);
+  }, [isOpen, initialProductName, user, shrunkEmail]);
 
   if (!isOpen) return null;
 
   const currentDisplayRating = hoverRating || rating;
+  const currentAvatarUrl =
+    user?.profileImage && user.profileImage.startsWith("http") && !user.profileImage.includes("unsplash.com/photo-1534528741775-53994a69daeb")
+      ? user.profileImage
+      : `https://ui-avatars.com/api/?name=${encodeURIComponent(name || shrunkEmail || "Customer")}&background=596B58&color=fff&bold=true`;
 
   const handleTagToggle = (tag: string) => {
     let nextTags: string[];
@@ -81,6 +91,12 @@ export const RatingModal: React.FC<RatingModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!user) {
+      setErrorMsg("Please log in first to submit your rating.");
+      return;
+    }
+
     if (!comment.trim()) {
       setErrorMsg("Please write a few words about your experience.");
       return;
@@ -89,13 +105,17 @@ export const RatingModal: React.FC<RatingModalProps> = ({
     setIsSubmitting(true);
     setErrorMsg(null);
 
+    const finalReviewerName = name.trim() || shrunkEmail || "Customer";
+
     try {
       await reviewService.addReview({
-        name: name.trim() || "Verified Customer",
+        name: finalReviewerName,
         rating,
         comment: comment.trim(),
         productName: productName.trim() || "Bakery Special",
         orderId: initialOrderId,
+        avatar: currentAvatarUrl,
+        tags: selectedTags,
       });
 
       setIsSuccess(true);
@@ -103,8 +123,8 @@ export const RatingModal: React.FC<RatingModalProps> = ({
         setIsSuccess(false);
         onClose();
       }, 1600);
-    } catch (_err) {
-      setErrorMsg("Failed to submit rating. Please try again.");
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to submit rating. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -134,14 +154,37 @@ export const RatingModal: React.FC<RatingModalProps> = ({
         </div>
 
         {/* Content Body */}
-        {isSuccess ? (
+        {!user ? (
+          /* Login Required Gate */
+          <div className="p-8 sm:p-10 text-center space-y-4 my-auto">
+            <div className="h-16 w-16 bg-amber-100 text-amber-800 rounded-full flex items-center justify-center mx-auto border-2 border-amber-300">
+              <Lock className="h-8 w-8 stroke-[2.5]" />
+            </div>
+            <h3 className="text-xl font-extrabold text-[#3B302B]">Login Required to Review</h3>
+            <p className="text-xs sm:text-sm text-[#7A6E65] max-w-sm mx-auto leading-relaxed">
+              Only verified logged-in customers can submit reviews. Please sign in to your Onebite Bakery account to share your feedback.
+            </p>
+            <div className="pt-3 flex items-center justify-center gap-3">
+              <Button type="button" variant="outline" onClick={onClose} className="text-xs">
+                Cancel
+              </Button>
+              <Link
+                to={`/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`}
+                onClick={onClose}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#596B58] hover:bg-[#495948] text-white font-bold text-xs shadow-md transition-colors"
+              >
+                <span>Log In to Continue</span>
+              </Link>
+            </div>
+          </div>
+        ) : isSuccess ? (
           <div className="p-8 sm:p-12 text-center space-y-4 my-auto animate-in zoom-in">
             <div className="h-16 w-16 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto border-2 border-emerald-300">
               <Check className="h-9 w-9 stroke-[3]" />
             </div>
             <h3 className="text-2xl font-extrabold text-[#3B302B]">Thank You So Much!</h3>
             <p className="text-sm text-[#7A6E65] max-w-sm mx-auto">
-              Your <strong>{rating}-star rating</strong> has been submitted. It is now live in the moving marquee on our Home Page!
+              Your <strong>{rating}-star rating</strong> has been submitted. It is now live in our customer reviews!
             </p>
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#E5DEC9] rounded-full text-xs font-bold text-[#596B58]">
               <Heart className="h-4 w-4 fill-current text-red-500" />
@@ -221,11 +264,11 @@ export const RatingModal: React.FC<RatingModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-[#3B302B]">
-                  Your Name <span className="text-gray-400 font-normal">(optional)</span>
+                  Your Display Name <span className="text-gray-400 font-normal">(from email username)</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Priya Sharma"
+                  placeholder={shrunkEmail || "Your name"}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full h-10 px-3 rounded-xl border border-[#E5DEC9] bg-white text-xs text-[#3B302B] outline-none focus:border-[#596B58]"
@@ -264,19 +307,21 @@ export const RatingModal: React.FC<RatingModalProps> = ({
             {/* Live Card Preview */}
             <div className="rounded-2xl border border-dashed border-[#596B58]/40 bg-white/70 p-3.5 space-y-2">
               <div className="flex items-center justify-between text-[11px] font-bold text-[#596B58]">
-                <span>Live Home Page Preview:</span>
+                <span>Live Review Preview:</span>
                 <span className="flex items-center gap-1">
-                  <ThumbsUp className="h-3 w-3" /> Moving Marquee
+                  <ThumbsUp className="h-3 w-3" /> Real Database Review
                 </span>
               </div>
               <div className="bg-white rounded-xl p-3 border border-[#E5DEC9] shadow-xs space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-full bg-[#596B58]/10 text-[#596B58] flex items-center justify-center font-bold text-xs">
-                    {(name || "U")[0].toUpperCase()}
-                  </div>
+                  <img
+                    src={currentAvatarUrl}
+                    alt={name || shrunkEmail || "Customer"}
+                    className="h-8 w-8 rounded-full object-cover border border-[#596B58]/30 shadow-2xs"
+                  />
                   <div>
                     <h4 className="text-xs font-bold text-[#3B302B]">
-                      {name || "Verified Customer"}
+                      {name || shrunkEmail || "Customer"}
                     </h4>
                     <div className="flex text-[#D8BE91] text-[10px]">
                       {Array.from({ length: rating }).map((_, i) => (

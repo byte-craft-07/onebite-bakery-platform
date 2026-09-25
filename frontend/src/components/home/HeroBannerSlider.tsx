@@ -25,7 +25,7 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({
   const fetchBanners = useCallback(async () => {
     try {
       const list = await bannerService.getActiveBanners();
-      if (list && list.length > 0) {
+      if (Array.isArray(list)) {
         setBanners(list);
       }
     } catch (_e) {

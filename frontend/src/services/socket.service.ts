@@ -38,8 +38,8 @@ class SocketService {
     this.isConnecting = true;
 
     // Resolve socket server base URL
-    let socketUrl = "";
-    if (typeof window !== "undefined") {
+    let socketUrl = (import.meta.env.VITE_SOCKET_URL as string | undefined) || "";
+    if (!socketUrl && typeof window !== "undefined") {
       const hostname = window.location.hostname;
       const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
       if (!isLocalhost && ENV.API_BASE_URL && !ENV.API_BASE_URL.startsWith("/")) {

@@ -20,6 +20,7 @@ import {
 
 import { Badge } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
+import { CustomSelect } from "@/components/ui/FormControls";
 import {
   AdminTable,
   AdminTableSkeleton,
@@ -307,20 +308,19 @@ export const BranchAdminOrdersPage: React.FC = () => {
               <span className="text-xs font-bold text-[#7A6E65] hidden sm:inline">
                 Active Branch:
               </span>
-              <select
-                value={activeBranchId}
-                onChange={(e) => {
-                  setActiveBranchId(e.target.value);
-                  setSearchParams({ branchId: e.target.value });
-                }}
-                className="h-10 px-3.5 rounded-xl border border-[#E5DEC9] bg-[#FFF8EC] text-xs font-extrabold text-[#3B302B] focus:outline-none focus:border-[#596B58] cursor-pointer shadow-2xs"
-              >
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    🏢 {b.name} ({b.code})
-                  </option>
-                ))}
-              </select>
+              <div className="w-56">
+                <CustomSelect
+                  value={activeBranchId}
+                  onChange={(val) => {
+                    setActiveBranchId(val);
+                    setSearchParams({ branchId: val });
+                  }}
+                  options={branches.map((b) => ({
+                    value: b.id,
+                    label: `🏢 ${b.name} (${b.code})`,
+                  }))}
+                />
+              </div>
             </div>
           ) : null}
 
@@ -582,19 +582,20 @@ export const BranchAdminOrdersPage: React.FC = () => {
                       CANCELLED
                     </span>
                   ) : (
-                    <select
+                    <CustomSelect
                       disabled={updatingId === ord.id}
                       value={ord.orderStatus}
-                      onChange={(e) => handleUpdateStatus(ord.id, e.target.value)}
-                      className="px-2.5 py-1 rounded-lg border border-[#E5DEC9] bg-[#FFF8EC] text-xs font-bold text-[#3B302B] focus:outline-none focus:border-[#596B58] cursor-pointer shadow-2xs"
-                    >
-                      <option value="PENDING">PENDING</option>
-                      <option value="CONFIRMED">CONFIRMED</option>
-                      <option value="PACKED">PACKED</option>
-                      <option value="OUT_FOR_DELIVERY">OUT FOR DELIVERY</option>
-                      <option value="DELIVERED">DELIVERED</option>
-                      <option value="CANCELLED">CANCELLED</option>
-                    </select>
+                      onChange={(val) => handleUpdateStatus(ord.id, val)}
+                      className="min-w-[130px]"
+                      options={[
+                        { value: "PENDING", label: "PENDING" },
+                        { value: "CONFIRMED", label: "CONFIRMED" },
+                        { value: "PACKED", label: "PACKED" },
+                        { value: "OUT_FOR_DELIVERY", label: "OUT FOR DELIVERY" },
+                        { value: "DELIVERED", label: "DELIVERED" },
+                        { value: "CANCELLED", label: "CANCELLED" },
+                      ]}
+                    />
                   )}
                 </td>
 

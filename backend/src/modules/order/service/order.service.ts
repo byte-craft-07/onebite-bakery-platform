@@ -76,8 +76,12 @@ export class OrderService {
 
     if (dto.deliveryMethod === "HOME_DELIVERY") {
       if (!cart.homeDeliveryAvailable) {
+        const { SettingsModel } = await import("../../settings/model/settings.model.js");
+        const settings = await SettingsModel.findOne({ singletonKey: "default" }).lean().exec();
+        const minHomeDeliveryAmount = settings?.delivery?.minimumHomeDeliveryAmount ?? 300;
+        const diff = Math.max(0, minHomeDeliveryAmount - cart.subtotal);
         throw new AppError(
-          "Home delivery is not available for this cart total.",
+          `Home delivery requires a minimum order of ₹${minHomeDeliveryAmount}. Please add ₹${diff} more to your cart, or choose Store Pickup.`,
           HTTP_STATUS.UNPROCESSABLE_ENTITY,
           [],
           true,

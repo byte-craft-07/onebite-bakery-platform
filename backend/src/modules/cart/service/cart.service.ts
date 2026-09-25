@@ -496,7 +496,7 @@ export class CartService {
       .exec();
 
     const minHomeDeliveryAmount =
-      settings?.delivery?.minimumHomeDeliveryAmount ?? 300;
+      settings?.delivery?.minimumHomeDeliveryAmount ?? 0;
     const baseDeliveryCharge = settings?.deliveryCharge ?? 0;
     const isDeliveryEnabled = settings?.isDeliveryEnabled ?? true;
     const isPickupEnabled = settings?.isPickupEnabled ?? true;

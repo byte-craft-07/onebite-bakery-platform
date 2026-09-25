@@ -186,6 +186,23 @@ export function formatTimeAgo(dateString?: string): string {
 
 export const ReviewCard: React.FC<{ review: MockReview }> = ({ review }) => {
   const prodName = review.productName || (review as any).product_name;
+  const rawName = (review as any).customerName || review.name;
+  const displayName =
+    rawName && rawName !== "Verified Customer"
+      ? rawName
+      : review.userEmail
+        ? review.userEmail.split("@")[0]
+        : "Customer";
+
+  const isUnsplashStock = review.avatar && (
+    review.avatar.includes("unsplash.com/photo-1534528741775-53994a69daeb") ||
+    review.avatar.includes("unsplash.com/photo-1494790108377-be9c29b29330") ||
+    review.avatar.includes("unsplash.com/photo-1507003211169-0a1dd7228f2d")
+  );
+
+  const avatarSrc = !review.avatar || isUnsplashStock
+    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=596B58&color=fff&bold=true`
+    : getOptimizedImageUrl(review.avatar, { width: 80, height: 80, quality: 75 });
 
   return (
     <div className="rounded-2xl border border-[#E5DEC9] bg-white p-4 sm:p-5 shadow-2xs space-y-3 min-w-[270px] sm:min-w-[290px] md:min-w-[320px] shrink-0 flex flex-col justify-between">
@@ -193,12 +210,12 @@ export const ReviewCard: React.FC<{ review: MockReview }> = ({ review }) => {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <img
-              src={getOptimizedImageUrl(review.avatar, { width: 80, height: 80, quality: 75 })}
-              alt={review.name}
+              src={avatarSrc}
+              alt={displayName}
               onError={(e) => {
                 if (e.currentTarget.dataset.failed !== "true") {
                   e.currentTarget.dataset.failed = "true";
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=75";
+                  e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=596B58&color=fff&bold=true`;
                 }
               }}
               className="h-9 w-9 rounded-full object-cover border border-[#596B58]/30 shrink-0"
@@ -207,7 +224,7 @@ export const ReviewCard: React.FC<{ review: MockReview }> = ({ review }) => {
             />
             <div>
               <h4 className="text-xs sm:text-sm font-bold text-[#3B302B] line-clamp-1">
-                {(review as any).customerName || review.name || "Verified Customer"}
+                {displayName}
               </h4>
               <div className="flex text-[#D8BE91] text-xs">
                 {Array.from({ length: Math.min(5, Math.max(1, review.rating || 5)) }).map((_, i) => (

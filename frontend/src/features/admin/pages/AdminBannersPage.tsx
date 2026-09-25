@@ -24,7 +24,7 @@ import {
 
 import { Badge, Modal } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/FormControls";
+import { CustomSelect, Input } from "@/components/ui/FormControls";
 import { AdminPageHeader, AdminTable } from "../components/AdminComponents";
 import { adminBannerService, type BannerPayload } from "../services/adminBanner.service";
 import { adminCatalogService } from "../services/adminCatalog.service";
@@ -898,45 +898,39 @@ export const AdminBannersPage: React.FC = () => {
             </label>
 
             {/* Quick Destination Dropdown */}
-            <select
+            <CustomSelect
               value={selectedLinkType}
-              onChange={(e) => setSelectedLinkType(e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-[#E5DEC9] text-xs font-semibold text-[#3B302B] outline-none focus:border-[#596B58] bg-white cursor-pointer"
-            >
-              <optgroup label="Popular Store Pages">
-                {PRESET_LINK_OPTIONS.filter((o) => o.group === "Main Pages").map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </optgroup>
-
-              <optgroup label="Store Categories">
-                {categories.length > 0
-                  ? categories.map((cat) => (
-                      <option key={cat.slug || cat.id} value={`/categories/${cat.slug || cat.id}`}>
-                        🍰 {cat.name} (/categories/{cat.slug || cat.id})
-                      </option>
-                    ))
-                  : PRESET_LINK_OPTIONS.filter((o) => o.group === "Categories").map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-              </optgroup>
-
-              <optgroup label="Occasions">
-                {PRESET_LINK_OPTIONS.filter((o) => o.group === "Occasions").map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </optgroup>
-
-              <optgroup label="Custom Link">
-                <option value="CUSTOM">🔗 Custom URL / External Link...</option>
-              </optgroup>
-            </select>
+              onChange={(val) => setSelectedLinkType(val)}
+              searchable={true}
+              options={[
+                ...PRESET_LINK_OPTIONS.filter((o) => o.group === "Main Pages").map((opt) => ({
+                  value: opt.value,
+                  label: opt.label,
+                  hint: "Main Pages",
+                })),
+                ...(categories.length > 0
+                  ? categories.map((cat) => ({
+                      value: `/categories/${cat.slug || cat.id}`,
+                      label: `🍰 ${cat.name}`,
+                      hint: `/categories/${cat.slug || cat.id}`,
+                    }))
+                  : PRESET_LINK_OPTIONS.filter((o) => o.group === "Categories").map((opt) => ({
+                      value: opt.value,
+                      label: opt.label,
+                      hint: "Categories",
+                    }))),
+                ...PRESET_LINK_OPTIONS.filter((o) => o.group === "Occasions").map((opt) => ({
+                  value: opt.value,
+                  label: opt.label,
+                  hint: "Occasions",
+                })),
+                {
+                  value: "CUSTOM",
+                  label: "🔗 Custom URL / External Link...",
+                  hint: "Custom",
+                },
+              ]}
+            />
 
             {/* Custom URL Input (if "CUSTOM" is selected) */}
             {selectedLinkType === "CUSTOM" && (

@@ -23,7 +23,7 @@ export interface UserProfileResponse {
 }
 
 export const authService = {
-  loginWithPassword: async (identifier: string, password: string): Promise<UserProfileResponse> => {
+  loginWithPassword: async (identifier: string, password: string): Promise<{ user: UserProfileResponse; tokens?: { accessToken?: string; refreshToken?: string } }> => {
     const response = await apiClient.post<{
       success: boolean;
       data: {
@@ -42,7 +42,7 @@ export const authService = {
       localStorage.setItem("onebitebakery_refresh_token", tokens.refreshToken);
     }
     localStorage.setItem("onebitebakery_user", JSON.stringify(user));
-    return user;
+    return { user, tokens };
   },
 
   getCurrentUser: async () => {

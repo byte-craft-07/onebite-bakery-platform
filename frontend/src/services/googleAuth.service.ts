@@ -51,7 +51,8 @@ export const googleAuthService = {
         ? sessionStorage.getItem("onebitebakery_auth_redirect") || ""
         : "";
 
-    const url = new URL(`${backendBaseUrl}/auth/google`);
+    const base = typeof window !== "undefined" ? window.location.origin : "http://localhost:5173";
+    const url = new URL(`${backendBaseUrl}/auth/google`, base);
     if (currentOrigin) {
       url.searchParams.set("origin", currentOrigin);
     }

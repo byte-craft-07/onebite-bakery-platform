@@ -1,5 +1,4 @@
 import { apiClient } from "./api.client";
-import { MOCK_PRODUCTS } from "@/data/mockData";
 
 export interface CartItem {
   id: string;
@@ -94,22 +93,10 @@ const normalizeCartResponse = (cart: any): CartResponse => {
         ? Math.round((item.itemTotal || item.totalPrice) / (item.quantity || 1))
         : 0);
 
-    if (!pName || pName === "Artisanal Bakery Item") {
-      const mockMatch = MOCK_PRODUCTS.find(
-        (p) => p.id === pId || p.slug === pSlug || pId.includes(p.id),
-      );
-      if (mockMatch) {
-        pName = mockMatch.name;
-        if (!pSlug) pSlug = mockMatch.slug;
-        if (!pImage) pImage = mockMatch.image;
-        if (!pPrice) pPrice = mockMatch.price;
-      }
-    }
-
     if (!pName) {
       pName = pId.startsWith("custom")
         ? "Custom Tier Celebration Cake"
-        : "Belgian Chocolate Special Cake";
+        : "Fresh Bakery Cake";
     }
 
     if (!pImage) {
@@ -235,24 +222,21 @@ export const cartService = {
     }
 
     const currentCart = getLocalCart();
-    const mockMatch = MOCK_PRODUCTS.find((p) => p.id === payload.productId);
 
     const productDetails = {
       id: payload.productId,
       name:
         payload.productDetails?.name ||
-        mockMatch?.name ||
         (payload.productId.startsWith("custom")
           ? "Custom Tier Celebration Cake"
           : "Fresh Handcrafted Bakery Cake"),
-      slug: payload.productDetails?.slug || mockMatch?.slug || payload.productId,
-      price: payload.productDetails?.price || mockMatch?.price || 649,
+      slug: payload.productDetails?.slug || payload.productId,
+      price: payload.productDetails?.price || 649,
       mainImage:
         payload.productDetails?.mainImage ||
-        mockMatch?.image ||
         DEFAULT_FALLBACK_IMAGE,
       isAvailable: true,
-      isEggless: payload.customization?.eggless ?? mockMatch?.isEggless ?? true,
+      isEggless: payload.customization?.eggless ?? true,
     };
 
     const existingIdx = currentCart.items.findIndex(

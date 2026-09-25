@@ -11,7 +11,6 @@ const adminOnly = [requireAuth, requireRoles(["admin"])] as const;
 // Public active banners
 bannerRouter.get(
   "/",
-  cacheResponse({ ttlSeconds: 600, tags: ["banners"] }),
   asyncHandler(bannerController.getActiveBanners),
 );
 

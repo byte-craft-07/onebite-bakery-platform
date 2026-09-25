@@ -19,6 +19,7 @@ export * from "./pages/AdminCombosPage";
 export * from "./pages/AdminBannersPage";
 export * from "./pages/AdminAdminsPage";
 export * from "./pages/AdminMainBranchOrdersPage";
+export * from "./pages/AdminReviewsPage";
 export * from "./services/adminCatalog.service";
 
 export * from "./services/adminOperations.service";
