@@ -89,12 +89,48 @@ export class MediaService {
       mimeType: mimeTypeToSave,
       extension: ext,
       size: sizeToSave,
-      storageProvider: "LOCAL",
+      storageProvider: (this.storageProvider.providerName as any) || "LOCAL",
       storagePath: saveResult.storagePath,
       publicUrl: saveResult.publicUrl,
       uploadedBy: userObjId,
       entityType: dto.entityType,
       ...(dto.entityId ? { entityId: dto.entityId } : {}),
+    });
+
+    return this.toResponse(mediaDoc);
+  }
+
+  public async listMedia(params?: {
+    search?: string;
+    entityType?: MediaEntityType;
+  }): Promise<{ media: MediaResponse[]; total: number }> {
+    const docs = await this.mediaRepository.findAllMedia(params);
+    return {
+      media: docs.map((doc) => this.toResponse(doc)),
+      total: docs.length,
+    };
+  }
+
+  public async createMediaFromUrl(
+    dto: { url: string; entityType?: MediaEntityType; filename?: string; originalName?: string },
+    userId: string,
+  ): Promise<MediaResponse> {
+    const url = dto.url.trim();
+    const entityType = dto.entityType || "PRODUCT";
+    const filename = dto.filename || url.split("/").pop()?.split("?")[0] || `asset_${Date.now()}.jpg`;
+    const userObjId = toObjectId(userId);
+
+    const mediaDoc = await this.mediaRepository.create({
+      filename,
+      originalName: dto.originalName || filename,
+      mimeType: "image/jpeg",
+      extension: path.extname(filename) || ".jpg",
+      size: 0,
+      storageProvider: (this.storageProvider.providerName as any) || "LOCAL",
+      storagePath: url,
+      publicUrl: url,
+      uploadedBy: userObjId,
+      entityType: entityType as MediaEntityType,
     });
 
     return this.toResponse(mediaDoc);
@@ -145,7 +181,14 @@ export class MediaService {
       );
     }
 
-    await this.storageProvider.delete(mediaDoc.storagePath);
+    if (mediaDoc.storagePath && !mediaDoc.storagePath.startsWith("http")) {
+      try {
+        await this.storageProvider.delete(mediaDoc.storagePath);
+      } catch (_e) {
+        // Storage delete fallback
+      }
+    }
+
     await this.mediaRepository.deleteMedia(mediaObjId);
 
     return {
@@ -323,6 +366,7 @@ export class MediaService {
       ...(media.height ? { height: media.height } : {}),
       storageProvider: media.storageProvider,
       publicUrl: media.publicUrl,
+      url: media.publicUrl,
       uploadedBy: media.uploadedBy.toString(),
       entityType: media.entityType,
       ...(media.entityId ? { entityId: media.entityId } : {}),
