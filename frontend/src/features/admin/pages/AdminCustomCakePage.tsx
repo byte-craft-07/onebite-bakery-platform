@@ -49,6 +49,7 @@ export const AdminCustomCakePage: React.FC = () => {
 
   // Flavors State
   const [flavors, setFlavors] = useState<CustomCakeOption[]>([]);
+  const [isLoadingFlavors, setIsLoadingFlavors] = useState(true);
   const [flavorModalOpen, setFlavorModalOpen] = useState(false);
   const [editingFlavor, setEditingFlavor] = useState<CustomCakeOption | null>(null);
   const [flavorForm, setFlavorForm] = useState({
@@ -62,6 +63,7 @@ export const AdminCustomCakePage: React.FC = () => {
 
   // Designs State
   const [designs, setDesigns] = useState<CustomCakeOption[]>([]);
+  const [isLoadingDesigns, setIsLoadingDesigns] = useState(true);
   const [designModalOpen, setDesignModalOpen] = useState(false);
   const [editingDesign, setEditingDesign] = useState<CustomCakeOption | null>(null);
   const [designForm, setDesignForm] = useState({
@@ -98,23 +100,29 @@ export const AdminCustomCakePage: React.FC = () => {
     }
   };
 
-  // Load Flavors
+  // Load Flavors from Database
   const fetchFlavors = async () => {
+    setIsLoadingFlavors(true);
     try {
       const data = await customCakeService.adminGetOptions("FLAVOR");
       setFlavors(Array.isArray(data) ? data : []);
     } catch {
       setFlavors([]);
+    } finally {
+      setIsLoadingFlavors(false);
     }
   };
 
-  // Load Designs
+  // Load Designs from Database
   const fetchDesigns = async () => {
+    setIsLoadingDesigns(true);
     try {
       const data = await customCakeService.adminGetOptions("DESIGN");
       setDesigns(Array.isArray(data) ? data : []);
     } catch {
       setDesigns([]);
+    } finally {
+      setIsLoadingDesigns(false);
     }
   };
 
@@ -210,11 +218,12 @@ export const AdminCustomCakePage: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this flavor?")) return;
     try {
       await customCakeService.adminDeleteOption(id);
+      setFlavors((prev) => prev.filter((f) => f._id !== id && f.id !== id));
       showToast("Flavor deleted successfully.");
-      fetchFlavors();
-    } catch {
-      showToast("Flavor removed.");
-      fetchFlavors();
+      await fetchFlavors();
+    } catch (err: any) {
+      alert("Failed to delete flavor: " + (err?.response?.data?.message || err?.message || "Server Error"));
+      await fetchFlavors();
     }
   };
 
@@ -255,11 +264,12 @@ export const AdminCustomCakePage: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this design?")) return;
     try {
       await customCakeService.adminDeleteOption(id);
+      setDesigns((prev) => prev.filter((d) => d._id !== id && d.id !== id));
       showToast("Design theme deleted successfully.");
-      fetchDesigns();
-    } catch {
-      showToast("Design theme removed.");
-      fetchDesigns();
+      await fetchDesigns();
+    } catch (err: any) {
+      alert("Failed to delete design: " + (err?.response?.data?.message || err?.message || "Server Error"));
+      await fetchDesigns();
     }
   };
 
@@ -585,68 +595,85 @@ export const AdminCustomCakePage: React.FC = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {flavors.map((flv) => (
-              <div
-                key={flv._id || flv.id || flv.slug}
-                className="bg-white p-4 rounded-2xl border border-[#E5DEC9] space-y-3 flex flex-col justify-between shadow-xs"
-              >
-                <div className="space-y-2">
-                  <div className="aspect-video w-full rounded-xl overflow-hidden bg-gray-100 relative">
-                    <img
-                      src={flv.imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80"}
-                      alt={flv.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <span
-                      className={`absolute top-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-bold text-white ${
-                        flv.isActive ? "bg-emerald-600" : "bg-gray-500"
-                      }`}
-                    >
-                      {flv.isActive ? "Active" : "Disabled"}
-                    </span>
+          {isLoadingFlavors ? (
+            <div className="p-12 text-center bg-white rounded-2xl border border-[#E5DEC9]">
+              <Loader2 className="h-8 w-8 animate-spin text-[#596B58] mx-auto" />
+              <p className="text-xs text-[#7A6E65] font-semibold mt-2">Loading flavors from database...</p>
+            </div>
+          ) : flavors.length === 0 ? (
+            <div className="p-12 text-center bg-white rounded-2xl border border-[#E5DEC9] space-y-2">
+              <Cake className="h-10 w-10 text-gray-300 mx-auto" />
+              <h3 className="font-bold text-sm text-[#3B302B]">No custom cake flavors in database</h3>
+              <p className="text-xs text-[#7A6E65] max-w-sm mx-auto">
+                Database me koi flavor nahi hai. Naya flavor add karne ke liye upar "+ Add New Flavor" par click karein.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {flavors.map((flv) => (
+                <div
+                  key={flv._id || flv.id || flv.slug}
+                  className="bg-white p-4 rounded-2xl border border-[#E5DEC9] space-y-3 flex flex-col justify-between shadow-xs"
+                >
+                  <div className="space-y-2">
+                    <div className="aspect-video w-full rounded-xl overflow-hidden bg-gray-100 relative">
+                      <img
+                        src={flv.imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80"}
+                        alt={flv.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <span
+                        className={`absolute top-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-bold text-white ${
+                          flv.isActive ? "bg-emerald-600" : "bg-gray-500"
+                        }`}
+                      >
+                        {flv.isActive ? "Active" : "Disabled"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-sm text-[#3B302B]">{flv.name}</h3>
+                      <p className="text-[11px] text-[#7A6E65] line-clamp-2 mt-0.5">{flv.description}</p>
+                    </div>
                   </div>
 
-                  <div>
-                    <h3 className="font-bold text-sm text-[#3B302B]">{flv.name}</h3>
-                    <p className="text-[11px] text-[#7A6E65] line-clamp-2 mt-0.5">{flv.description}</p>
+                  <div className="pt-2 border-t border-[#E5DEC9] flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-gray-500 font-medium">{flv.category}</span>
+                      <p className="font-black text-sm text-[#596B58]">₹{flv.priceModifier}/kg</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          setEditingFlavor(flv);
+                          setFlavorForm({
+                            name: flv.name,
+                            priceModifier: flv.priceModifier,
+                            category: flv.category || "Signature Classics",
+                            description: flv.description || "",
+                            imageUrl: flv.imageUrl || "",
+                            isActive: flv.isActive ?? true,
+                          });
+                          setFlavorModalOpen(true);
+                        }}
+                        className="p-2 rounded-xl text-gray-500 hover:text-[#596B58] hover:bg-[#FFF8EC] transition-colors cursor-pointer"
+                        title="Edit Flavor"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteFlavor(flv._id || flv.id)}
+                        className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        title="Delete Flavor"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                <div className="pt-2 border-t border-[#E5DEC9] flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-gray-500 font-medium">{flv.category}</span>
-                    <p className="font-black text-sm text-[#596B58]">₹{flv.priceModifier}/kg</p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => {
-                        setEditingFlavor(flv);
-                        setFlavorForm({
-                          name: flv.name,
-                          priceModifier: flv.priceModifier,
-                          category: flv.category || "Signature Classics",
-                          description: flv.description || "",
-                          imageUrl: flv.imageUrl || "",
-                          isActive: flv.isActive ?? true,
-                        });
-                        setFlavorModalOpen(true);
-                      }}
-                      className="p-2 rounded-xl text-gray-500 hover:text-[#596B58] hover:bg-[#FFF8EC] transition-colors"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteFlavor(flv._id || flv.id)}
-                      className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -680,70 +707,87 @@ export const AdminCustomCakePage: React.FC = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {designs.map((dsg) => (
-              <div
-                key={dsg._id || dsg.id || dsg.slug}
-                className="bg-white p-4 rounded-2xl border border-[#E5DEC9] space-y-3 flex flex-col justify-between shadow-xs"
-              >
-                <div className="space-y-2">
-                  <div className="aspect-video w-full rounded-xl overflow-hidden bg-gray-100 relative">
-                    <img
-                      src={dsg.imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80"}
-                      alt={dsg.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <span
-                      className={`absolute top-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-bold text-white ${
-                        dsg.isActive ? "bg-emerald-600" : "bg-gray-500"
-                      }`}
-                    >
-                      {dsg.isActive ? "Active" : "Disabled"}
-                    </span>
+          {isLoadingDesigns ? (
+            <div className="p-12 text-center bg-white rounded-2xl border border-[#E5DEC9]">
+              <Loader2 className="h-8 w-8 animate-spin text-[#596B58] mx-auto" />
+              <p className="text-xs text-[#7A6E65] font-semibold mt-2">Loading designs from database...</p>
+            </div>
+          ) : designs.length === 0 ? (
+            <div className="p-12 text-center bg-white rounded-2xl border border-[#E5DEC9] space-y-2">
+              <Sparkles className="h-10 w-10 text-gray-300 mx-auto" />
+              <h3 className="font-bold text-sm text-[#3B302B]">No design themes in database</h3>
+              <p className="text-xs text-[#7A6E65] max-w-sm mx-auto">
+                Database me koi design theme nahi hai. Nayi design add karne ke liye upar "+ Add New Design Theme" par click karein.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {designs.map((dsg) => (
+                <div
+                  key={dsg._id || dsg.id || dsg.slug}
+                  className="bg-white p-4 rounded-2xl border border-[#E5DEC9] space-y-3 flex flex-col justify-between shadow-xs"
+                >
+                  <div className="space-y-2">
+                    <div className="aspect-video w-full rounded-xl overflow-hidden bg-gray-100 relative">
+                      <img
+                        src={dsg.imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80"}
+                        alt={dsg.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <span
+                        className={`absolute top-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-bold text-white ${
+                          dsg.isActive ? "bg-emerald-600" : "bg-gray-500"
+                        }`}
+                      >
+                        {dsg.isActive ? "Active" : "Disabled"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-sm text-[#3B302B]">{dsg.name}</h3>
+                      <p className="text-[11px] text-[#7A6E65] line-clamp-2 mt-0.5">{dsg.description}</p>
+                    </div>
                   </div>
 
-                  <div>
-                    <h3 className="font-bold text-sm text-[#3B302B]">{dsg.name}</h3>
-                    <p className="text-[11px] text-[#7A6E65] line-clamp-2 mt-0.5">{dsg.description}</p>
+                  <div className="pt-2 border-t border-[#E5DEC9] flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-gray-500 font-medium">{dsg.category}</span>
+                      <p className="font-black text-sm text-[#596B58]">
+                        {dsg.priceModifier > 0 ? `+₹${dsg.priceModifier} Add-on` : "Free Add-on"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          setEditingDesign(dsg);
+                          setDesignForm({
+                            name: dsg.name,
+                            priceModifier: dsg.priceModifier,
+                            category: dsg.category || "Celebration",
+                            description: dsg.description || "",
+                            imageUrl: dsg.imageUrl || "",
+                            isActive: dsg.isActive ?? true,
+                          });
+                          setDesignModalOpen(true);
+                        }}
+                        className="p-2 rounded-xl text-gray-500 hover:text-[#596B58] hover:bg-[#FFF8EC] transition-colors cursor-pointer"
+                        title="Edit Design Theme"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDesign(dsg._id || dsg.id)}
+                        className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        title="Delete Design Theme"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                <div className="pt-2 border-t border-[#E5DEC9] flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-gray-500 font-medium">{dsg.category}</span>
-                    <p className="font-black text-sm text-[#596B58]">
-                      {dsg.priceModifier > 0 ? `+₹${dsg.priceModifier} Add-on` : "Free Add-on"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => {
-                        setEditingDesign(dsg);
-                        setDesignForm({
-                          name: dsg.name,
-                          priceModifier: dsg.priceModifier,
-                          category: dsg.category || "Celebration",
-                          description: dsg.description || "",
-                          imageUrl: dsg.imageUrl || "",
-                          isActive: dsg.isActive ?? true,
-                        });
-                        setDesignModalOpen(true);
-                      }}
-                      className="p-2 rounded-xl text-gray-500 hover:text-[#596B58] hover:bg-[#FFF8EC] transition-colors"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteDesign(dsg._id || dsg.id)}
-                      className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

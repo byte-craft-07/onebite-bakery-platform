@@ -224,19 +224,16 @@ export class CustomCakeService {
   constructor(private readonly repo: CustomCakeRepository) {}
 
   public async getOptions(type?: CustomCakeOptionType, onlyActive = true): Promise<CustomCakeOption[]> {
-    const count = await this.repo.countOptions();
-    if (count === 0) {
-      for (const opt of DEFAULT_OPTIONS) {
-        await this.repo.createOption(opt);
-      }
-    }
     return this.repo.findAllOptions(type, onlyActive);
   }
 
   public async createOption(data: Partial<CustomCakeOption>): Promise<HydratedDocument<CustomCakeOption>> {
-    if (!data.slug) {
-      data.slug = data.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `opt-${Date.now()}`;
+    let slug = data.slug || data.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `opt-${Date.now()}`;
+    const existing = await this.repo.findOptionBySlug(slug, (data.type as CustomCakeOptionType) || "FLAVOR");
+    if (existing) {
+      slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
     }
+    data.slug = slug;
     return this.repo.createOption(data);
   }
 

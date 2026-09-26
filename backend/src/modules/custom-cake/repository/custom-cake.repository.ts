@@ -1,4 +1,4 @@
-import type { FilterQuery, HydratedDocument } from "mongoose";
+import mongoose, { type FilterQuery, type HydratedDocument } from "mongoose";
 
 import { escapeRegex } from "../../../shared/utils/escape-regex.js";
 import {
@@ -23,7 +23,11 @@ export class CustomCakeRepository {
   }
 
   public async findOptionById(id: string): Promise<HydratedDocument<CustomCakeOption> | null> {
-    return CustomCakeOptionModel.findById(id).exec();
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      const res = await CustomCakeOptionModel.findById(id).exec();
+      if (res) return res;
+    }
+    return CustomCakeOptionModel.findOne({ $or: [{ slug: id }, { _id: id }] }).exec();
   }
 
   public async findOptionBySlug(slug: string, type: CustomCakeOptionType): Promise<HydratedDocument<CustomCakeOption> | null> {
@@ -36,12 +40,26 @@ export class CustomCakeRepository {
   }
 
   public async updateOption(id: string, data: Partial<CustomCakeOption>): Promise<HydratedDocument<CustomCakeOption> | null> {
-    return CustomCakeOptionModel.findByIdAndUpdate(id, { $set: data }, { new: true }).exec();
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      const res = await CustomCakeOptionModel.findByIdAndUpdate(id, { $set: data }, { new: true }).exec();
+      if (res) return res;
+    }
+    return CustomCakeOptionModel.findOneAndUpdate(
+      { $or: [{ slug: id }, { _id: id }] },
+      { $set: data },
+      { new: true }
+    ).exec();
   }
 
   public async deleteOption(id: string): Promise<boolean> {
-    const res = await CustomCakeOptionModel.findByIdAndDelete(id).exec();
-    return res !== null;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      const res = await CustomCakeOptionModel.findByIdAndDelete(id).exec();
+      if (res) return true;
+    }
+    const res2 = await CustomCakeOptionModel.findOneAndDelete({
+      $or: [{ slug: id }, { _id: id }]
+    }).exec();
+    return res2 !== null;
   }
 
   public async countOptions(): Promise<number> {

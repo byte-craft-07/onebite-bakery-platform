@@ -367,8 +367,15 @@ function deleteLocalInquiry(id: string) {
   }
 }
 
+try {
+  // Clear any legacy mock options stored in browser localStorage
+  localStorage.removeItem(LOCAL_OPTIONS_KEY);
+} catch (_e) {
+  // Ignore
+}
+
 export const customCakeService = {
-  // Public
+  // Public - Only Database Options
   getOptions: async (type?: "FLAVOR" | "DESIGN" | "SHAPE" | "TIER"): Promise<CustomCakeOption[]> => {
     try {
       const response = await apiClient.get<{
@@ -379,9 +386,9 @@ export const customCakeService = {
         return response.data.data.options;
       }
     } catch (_err) {
-      // Return local stored options on network failure
+      // Ignore network errors and return empty list
     }
-    return getLocalOptions(type);
+    return [];
   },
 
   submitInquiry: async (payload: SubmitInquiryPayload): Promise<CustomCakeInquiry> => {
@@ -420,20 +427,20 @@ export const customCakeService = {
     throw new Error("Inquiry not found.");
   },
 
-  // Admin Options
+  // Admin Options - Only Real Database Options
   adminGetOptions: async (type?: string): Promise<CustomCakeOption[]> => {
     try {
       const response = await apiClient.get<{
         success: boolean;
         data: { options: CustomCakeOption[] };
       }>("/custom-cake/admin/options", { params: { type } });
-      if (response.data?.data?.options) {
+      if (response.data?.success && Array.isArray(response.data?.data?.options)) {
         return response.data.data.options;
       }
     } catch (_err) {
-      // Fallback
+      // Ignore and return empty list
     }
-    return getLocalOptions(type);
+    return [];
   },
 
   adminCreateOption: async (payload: Partial<CustomCakeOption>): Promise<CustomCakeOption> => {
@@ -443,12 +450,11 @@ export const customCakeService = {
         data: { option: CustomCakeOption };
       }>("/custom-cake/admin/options", payload);
       if (response.data?.data?.option) {
-        saveLocalOption(response.data.data.option);
         return response.data.data.option;
       }
-      throw new Error("Failed to create option");
+      throw new Error("Failed to create option in database");
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || "Failed to create option";
+      const msg = err.response?.data?.message || err.message || "Failed to create option in database";
       throw new Error(msg);
     }
   },
@@ -460,12 +466,11 @@ export const customCakeService = {
         data: { option: CustomCakeOption };
       }>(`/custom-cake/admin/options/${id}`, payload);
       if (response.data?.data?.option) {
-        saveLocalOption(response.data.data.option);
         return response.data.data.option;
       }
-      throw new Error("Failed to update option");
+      throw new Error("Failed to update option in database");
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || "Failed to update option";
+      const msg = err.response?.data?.message || err.message || "Failed to update option in database";
       throw new Error(msg);
     }
   },
@@ -473,9 +478,8 @@ export const customCakeService = {
   adminDeleteOption: async (id: string): Promise<void> => {
     try {
       await apiClient.delete(`/custom-cake/admin/options/${id}`);
-      deleteLocalOption(id);
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || "Failed to delete option";
+      const msg = err.response?.data?.message || err.message || "Failed to delete option from database";
       throw new Error(msg);
     }
   },
