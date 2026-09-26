@@ -19,9 +19,28 @@ export class MediaRepository extends BaseRepository<Media> {
     return MediaModel.find(filter).sort({ createdAt: -1 }).exec();
   }
 
+  public async findAllMedia(params?: {
+    search?: string;
+    entityType?: MediaEntityType;
+  }): Promise<Array<HydratedDocument<Media>>> {
+    const filter: Record<string, unknown> = {};
+    if (params?.entityType) {
+      filter.entityType = params.entityType;
+    }
+    if (params?.search) {
+      filter.$or = [
+        { filename: { $regex: params.search, $options: "i" } },
+        { originalName: { $regex: params.search, $options: "i" } },
+      ];
+    }
+
+    return MediaModel.find(filter).sort({ createdAt: -1 }).exec();
+  }
+
   public async deleteMedia(
     id: Types.ObjectId,
   ): Promise<HydratedDocument<Media> | null> {
     return MediaModel.findByIdAndDelete(id).exec();
   }
 }
+
