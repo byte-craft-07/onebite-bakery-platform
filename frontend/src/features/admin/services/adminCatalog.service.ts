@@ -192,10 +192,10 @@ export const adminCatalogService = {
 
     const response = await apiClient.post<{
       success: boolean;
-      data: { media: { url: string } };
+      data: { media: { url?: string; publicUrl?: string } };
     }>("/media/upload", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return response.data.data.media.url;
+    return response.data?.data?.media?.url || response.data?.data?.media?.publicUrl || "";
   },
 };
