@@ -42,6 +42,56 @@ export class MediaController {
     });
   };
 
+  public listMedia = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const { search, entityType } = request.query;
+    const result = await this.mediaService.listMedia({
+      search: typeof search === "string" ? search : undefined,
+      entityType: typeof entityType === "string" ? (entityType as any) : undefined,
+    });
+
+    return sendSuccess(response, {
+      message: "Media assets retrieved successfully.",
+      data: result,
+    });
+  };
+
+  public createMedia = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const authenticatedRequest = request as AuthenticatedRequest;
+    const { url, entityType, filename, originalName } = request.body;
+
+    if (!url || typeof url !== "string") {
+      throw new AppError(
+        "Media URL is required.",
+        HTTP_STATUS.BAD_REQUEST,
+        [],
+        true,
+        APP_ERROR_CODES.BAD_REQUEST,
+      );
+    }
+
+    const media = await this.mediaService.createMediaFromUrl(
+      {
+        url,
+        entityType: entityType || "PRODUCT",
+        filename,
+        originalName,
+      },
+      authenticatedRequest.user.id,
+    );
+
+    return sendSuccess(response, {
+      statusCode: HTTP_STATUS.CREATED,
+      message: "Media asset created successfully.",
+      data: { media },
+    });
+  };
+
   public getMediaById = async (
     request: Request,
     response: Response,
