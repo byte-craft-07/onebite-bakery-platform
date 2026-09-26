@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/FormControls";
 import { AuthProvider, useAuth } from "@/contexts/auth.context";
 import { AppProvider } from "@/providers/app.provider";
 import { DESIGN_TOKENS } from "@/theme/tokens";
+import { BakeryLoader, FullScreenLoader } from "@/components/common/BakeryLoader";
 
 const TestAuthConsumer: React.FC = () => {
   const { isAuthenticated, role } = useAuth();
@@ -79,5 +80,15 @@ describe("Frontend Component Library & Providers", () => {
     );
 
     expect(screen.getByText("App Provider Consumer")).toBeDefined();
+  });
+
+  it("renders BakeryLoader and FullScreenLoader with animated bakery elements", () => {
+    render(<BakeryLoader message="Baking fresh delights..." subtext="Handcrafted with Love" />);
+    expect(screen.getByText("Onebite Bakery")).toBeDefined();
+    expect(screen.getByText("Baking fresh delights...")).toBeDefined();
+    expect(screen.getByText("Handcrafted with Love")).toBeDefined();
+
+    render(<FullScreenLoader message="Checking authentication..." />);
+    expect(screen.getByText("Checking authentication...")).toBeDefined();
   });
 });

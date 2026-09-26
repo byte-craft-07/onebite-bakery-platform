@@ -6,16 +6,17 @@ import { PublicLayout } from "@/layouts/PublicLayout";
 import { AdminLayout } from "@/features/admin/layout/AdminLayout";
 import { AdminRoute, GuestRoute, ProtectedRoute } from "@/routes/guards";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
+import { BakeryLoader } from "@/components/common/BakeryLoader";
 import { lazyRetry } from "@/utils/lazyRetry";
 
-// Loading Fallback Component with smooth pulse
+// Loading Fallback Component with smooth bakery animation
 const PageLoader: React.FC = () => (
-  <div className="flex min-h-[50vh] w-full items-center justify-center p-8">
-    <div className="flex flex-col items-center gap-3">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#E5DEC9] border-t-[#596B58]" />
-      <span className="text-xs font-semibold tracking-wide text-[#7A6E65]">Loading page...</span>
-    </div>
-  </div>
+  <BakeryLoader
+    fullScreen={false}
+    message="Loading page..."
+    subtext="Preparing fresh treats"
+    size="md"
+  />
 );
 
 // Public Pages (Lazy Loaded)

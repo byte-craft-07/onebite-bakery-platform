@@ -92,12 +92,10 @@ export class ComboService {
   }
 
   async getActiveCombos(): Promise<Combo[]> {
-    await this.ensureSeeded();
     return comboRepository.findActive();
   }
 
   async getAllCombosAdmin(): Promise<Combo[]> {
-    await this.ensureSeeded();
     return comboRepository.findAllAdmin();
   }
 

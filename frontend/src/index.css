@@ -45,6 +45,75 @@
   animation-play-state: paused !important;
 }
 
+/* Bakery Artisanal Loader Animations */
+@keyframes bakerySteam {
+  0% {
+    opacity: 0;
+    transform: translateY(2px) scaleX(0.7) scaleY(0.7);
+  }
+  40% {
+    opacity: 0.85;
+    transform: translateY(-5px) scaleX(1.1) scaleY(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14px) scaleX(1.3) scaleY(1.4);
+  }
+}
+
+@keyframes bakeryShimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+@keyframes bakeryGlowPulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes bakeryFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(0.8deg);
+  }
+}
+
+.animate-bakery-steam-1 {
+  animation: bakerySteam 1.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-bakery-steam-2 {
+  animation: bakerySteam 2.1s cubic-bezier(0.4, 0, 0.2, 1) infinite 0.5s;
+}
+
+.animate-bakery-steam-3 {
+  animation: bakerySteam 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite 1.1s;
+}
+
+.animate-bakery-shimmer {
+  animation: bakeryShimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-bakery-glow {
+  animation: bakeryGlowPulse 2.8s ease-in-out infinite;
+}
+
+.animate-bakery-float {
+  animation: bakeryFloat 2.4s ease-in-out infinite;
+}
+
 /* Global Custom Form Controls & Select Option Styling */
 select {
   appearance: none;

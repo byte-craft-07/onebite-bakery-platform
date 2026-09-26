@@ -79,7 +79,7 @@ export const seedInitialData = async (_force: boolean = false): Promise<void> =>
 
     const categoryCount = await CategoryModel.countDocuments();
     let defaultCatId;
-    if (categoryCount === 0) {
+    if ((categoryCount === 0 && isFirstRun) || _force) {
       const cat = await CategoryModel.create({
         name: "Artisanal Cakes",
         slug: "artisanal-cakes",
@@ -157,7 +157,7 @@ export const seedInitialData = async (_force: boolean = false): Promise<void> =>
 
     // 3. Seed Products
     const productCount = await ProductModel.countDocuments();
-    if (productCount === 0 && defaultCatId) {
+    if (((productCount === 0 && isFirstRun) || _force) && defaultCatId) {
       await ProductModel.insertMany([
         {
           name: "Belgian Dark Chocolate Truffle Cake",

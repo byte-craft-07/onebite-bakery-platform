@@ -40,7 +40,139 @@
     <title>Onebite Bakery | Fresh Handcrafted Cakes, Pastries & Party Supplies</title>
   </head>
   <body class="bg-[#FFFBF5] text-[#2C1E16] antialiased selection:bg-[#E67E22]/20 selection:text-[#E67E22]">
-    <div id="root"></div>
+    <div id="root">
+      <style>
+        .initial-loader-wrapper {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background-color: #FFFBF5;
+          font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+          z-index: 9999;
+        }
+        .initial-loader-emblem {
+          position: relative;
+          width: 84px;
+          height: 84px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 16px;
+        }
+        .initial-loader-ring {
+          position: absolute;
+          inset: -4px;
+          border-radius: 50%;
+          border: 3px solid transparent;
+          border-top-color: #E67E22;
+          border-right-color: #596B58;
+          animation: initialSpin 1.1s linear infinite;
+        }
+        .initial-loader-ring-dashed {
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          border: 2px dashed rgba(230, 126, 34, 0.45);
+          animation: initialSpin 9s linear infinite;
+        }
+        .initial-loader-disc {
+          width: 62px;
+          height: 62px;
+          border-radius: 50%;
+          background: #ffffff;
+          box-shadow: 0 6px 20px rgba(230, 126, 34, 0.16);
+          border: 1px solid #E5DEC9;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: initialFloat 2.4s ease-in-out infinite;
+        }
+        .initial-loader-title {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #596B58;
+          margin-bottom: 4px;
+        }
+        .initial-loader-sub {
+          font-size: 15px;
+          font-weight: 700;
+          color: #2C1E16;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .initial-loader-dots {
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+          margin-left: 2px;
+        }
+        .initial-loader-dots span {
+          display: inline-block;
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          animation: initialBounce 1s infinite;
+        }
+        .initial-loader-dots span:nth-child(1) { background-color: #E67E22; animation-delay: 0s; }
+        .initial-loader-dots span:nth-child(2) { background-color: #D35400; animation-delay: 0.2s; }
+        .initial-loader-dots span:nth-child(3) { background-color: #596B58; animation-delay: 0.4s; }
+        .initial-loader-bar {
+          width: 140px;
+          height: 4px;
+          background: rgba(229, 222, 201, 0.6);
+          border-radius: 999px;
+          margin-top: 14px;
+          overflow: hidden;
+          position: relative;
+        }
+        .initial-loader-bar::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          width: 60%;
+          background: linear-gradient(90deg, transparent, #E67E22, transparent);
+          animation: initialShimmer 1.6s infinite ease-in-out;
+        }
+        @keyframes initialSpin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes initialFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+        @keyframes initialBounce {
+          0%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-5px); }
+        }
+        @keyframes initialShimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(200%); }
+        }
+      </style>
+      <div class="initial-loader-wrapper">
+        <div class="initial-loader-emblem">
+          <div class="initial-loader-ring-dashed"></div>
+          <div class="initial-loader-ring"></div>
+          <div class="initial-loader-disc">
+            <img src="/logo.svg" alt="Onebite Bakery" style="width: 38px; height: 38px; object-fit: contain;" />
+          </div>
+        </div>
+        <div class="initial-loader-title">Onebite Bakery</div>
+        <div class="initial-loader-sub">
+          <span>Baking fresh delights</span>
+          <span class="initial-loader-dots">
+            <span></span><span></span><span></span>
+          </span>
+        </div>
+        <div class="initial-loader-bar"></div>
+      </div>
+    </div>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>

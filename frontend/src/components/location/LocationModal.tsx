@@ -193,8 +193,8 @@ export const LocationModal: React.FC<LocationModalProps> = ({ isOpen, onClose })
 
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-4 overflow-y-auto min-h-[360px] pb-6">
-          {/* Active Location or Required Selection Prompt */}
-          {currentLocation ? (
+          {/* Active Location */}
+          {currentLocation && (
             <div className="p-3 bg-white border border-[#E5DEC9] rounded-xl flex items-center justify-between gap-3 shadow-2xs">
               <div className="flex items-center gap-2.5 min-w-0">
                 <Navigation className="h-5 w-5 text-[#596B58] shrink-0" />
@@ -208,18 +208,6 @@ export const LocationModal: React.FC<LocationModalProps> = ({ isOpen, onClose })
               <span className="px-2 py-0.5 text-[10px] font-bold bg-[#596B58] text-white rounded-full shrink-0">
                 Active
               </span>
-            </div>
-          ) : (
-            <div className="p-3.5 bg-amber-50/90 border border-amber-300 rounded-xl flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5 animate-pulse" />
-              <div className="text-xs text-[#3B302B]">
-                <strong className="block text-amber-800 font-extrabold mb-0.5">
-                  Koi Delivery Address Select Nahi Hai
-                </strong>
-                <p className="text-amber-900/80 leading-relaxed">
-                  Kripya apna delivery address select karein ya niche area chunein taaki aapko local products aur accurate delivery rates dikh sakein.
-                </p>
-              </div>
             </div>
           )}
 

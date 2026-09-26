@@ -2,13 +2,14 @@ import React from "react";
 import { Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom";
 
 import { useAuth } from "@/contexts/auth.context";
+import { FullScreenLoader } from "@/components/common/BakeryLoader";
 
 export const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
-    return <div className="p-8 text-center text-xs font-semibold text-[#7A6E65]">Loading authentication...</div>;
+    return <FullScreenLoader message="Verifying session..." subtext="Getting your account ready" />;
   }
 
   const redirectPath = encodeURIComponent(location.pathname + location.search);
@@ -20,7 +21,7 @@ export const GuestRoute: React.FC = () => {
   const [searchParams] = useSearchParams();
 
   if (isLoading) {
-    return <div className="p-8 text-center text-xs font-semibold text-[#7A6E65]">Loading...</div>;
+    return <FullScreenLoader message="Loading delights..." subtext="Freshly baked just for you" />;
   }
 
   if (isAuthenticated && user) {
@@ -46,7 +47,7 @@ export const AdminRoute: React.FC = () => {
   const { isAuthenticated, role, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div className="p-8 text-center text-xs font-semibold text-[#7A6E65]">Loading admin credentials...</div>;
+    return <FullScreenLoader message="Loading admin dashboard..." subtext="Verifying security credentials" />;
   }
 
   if (!isAuthenticated) {
