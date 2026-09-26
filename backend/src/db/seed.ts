@@ -495,6 +495,15 @@ export const seedInitialData = async (_force: boolean = false): Promise<void> =>
       ]);
       logger.info("Default Verified Customer Reviews seeded into MongoDB");
     }
+
+    // 10. Seed Baseline Decorations (only on first run or force)
+    const { DecorationModel } = await import("../modules/decoration/model/decoration.model.js");
+    const { BASELINE_DECORATIONS } = await import("../modules/decoration/service/decoration.service.js");
+    const decorationCount = await DecorationModel.countDocuments();
+    if ((decorationCount === 0 && isFirstRun) || _force) {
+      await DecorationModel.insertMany(BASELINE_DECORATIONS);
+      logger.info("Default Party Decorations seeded into MongoDB");
+    }
   } catch (error) {
     logger.warn({ error }, "Skipping dev database seed due to error");
   }

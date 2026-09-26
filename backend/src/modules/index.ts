@@ -23,3 +23,4 @@ export { branchRouter } from "./branch/index.js";
 export { customCakeRouter } from "./custom-cake/index.js";
 export { comboRouter } from "./combo/index.js";
 export { bannerRouter } from "./banner/index.js";
+export { decorationRouter } from "./decoration/index.js";

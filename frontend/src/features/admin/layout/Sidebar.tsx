@@ -16,6 +16,7 @@ import {
   LogOut,
   MapPin,
   Package,
+  PartyPopper,
   Settings,
   ShieldCheck,
   ShoppingBag,
@@ -39,6 +40,7 @@ const centralAdminNavSections = [
   { id: "branch-matrix", label: "Branch Product Matrix", path: "/admin/branch-matrix", icon: Layers },
   { id: "catalog", label: "Catalog & Products", path: "/admin/catalog", icon: Package },
   { id: "combos", label: "Celebration Combos", path: "/admin/combos", icon: Gift },
+  { id: "decorations", label: "Party Decorations", path: "/admin/decorations", icon: PartyPopper },
   { id: "custom-cakes", label: "Custom Cake Studio", path: "/admin/custom-cakes", icon: Cake },
   { id: "categories", label: "Categories", path: "/admin/categories", icon: Box },
 

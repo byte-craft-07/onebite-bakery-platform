@@ -91,10 +91,40 @@ export class CartService {
     const cart = await this.getOrCreateCartDocument(customerId, targetSessionId);
 
     const productObjId = toObjectId(dto.productId);
-    const product = await ProductModel.findOne({
+    let product: any = await ProductModel.findOne({
       _id: productObjId,
       isDeleted: false,
     }).exec();
+
+    let isDecoration = false;
+    if (!product) {
+      try {
+        const { DecorationModel } = await import("../../decoration/model/decoration.model.js");
+        if (DecorationModel.db?.readyState === 1) {
+          const dec = await DecorationModel.findOne({ _id: productObjId, isActive: true }).exec();
+          if (dec) {
+            isDecoration = true;
+            product = {
+              _id: dec._id,
+              name: dec.name,
+              slug: dec.slug || String(dec._id),
+              price: dec.price,
+              compareAtPrice: dec.originalPrice,
+              thumbnailUrl: dec.image,
+              imageUrls: [dec.image],
+              productType: "DECORATION",
+              stockStatus: dec.inStock ? "IN_STOCK" : "OUT_OF_STOCK",
+              isActive: dec.isActive,
+              isAvailable: dec.inStock,
+              trackInventory: false,
+              allowBackorder: true,
+            };
+          }
+        }
+      } catch (_err) {
+        // fallback
+      }
+    }
 
     if (!product || !product.isActive || !product.isAvailable) {
       throw new AppError(
@@ -106,7 +136,7 @@ export class CartService {
       );
     }
 
-    if (customerId) {
+    if (customerId && !isDecoration) {
       try {
         const { UserModel } = await import("../../user/model/user.model.js");
         if (UserModel.db?.readyState === 1) {
@@ -415,9 +445,38 @@ export class CartService {
       isDeleted: false,
     }).exec();
 
-    const productMap = new Map<string, Product>();
+    const productMap = new Map<string, any>();
     for (const prod of products) {
       productMap.set(prod._id.toString(), prod);
+    }
+
+    try {
+      const { DecorationModel } = await import("../../decoration/model/decoration.model.js");
+      if (DecorationModel.db?.readyState === 1) {
+        const decorations = await DecorationModel.find({
+          _id: { $in: productIds },
+          isActive: true,
+        }).exec();
+        for (const dec of decorations) {
+          productMap.set(dec._id.toString(), {
+            _id: dec._id,
+            name: dec.name,
+            slug: dec.slug || String(dec._id),
+            price: dec.price,
+            compareAtPrice: dec.originalPrice,
+            thumbnailUrl: dec.image,
+            imageUrls: [dec.image],
+            productType: "DECORATION",
+            stockStatus: dec.inStock ? "IN_STOCK" : "OUT_OF_STOCK",
+            isActive: dec.isActive,
+            isAvailable: dec.inStock,
+            trackInventory: false,
+            allowBackorder: true,
+          });
+        }
+      }
+    } catch (_err) {
+      // fallback
     }
 
     const validItems: CartItem[] = [];

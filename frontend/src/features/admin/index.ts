@@ -16,6 +16,7 @@ export * from "./pages/AdminVillagesPage";
 export * from "./pages/AdminCouponsPage";
 export * from "./pages/AdminCustomCakePage";
 export * from "./pages/AdminCombosPage";
+export * from "./pages/AdminDecorationsPage";
 export * from "./pages/AdminBannersPage";
 export * from "./pages/AdminAdminsPage";
 export * from "./pages/AdminMainBranchOrdersPage";

@@ -25,5 +25,6 @@ export const ROUTES = {
   CUSTOM_CAKE: "/custom-cake",
   COMBOS: "/combos",
   BANNER: "/banners",
+  DECORATIONS: "/decorations",
 } as const;
 

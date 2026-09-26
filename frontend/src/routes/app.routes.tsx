@@ -70,6 +70,7 @@ const BranchAdminProductsPage = lazyRetry(() => import("@/features/admin/pages/B
 const BranchAdminOrdersPage = lazyRetry(() => import("@/features/admin/pages/BranchAdminOrdersPage").then((m) => ({ default: m.BranchAdminOrdersPage })));
 const AdminCatalogPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminCatalogPage })));
 const AdminCombosPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminCombosPage })));
+const AdminDecorationsPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminDecorationsPage })));
 const AdminCustomCakePage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminCustomCakePage })));
 const AdminCategoryPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminCategoryPage })));
 const AdminOccasionPage = lazyRetry(() => import("@/features/admin").then((m) => ({ default: m.AdminOccasionPage })));
@@ -179,6 +180,7 @@ export const AppRoutes: React.FC = () => {
               <Route path="branch/orders" element={<BranchAdminOrdersPage />} />
               <Route path="catalog" element={<AdminCatalogPage />} />
               <Route path="combos" element={<AdminCombosPage />} />
+              <Route path="decorations" element={<AdminDecorationsPage />} />
               <Route path="custom-cakes" element={<AdminCustomCakePage />} />
               <Route path="categories" element={<AdminCategoryPage />} />
 

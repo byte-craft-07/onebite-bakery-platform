@@ -20,6 +20,7 @@ export const COLLECTION_NAMES = {
   BANNERS: "banners",
   PAYMENTS: "payments",
   REVIEWS: "reviews",
+  DECORATIONS: "decorations",
 } as const;
 
 export type CollectionName =
