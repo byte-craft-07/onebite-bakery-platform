@@ -14,9 +14,11 @@ export interface MediaResponse {
   height?: number;
   storageProvider: StorageProviderType;
   publicUrl: string;
+  url: string;
   uploadedBy: string;
   entityType: MediaEntityType;
   entityId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
+
