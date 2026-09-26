@@ -71,7 +71,7 @@ export class MediaController {
         HTTP_STATUS.BAD_REQUEST,
         [],
         true,
-        APP_ERROR_CODES.BAD_REQUEST,
+        APP_ERROR_CODES.VALIDATION_ERROR,
       );
     }
 
