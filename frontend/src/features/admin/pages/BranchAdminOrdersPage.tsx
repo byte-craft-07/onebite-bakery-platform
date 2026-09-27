@@ -65,6 +65,10 @@ interface OrderRecord {
   orderNumber: string;
   orderStatus: "PENDING" | "CONFIRMED" | "PREPARING" | "OUT_FOR_DELIVERY" | "DELIVERED" | "CANCELLED" | string;
   paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED" | string;
+  paymentMethod?: string;
+  paymentReceiptUrl?: string;
+  transactionId?: string;
+  manualUpiDiscount?: number;
   deliveryMethod: "HOME_DELIVERY" | "STORE_PICKUP" | string;
   deliveryTimingType?: "INSTANT" | "SCHEDULED" | string;
   deliveryTimePreference?: string;
@@ -185,6 +189,10 @@ export const BranchAdminOrdersPage: React.FC = () => {
           orderNumber: g.orderNumber,
           orderStatus: g.orderStatus as any,
           paymentStatus: g.paymentStatus as any,
+          paymentMethod: g.paymentMethod,
+          paymentReceiptUrl: g.paymentReceiptUrl,
+          transactionId: g.transactionId,
+          manualUpiDiscount: g.manualUpiDiscount,
           deliveryMethod: g.fulfillmentType,
           deliveryTimingType: g.deliveryTimingType,
           deliveryTimePreference: g.deliveryTimePreference,
@@ -556,17 +564,29 @@ export const BranchAdminOrdersPage: React.FC = () => {
 
                 {/* 7. PAYMENT */}
                 <td className="px-4 py-3 whitespace-nowrap">
-                  <Badge
-                    variant={
-                      ord.paymentStatus === "PAID"
-                        ? "success"
-                        : ord.paymentStatus === "FAILED"
-                        ? "danger"
-                        : "warning"
-                    }
-                  >
-                    {ord.paymentStatus}
-                  </Badge>
+                  <div className="flex flex-col gap-1 items-start">
+                    <Badge
+                      variant={
+                        ord.paymentStatus === "PAID"
+                          ? "success"
+                          : ord.paymentStatus === "FAILED"
+                          ? "danger"
+                          : "warning"
+                      }
+                    >
+                      {ord.paymentStatus}
+                    </Badge>
+                    {ord.paymentMethod === "MANUAL_UPI" && (
+                      <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                        ⚡ Direct UPI
+                      </span>
+                    )}
+                    {ord.paymentReceiptUrl && (
+                      <span className="text-[9px] text-blue-600 font-bold">
+                        📸 Receipt
+                      </span>
+                    )}
+                  </div>
                 </td>
 
                 {/* 8. ORDER STAGE */}
@@ -704,6 +724,64 @@ export const BranchAdminOrdersPage: React.FC = () => {
               <span className="font-extrabold text-lg text-[#596B58]">
                 ₹{activeOrderModal.pricingSnapshot?.grandTotal ?? activeOrderModal.totalAmount ?? 0}
               </span>
+            </div>
+
+            {/* Payment Details */}
+            <div className="p-3 bg-[#FFF8EC] border border-[#E5DEC9] rounded-xl text-xs space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 font-bold">Payment Method:</span>
+                <span className="font-bold text-[#3B302B]">
+                  {activeOrderModal.paymentMethod === "MANUAL_UPI"
+                    ? "Direct UPI ID & QR Code (1.5% Off)"
+                    : activeOrderModal.paymentMethod === "COD"
+                    ? "Cash on Delivery"
+                    : "Online Razorpay"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 font-bold">Payment Status:</span>
+                <Badge
+                  variant={
+                    activeOrderModal.paymentStatus === "PAID"
+                      ? "success"
+                      : activeOrderModal.paymentStatus === "FAILED"
+                      ? "danger"
+                      : "warning"
+                  }
+                >
+                  {activeOrderModal.paymentStatus}
+                </Badge>
+              </div>
+
+              {((activeOrderModal.manualUpiDiscount && activeOrderModal.manualUpiDiscount > 0) ||
+                activeOrderModal.paymentMethod === "MANUAL_UPI") && (
+                <div className="flex justify-between items-center text-emerald-800 font-bold bg-emerald-50 p-1.5 rounded-lg border border-emerald-200">
+                  <span>⚡ Direct UPI 1.5% Discount:</span>
+                  <span>-₹{activeOrderModal.manualUpiDiscount || Math.round((activeOrderModal.totalAmount || 0) * 0.015)}</span>
+                </div>
+              )}
+
+              {activeOrderModal.transactionId && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 font-bold">UPI / UTR Ref:</span>
+                  <span className="font-mono font-bold text-[#3B302B]">
+                    {activeOrderModal.transactionId}
+                  </span>
+                </div>
+              )}
+
+              {activeOrderModal.paymentReceiptUrl && (
+                <div className="space-y-1.5 pt-2 border-t border-[#E5DEC9]">
+                  <span className="font-bold text-[#3B302B] block">Payment Receipt Screenshot:</span>
+                  <div className="max-h-40 rounded-lg overflow-hidden border border-[#E5DEC9] bg-white flex items-center justify-center">
+                    <img
+                      src={activeOrderModal.paymentReceiptUrl}
+                      alt="Payment Receipt"
+                      className="max-h-40 object-contain w-full"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Modal Actions */}

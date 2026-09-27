@@ -20,6 +20,8 @@ const settingPayloadSchema = z.object({
   taxRatePercent: z.number().min(0).max(100).optional(),
   isTaxEnabled: z.boolean().optional(),
   isOrderAcceptanceActive: z.boolean().optional(),
+  upiId: z.string().trim().optional(),
+  upiQr: z.string().trim().optional(),
 });
 
 const defaultStoreTiming = {
@@ -59,6 +61,8 @@ const getOrCreateSettings = async (): Promise<Settings> => {
       pickupEnabled: true,
     },
     socialLinks: {},
+    upiId: "7897671632@okbizaxis",
+    upiQr: "",
     isDeliveryEnabled: true,
     isPickupEnabled: true,
     isCodEnabled: true,
@@ -83,6 +87,8 @@ const toSettingsResponse = (settings: Settings) => ({
   taxRatePercent: settings.taxRatePercent ?? 5,
   isTaxEnabled: settings.isTaxEnabled ?? true,
   isOrderAcceptanceActive: settings.isDeliveryEnabled || settings.isPickupEnabled,
+  upiId: settings.upiId || "7897671632@okbizaxis",
+  upiQr: settings.upiQr || "",
   delivery: settings.delivery,
 });
 
@@ -127,6 +133,8 @@ settingsRouter.put(
             payload.isOrderAcceptanceActive ?? current.delivery.homeDeliveryEnabled,
           "delivery.pickupEnabled":
             payload.isOrderAcceptanceActive ?? current.delivery.pickupEnabled,
+          upiId: payload.upiId !== undefined ? payload.upiId : current.upiId,
+          upiQr: payload.upiQr !== undefined ? payload.upiQr : current.upiQr,
         },
       },
       { new: true, runValidators: true },

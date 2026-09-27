@@ -244,12 +244,16 @@ export const CheckoutSummary: React.FC<{
   };
   fulfillmentType?: "HOME_DELIVERY" | "STORE_PICKUP";
   onSwitchToPickup?: () => void;
+  paymentMethod?: string;
+  manualUpiDiscount?: number;
 }> = ({
   pricing,
   onCouponChanged,
   deliveryThreshold,
   fulfillmentType = "HOME_DELIVERY",
   onSwitchToPickup,
+  paymentMethod,
+  manualUpiDiscount = 0,
 }) => {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
@@ -309,7 +313,9 @@ export const CheckoutSummary: React.FC<{
   };
 
   const effectiveDiscount = Math.round((appliedCoupon ? appliedDiscount : pricing.discountAmount) * 100) / 100;
-  const effectiveTotal = Math.max(0, Math.round((pricing.subtotal - effectiveDiscount + pricing.deliveryFee) * 100) / 100);
+  const baseTotal = Math.max(0, Math.round((pricing.subtotal - effectiveDiscount + pricing.deliveryFee) * 100) / 100);
+  const upiDiscount = (paymentMethod === "MANUAL_UPI" && manualUpiDiscount > 0) ? manualUpiDiscount : 0;
+  const effectiveTotal = Math.max(0, Math.round((baseTotal - upiDiscount) * 100) / 100);
 
   return (
     <Card className="space-y-4 bg-white border-[#E5DEC9]">
@@ -387,6 +393,14 @@ export const CheckoutSummary: React.FC<{
             {pricing.deliveryFee === 0 ? <span className="text-[#596B58] bg-[#FFF8EC] px-2 py-0.5 rounded font-bold">FREE</span> : `₹${pricing.deliveryFee}`}
           </span>
         </div>
+        {upiDiscount > 0 ? (
+          <div className="flex justify-between items-center text-emerald-700 font-bold bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+            <span className="flex items-center gap-1.5">
+              <span>⚡ Direct UPI Discount (1.5% OFF)</span>
+            </span>
+            <span>-₹{upiDiscount}</span>
+          </div>
+        ) : null}
       </div>
 
       <div className="pt-3 border-t border-[#E5DEC9] flex justify-between items-baseline">

@@ -38,6 +38,8 @@ export interface OrderResponse {
   paymentMethod?: PaymentMethod;
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
+  paymentReceiptUrl?: string;
+  transactionId?: string;
   notes?: string;
   deliveryTimingType?: "INSTANT" | "SCHEDULED";
   deliveryTimePreference?: string;

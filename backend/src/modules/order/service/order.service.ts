@@ -228,14 +228,22 @@ export class OrderService {
         : 0;
 
     const subtotal = cart.subtotal;
-    const grandTotal =
+    const preDiscountTotal =
       subtotal - cart.estimatedDiscount + cart.estimatedTax + deliveryCharge;
+
+    const manualUpiDiscount =
+      dto.paymentMethod === "MANUAL_UPI"
+        ? Math.round(preDiscountTotal * 0.015 * 100) / 100
+        : 0;
+
+    const grandTotal = Math.max(0, Math.round((preDiscountTotal - manualUpiDiscount) * 100) / 100);
 
     const pricingSnapshot: OrderPricingSnapshot = {
       subtotal,
       tax: cart.estimatedTax,
       deliveryCharge,
       discount: cart.estimatedDiscount,
+      manualUpiDiscount,
       grandTotal,
       homeDeliveryAvailable: cart.homeDeliveryAvailable,
       pickupAvailable: cart.pickupAvailable,
@@ -442,6 +450,10 @@ export class OrderService {
       paymentMethod: dto.paymentMethod ?? "UPI",
       orderStatus: "PENDING",
       paymentStatus: "PENDING",
+      ...(dto.paymentReceiptUrl || dto.paymentReceipt
+        ? { paymentReceiptUrl: dto.paymentReceiptUrl || dto.paymentReceipt }
+        : {}),
+      ...(dto.transactionId ? { transactionId: dto.transactionId } : {}),
       deliveryTimingType: timingType,
       deliveryTimePreference: deliveryPreference,
       ...(dto.notes ? { notes: dto.notes } : {}),
@@ -889,6 +901,74 @@ export class OrderService {
     return response;
   }
 
+  public async adminUpdatePaymentStatus(
+    orderId: string,
+    dto: { paymentStatus: any; transactionId?: string; paymentReceiptUrl?: string },
+    context?: RequestContext,
+  ): Promise<OrderResponse> {
+    const orderObjId = toObjectId(orderId);
+    const order = await this.orderRepository.findById(orderObjId);
+    if (!order) {
+      throw this.createNotFoundError();
+    }
+
+    const updated = await this.orderRepository.updatePaymentStatus(
+      orderObjId,
+      dto.paymentStatus,
+      {
+        transactionId: dto.transactionId,
+        paymentReceiptUrl: dto.paymentReceiptUrl,
+      },
+    );
+
+    if (!updated) {
+      throw this.createNotFoundError();
+    }
+
+    if (context?.userId) {
+      void AuditLogModel.create({
+        actorId: toObjectId(context.userId),
+        actorRole: context.userRole ?? "admin",
+        action: "ORDER_PAYMENT_STATUS_UPDATE",
+        entityType: "ORDER",
+        entityId: orderObjId,
+        metadata: {
+          previousPaymentStatus: order.paymentStatus,
+          nextPaymentStatus: dto.paymentStatus,
+          orderNumber: order.orderNumber,
+        },
+      }).catch(() => {});
+    }
+
+    return this.toResponse(updated);
+  }
+
+  public async attachCustomerPaymentReceipt(
+    customerId: string,
+    orderId: string,
+    payload: { paymentReceiptUrl: string; transactionId?: string },
+  ): Promise<OrderResponse> {
+    const orderObjId = toObjectId(orderId);
+    const order = await this.orderRepository.findById(orderObjId);
+    if (!order) {
+      throw this.createNotFoundError();
+    }
+
+    if (order.customerId.toString() !== customerId && order.userId?.toString() !== customerId) {
+      throw new AppError("Unauthorized access to order.", HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (payload.paymentReceiptUrl) {
+      order.paymentReceiptUrl = payload.paymentReceiptUrl;
+    }
+    if (payload.transactionId) {
+      order.transactionId = payload.transactionId;
+    }
+    await order.save();
+
+    return this.toResponse(order);
+  }
+
   public async assignDeliveryAgent(
     branchId: string,
     orderId: string,
@@ -1332,6 +1412,8 @@ export class OrderService {
       ...(order.paymentMethod ? { paymentMethod: order.paymentMethod } : {}),
       orderStatus: order.orderStatus,
       paymentStatus: order.paymentStatus,
+      ...(order.paymentReceiptUrl ? { paymentReceiptUrl: order.paymentReceiptUrl } : {}),
+      ...(order.transactionId ? { transactionId: order.transactionId } : {}),
       ...(order.deliveryTimingType ? { deliveryTimingType: order.deliveryTimingType } : {}),
       ...(order.deliveryTimePreference ? { deliveryTimePreference: order.deliveryTimePreference } : {}),
       ...(order.notes ? { notes: order.notes } : {}),

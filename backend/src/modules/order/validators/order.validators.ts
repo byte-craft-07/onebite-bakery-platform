@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { DELIVERY_METHODS, ORDER_STATUSES, PAYMENT_METHODS } from "../constants/index.js";
+import { DELIVERY_METHODS, ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES } from "../constants/index.js";
 
 const objectIdSchema = z.string().trim().min(1, "Invalid id.");
 
@@ -32,6 +32,9 @@ export const createOrderSchema = z
     deliveryTimePreference: z.string().trim().max(200).optional(),
     scheduledDate: z.string().trim().optional(),
     scheduledTimeSlot: z.string().trim().max(100).optional(),
+    paymentReceipt: z.string().trim().optional(),
+    paymentReceiptUrl: z.string().trim().optional(),
+    transactionId: z.string().trim().max(100).optional(),
   })
   .refine(
     (data) =>
@@ -41,6 +44,12 @@ export const createOrderSchema = z
       path: ["addressId"],
     },
   );
+
+export const updatePaymentStatusSchema = z.object({
+  paymentStatus: z.enum(PAYMENT_STATUSES),
+  transactionId: z.string().trim().max(100).optional(),
+  paymentReceiptUrl: z.string().trim().optional(),
+});
 
 export const updateOrderStatusSchema = z.object({
   status: z.enum(ORDER_STATUSES),

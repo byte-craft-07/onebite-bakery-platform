@@ -229,13 +229,15 @@ export const checkoutService = {
 
   createOrder: async (payload: {
     fulfillmentType: "HOME_DELIVERY" | "STORE_PICKUP";
-    paymentMethod?: "UPI" | "COD";
+    paymentMethod?: "UPI" | "COD" | "MANUAL_UPI";
     addressId?: string;
     customerNotes?: string;
     deliveryTimingType?: "INSTANT" | "SCHEDULED";
     deliveryTimePreference?: string;
     scheduledDate?: string;
     scheduledTimeSlot?: string;
+    paymentReceiptUrl?: string;
+    transactionId?: string;
     directItem?: DirectOrderItem | null;
   }) => {
     let originalLocalCartJson: string | null = null;
@@ -319,6 +321,8 @@ export const checkoutService = {
       ...(payload.deliveryTimePreference ? { deliveryTimePreference: payload.deliveryTimePreference } : {}),
       ...(payload.scheduledDate ? { scheduledDate: payload.scheduledDate } : {}),
       ...(payload.scheduledTimeSlot ? { scheduledTimeSlot: payload.scheduledTimeSlot } : {}),
+      ...(payload.paymentReceiptUrl ? { paymentReceiptUrl: payload.paymentReceiptUrl } : {}),
+      ...(payload.transactionId ? { transactionId: payload.transactionId } : {}),
     });
 
     if (response.data?.data?.order) {

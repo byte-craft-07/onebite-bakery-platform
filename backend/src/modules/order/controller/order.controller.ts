@@ -203,6 +203,43 @@ export class OrderController {
     });
   };
 
+  public attachPaymentReceipt = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const authenticatedRequest = request as AuthenticatedRequest;
+    const orderId = this.getIdParam(request);
+    const { paymentReceiptUrl, transactionId } = request.body;
+
+    const order = await this.orderService.attachCustomerPaymentReceipt(
+      authenticatedRequest.user.id,
+      orderId,
+      { paymentReceiptUrl, transactionId },
+    );
+
+    return sendSuccess(response, {
+      message: "Payment receipt attached successfully.",
+      data: { order },
+    });
+  };
+
+  public adminUpdatePaymentStatus = async (
+    request: Request,
+    response: Response,
+  ): Promise<Response> => {
+    const orderId = this.getIdParam(request);
+    const order = await this.orderService.adminUpdatePaymentStatus(
+      orderId,
+      request.body,
+      this.createAuthContext(request),
+    );
+
+    return sendSuccess(response, {
+      message: "Order payment status updated successfully.",
+      data: { order },
+    });
+  };
+
   public adminDeleteOrder = async (
     request: Request,
     response: Response,

@@ -15,6 +15,7 @@ export const PAYMENT_PROVIDERS = [
   "COD",
   "UPI",
   "STRIPE",
+  "MANUAL_UPI",
 ] as const;
 
 export type PaymentProviderType = (typeof PAYMENT_PROVIDERS)[number];

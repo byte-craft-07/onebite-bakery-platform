@@ -88,10 +88,14 @@ export class OrderRepository extends BaseRepository<Order> {
   public async updatePaymentStatus(
     orderId: Types.ObjectId,
     paymentStatus: PaymentStatus,
+    extra?: { transactionId?: string; paymentReceiptUrl?: string },
   ): Promise<HydratedDocument<Order> | null> {
+    const update: Record<string, unknown> = { paymentStatus };
+    if (extra?.transactionId) update.transactionId = extra.transactionId;
+    if (extra?.paymentReceiptUrl) update.paymentReceiptUrl = extra.paymentReceiptUrl;
     return OrderModel.findByIdAndUpdate(
       orderId,
-      { $set: { paymentStatus } },
+      { $set: update },
       { new: true },
     ).exec();
   }

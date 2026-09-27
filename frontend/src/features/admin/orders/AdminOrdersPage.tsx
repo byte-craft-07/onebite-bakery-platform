@@ -11,6 +11,7 @@ import {
   MapPin,
   Phone,
   Printer,
+  Receipt,
   RefreshCw,
   Search,
   ShoppingBag,
@@ -62,6 +63,38 @@ export const AdminOrdersPage: React.FC = () => {
   const [orderToDelete, setOrderToDelete] = useState<AdminOrderSummary | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isClearAllModalOpen, setIsClearAllModalOpen] = useState(false);
+  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
+  const [viewReceiptImage, setViewReceiptImage] = useState<string | null>(null);
+
+  const handleApprovePayment = async (orderId: string) => {
+    try {
+      setIsUpdatingPayment(true);
+      await adminOperationsService.updatePaymentStatus(orderId, {
+        paymentStatus: "PAID",
+        notes: "Approved by Admin after direct UPI receipt verification",
+      });
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId || o.orderNumber === orderId
+            ? { ...o, paymentStatus: "PAID" }
+            : o
+        )
+      );
+      if (
+        selectedOrderForModal &&
+        (selectedOrderForModal.id === orderId || selectedOrderForModal.orderNumber === orderId)
+      ) {
+        setSelectedOrderForModal({
+          ...selectedOrderForModal,
+          paymentStatus: "PAID",
+        });
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to update payment status");
+    } finally {
+      setIsUpdatingPayment(false);
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -615,15 +648,27 @@ export const AdminOrdersPage: React.FC = () => {
 
                   {/* 8. PAYMENT */}
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        ord.paymentStatus === "PAID"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-amber-100 text-amber-800"
-                      }`}
-                    >
-                      {ord.paymentStatus || "PAID"}
-                    </span>
+                    <div className="flex flex-col gap-1 items-start">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          ord.paymentStatus === "PAID"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-amber-100 text-amber-800"
+                        }`}
+                      >
+                        {ord.paymentStatus || "PENDING"}
+                      </span>
+                      {ord.paymentMethod === "MANUAL_UPI" && (
+                        <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                          ⚡ Direct UPI
+                        </span>
+                      )}
+                      {ord.paymentReceiptUrl && (
+                        <span className="text-[9px] text-blue-600 font-bold flex items-center gap-0.5">
+                          📸 Receipt
+                        </span>
+                      )}
+                    </div>
                   </td>
 
                   {/* 9. ORDER STAGE WORKFLOW */}
@@ -796,6 +841,98 @@ export const AdminOrdersPage: React.FC = () => {
               <span className="font-black text-base text-[#596B58]">
                 ₹{selectedOrderForModal.totalAmount?.toLocaleString("en-IN")}
               </span>
+            </div>
+
+            {/* Payment Details & Receipt Verification */}
+            <div className="p-3.5 bg-white rounded-xl border border-[#E5DEC9] space-y-3">
+              <div className="flex items-center justify-between border-b border-[#E5DEC9] pb-2">
+                <span className="text-xs font-bold text-[#3B302B] uppercase tracking-wider flex items-center gap-1.5">
+                  <Receipt className="h-3.5 w-3.5 text-[#596B58]" />
+                  Payment Verification
+                </span>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                    selectedOrderForModal.paymentStatus === "PAID"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-amber-100 text-amber-800"
+                  }`}
+                >
+                  {selectedOrderForModal.paymentStatus === "PAID" ? "✓ Paid" : "⏳ " + selectedOrderForModal.paymentStatus}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-gray-400 block text-[10px]">Payment Method:</span>
+                  <span className="font-bold text-[#3B302B]">
+                    {selectedOrderForModal.paymentMethod === "MANUAL_UPI"
+                      ? "Direct UPI ID / QR (1.5% Off)"
+                      : selectedOrderForModal.paymentMethod === "COD"
+                      ? "Cash on Delivery (COD)"
+                      : "Online Razorpay"}
+                  </span>
+                </div>
+
+                {selectedOrderForModal.transactionId && (
+                  <div>
+                    <span className="text-gray-400 block text-[10px]">Customer UPI / UTR Ref:</span>
+                    <span className="font-mono font-bold text-[#3B302B] text-xs">
+                      {selectedOrderForModal.transactionId}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {((selectedOrderForModal.manualUpiDiscount && selectedOrderForModal.manualUpiDiscount > 0) ||
+                selectedOrderForModal.paymentMethod === "MANUAL_UPI") && (
+                <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200 flex items-center justify-between text-xs text-emerald-800 font-bold">
+                  <span className="flex items-center gap-1">
+                    <Zap className="h-3.5 w-3.5 text-emerald-600 fill-emerald-600" />
+                    Direct UPI 1.5% Discount Deducted:
+                  </span>
+                  <span>-₹{selectedOrderForModal.manualUpiDiscount || Math.round((selectedOrderForModal.totalAmount || 0) * 0.015)}</span>
+                </div>
+              )}
+
+              {/* Uploaded Receipt Preview */}
+              {selectedOrderForModal.paymentReceiptUrl && (
+                <div className="space-y-2 pt-2 border-t border-[#E5DEC9]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#3B302B]">Uploaded Payment Receipt Screenshot:</span>
+                    <button
+                      type="button"
+                      onClick={() => setViewReceiptImage(selectedOrderForModal.paymentReceiptUrl || null)}
+                      className="text-[11px] font-bold text-[#596B58] hover:underline cursor-pointer"
+                    >
+                      Click to Enlarge
+                    </button>
+                  </div>
+                  <div
+                    onClick={() => setViewReceiptImage(selectedOrderForModal.paymentReceiptUrl || null)}
+                    className="max-h-48 rounded-xl overflow-hidden border border-[#E5DEC9] bg-[#FAF8F5] cursor-pointer flex items-center justify-center hover:opacity-90 transition-opacity"
+                  >
+                    <img
+                      src={selectedOrderForModal.paymentReceiptUrl}
+                      alt="Payment Receipt"
+                      className="w-full object-contain max-h-48"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* 1-Click Approve Payment Button */}
+              {selectedOrderForModal.paymentStatus !== "PAID" && (
+                <div className="pt-2">
+                  <Button
+                    onClick={() => handleApprovePayment(selectedOrderForModal.id)}
+                    isLoading={isUpdatingPayment}
+                    className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    Approve Payment &amp; Mark as Paid
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Actions */}
@@ -987,6 +1124,34 @@ export const AdminOrdersPage: React.FC = () => {
                 className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold"
               >
                 {isDeleting ? "Clearing..." : "Clear Orders"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* MODAL 5: ENLARGED PAYMENT RECEIPT IMAGE */}
+      {viewReceiptImage && (
+        <Modal
+          isOpen={Boolean(viewReceiptImage)}
+          onClose={() => setViewReceiptImage(null)}
+          title="Customer Payment Receipt"
+        >
+          <div className="p-2 space-y-3">
+            <div className="max-h-[75vh] overflow-auto rounded-xl border border-[#E5DEC9] bg-black/5 flex items-center justify-center">
+              <img
+                src={viewReceiptImage}
+                alt="Enlarged Payment Receipt"
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                onClick={() => setViewReceiptImage(null)}
+                className="text-xs font-bold"
+              >
+                Close
               </Button>
             </div>
           </div>

@@ -75,6 +75,7 @@ export interface OrderPricingSnapshot {
   tax: number;
   deliveryCharge: number;
   discount: number;
+  manualUpiDiscount?: number;
   grandTotal: number;
   homeDeliveryAvailable: boolean;
   pickupAvailable: boolean;
@@ -101,6 +102,8 @@ export interface Order extends TimestampedDocument {
   paymentMethod?: PaymentMethod;
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
+  paymentReceiptUrl?: string;
+  transactionId?: string;
   notes?: string;
   deliveryTimingType?: "INSTANT" | "SCHEDULED";
   deliveryTimePreference?: string;
@@ -214,6 +217,7 @@ const orderPricingSnapshotSchema = new Schema<OrderPricingSnapshot>(
     tax: { type: Number, required: true, min: 0, default: 0 },
     deliveryCharge: { type: Number, required: true, min: 0, default: 0 },
     discount: { type: Number, required: true, min: 0, default: 0 },
+    manualUpiDiscount: { type: Number, required: false, min: 0, default: 0 },
     grandTotal: { type: Number, required: true, min: 0 },
     homeDeliveryAvailable: { type: Boolean, required: true, default: true },
     pickupAvailable: { type: Boolean, required: true, default: true },
@@ -315,6 +319,16 @@ const orderSchema = new Schema<Order>(
       required: true,
       enum: PAYMENT_STATUSES,
       default: "PENDING",
+    },
+    paymentReceiptUrl: {
+      type: String,
+      trim: true,
+      default: undefined,
+    },
+    transactionId: {
+      type: String,
+      trim: true,
+      default: undefined,
     },
     notes: {
       type: String,

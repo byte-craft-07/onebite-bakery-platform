@@ -22,6 +22,15 @@ export interface CreateOrderDto {
   deliveryTimePreference?: string;
   scheduledDate?: string;
   scheduledTimeSlot?: string;
+  paymentReceiptUrl?: string;
+  paymentReceipt?: string;
+  transactionId?: string;
+}
+
+export interface UpdatePaymentStatusDto {
+  paymentStatus: "PENDING" | "PROCESSING" | "SUCCESS" | "FAILED" | "CANCELLED";
+  transactionId?: string;
+  paymentReceiptUrl?: string;
 }
 
 export interface UpdateOrderStatusDto {

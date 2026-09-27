@@ -314,6 +314,39 @@ describe("OrderService", () => {
     );
   });
 
+  it("creates a Direct Manual UPI order with 1.5% discount and payment receipt", async () => {
+    const { service, orderRepository } = createService();
+
+    const order = await service.createOrder(
+      customerId,
+      {
+        deliveryMethod: "HOME_DELIVERY",
+        paymentMethod: "MANUAL_UPI",
+        addressId: addressId.toString(),
+        paymentReceiptUrl: "https://example.com/receipt.jpg",
+        transactionId: "UPI123456789012",
+      },
+      context,
+    );
+
+    expect(order.deliveryMethod).toBe("HOME_DELIVERY");
+    expect(order.paymentMethod).toBe("MANUAL_UPI");
+    expect(order.paymentStatus).toBe("PENDING");
+    // Cart in test: preTotal = 1050
+    // 1.5% discount = 1050 * 0.015 = 15.75
+    // grandTotal = 1050 - 15.75 = 1034.25
+    expect(order.pricingSnapshot.manualUpiDiscount).toBe(15.75);
+    expect(order.totalAmount).toBe(1034.25);
+    expect(orderRepository.createOrder).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paymentMethod: "MANUAL_UPI",
+        totalAmount: 1034.25,
+        paymentReceiptUrl: "https://example.com/receipt.jpg",
+        transactionId: "UPI123456789012",
+      }),
+    );
+  });
+
   it("creates a store pickup order without requiring delivery address", async () => {
     const { service, orderRepository } = createService();
 

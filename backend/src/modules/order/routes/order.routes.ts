@@ -17,6 +17,7 @@ import {
   listOrdersQuerySchema,
   orderIdParamSchema,
   updateOrderStatusSchema,
+  updatePaymentStatusSchema,
   updateReadyTimeSchema,
 } from "../validators/index.js";
 
@@ -73,6 +74,13 @@ orderRouter.patch(
 );
 
 orderRouter.patch(
+  "/admin/orders/:id/payment-status",
+  ...staffOrAdmin,
+  validateRequest({ params: orderIdParamSchema, body: updatePaymentStatusSchema }),
+  asyncHandler(orderController.adminUpdatePaymentStatus),
+);
+
+orderRouter.patch(
   "/:id/status",
   ...staffOrAdmin,
   validateRequest({ params: orderIdParamSchema, body: updateOrderStatusSchema }),
@@ -84,6 +92,13 @@ orderRouter.patch(
   ...staffOrAdmin,
   validateRequest({ params: orderIdParamSchema, body: updateReadyTimeSchema }),
   asyncHandler(orderController.adminUpdateReadyTime),
+);
+
+orderRouter.post(
+  "/:id/payment-receipt",
+  requireAuth,
+  validateRequest({ params: orderIdParamSchema }),
+  asyncHandler(orderController.attachPaymentReceipt),
 );
 
 orderRouter.get(

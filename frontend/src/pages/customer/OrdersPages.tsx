@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -8,16 +8,20 @@ import {
   Clock,
   Download,
   ExternalLink,
+  Eye,
   MapPin,
   MessageSquare,
   Navigation,
+  Receipt,
   RefreshCw,
+  ShieldCheck,
   Star,
+  UploadCloud,
   Zap,
 } from "lucide-react";
 import { getStoreGoogleMapsUrl } from "@/components/shopping/CheckoutComponents";
 
-import { Badge, Card, EmptyState, Skeleton } from "@/components/ui/DisplayComponents";
+import { Badge, Card, EmptyState, Modal, Skeleton } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
 import { orderService, type OrderDetails } from "@/services/order.service";
 import { cartService } from "@/services/cart.service";
@@ -25,6 +29,7 @@ import { reviewService } from "@/services/review.service";
 import { RatingModal } from "@/components/review/RatingModal";
 import { PerOrderRatingModal } from "@/components/review/PerOrderRatingModal";
 import { FlipkartOrderTracker } from "@/components/shopping/FlipkartOrderTracker";
+import { toast } from "@/contexts/toast.context";
 
 export const OrderReviewForm: React.FC<{ orderId: string; productName?: string }> = ({ orderId, productName }) => {
   const [rating, setRating] = useState(5);
@@ -196,7 +201,12 @@ export const OrdersHistoryPage: React.FC = () => {
                 ) : null}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {ord.paymentMethod === "MANUAL_UPI" && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300">
+                    ⚡ Direct UPI (1.5% Off)
+                  </span>
+                )}
                 <Badge variant={ord.orderStatus === "DELIVERED" ? "success" : "primary"}>
                   {ord.orderStatus}
                 </Badge>
@@ -294,6 +304,70 @@ export const OrderDetailsPage: React.FC = () => {
   const [isOrderRatingModalOpen, setIsOrderRatingModalOpen] = useState(false);
   const [focusedItemIndex, setFocusedItemIndex] = useState<number | undefined>(undefined);
   const [, setRatingVersion] = useState(0);
+
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
+  const [attachTxnId, setAttachTxnId] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !order) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be under 10MB");
+      return;
+    }
+
+    setIsUploadingReceipt(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const dataUrl = event.target?.result as string;
+        const img = new Image();
+        img.onload = async () => {
+          const canvas = document.createElement("canvas");
+          const maxDim = 1000;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL("image/jpeg", 0.8);
+
+          try {
+            const updated = await orderService.attachPaymentReceipt(
+              order.id,
+              {
+                paymentReceiptUrl: compressed,
+                transactionId: attachTxnId.trim() || undefined,
+              }
+            );
+            setOrder(updated);
+            toast.success("Payment receipt uploaded successfully! Staff will verify shortly.");
+          } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Failed to upload receipt");
+          } finally {
+            setIsUploadingReceipt(false);
+          }
+        };
+        img.src = dataUrl;
+      };
+      reader.readAsDataURL(file);
+    } catch (_err) {
+      setIsUploadingReceipt(false);
+      toast.error("Error reading image file");
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -465,6 +539,223 @@ export const OrderDetailsPage: React.FC = () => {
           }}
         />
       </Card>
+
+      {/* Items & Payment Details Card */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Ordered Items List */}
+        <Card className="lg:col-span-2 p-5 sm:p-6 space-y-4 bg-white border-[#E5DEC9]">
+          <h3 className="text-sm font-bold text-[#3B302B] border-b border-[#E5DEC9] pb-3 flex items-center justify-between">
+            <span>Ordered Items ({order.items.length})</span>
+            <span className="text-xs font-normal text-[#7A6E65]">Freshly prepared</span>
+          </h3>
+          <div className="divide-y divide-[#E5DEC9]/60">
+            {order.items.map((item, idx) => {
+              const itemImg =
+                (item as any)?.image ||
+                (item as any)?.thumbnailUrl ||
+                (item as any)?.imageUrl ||
+                (item as any)?.imageUrls?.[0] ||
+                (item as any)?.mainImage ||
+                "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=400&q=80";
+              return (
+                <div key={item.id || idx} className="py-3 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="h-14 w-14 rounded-xl overflow-hidden bg-[#FFF8EC] border border-[#E5DEC9] shrink-0">
+                      <img
+                        src={itemImg}
+                        alt={item.name}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src =
+                            "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=400&q=80";
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm text-[#3B302B]">{item.name}</p>
+                      <p className="text-[11px] text-[#7A6E65]">
+                        Qty: <strong>{item.quantity}</strong> • Rate: ₹
+                        {item.unitPrice || Math.round(item.itemTotal / (item.quantity || 1))}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="font-extrabold text-sm text-[#3B302B]">₹{item.itemTotal}</span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* Payment & Bill Summary */}
+        <div className="space-y-4">
+          <Card className="p-5 space-y-4 bg-white border-[#E5DEC9]">
+            <h3 className="text-sm font-bold text-[#3B302B] border-b border-[#E5DEC9] pb-2 flex items-center justify-between">
+              <span>Payment &amp; Bill</span>
+              <span
+                className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                  order.paymentStatus === "PAID"
+                    ? "bg-emerald-100 text-emerald-800"
+                    : "bg-amber-100 text-amber-800"
+                }`}
+              >
+                {order.paymentStatus === "PAID" ? "✓ Paid" : "⏳ " + order.paymentStatus}
+              </span>
+            </h3>
+
+            {/* Bill Lines */}
+            <div className="space-y-2 text-xs text-[#7A6E65]">
+              <div className="flex justify-between">
+                <span>Items Subtotal</span>
+                <span className="font-bold text-[#3B302B]">₹{order.subtotal}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Delivery Charge</span>
+                <span className="font-bold text-[#3B302B]">
+                  {order.deliveryFee === 0 ? "FREE" : `₹${order.deliveryFee}`}
+                </span>
+              </div>
+              {order.discountAmount > 0 && (
+                <div className="flex justify-between text-emerald-700 font-bold">
+                  <span>Coupon Discount</span>
+                  <span>-₹{order.discountAmount}</span>
+                </div>
+              )}
+              {((order.manualUpiDiscount && order.manualUpiDiscount > 0) ||
+                order.paymentMethod === "MANUAL_UPI") && (
+                <div className="flex justify-between text-emerald-700 font-bold bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+                  <span className="flex items-center gap-1.5">
+                    <Zap className="h-3.5 w-3.5 fill-emerald-600 text-emerald-600" />
+                    Direct UPI Discount (1.5% OFF)
+                  </span>
+                  <span>-₹{order.manualUpiDiscount || Math.round((order.subtotal || 0) * 0.015)}</span>
+                </div>
+              )}
+              <div className="border-t border-[#E5DEC9] pt-2 flex justify-between text-sm font-extrabold text-[#3B302B]">
+                <span>Total Amount</span>
+                <span className="text-[#596B58]">₹{order.totalAmount}</span>
+              </div>
+            </div>
+
+            {/* Payment Method Details */}
+            <div className="pt-2 border-t border-[#E5DEC9] space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#7A6E65]">Payment Method:</span>
+                <span className="font-bold text-[#3B302B]">
+                  {order.paymentMethod === "MANUAL_UPI"
+                    ? "Direct UPI / QR (1.5% Instant Off)"
+                    : order.paymentMethod === "COD"
+                    ? "Cash on Delivery"
+                    : "Razorpay Online"}
+                </span>
+              </div>
+
+              {order.transactionId && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#7A6E65]">UPI Ref / UTR:</span>
+                  <span className="font-mono font-bold text-[#3B302B] text-[11px]">
+                    {order.transactionId}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Payment Receipt Section for MANUAL_UPI */}
+            {order.paymentMethod === "MANUAL_UPI" && (
+              <div className="pt-3 border-t border-[#E5DEC9] space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#3B302B] flex items-center gap-1.5">
+                    <Receipt className="h-3.5 w-3.5 text-[#596B58]" />
+                    Payment Screenshot
+                  </span>
+                  {order.paymentReceiptUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setIsReceiptModalOpen(true)}
+                      className="text-[11px] font-bold text-[#596B58] hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Eye className="h-3 w-3" />
+                      View Full
+                    </button>
+                  )}
+                </div>
+
+                {order.paymentReceiptUrl ? (
+                  <div
+                    onClick={() => setIsReceiptModalOpen(true)}
+                    className="relative group rounded-xl overflow-hidden border border-[#E5DEC9] bg-[#FFF8EC] cursor-pointer max-h-36 flex items-center justify-center"
+                  >
+                    <img
+                      src={order.paymentReceiptUrl}
+                      alt="Payment Receipt"
+                      className="w-full object-cover max-h-36 group-hover:opacity-90 transition-opacity"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                      <Eye className="h-4 w-4" />
+                      Click to Enlarge
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
+                    <p className="text-[11px] text-amber-800 leading-tight">
+                      No payment receipt attached yet. Please upload your payment screenshot or enter UTR so staff can verify and bake your order.
+                    </p>
+                    <input
+                      type="text"
+                      placeholder="12-digit UTR Number"
+                      value={attachTxnId}
+                      onChange={(e) => setAttachTxnId(e.target.value)}
+                      className="w-full text-xs p-1.5 rounded-lg border border-amber-300 bg-white outline-none"
+                    />
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept="image/*"
+                      onChange={handleReceiptUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      isLoading={isUploadingReceipt}
+                      className="w-full text-xs flex items-center justify-center gap-1.5"
+                    >
+                      <UploadCloud className="h-3.5 w-3.5" />
+                      Upload Receipt Screenshot
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
+
+      {/* Modal for Full Receipt View */}
+      {order.paymentReceiptUrl && (
+        <Modal
+          isOpen={isReceiptModalOpen}
+          onClose={() => setIsReceiptModalOpen(false)}
+          title="Payment Receipt Screenshot"
+        >
+          <div className="p-2 space-y-3">
+            <div className="max-h-[70vh] overflow-auto rounded-xl border border-[#E5DEC9] bg-black/5 flex items-center justify-center">
+              <img
+                src={order.paymentReceiptUrl}
+                alt="Payment Receipt Screenshot"
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+            {order.transactionId && (
+              <p className="text-xs text-center text-[#7A6E65]">
+                Transaction / UTR Number:{" "}
+                <strong className="font-mono text-[#3B302B]">{order.transactionId}</strong>
+              </p>
+            )}
+          </div>
+        </Modal>
+      )}
 
       <PerOrderRatingModal
         isOpen={isOrderRatingModalOpen}

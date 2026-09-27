@@ -29,7 +29,18 @@ export interface OrderDetails {
     | "CANCELLED"
     | "REFUNDED";
   paymentStatus: "PENDING" | "PROCESSING" | "SUCCESS" | "PAID" | "FAILED" | "CANCELLED" | "REFUNDED";
-  paymentMethod?: "UPI" | "COD";
+  paymentMethod?: "UPI" | "COD" | "MANUAL_UPI" | "RAZORPAY" | string;
+  paymentReceiptUrl?: string;
+  transactionId?: string;
+  manualUpiDiscount?: number;
+  pricingSnapshot?: {
+    subtotal?: number;
+    tax?: number;
+    deliveryCharge?: number;
+    discount?: number;
+    manualUpiDiscount?: number;
+    grandTotal?: number;
+  };
   fulfillmentType: "HOME_DELIVERY" | "STORE_PICKUP";
   items: OrderItemDetails[];
   subtotal: number;
@@ -88,7 +99,9 @@ interface BackendOrder {
   orderNumber: string;
   orderStatus: OrderDetails["orderStatus"];
   paymentStatus: OrderDetails["paymentStatus"];
-  paymentMethod?: "UPI" | "COD";
+  paymentMethod?: "UPI" | "COD" | "MANUAL_UPI" | "RAZORPAY" | string;
+  paymentReceiptUrl?: string;
+  transactionId?: string;
   deliveryMethod?: OrderDetails["fulfillmentType"];
   fulfillmentType?: OrderDetails["fulfillmentType"];
   items?: BackendOrderItem[];
@@ -109,6 +122,7 @@ interface BackendOrder {
     tax?: number;
     deliveryCharge?: number;
     discount?: number;
+    manualUpiDiscount?: number;
     grandTotal?: number;
   };
   createdAt?: string;
@@ -222,6 +236,10 @@ const toOrderDetails = (order: BackendOrder): OrderDetails => {
     orderStatus: order.orderStatus,
     paymentStatus: order.paymentStatus,
     paymentMethod: order.paymentMethod ?? "UPI",
+    paymentReceiptUrl: order.paymentReceiptUrl,
+    transactionId: order.transactionId,
+    manualUpiDiscount: order.pricingSnapshot?.manualUpiDiscount,
+    pricingSnapshot: order.pricingSnapshot,
     fulfillmentType: order.fulfillmentType ?? order.deliveryMethod ?? "HOME_DELIVERY",
     items: (order.items ?? []).map((item, index) => {
       const unitPrice = item.unitPrice ?? item.unitPriceSnapshot ?? 0;
@@ -342,6 +360,49 @@ export const orderService = {
       return updated;
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || "Unable to cancel order.";
+      throw new Error(msg);
+    }
+  },
+
+  attachPaymentReceipt: async (id: string, payload: { paymentReceiptUrl: string; transactionId?: string }): Promise<OrderDetails> => {
+    try {
+      const response = await apiClient.post<{
+        success: boolean;
+        data: { order: BackendOrder };
+      }>(`/orders/${id}/payment-receipt`, payload);
+      const updated = toOrderDetails(response.data.data.order);
+      const localList = orderService.getLocalOrders();
+      const idx = localList.findIndex((o) => o.id === id);
+      if (idx >= 0) {
+        localList[idx] = updated;
+        localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(localList));
+      }
+      return updated;
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Unable to attach payment receipt.";
+      throw new Error(msg);
+    }
+  },
+
+  updatePaymentStatus: async (
+    id: string,
+    payload: { paymentStatus: string; transactionId?: string; paymentReceiptUrl?: string }
+  ): Promise<OrderDetails> => {
+    try {
+      const response = await apiClient.patch<{
+        success: boolean;
+        data: { order: BackendOrder };
+      }>(`/orders/admin/orders/${id}/payment-status`, payload);
+      const updated = toOrderDetails(response.data.data.order);
+      const localList = orderService.getLocalOrders();
+      const idx = localList.findIndex((o) => o.id === id);
+      if (idx >= 0) {
+        localList[idx] = updated;
+        localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(localList));
+      }
+      return updated;
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Unable to update payment status.";
       throw new Error(msg);
     }
   },

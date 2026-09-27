@@ -9,15 +9,20 @@ import {
   Check,
   CheckCircle2,
   Clock,
+  Copy,
   Download,
   Edit2,
+  ExternalLink,
   FileText,
   Lock,
   Plus,
   QrCode,
   ShieldCheck,
   ShoppingBag,
+  Sparkles,
+  Trash2,
   Truck,
+  UploadCloud,
   Zap,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -47,6 +52,7 @@ import { orderService, type OrderDetails } from "@/services/order.service";
 import { paymentService } from "@/services/payment.service";
 import { razorpayService } from "@/services/razorpay.service";
 import { villageService, type Village } from "@/services/village.service";
+import { adminOperationsService } from "@/features/admin/services/adminOperations.service";
 
 const inlineAddressSchema = z.object({
   name: z.string().trim().min(2, "Name is required."),
@@ -109,7 +115,13 @@ export const CheckoutPage: React.FC = () => {
   });
 
   const [fulfillmentType, setFulfillmentType] = useState<"HOME_DELIVERY" | "STORE_PICKUP">("HOME_DELIVERY");
-  const [paymentMethod, setPaymentMethod] = useState<"UPI" | "COD">("UPI");
+  const [paymentMethod, setPaymentMethod] = useState<"UPI" | "MANUAL_UPI" | "COD">("UPI");
+  const [bakeryUpiId, setBakeryUpiId] = useState<string>("7897671632@okbizaxis");
+  const [bakeryUpiQr, setBakeryUpiQr] = useState<string>("");
+  const [isDownloadingQr, setIsDownloadingQr] = useState<boolean>(false);
+  const [paymentReceiptPreview, setPaymentReceiptPreview] = useState<string | null>(null);
+  const [transactionId, setTransactionId] = useState<string>("");
+  const [isCopiedUpi, setIsCopiedUpi] = useState<boolean>(false);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [villages, setVillages] = useState<Village[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>(undefined);
@@ -277,6 +289,20 @@ export const CheckoutPage: React.FC = () => {
   }, [fulfillmentType, selectedAddressId]);
 
   useEffect(() => {
+    adminOperationsService
+      .getSettings()
+      .then((res) => {
+        if (res?.upiId) {
+          setBakeryUpiId(res.upiId);
+        }
+        if (res?.upiQr) {
+          setBakeryUpiQr(res.upiQr);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (!isLoading && !placedOrder && !directItem && (!checkoutPreview?.items || checkoutPreview.items.length === 0)) {
       navigate("/", { replace: true });
     }
@@ -298,6 +324,111 @@ export const CheckoutPage: React.FC = () => {
       toast.error("Address Error", "Could not save address. Please check fields.");
     } finally {
       setIsAddingAddress(false);
+    }
+  };
+
+  const handleReceiptFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Invalid File Type", "Please upload a valid receipt image (JPG, PNG, WEBP).");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const src = event.target?.result as string;
+      if (!src) return;
+
+      const img = new Image();
+      img.onload = () => {
+        const maxWidth = 1000;
+        const maxHeight = 1000;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          setPaymentReceiptPreview(canvas.toDataURL("image/jpeg", 0.85));
+        } else {
+          setPaymentReceiptPreview(src);
+        }
+        toast.success("Receipt Uploaded", "Payment receipt screenshot attached successfully.");
+      };
+      img.src = src;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCopyUpiId = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(bakeryUpiId);
+      setIsCopiedUpi(true);
+      toast.success("UPI ID Copied!", `${bakeryUpiId} copied to clipboard.`);
+      setTimeout(() => setIsCopiedUpi(false), 2500);
+    }
+  };
+
+  const handleDownloadQr = async () => {
+    setIsDownloadingQr(true);
+    const qrDisplayUrl =
+      bakeryUpiQr ||
+      `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
+        `upi://pay?pa=${bakeryUpiId}&pn=Onebite%20Bakery&am=${payableAmount}&cu=INR&tn=Order%20Payment`
+      )}`;
+
+    try {
+      if (qrDisplayUrl.startsWith("data:")) {
+        const link = document.createElement("a");
+        link.href = qrDisplayUrl;
+        link.download = `onebite-bakery-upi-qr-${payableAmount}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success(
+          "QR Code Downloaded!",
+          "Open PhonePe / Paytm / GPay -> Scan QR from Gallery to pay."
+        );
+        return;
+      }
+
+      const response = await fetch(qrDisplayUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `onebite-bakery-upi-qr-${payableAmount}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+      toast.success(
+        "QR Code Downloaded!",
+        "Open PhonePe / Paytm / GPay -> Scan QR from Gallery to pay."
+      );
+    } catch (_err) {
+      window.open(qrDisplayUrl, "_blank");
+      toast.info(
+        "QR Code Opened",
+        "Long-press or right-click the image to save it to your phone."
+      );
+    } finally {
+      setIsDownloadingQr(false);
     }
   };
 
@@ -467,6 +598,106 @@ export const CheckoutPage: React.FC = () => {
 
     try {
       setIsPlacingOrder(true);
+
+      if (paymentMethod === "MANUAL_UPI") {
+        if (!paymentReceiptPreview && !transactionId.trim()) {
+          setErrorMsg("Kripya payment screenshot upload karein ya 12-digit UTR / Reference number enter karein.");
+          toast.error("Receipt Required", "Manual UPI payment ke baad payment receipt screenshot ya UTR number upload karna zaroori hai.");
+          setIsPlacingOrder(false);
+          return;
+        }
+
+        setPaymentStateMessage("Submitting your order with payment receipt...");
+        const order = await checkoutService.createOrder({
+          fulfillmentType,
+          paymentMethod: "MANUAL_UPI",
+          addressId: selectedAddressId,
+          deliveryTimingType: effectiveTimingType,
+          deliveryTimePreference: deliveryPreference,
+          scheduledDate: effectiveTimingType === "SCHEDULED" ? scheduledDate : undefined,
+          scheduledTimeSlot: effectiveTimingType === "SCHEDULED" ? scheduledTimeSlot : undefined,
+          paymentReceiptUrl: paymentReceiptPreview || undefined,
+          transactionId: transactionId.trim() || undefined,
+          directItem,
+        });
+
+        const manualOrder: OrderDetails = {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          orderStatus: (order.orderStatus as OrderDetails["orderStatus"]) || "PENDING",
+          paymentStatus: "PENDING",
+          paymentMethod: "MANUAL_UPI",
+          paymentReceiptUrl: paymentReceiptPreview || undefined,
+          transactionId: transactionId.trim() || undefined,
+          manualUpiDiscount,
+          fulfillmentType,
+          items: order.items && Array.isArray(order.items) && order.items.length > 0
+            ? order.items.map((it: any, idx: number) => ({
+                id: it.id || it._id || `item_${idx}`,
+                productId: it.productId ? String(it.productId) : directItem?.productId || "",
+                name: it.productName || it.productNameSnapshot || it.name || directItem?.name || "Bakery Product",
+                image: it.image || it.thumbnailUrl || it.imageUrl || directItem?.mainImage,
+                quantity: it.quantity || 1,
+                unitPrice: it.unitPrice || it.unitPriceSnapshot || 0,
+                itemTotal: it.subtotal || it.itemTotal || (it.unitPrice || 0) * (it.quantity || 1),
+                isEggless: Boolean(it.customization?.eggless),
+              }))
+            : directItem
+            ? [
+                {
+                  id: "item_direct_1",
+                  productId: directItem.productId,
+                  name: directItem.name,
+                  image: directItem.mainImage,
+                  quantity: directItem.quantity,
+                  unitPrice: directItem.price,
+                  itemTotal: directItem.itemTotal,
+                  isEggless: Boolean(directItem.customization?.eggless),
+                },
+              ]
+            : (checkoutPreview?.items || []).map((i: any, idx: number) => ({
+                id: `item_${idx}`,
+                productId: i.productId,
+                name: i.name,
+                image: i.image || i.mainImage || i.thumbnailUrl,
+                quantity: i.quantity,
+                unitPrice: i.unitPrice,
+                itemTotal: i.itemTotal,
+              })),
+          subtotal: checkoutPreview?.pricing.subtotal || 0,
+          deliveryFee: checkoutPreview?.pricing.deliveryFee || 0,
+          taxAmount: checkoutPreview?.pricing.taxAmount || 0,
+          discountAmount: (checkoutPreview?.pricing.discountAmount || 0) + manualUpiDiscount,
+          totalAmount: order.totalAmount || payableAmount,
+          deliveryTimingType: effectiveTimingType,
+          deliveryTimePreference: deliveryPreference,
+          scheduledDate: effectiveTimingType === "SCHEDULED" ? scheduledDate : undefined,
+          scheduledTimeSlot: effectiveTimingType === "SCHEDULED" ? scheduledTimeSlot : undefined,
+          customerName: selectedAddr?.name || user?.name || "Onebite Bakery Customer",
+          customerPhone: checkoutPhone,
+          addressSnapshot: selectedAddr
+            ? {
+                fullName: selectedAddr.name,
+                phone: selectedAddr.phone,
+                street: selectedAddr.street,
+                city: selectedAddr.village || selectedAddr.district || "",
+                state: selectedAddr.district || "",
+                pincode: selectedAddr.pincode,
+                landmark: selectedAddr.landmark,
+              }
+            : undefined,
+          createdAt: new Date().toISOString(),
+        };
+
+        orderService.addOrder(manualOrder);
+        setPlacedOrder(manualOrder);
+        setIsCelebrationModalOpen(true);
+        toast.success("Order Placed Successfully! 🎉", `Order #${manualOrder.orderNumber} placed via Direct UPI (Saved ₹${manualUpiDiscount}). Receipt submitted!`);
+        setIsPlacingOrder(false);
+        setPaymentStateMessage(null);
+        return;
+      }
+
       if (paymentMethod === "COD") {
         setPaymentStateMessage("Creating your order (Cash on Delivery)...");
         const order = await checkoutService.createOrder({
@@ -701,9 +932,14 @@ export const CheckoutPage: React.FC = () => {
     );
   }
 
-  const payableAmount = checkoutPreview?.pricing
+  const basePayableAmount = checkoutPreview?.pricing
     ? Math.round(checkoutPreview.pricing.totalAmount * 100) / 100
     : 0;
+  const manualUpiDiscount = paymentMethod === "MANUAL_UPI"
+    ? Math.round(basePayableAmount * 0.015 * 100) / 100
+    : 0;
+  const potentialSavings = Math.round(basePayableAmount * 0.015 * 100) / 100;
+  const payableAmount = Math.max(0, Math.round((basePayableAmount - manualUpiDiscount) * 100) / 100);
   const minDelivery = checkoutPreview?.deliveryThreshold?.minDeliveryAmount ?? 0;
   const subtotal = checkoutPreview?.pricing?.subtotal || 0;
   const isBelowMin = fulfillmentType === "HOME_DELIVERY" && minDelivery > 0 && subtotal < minDelivery;
@@ -1174,7 +1410,7 @@ export const CheckoutPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-3">
-                    {/* Option 1: UPI */}
+                    {/* Option 1: Razorpay Online */}
                     <div
                       onClick={() => setPaymentMethod("UPI")}
                       className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3.5 ${
@@ -1193,18 +1429,214 @@ export const CheckoutPage: React.FC = () => {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 font-bold text-sm text-[#3B302B]">
                           <QrCode className="h-4 w-4 text-[#596B58]" />
-                          <span>Pay with UPI</span>
+                          <span>Pay with Razorpay (Instant Online)</span>
                           <span className="text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded-full">
                             Fast &amp; Instant
                           </span>
                         </div>
                         <p className="text-xs text-[#7A6E65]">
-                          Google Pay, PhonePe, Paytm, BHIM, and other UPI apps securely through Razorpay.
+                          Google Pay, PhonePe, Paytm, BHIM, Cards &amp; Netbanking securely through Razorpay gateway.
                         </p>
                       </div>
                     </div>
 
-                    {/* Option 2: Cash on Delivery */}
+                    {/* Option 2: Direct UPI ID & QR Code (Manual Payment with 1.5% Discount) */}
+                    <div
+                      onClick={() => setPaymentMethod("MANUAL_UPI")}
+                      className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+                        paymentMethod === "MANUAL_UPI"
+                          ? "border-[#596B58] bg-[#FFF8EC]/80 shadow-md ring-2 ring-[#596B58]/30"
+                          : "border-[#E5DEC9] bg-white hover:border-[#596B58]/50"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3.5">
+                        <input
+                          type="radio"
+                          name="payment-method"
+                          checked={paymentMethod === "MANUAL_UPI"}
+                          onChange={() => setPaymentMethod("MANUAL_UPI")}
+                          className="mt-1 text-[#596B58] accent-[#596B58]"
+                        />
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-bold text-sm text-[#3B302B] flex items-center gap-1.5">
+                              <QrCode className="h-4 w-4 text-[#596B58]" />
+                              <span>Direct UPI ID &amp; QR Code (Manual)</span>
+                            </span>
+                            <span className="text-[10px] bg-gradient-to-r from-amber-500 to-red-500 text-white font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+                              <span>🔥 FLAT 1.5% EXTRA OFF</span>
+                            </span>
+                            {potentialSavings > 0 && (
+                              <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                                Save ₹{potentialSavings}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-[#7A6E65]">
+                            Pay directly via UPI ID or scan QR code. <strong>Flat 1.5% discount automatically deducted from your total bill!</strong> Submit payment receipt / UTR after payment.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Expanded Section when MANUAL_UPI is Selected */}
+                      {paymentMethod === "MANUAL_UPI" && (
+                        <div className="mt-4 pt-4 border-t border-[#E5DEC9] space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                          {/* 1.5% Discount Banner */}
+                          <div className="p-3 bg-gradient-to-r from-emerald-500/10 via-amber-500/10 to-emerald-500/10 border border-emerald-300 rounded-xl flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2 text-emerald-950 font-bold">
+                              <Sparkles className="h-4 w-4 text-emerald-600 shrink-0" />
+                              <span>1.5% Instant Saving Applied:</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="line-through text-gray-500 text-[11px] mr-1.5">₹{basePayableAmount}</span>
+                              <span className="font-extrabold text-sm text-emerald-700">₹{payableAmount}</span>
+                              <span className="text-[10px] text-emerald-800 font-semibold block">You save ₹{potentialSavings}</span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Step A: QR & UPI ID */}
+                            <div className="bg-white p-4 rounded-xl border border-[#E5DEC9] flex flex-col items-center justify-center text-center space-y-3 shadow-2xs">
+                              <span className="text-[11px] font-bold text-[#3B302B] uppercase tracking-wider">
+                                Step 1: Scan QR or Download &amp; Pay
+                              </span>
+
+                              <div className="p-2.5 bg-white rounded-xl border-2 border-dashed border-[#596B58]/40 shadow-xs relative">
+                                <img
+                                  src={
+                                    bakeryUpiQr ||
+                                    `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
+                                      `upi://pay?pa=${bakeryUpiId}&pn=Onebite%20Bakery&am=${payableAmount}&cu=INR&tn=Order%20Payment`
+                                    )}`
+                                  }
+                                  alt="Bakery UPI QR Code"
+                                  className="h-36 w-36 object-contain mx-auto rounded-lg"
+                                />
+                                <div className="mt-1">
+                                  <span className="inline-block text-[9px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                    {bakeryUpiQr ? "Official Store QR" : `Exact Amount: ₹${payableAmount}`}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Download QR Button (Requested by User) */}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleDownloadQr}
+                                isLoading={isDownloadingQr}
+                                className="w-full text-xs font-bold border-[#596B58] text-[#596B58] hover:bg-[#596B58]/10 flex items-center justify-center gap-1.5 shadow-2xs"
+                              >
+                                <Download className="h-4 w-4 text-[#596B58]" />
+                                <span>Download QR Code (Save to Phone)</span>
+                              </Button>
+
+                              <p className="text-[10px] text-[#7A6E65] leading-tight px-1">
+                                💡 <strong>Tip:</strong> QR download karein, fir PhonePe / Paytm / GPay me <strong>"Scan QR from Gallery"</strong> karke payment karein.
+                              </p>
+
+                              <div className="w-full space-y-1.5 pt-1 border-t border-[#E5DEC9]">
+                                <span className="text-[10px] text-[#7A6E65] font-semibold block">Bakery Official UPI ID:</span>
+                                <div className="flex items-center justify-between gap-2 p-2 bg-[#FFF8EC] border border-[#E5DEC9] rounded-lg">
+                                  <span className="text-xs font-mono font-bold text-[#3B302B] truncate">{bakeryUpiId}</span>
+                                  <button
+                                    type="button"
+                                    onClick={handleCopyUpiId}
+                                    className="px-2.5 py-1 bg-[#596B58] hover:bg-[#495948] text-white rounded text-[11px] font-bold flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                                  >
+                                    {isCopiedUpi ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                                    <span>{isCopiedUpi ? "Copied!" : "Copy"}</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              <a
+                                href={`upi://pay?pa=${bakeryUpiId}&pn=Onebite%20Bakery&am=${payableAmount}&cu=INR&tn=Order%20Payment`}
+                                className="w-full py-2 px-3 bg-[#596B58]/10 hover:bg-[#596B58]/20 text-[#596B58] rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                                <span>Open UPI App Directly</span>
+                              </a>
+                            </div>
+
+                            {/* Step B: Payment Receipt & UTR */}
+                            <div className="bg-white p-4 rounded-xl border border-[#E5DEC9] flex flex-col justify-between space-y-3 shadow-2xs">
+                              <div>
+                                <span className="text-[11px] font-bold text-[#3B302B] uppercase tracking-wider block">
+                                  Step 2: Submit Payment Receipt *
+                                </span>
+                                <p className="text-[11px] text-[#7A6E65] mt-1">
+                                  Pay karne ke baad apna payment screenshot ya transaction UTR number upload karein.
+                                </p>
+                              </div>
+
+                              {/* Upload Box */}
+                              <div className="space-y-2">
+                                <label className="text-[11px] font-bold text-[#3B302B] block">
+                                  Payment Screenshot / Receipt Photo *
+                                </label>
+                                {paymentReceiptPreview ? (
+                                  <div className="relative p-2 bg-[#FFF8EC] rounded-xl border border-[#596B58]/30 flex items-center gap-3">
+                                    <img
+                                      src={paymentReceiptPreview}
+                                      alt="Payment receipt preview"
+                                      className="h-16 w-16 rounded-lg object-cover border border-[#E5DEC9]"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-xs font-bold text-[#3B302B] block truncate flex items-center gap-1">
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                        <span>Receipt Attached</span>
+                                      </span>
+                                      <span className="text-[10px] text-[#7A6E65]">Ready to place order</span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => setPaymentReceiptPreview(null)}
+                                      className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                      title="Remove Receipt"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-[#E5DEC9] hover:border-[#596B58] rounded-xl cursor-pointer bg-[#FAF8F5] hover:bg-[#FFF8EC] transition-all">
+                                    <UploadCloud className="h-6 w-6 text-[#596B58] mb-1" />
+                                    <span className="text-xs font-bold text-[#3B302B]">Click to Upload Screenshot</span>
+                                    <span className="text-[10px] text-[#7A6E65]">PNG, JPG, JPEG up to 10MB</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={handleReceiptFileChange}
+                                      className="hidden"
+                                    />
+                                  </label>
+                                )}
+                              </div>
+
+                              {/* UTR / Transaction ID */}
+                              <div className="space-y-1">
+                                <label className="text-[11px] font-bold text-[#3B302B] block">
+                                  UPI Reference / UTR Number (12 Digits)
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. 4235XXXXXXXX"
+                                  value={transactionId}
+                                  onChange={(e) => setTransactionId(e.target.value)}
+                                  className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-[#E5DEC9] bg-white outline-none focus:border-[#596B58]"
+                                />
+                                <span className="text-[10px] text-[#7A6E65] block">
+                                  Found in payment details of your UPI app.
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Option 3: Cash on Delivery */}
                     <div
                       onClick={() => setPaymentMethod("COD")}
                       className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3.5 ${
@@ -1305,6 +1737,8 @@ export const CheckoutPage: React.FC = () => {
                         totalAmount: 0,
                       }
                     }
+                    paymentMethod={paymentMethod}
+                    manualUpiDiscount={manualUpiDiscount}
                     onCouponChanged={fetchAddressesAndPreview}
                     deliveryThreshold={checkoutPreview?.deliveryThreshold}
                     fulfillmentType={fulfillmentType}
@@ -1334,13 +1768,15 @@ export const CheckoutPage: React.FC = () => {
                     <Button
                       onClick={handlePlaceOrder}
                       isLoading={isPlacingOrder}
-                      className="w-full sm:w-auto px-6 h-12 shadow-md"
+                      className="w-full sm:w-auto px-6 h-12 shadow-md bg-[#596B58] hover:bg-[#495948]"
                     >
                       <Lock className="h-4 w-4 mr-1.5" />
                       <span>
                         {paymentMethod === "COD"
-                          ? `Place Order Rs. ${payableAmount} (COD)`
-                          : `Pay Rs. ${payableAmount} with UPI`}
+                          ? `Place Order ₹${payableAmount} (COD)`
+                          : paymentMethod === "MANUAL_UPI"
+                          ? `Pay ₹${payableAmount} via Direct UPI (Saved ₹${manualUpiDiscount})`
+                          : `Pay ₹${payableAmount} with Razorpay`}
                       </span>
                     </Button>
                   )}
@@ -1351,7 +1787,9 @@ export const CheckoutPage: React.FC = () => {
                   <span>
                     {paymentMethod === "COD"
                       ? "100% verified order. Pay cash upon delivery."
-                      : "100% secure UPI payment processed securely by Razorpay."}
+                      : paymentMethod === "MANUAL_UPI"
+                      ? "Flat 1.5% discount automatically applied. Order confirmed after receipt verification."
+                      : "100% secure payment processed securely by Razorpay."}
                   </span>
                 </p>
               </div>
@@ -1374,6 +1812,8 @@ export const CheckoutPage: React.FC = () => {
               deliveryThreshold={checkoutPreview?.deliveryThreshold}
               fulfillmentType={fulfillmentType}
               onSwitchToPickup={() => setFulfillmentType("STORE_PICKUP")}
+              paymentMethod={paymentMethod}
+              manualUpiDiscount={manualUpiDiscount}
             />
 
             {/* Desktop Dynamic Step Action Button */}
@@ -1415,7 +1855,9 @@ export const CheckoutPage: React.FC = () => {
                     <span>
                       {paymentMethod === "COD"
                         ? `Place Order Rs. ${payableAmount} (COD)`
-                        : `Pay Rs. ${payableAmount} with UPI`}
+                        : paymentMethod === "MANUAL_UPI"
+                        ? `Pay Rs. ${payableAmount} via Direct UPI (Saved Rs. ${manualUpiDiscount})`
+                        : `Pay Rs. ${payableAmount} with Razorpay`}
                     </span>
                   </Button>
                 )}
@@ -1452,7 +1894,9 @@ export const CheckoutPage: React.FC = () => {
               <span>
                 {paymentMethod === "COD"
                   ? "100% verified order. Pay cash upon delivery."
-                  : "100% secure UPI payment through Razorpay."}
+                  : paymentMethod === "MANUAL_UPI"
+                  ? "Flat 1.5% discount automatically applied. Order confirmed after receipt verification."
+                  : "100% secure payment processed securely by Razorpay."}
               </span>
             </p>
           </div>
@@ -1510,7 +1954,11 @@ export const CheckoutPage: React.FC = () => {
                 className="px-4 py-2.5 text-xs font-bold shadow-sm"
               >
                 <span>
-                  {paymentMethod === "COD" ? "Place COD" : `Pay ₹${payableAmount}`}
+                  {paymentMethod === "COD"
+                    ? "Place COD"
+                    : paymentMethod === "MANUAL_UPI"
+                    ? `Pay ₹${payableAmount} (Save ₹${manualUpiDiscount})`
+                    : `Pay ₹${payableAmount}`}
                 </span>
               </Button>
             )}

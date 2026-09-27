@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  CheckCircle2,
   DollarSign,
+  Download,
+  Image as ImageIcon,
+  QrCode,
   Send,
+  Trash2,
   TrendingUp,
+  UploadCloud,
   Users,
 } from "lucide-react";
 
@@ -467,10 +473,60 @@ export const AdminSettingsPage: React.FC = () => {
     taxRatePercent: 5,
     isTaxEnabled: true,
     isOrderAcceptanceActive: true,
+    upiId: "7897671632@okbizaxis",
+    upiQr: "",
   });
 
   const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isProcessingQr, setIsProcessingQr] = useState(false);
+  const [isManualUrlMode, setIsManualUrlMode] = useState(false);
+  const qrFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleQrFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File size must be under 10MB");
+      return;
+    }
+
+    setIsProcessingQr(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const maxDim = 800;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+        const compressed = canvas.toDataURL("image/png");
+        setSettings((prev) => ({ ...prev, upiQr: compressed }));
+        setIsProcessingQr(false);
+      };
+      img.onerror = () => {
+        setIsProcessingQr(false);
+        alert("Failed to process QR code image.");
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     adminOperationsService.getSettings().then((res) => {
@@ -486,6 +542,8 @@ export const AdminSettingsPage: React.FC = () => {
           taxRatePercent: res.taxRatePercent ?? 5,
           isTaxEnabled: res.isTaxEnabled ?? true,
           isOrderAcceptanceActive: res.isOrderAcceptanceActive ?? true,
+          upiId: res.upiId || "7897671632@okbizaxis",
+          upiQr: res.upiQr || "",
         });
       }
     });
@@ -582,6 +640,149 @@ export const AdminSettingsPage: React.FC = () => {
               value={settings.email}
               onChange={(e) => setSettings({ ...settings, email: e.target.value })}
             />
+          </div>
+        </AdminCard>
+
+        {/* Direct UPI Payment Settings */}
+        <AdminCard title="⚡ Direct UPI & QR Code Settings (1.5% Instant Discount)">
+          <p className="text-xs text-[#7A6E65] mb-4">
+            Customers who choose <strong>Direct UPI ID &amp; QR Code</strong> receive an automated <strong>1.5% instant discount</strong> on their bill. They pay directly using this UPI ID or scan/download this QR code and submit their payment receipt screenshot or UTR number.
+          </p>
+
+          <div className="space-y-4">
+            <Input
+              label="Bakery Official UPI ID (e.g., 7897671632@okbizaxis) *"
+              value={settings.upiId || ""}
+              placeholder="7897671632@okbizaxis"
+              onChange={(e) => setSettings({ ...settings, upiId: e.target.value })}
+              required
+            />
+
+            {/* Device File Upload for QR Code */}
+            <div className="p-4 bg-white rounded-xl border border-[#E5DEC9] space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <label className="text-xs font-bold text-[#3B302B] block">
+                    Bakery UPI QR Code (Upload from Device)
+                  </label>
+                  <p className="text-[11px] text-[#7A6E65]">
+                    PhonePe / Paytm / Google Pay / Bank Merchant QR Code upload karein. Customer ise checkout pe download karke payment kar sakega.
+                  </p>
+                </div>
+                {settings.upiQr ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Custom QR Code Active
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+                    Auto Dynamic QR Active
+                  </span>
+                )}
+              </div>
+
+              {/* Live Preview & Actions */}
+              {settings.upiQr ? (
+                <div className="flex flex-col sm:flex-row items-center gap-4 p-3.5 bg-[#FFF8EC] rounded-xl border border-[#596B58]/30">
+                  <div className="h-32 w-32 bg-white rounded-lg p-1.5 border border-[#E5DEC9] shrink-0 shadow-xs flex items-center justify-center">
+                    <img
+                      src={settings.upiQr}
+                      alt="Uploaded Bakery QR Code"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+
+                  <div className="space-y-2 text-center sm:text-left flex-1 min-w-0">
+                    <p className="text-xs font-bold text-[#3B302B]">
+                      Aapka QR Code device se uploaded hai.
+                    </p>
+                    <p className="text-[11px] text-[#7A6E65]">
+                      Customer checkout par yahi QR Code dekh sakega aur <strong>"Download QR Code"</strong> button se save karke PhonePe/Paytm/GPay se scan karke payment kar sakega.
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => qrFileInputRef.current?.click()}
+                        disabled={isProcessingQr}
+                        className="text-xs font-bold"
+                      >
+                        <UploadCloud className="h-3.5 w-3.5 mr-1" />
+                        {isProcessingQr ? "Processing..." : "Change QR Code Image"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSettings({ ...settings, upiQr: "" })}
+                        className="text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1" />
+                        Remove (Use Auto Dynamic QR)
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => qrFileInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-[#596B58]/40 hover:border-[#596B58] rounded-xl cursor-pointer bg-[#FAF8F5] hover:bg-[#FFF8EC] transition-all text-center space-y-2"
+                >
+                  <div className="h-10 w-10 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#596B58]">
+                    <UploadCloud className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-[#3B302B] block">
+                      Click to Upload QR Code from Device (Gallery / Files)
+                    </span>
+                    <span className="text-[11px] text-[#7A6E65] block mt-0.5">
+                      PNG, JPG, JPEG, WEBP accepted (auto-optimized)
+                    </span>
+                  </div>
+                  {isProcessingQr && (
+                    <span className="text-xs font-bold text-[#596B58] animate-pulse">
+                      Processing QR code image...
+                    </span>
+                  )}
+                </div>
+              )}
+
+              <input
+                ref={qrFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleQrFileUpload}
+                className="hidden"
+              />
+
+              {/* Optional Manual URL fallback toggle */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsManualUrlMode(!isManualUrlMode)}
+                  className="text-[11px] font-bold text-[#596B58] hover:underline cursor-pointer"
+                >
+                  {isManualUrlMode ? "Hide Direct Image URL Input" : "Or enter custom QR image URL manually"}
+                </button>
+                {isManualUrlMode && (
+                  <div className="mt-2">
+                    <Input
+                      label="Custom QR Code Direct Image URL"
+                      value={settings.upiQr || ""}
+                      placeholder="https://... or data:image/..."
+                      onChange={(e) => setSettings({ ...settings, upiQr: e.target.value })}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 space-y-1">
+            <p>
+              💡 <strong>Customer Experience:</strong> Customer checkout me jab Direct UPI choose karega toh usko ye QR code dikhega aur <strong>"Download QR Code"</strong> button milega jisse wo ise mobile gallery me save karke kisi bhi UPI app (PhonePe / GPay / Paytm) se scan karke pay kar sakega.
+            </p>
           </div>
         </AdminCard>
 

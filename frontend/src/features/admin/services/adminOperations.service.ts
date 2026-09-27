@@ -9,6 +9,18 @@ export interface AdminOrderSummary {
   totalAmount: number;
   orderStatus: string;
   paymentStatus: string;
+  paymentMethod?: string;
+  paymentReceiptUrl?: string;
+  transactionId?: string;
+  manualUpiDiscount?: number;
+  pricingSnapshot?: {
+    subtotal?: number;
+    tax?: number;
+    deliveryCharge?: number;
+    discount?: number;
+    manualUpiDiscount?: number;
+    grandTotal?: number;
+  };
   deliveryTimingType?: "INSTANT" | "SCHEDULED" | string;
   deliveryTimePreference?: string;
   scheduledDate?: string;
@@ -120,6 +132,8 @@ export interface StoreSettingsPayload {
   taxRatePercent: number;
   isTaxEnabled: boolean;
   isOrderAcceptanceActive: boolean;
+  upiId?: string;
+  upiQr?: string;
 }
 
 const ORDERS_KEY = "onebitebakery_local_orders";
@@ -174,6 +188,11 @@ export const adminOperationsService = {
           totalAmount: o.totalAmount ?? o.pricingSnapshot?.grandTotal ?? 0,
           orderStatus: o.orderStatus,
           paymentStatus: o.paymentStatus,
+          paymentMethod: o.paymentMethod,
+          paymentReceiptUrl: o.paymentReceiptUrl,
+          transactionId: o.transactionId,
+          manualUpiDiscount: o.manualUpiDiscount ?? o.pricingSnapshot?.manualUpiDiscount ?? 0,
+          pricingSnapshot: o.pricingSnapshot,
           deliveryTimingType: o.deliveryTimingType || (o.scheduledDate ? "SCHEDULED" : "INSTANT"),
           deliveryTimePreference: o.deliveryTimePreference || (o.scheduledDate ? `📅 Scheduled: ${new Date(o.scheduledDate).toLocaleDateString()} ${o.scheduledTimeSlot || ""}` : "⚡ Instant Delivery (Within 30-45 mins)"),
           scheduledDate: o.scheduledDate,
@@ -282,6 +301,25 @@ export const adminOperationsService = {
       status,
     });
     return response.data.data.order;
+  },
+
+  updatePaymentStatus: async (
+    orderId: string,
+    payload: {
+      paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+      transactionId?: string;
+      notes?: string;
+    }
+  ) => {
+    adminOperationsService.logAuditAction(
+      "UPDATE_PAYMENT_STATUS",
+      `Payment status set to ${payload.paymentStatus} for order #${orderId}`
+    );
+    const response = await apiClient.patch<{
+      success: boolean;
+      data: { order: any };
+    }>(`/orders/admin/orders/${orderId}/payment-status`, payload);
+    return response.data?.data?.order;
   },
 
   deleteOrder: async (orderId: string) => {
@@ -524,6 +562,8 @@ export const adminOperationsService = {
       taxRatePercent: 5,
       isTaxEnabled: true,
       isOrderAcceptanceActive: true,
+      upiId: "7897671632@okbizaxis",
+      upiQr: "",
     };
   },
 

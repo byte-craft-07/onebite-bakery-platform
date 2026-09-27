@@ -5,5 +5,6 @@ export {
   listOrdersQuerySchema,
   orderIdParamSchema,
   updateOrderStatusSchema,
+  updatePaymentStatusSchema,
   updateReadyTimeSchema,
 } from "./order.validators.js";
