@@ -31,6 +31,7 @@ import { LocationModal } from "@/components/location/LocationModal";
 import { UserAvatar } from "@/components/common/UserAvatar";
 import { BakeryLogo } from "@/components/navigation/BakeryLogo";
 import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
+import { LanguageSelectModal } from "@/components/navigation/LanguageSelectModal";
 import { useTranslation } from "react-i18next";
 
 export const Navbar: React.FC = () => {
@@ -125,14 +126,12 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile Center: Bakery Brand Name & Logo */}
-          <div className="flex lg:hidden flex-1 justify-center items-center px-1">
-            <BakeryLogo size="sm" />
+          <div className="flex lg:hidden flex-1 justify-center items-center px-1 min-w-0">
+            <BakeryLogo size="md" />
           </div>
 
-          {/* Mobile Right: Language Switcher, Shopping Bag Cart & User Profile Icon */}
+          {/* Mobile Right: Shopping Bag Cart & User Profile Icon */}
           <div className="flex lg:hidden items-center gap-1.5 sm:gap-2 shrink-0">
-            <LanguageSwitcher variant="compact" />
-
             <Link
               to="/cart"
               className="p-1.5 rounded-xl text-[#3B302B] hover:bg-[#A8B89A]/15 active:bg-[#A8B89A]/25 transition-colors relative flex items-center justify-center"
@@ -518,6 +517,9 @@ export const Navbar: React.FC = () => {
         isOpen={isLocationModalOpen}
         onClose={() => setIsLocationModalOpen(false)}
       />
+
+      {/* Initial Language Selection Modal (Required on first visit) */}
+      <LanguageSelectModal />
 
       {/* Sticky Mobile Bottom Navigation Bar (< 1024px) */}
       <nav aria-label="Mobile Navigation" className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FFF8EC]/95 backdrop-blur-md border-t border-[#E5DEC9] px-1 sm:px-4 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-[0_-2px_12px_rgba(59,48,43,0.06)]">

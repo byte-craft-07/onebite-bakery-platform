@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, expect, it, beforeEach } from "vitest";
-import i18n, { LANGUAGE_STORAGE_KEY, changeLanguage } from "@/i18n";
+import i18n, { LANGUAGE_STORAGE_KEY, LANGUAGE_CONFIRMED_KEY, changeLanguage } from "@/i18n";
 import {
   getLocalizedProductName,
   getLocalizedProductDescription,
@@ -12,6 +12,7 @@ import {
   formatPrice,
 } from "@/i18n/utils";
 import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
+import { LanguageSelectModal } from "@/components/navigation/LanguageSelectModal";
 
 describe("i18n Internationalization Core Suite", () => {
   beforeEach(async () => {
@@ -304,6 +305,44 @@ describe("i18n Internationalization Core Suite", () => {
       render(<LanguageSwitcher variant="mobile" />);
       expect(screen.getByRole("button", { name: "English" })).toBeDefined();
       expect(screen.getByRole("button", { name: "हिंदी" })).toBeDefined();
+    });
+  });
+
+  describe("7. LanguageSelectModal Initial Required Prompt", () => {
+    it("renders automatically on first visit when language is not yet confirmed", () => {
+      localStorage.removeItem(LANGUAGE_CONFIRMED_KEY);
+      render(<LanguageSelectModal />);
+
+      expect(screen.getByRole("dialog")).toBeDefined();
+      expect(screen.getByText(/Select Your Language/i)).toBeDefined();
+      expect(screen.getByText(/अपनी पसंदीदा भाषा चुनें/i)).toBeDefined();
+    });
+
+    it("does not render when language has already been confirmed", () => {
+      localStorage.setItem(LANGUAGE_CONFIRMED_KEY, "true");
+      render(<LanguageSelectModal />);
+
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+
+    it("saves language choice and confirms preference upon clicking continue", async () => {
+      localStorage.removeItem(LANGUAGE_CONFIRMED_KEY);
+      render(<LanguageSelectModal />);
+
+      const hindiCard = screen.getByRole("button", { name: /हिन्दी/i });
+      await act(async () => {
+        fireEvent.click(hindiCard);
+      });
+
+      const continueBtn = screen.getByRole("button", { name: /आगे बढ़ें/i });
+      await act(async () => {
+        fireEvent.click(continueBtn);
+      });
+
+      expect(localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe("hi");
+      expect(localStorage.getItem(LANGUAGE_CONFIRMED_KEY)).toBe("true");
+      expect(i18n.language).toBe("hi");
+      expect(screen.queryByRole("dialog")).toBeNull();
     });
   });
 });

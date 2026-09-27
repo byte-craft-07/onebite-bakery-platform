@@ -5,6 +5,7 @@ import en from "./locales/en";
 import hi from "./locales/hi";
 
 export const LANGUAGE_STORAGE_KEY = "onebitebakery_language";
+export const LANGUAGE_CONFIRMED_KEY = "onebitebakery_language_confirmed";
 export const DEFAULT_LANGUAGE = "en";
 export const SUPPORTED_LANGUAGES = ["en", "hi"] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -81,6 +82,7 @@ export const setAppLanguage = (lang: SupportedLanguage): void => {
   i18n.changeLanguage(lang);
   try {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+    localStorage.setItem(LANGUAGE_CONFIRMED_KEY, "true");
   } catch {
     // Ignore storage errors
   }
