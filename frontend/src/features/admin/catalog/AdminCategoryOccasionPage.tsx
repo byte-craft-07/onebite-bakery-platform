@@ -37,9 +37,11 @@ export const AdminCategoryPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCat, setEditingCat] = useState<any | null>(null);
   const [name, setName] = useState("");
+  const [nameHi, setNameHi] = useState("");
   const [slug, setSlug] = useState("");
   const [isManualSlug, setIsManualSlug] = useState(false);
   const [description, setDescription] = useState("");
+  const [descriptionHi, setDescriptionHi] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -60,9 +62,11 @@ export const AdminCategoryPage: React.FC = () => {
   const handleOpenCreate = () => {
     setEditingCat(null);
     setName("");
+    setNameHi("");
     setSlug("");
     setIsManualSlug(false);
     setDescription("");
+    setDescriptionHi("");
     setImageUrl("");
     setErrorMsg(null);
     setIsModalOpen(true);
@@ -71,9 +75,11 @@ export const AdminCategoryPage: React.FC = () => {
   const handleOpenEdit = (cat: any) => {
     setEditingCat(cat);
     setName(cat.name || "");
+    setNameHi(cat.nameHi || "");
     setSlug(cat.slug || "");
     setIsManualSlug(true);
     setDescription(cat.description || "");
+    setDescriptionHi(cat.descriptionHi || "");
     setImageUrl(cat.image || cat.bannerImage || "");
     setErrorMsg(null);
     setIsModalOpen(true);
@@ -102,8 +108,10 @@ export const AdminCategoryPage: React.FC = () => {
 
     const payload = {
       name: name.trim(),
+      nameHi: nameHi.trim() || undefined,
       slug: formattedSlug || cleanSlug(name),
       description: description.trim() || `${name.trim()} category from Onebite Bakery.`,
+      descriptionHi: descriptionHi.trim() || undefined,
       image: imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80",
     };
 
@@ -197,11 +205,16 @@ export const AdminCategoryPage: React.FC = () => {
             </div>
           ) : null}
 
-          <Input label="Category Name" placeholder="Cupcakes & Muffins" value={name} onChange={(e) => handleNameChange(e.target.value)} required />
+          <Input label="Category Name (English) *" placeholder="Cupcakes & Muffins" value={name} onChange={(e) => handleNameChange(e.target.value)} required />
+          <Input label="Category Name (Hindi / हिंदी) (Optional)" placeholder="उदा. मफ़िन और कप केक" value={nameHi} onChange={(e) => setNameHi(e.target.value)} />
           <Input label="URL Slug" placeholder="cupcakes-muffins" value={slug} onChange={(e) => handleSlugChange(e.target.value)} />
           <div>
-            <label className="block text-xs font-bold text-[#3B302B] mb-1">Description</label>
+            <label className="block text-xs font-bold text-[#3B302B] mb-1">Description (English)</label>
             <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-3 rounded-lg border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58]" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-[#3B302B] mb-1">Description (Hindi / हिंदी) (Optional)</label>
+            <textarea rows={2} value={descriptionHi} onChange={(e) => setDescriptionHi(e.target.value)} className="w-full p-3 rounded-lg border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58]" />
           </div>
           <MediaUploader value={imageUrl} onChange={setImageUrl} entityType="CATEGORY" />
           <Button type="submit" className="w-full" isLoading={isSubmitting}>

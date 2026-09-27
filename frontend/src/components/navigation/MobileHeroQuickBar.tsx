@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, MapPin, Sparkles, Tag, Ticket } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { useAuth } from "@/contexts/auth.context";
 import { LocationModal } from "@/components/location/LocationModal";
 
 export const MobileHeroQuickBar: React.FC = () => {
+  const { t } = useTranslation();
   const { currentLocation } = useAuth();
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
@@ -23,7 +25,7 @@ export const MobileHeroQuickBar: React.FC = () => {
               🎂
             </div>
             <span className="font-extrabold text-[11px] sm:text-xs text-[#3B302B] leading-tight tracking-tight">
-              Bakery
+              {t("home.bakery", "Bakery")}
             </span>
           </Link>
 
@@ -36,7 +38,7 @@ export const MobileHeroQuickBar: React.FC = () => {
               🍰
             </div>
             <span className="font-extrabold text-[11px] sm:text-xs text-[#3B302B] leading-tight tracking-tight whitespace-nowrap">
-              Custom Cake
+              {t("home.customCake", "Custom Cake")}
             </span>
           </Link>
 
@@ -49,7 +51,7 @@ export const MobileHeroQuickBar: React.FC = () => {
               🎉
             </div>
             <span className="font-extrabold text-[11px] sm:text-xs text-[#3B302B] leading-tight tracking-tight whitespace-nowrap">
-              Decorations
+              {t("home.decorations", "Decorations")}
             </span>
           </Link>
         </div>
@@ -69,7 +71,7 @@ export const MobileHeroQuickBar: React.FC = () => {
               <span className={`font-bold text-xs truncate text-left ${currentLocation?.villageName ? "text-[#3B302B]" : "text-amber-800"}`}>
                 {currentLocation?.villageName
                   ? `${currentLocation.villageName}${currentLocation.district ? `, ${currentLocation.district}` : ""}`
-                  : "Select Delivery Address"}
+                  : t("home.selectDeliveryAddress", "Select Delivery Address")}
               </span>
             </div>
             <ChevronDown className="h-4 w-4 text-[#7A6E65] shrink-0 ml-1 group-hover:translate-y-0.5 transition-transform" />
@@ -81,7 +83,7 @@ export const MobileHeroQuickBar: React.FC = () => {
             className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 rounded-2xl bg-[#D8BE91]/25 border border-[#D8BE91] shadow-2xs hover:bg-[#D8BE91]/40 transition-all cursor-pointer group active:scale-98 shrink-0 min-h-[46px]"
           >
             <span className="text-base group-hover:rotate-12 transition-transform">🎟️</span>
-            <span className="font-extrabold text-xs text-[#3B302B]">Offers</span>
+            <span className="font-extrabold text-xs text-[#3B302B]">{t("home.offers", "Offers")}</span>
           </Link>
         </div>
       </div>

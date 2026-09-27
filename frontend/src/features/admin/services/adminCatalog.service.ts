@@ -3,9 +3,12 @@ import { catalogService } from "@/services/catalog.service";
 
 export interface CreateProductPayload {
   name: string;
+  nameHi?: string;
   slug: string;
   description: string;
+  descriptionHi?: string;
   shortDescription?: string;
+  shortDescriptionHi?: string;
   productType: "NORMAL" | "COMBO" | "CUSTOM_CAKE" | "DECORATION";
   price: number;
   compareAtPrice?: number;
@@ -13,6 +16,7 @@ export interface CreateProductPayload {
   sku: string;
   isEggless?: boolean;
   isAvailable?: boolean;
+  isInstantAvailable?: boolean;
   isFeatured?: boolean;
   isBestseller?: boolean;
   categoryId?: string;
@@ -43,6 +47,7 @@ export const adminCatalogService = {
           sku: p.sku || `SKU-${p.id}`,
           isEggless: p.isEggless ?? true,
           isAvailable: p.isAvailable ?? true,
+          isInstantAvailable: Boolean(p.isInstantAvailable),
           stockQuantity: p.stockQuantity ?? 50,
           mainImage:
             p.thumbnailUrl ||
@@ -121,7 +126,7 @@ export const adminCatalogService = {
     return catalogService.getCategories();
   },
 
-  createCategory: async (payload: { name: string; slug: string; description?: string; image?: string }) => {
+  createCategory: async (payload: { name: string; nameHi?: string; slug: string; description?: string; descriptionHi?: string; image?: string }) => {
     const response = await apiClient.post<{
       success: boolean;
       data: { category: any };
@@ -129,7 +134,7 @@ export const adminCatalogService = {
     return response.data.data.category;
   },
 
-  updateCategory: async (id: string, payload: Partial<{ name: string; slug: string; description: string; isActive: boolean }>) => {
+  updateCategory: async (id: string, payload: Partial<{ name: string; nameHi?: string; slug: string; description: string; descriptionHi?: string; isActive: boolean; image?: string }>) => {
     const response = await apiClient.patch<{
       success: boolean;
       data: { category: any };

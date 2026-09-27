@@ -17,6 +17,8 @@ import {
 
 import { useAuth } from "@/contexts/auth.context";
 import { UserAvatar } from "@/components/common/UserAvatar";
+import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 import { adminOperationsService } from "../services/adminOperations.service";
 import {
   PushNotificationService,
@@ -30,6 +32,7 @@ import {
 } from "@/utils/sound.util";
 
 export const Topbar: React.FC<{ onMenuToggle: () => void }> = ({ onMenuToggle }) => {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -211,7 +214,7 @@ export const Topbar: React.FC<{ onMenuToggle: () => void }> = ({ onMenuToggle })
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search orders, SKU, customer phone..."
+            placeholder={t("admin.searchPlaceholder", "Search orders, SKU, customer phone...")}
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
                 navigate(`/admin/orders?search=${encodeURIComponent((e.target as HTMLInputElement).value.trim())}`);
@@ -403,14 +406,17 @@ export const Topbar: React.FC<{ onMenuToggle: () => void }> = ({ onMenuToggle })
           )}
         </div>
 
+        {/* Language Switcher */}
+        <LanguageSwitcher variant="compact" />
+
         {/* View Storefront / Home Page Button */}
         <Link
           to="/"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FFF8EC] border border-[#596B58]/30 text-xs font-bold text-[#596B58] hover:bg-[#596B58] hover:text-white transition-all shadow-2xs"
-          title="Return to Customer Storefront Home Page"
+          title={t("admin.nav.goToHomePage", "Return to Customer Storefront Home Page")}
         >
           <Home className="h-4 w-4" />
-          <span className="hidden sm:inline">Storefront Home</span>
+          <span className="hidden sm:inline">{t("admin.nav.goToHomePage", "Storefront Home")}</span>
         </Link>
 
         {/* Notification Bell Dropdown */}

@@ -5,11 +5,13 @@ export interface CartItem {
   productId: {
     id: string;
     name: string;
+    nameHi?: string;
     slug: string;
     price: number;
     mainImage?: string;
     isAvailable: boolean;
     isEggless?: boolean;
+    isInstantAvailable?: boolean;
   };
   quantity: number;
   unitPrice: number;
@@ -56,6 +58,8 @@ const normalizeCartResponse = (cart: any): CartResponse => {
     let pPrice = 0;
     let pImage = "";
 
+    let isInstantAvailable = false;
+
     if (typeof item.productId === "object" && item.productId !== null) {
       pId = String(item.productId.id || item.productId._id || "");
       pName = item.productId.name || "";
@@ -66,6 +70,9 @@ const normalizeCartResponse = (cart: any): CartResponse => {
         item.productId.thumbnailUrl ||
         item.productId.image ||
         "";
+      if (item.productId.isInstantAvailable !== undefined) {
+        isInstantAvailable = Boolean(item.productId.isInstantAvailable);
+      }
     } else if (typeof item.productId === "string") {
       pId = item.productId;
     }
@@ -76,6 +83,9 @@ const normalizeCartResponse = (cart: any): CartResponse => {
       if (!pImage && (item.productSnapshot.thumbnailUrl || item.productSnapshot.image)) {
         pImage = item.productSnapshot.thumbnailUrl || item.productSnapshot.image;
       }
+      if (item.productSnapshot.isInstantAvailable !== undefined) {
+        isInstantAvailable = Boolean(item.productSnapshot.isInstantAvailable);
+      }
     }
 
     if (item.productDetails) {
@@ -83,6 +93,9 @@ const normalizeCartResponse = (cart: any): CartResponse => {
       if (!pSlug && item.productDetails.slug) pSlug = item.productDetails.slug;
       if (!pPrice && item.productDetails.price) pPrice = item.productDetails.price;
       if (!pImage && item.productDetails.mainImage) pImage = item.productDetails.mainImage;
+      if (item.productDetails.isInstantAvailable !== undefined) {
+        isInstantAvailable = Boolean(item.productDetails.isInstantAvailable);
+      }
     }
 
     const unitPrice =
@@ -118,6 +131,7 @@ const normalizeCartResponse = (cart: any): CartResponse => {
         mainImage: pImage,
         isAvailable: true,
         isEggless: item.customization?.eggless ?? true,
+        isInstantAvailable,
       },
       quantity,
       unitPrice: finalPrice,
@@ -195,7 +209,7 @@ export const cartService = {
     productId: string;
     quantity: number;
     customization?: { eggless?: boolean; message?: string };
-    productDetails?: { name?: string; price?: number; mainImage?: string; slug?: string };
+    productDetails?: { name?: string; price?: number; mainImage?: string; slug?: string; isInstantAvailable?: boolean };
   }): Promise<CartResponse> => {
     try {
       const response = await apiClient.post<{
@@ -237,6 +251,7 @@ export const cartService = {
         DEFAULT_FALLBACK_IMAGE,
       isAvailable: true,
       isEggless: payload.customization?.eggless ?? true,
+      isInstantAvailable: payload.productDetails?.isInstantAvailable ?? false,
     };
 
     const existingIdx = currentCart.items.findIndex(

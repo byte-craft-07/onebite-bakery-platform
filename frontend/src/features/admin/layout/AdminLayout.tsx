@@ -62,7 +62,7 @@ export const AdminLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF8EC] text-[#3B302B] flex">
+    <div className="min-h-screen bg-[#FFF8EC] text-[#3B302B] flex admin-portal">
       {/* Sidebar */}
       <Sidebar isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} />
 

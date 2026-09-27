@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Award,
+  Calendar,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -27,11 +28,14 @@ import { reviewService } from "@/services/review.service";
 import { RatingModal } from "@/components/review/RatingModal";
 import { ShareButton } from "@/components/sharing";
 import { getOptimizedImageUrl } from "@/utils/cdn.utils";
+import { useTranslation } from "react-i18next";
+import { getLocalizedProductName, getLocalizedProductDescription } from "@/i18n/utils";
 
 const FALLBACK_PRODUCT_IMAGE =
   "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=85";
 
 export const ProductDetailsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { currentLocation } = useAuth();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -284,6 +288,7 @@ export const ProductDetailsPage: React.FC = () => {
           price: product.price,
           mainImage: activeImageUrl,
           slug: product.slug,
+          isInstantAvailable: Boolean(product.isInstantAvailable),
         },
       });
       toast.add("Added to Cart! 🛒", `${quantity}x "${product.name}" (${selectedWeight}) added to your cart.`, {
@@ -323,6 +328,7 @@ export const ProductDetailsPage: React.FC = () => {
           message: `Portion: ${selectedWeight}`,
         },
         itemTotal: product.price * quantity,
+        isInstantAvailable: Boolean(product.isInstantAvailable),
       };
       sessionStorage.setItem("onebitebakery_direct_order_item", JSON.stringify(directItem));
       navigate("/checkout?direct=1");
@@ -387,11 +393,11 @@ export const ProductDetailsPage: React.FC = () => {
           className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#7A6E65] hover:text-[#596B58] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Back to All Bakery Items</span>
+          <span>{t("products.allProducts", "Back to All Bakery Items")}</span>
         </Link>
 
         <span className="text-xs font-semibold text-gray-400">
-          Home &gt; {product.categoryId?.name || "Bakery"} &gt; <strong className="text-gray-700">{product.name}</strong>
+          Home &gt; {product.categoryId?.name || "Bakery"} &gt; <strong className="text-gray-700">{getLocalizedProductName(product) || product.name}</strong>
         </span>
       </div>
 
@@ -556,13 +562,24 @@ export const ProductDetailsPage: React.FC = () => {
 
           {/* Header Title & Badges */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Badge variant="primary">{product.productType || "ARTISANAL"}</Badge>
               <Badge variant="success">100% Freshly Baked</Badge>
+              {product.isInstantAvailable ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500 text-white shadow-xs tracking-wide">
+                  <Zap className="h-3.5 w-3.5 fill-current" />
+                  <span>Available in Stock (अभी ऑर्डर करें)</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#3B302B]/85 text-[#FFF8EC] shadow-xs tracking-wide">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Fresh केक बनवाएं</span>
+                </span>
+              )}
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black text-[#3B302B] leading-tight">
-              {product.name}
+              {getLocalizedProductName(product) || product.name}
             </h1>
 
             {/* Real Rating & Clickable Review Link */}
@@ -583,7 +600,7 @@ export const ProductDetailsPage: React.FC = () => {
                       <Star className="h-4 w-4 fill-current" />
                     </div>
                     <span className="text-gray-500 font-semibold group-hover:underline">
-                      ({liveRatingData.reviewCount} Reviews)
+                      ({liveRatingData.reviewCount} {t("products.reviews", "Reviews")})
                     </span>
                   </>
                 ) : (
@@ -601,7 +618,7 @@ export const ProductDetailsPage: React.FC = () => {
                 className="text-xs text-[#596B58] hover:text-[#495948] font-bold flex items-center gap-1 cursor-pointer bg-[#FFF8EC] hover:bg-[#F7F2E7] px-3 py-1 rounded-xl border border-[#596B58]/30 transition-colors shadow-2xs"
               >
                 <Star className="h-3.5 w-3.5 fill-current text-amber-500" />
-                <span>Rate this Cake</span>
+                <span>{t("products.writeReview", "Rate this Cake")}</span>
               </button>
 
               <span className="text-gray-300">•</span>
@@ -637,13 +654,13 @@ export const ProductDetailsPage: React.FC = () => {
 
           {/* Description */}
           <p className="text-xs sm:text-sm text-[#7A6E65] leading-relaxed">
-            {product.description}
+            {getLocalizedProductDescription(product) || product.description}
           </p>
 
           {/* Weight & Portion Selection */}
           <div className="space-y-2 pt-1">
             <label className="block text-xs font-black uppercase tracking-wider text-[#3B302B]">
-              Select Weight / Portion:
+              {t("products.weightSize", "Select Weight / Portion:")}
             </label>
             <div className="grid grid-cols-3 gap-2.5">
               {[
@@ -699,7 +716,7 @@ export const ProductDetailsPage: React.FC = () => {
                 }`}
               >
                 <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 text-[#3B302B]" />
-                <span>{isAddingToCart ? "Adding..." : "Add to Cart"}</span>
+                <span>{isAddingToCart ? t("cart.adding", "Adding...") : t("products.addToCart", "Add to Cart")}</span>
               </button>
             </div>
 
@@ -714,15 +731,26 @@ export const ProductDetailsPage: React.FC = () => {
               }`}
             >
               <Zap className="h-4 w-4 sm:h-5 sm:w-5 fill-[#D8BE91] text-[#D8BE91]" />
-              <span>{isOutOfStockNotice ? "Out of Stock" : isOrderingNow ? "Preparing Order..." : "Order Now (Instant Checkout)"}</span>
+              <span>
+                {isOutOfStockNotice
+                  ? t("products.outOfStock", "Out of Stock")
+                  : isOrderingNow
+                  ? t("checkout.placingOrder", "Preparing Order...")
+                  : t("products.buyNow", "Order Now (Instant Checkout)")}
+              </span>
             </button>
           </div>
+
 
           {/* Product Highlights & Quality Assurance */}
           <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-2.5 text-xs text-[#7A6E65]">
             <div className="flex items-center gap-2.5 text-amber-950 font-bold">
               <Clock className="h-4 w-4 text-[#596B58] shrink-0" />
-              <span>⚡ 30-45 Mins Fast Delivery or Schedule anytime</span>
+              {product.isInstantAvailable ? (
+                <span>⚡ Ready to Deliver (Instant): In-store stock ready for fast 30-45 min delivery</span>
+              ) : (
+                <span>📅 Made to Order: Freshly baked on demand (Choose specific delivery date &amp; time slot at checkout)</span>
+              )}
             </div>
             <div className="flex items-center gap-2.5 text-amber-950 font-bold">
               <ShieldCheck className="h-4 w-4 text-[#27AE60] shrink-0" />

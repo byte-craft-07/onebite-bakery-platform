@@ -1,0 +1,15 @@
+export default {
+  nameRequired: "Full name is required.",
+  emailRequired: "Email address is required.",
+  validEmail: "Please enter a valid email address.",
+  phoneRequired: "Mobile phone number is required.",
+  validPhone: "Please enter a valid 10-digit mobile number.",
+  villageRequired: "Please select or enter your village.",
+  districtRequired: "District is required.",
+  pincodeRequired: "PIN code is required.",
+  validPincode: "Please enter a valid 6-digit postal PIN code.",
+  streetRequired: "Street and landmark details are required.",
+  fieldRequired: "This field is required.",
+  minLength: "Must be at least {{min}} characters.",
+  maxLength: "Must not exceed {{max}} characters.",
+};

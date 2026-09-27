@@ -30,8 +30,11 @@ import { cartService } from "@/services/cart.service";
 import { LocationModal } from "@/components/location/LocationModal";
 import { UserAvatar } from "@/components/common/UserAvatar";
 import { BakeryLogo } from "@/components/navigation/BakeryLogo";
+import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 
 export const Navbar: React.FC = () => {
+  const { t } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
@@ -126,8 +129,10 @@ export const Navbar: React.FC = () => {
             <BakeryLogo size="sm" />
           </div>
 
-          {/* Mobile Right: Shopping Bag Cart & User Profile Icon */}
-          <div className="flex lg:hidden items-center gap-2 shrink-0">
+          {/* Mobile Right: Language Switcher, Shopping Bag Cart & User Profile Icon */}
+          <div className="flex lg:hidden items-center gap-1.5 sm:gap-2 shrink-0">
+            <LanguageSwitcher variant="compact" />
+
             <Link
               to="/cart"
               className="p-1.5 rounded-xl text-[#3B302B] hover:bg-[#A8B89A]/15 active:bg-[#A8B89A]/25 transition-colors relative flex items-center justify-center"
@@ -167,9 +172,9 @@ export const Navbar: React.FC = () => {
             >
               <MapPin className="h-3.5 w-3.5 text-[#596B58] shrink-0 group-hover:scale-110 transition-transform" />
               <div className="flex flex-col text-left leading-tight">
-                <span className="text-[9px] text-[#7A6E65] font-semibold leading-none">Deliver to:</span>
+                <span className="text-[9px] text-[#7A6E65] font-semibold leading-none">{t("common.deliverTo", "Deliver to:")}</span>
                 <span className={`font-bold max-w-[90px] xl:max-w-[120px] truncate text-[11px] ${currentLocation?.villageName ? "text-[#3B302B]" : "text-amber-800"}`}>
-                  {currentLocation?.villageName || "Select Address"}
+                  {currentLocation?.villageName || t("common.selectAddress", "Select Address")}
                 </span>
               </div>
               <ChevronDown className="h-3 w-3 text-[#7A6E65] ml-0.5 shrink-0" />
@@ -178,16 +183,16 @@ export const Navbar: React.FC = () => {
 
           {/* Desktop Center Links */}
           <nav className="hidden lg:flex items-center gap-3.5 xl:gap-6 font-semibold text-xs xl:text-sm text-[#3B302B] shrink-0">
-            <Link to="/" className="hover:text-[#596B58] transition-colors whitespace-nowrap">Home</Link>
-            <Link to="/products" className="hover:text-[#596B58] transition-colors whitespace-nowrap">Products</Link>
-            <Link to="/categories" className="hover:text-[#596B58] transition-colors whitespace-nowrap">Categories</Link>
-            <Link to="/occasions" className="hover:text-[#596B58] transition-colors whitespace-nowrap">Occasions</Link>
+            <Link to="/" className="hover:text-[#596B58] transition-colors whitespace-nowrap">{t("navigation.home", "Home")}</Link>
+            <Link to="/products" className="hover:text-[#596B58] transition-colors whitespace-nowrap">{t("navigation.products", "Products")}</Link>
+            <Link to="/categories" className="hover:text-[#596B58] transition-colors whitespace-nowrap">{t("navigation.categories", "Categories")}</Link>
+            <Link to="/occasions" className="hover:text-[#596B58] transition-colors whitespace-nowrap">{t("navigation.occasions", "Occasions")}</Link>
             <Link to="/offers" className="text-[#596B58] font-bold hover:text-[#3B302B] transition-colors flex items-center gap-1 whitespace-nowrap">
-              <span>Offers</span>
-              <span className="text-[8px] xl:text-[9px] font-extrabold bg-[#D8BE91] text-[#3B302B] px-1.5 py-0.2 rounded-full shadow-2xs">New</span>
+              <span>{t("navigation.offers", "Offers")}</span>
+              <span className="text-[8px] xl:text-[9px] font-extrabold bg-[#D8BE91] text-[#3B302B] px-1.5 py-0.2 rounded-full shadow-2xs">{t("navigation.newBadge", "New")}</span>
             </Link>
-            <Link to="/decorations" className="hover:text-[#596B58] transition-colors whitespace-nowrap">Decorations</Link>
-            <Link to="/about" className="hover:text-[#596B58] transition-colors whitespace-nowrap">About Us</Link>
+            <Link to="/decorations" className="hover:text-[#596B58] transition-colors whitespace-nowrap">{t("navigation.decorations", "Decorations")}</Link>
+            <Link to="/about" className="hover:text-[#596B58] transition-colors whitespace-nowrap">{t("navigation.aboutUs", "About Us")}</Link>
           </nav>
 
           {/* Desktop Right Actions */}
@@ -216,10 +221,13 @@ export const Navbar: React.FC = () => {
                 title="Install Onebite Bakery App"
               >
                 <Download className="h-4 w-4 text-[#596B58]" />
-                <span className="hidden xl:inline">Install App</span>
-                <span className="xl:hidden">App</span>
+                <span className="hidden xl:inline">{t("common.installApp", "Install App")}</span>
+                <span className="xl:hidden">{t("common.app", "App")}</span>
               </button>
             )}
+
+            {/* Desktop Language Switcher */}
+            <LanguageSwitcher variant="desktop" />
 
             <Link
               to="/cart"
@@ -240,8 +248,8 @@ export const Navbar: React.FC = () => {
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-xs whitespace-nowrap"
                   >
                     <ShieldCheck className="h-3.5 w-3.5 text-white" />
-                    <span className="hidden xl:inline">👑 Admin Panel</span>
-                    <span className="xl:hidden">Admin</span>
+                    <span className="hidden xl:inline">👑 {t("navigation.adminPanel", "Admin Panel")}</span>
+                    <span className="xl:hidden">{t("navigation.adminPanel", "Admin")}</span>
                   </Link>
                 ) : user?.role === "branch_admin" ? (
                   <Link
@@ -249,8 +257,8 @@ export const Navbar: React.FC = () => {
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#596B58] hover:bg-[#495948] text-[#FFF8EC] text-xs font-bold transition-all shadow-xs whitespace-nowrap"
                   >
                     <Building className="h-3.5 w-3.5 text-[#FFF8EC]" />
-                    <span className="hidden xl:inline">Branch Portal</span>
-                    <span className="xl:hidden">Branch</span>
+                    <span className="hidden xl:inline">{t("navigation.branchPortal", "Branch Portal")}</span>
+                    <span className="xl:hidden">{t("navigation.branchPortal", "Branch")}</span>
                   </Link>
                 ) : null}
 
@@ -259,12 +267,12 @@ export const Navbar: React.FC = () => {
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#F7F2E7] border border-[#E5DEC9] text-xs font-bold text-[#3B302B] transition-all group max-w-[110px] xl:max-w-[140px] shadow-2xs"
                 >
                   <UserAvatar user={user} size="xs" className="ring-1 ring-[#596B58]/50 shrink-0" />
-                  <span className="truncate">{user?.name?.split(" ")[0] || "Account"}</span>
+                  <span className="truncate">{user?.name?.split(" ")[0] || t("navigation.account", "Account")}</span>
                 </Link>
                 <button
                   onClick={logout}
                   className="p-1.5 text-[#7A6E65] hover:text-[#3B302B] hover:bg-[#A8B89A]/20 rounded-lg transition-colors cursor-pointer"
-                  title="Logout"
+                  title={t("common.logout", "Logout")}
                 >
                   <LogOut className="h-4 w-4" />
                 </button>
@@ -274,7 +282,7 @@ export const Navbar: React.FC = () => {
                 to="/auth/login"
                 className="px-3.5 py-1.5 xl:px-4 xl:py-2 rounded-xl bg-[#596B58] text-xs font-bold text-[#FFF8EC] hover:bg-[#495948] transition-all shadow-xs whitespace-nowrap"
               >
-                Log In
+                {t("navigation.login", "Log In")}
               </Link>
             )}
           </div>
@@ -287,7 +295,7 @@ export const Navbar: React.FC = () => {
               <Search className="h-5 w-5 text-[#7A6E65]" />
               <input
                 type="text"
-                placeholder="Search Belgian Chocolate Cake, Croissants, Eggless tarts..."
+                placeholder={t("common.searchPlaceholder", "Search Belgian Chocolate Cake, Croissants, Eggless tarts...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full text-sm outline-none bg-white rounded-lg px-3 py-2 text-[#3B302B] placeholder-[#7A6E65] border border-[#E5DEC9] focus:border-[#596B58]"
@@ -298,7 +306,7 @@ export const Navbar: React.FC = () => {
                 onClick={() => setIsSearchOpen(false)}
                 className="text-xs font-semibold text-[#596B58] hover:text-[#3B302B] px-2 py-1 cursor-pointer"
               >
-                Cancel
+                {t("common.cancel", "Cancel")}
               </button>
             </div>
           </form>
@@ -329,12 +337,15 @@ export const Navbar: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-[#596B58]" />
                   <div className="text-left">
-                    <p className="text-[10px] text-[#7A6E65] font-semibold">Delivery Location:</p>
-                    <p className="font-bold text-[#596B58]">{currentLocation?.villageName || "Select Delivery Village"}</p>
+                    <p className="text-[10px] text-[#7A6E65] font-semibold">{t("common.deliverTo", "Delivery Location:")}</p>
+                    <p className="font-bold text-[#596B58]">{currentLocation?.villageName || t("common.selectAddress", "Select Delivery Village")}</p>
                   </div>
                 </div>
-                <span className="text-[11px] font-bold text-[#596B58] underline">Change</span>
+                <span className="text-[11px] font-bold text-[#596B58] underline">{t("common.edit", "Change")}</span>
               </button>
+
+              {/* Mobile Language Switcher */}
+              <LanguageSwitcher variant="mobile" />
 
               <nav className="flex flex-col gap-2 font-semibold text-sm text-[#3B302B]">
                 <Link
@@ -343,7 +354,7 @@ export const Navbar: React.FC = () => {
                   className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#A8B89A]/20 hover:text-[#596B58] transition-colors"
                 >
                   <Home className="h-4 w-4 text-[#596B58]" />
-                  <span>Home</span>
+                  <span>{t("navigation.home", "Home")}</span>
                 </Link>
                 <Link
                   to="/products"
@@ -351,7 +362,7 @@ export const Navbar: React.FC = () => {
                   className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#A8B89A]/20 hover:text-[#596B58] transition-colors"
                 >
                   <Package className="h-4 w-4 text-[#596B58]" />
-                  <span>Products</span>
+                  <span>{t("navigation.products", "Products")}</span>
                 </Link>
                 <Link
                   to="/categories"
@@ -359,7 +370,7 @@ export const Navbar: React.FC = () => {
                   className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#A8B89A]/20 hover:text-[#596B58] transition-colors"
                 >
                   <Box className="h-4 w-4 text-[#596B58]" />
-                  <span>Categories</span>
+                  <span>{t("navigation.categories", "Categories")}</span>
                 </Link>
                 <Link
                   to="/occasions"
@@ -367,7 +378,7 @@ export const Navbar: React.FC = () => {
                   className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#A8B89A]/20 hover:text-[#596B58] transition-colors"
                 >
                   <Sparkles className="h-4 w-4 text-[#596B58]" />
-                  <span>Occasions</span>
+                  <span>{t("navigation.occasions", "Occasions")}</span>
                 </Link>
                 <Link
                   to="/custom-cake"
@@ -375,7 +386,7 @@ export const Navbar: React.FC = () => {
                   className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#A8B89A]/20 hover:text-[#596B58] transition-colors"
                 >
                   <Cake className="h-4 w-4 text-[#596B58]" />
-                  <span>Custom Cake Studio</span>
+                  <span>{t("navigation.customCakes", "Custom Cake Studio")}</span>
                 </Link>
                 <Link
                   to="/combos"
@@ -383,7 +394,7 @@ export const Navbar: React.FC = () => {
                   className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#A8B89A]/20 hover:text-[#596B58] transition-colors"
                 >
                   <Gift className="h-4 w-4 text-[#596B58]" />
-                  <span>Celebration Combos</span>
+                  <span>{t("navigation.combos", "Celebration Combos")}</span>
                 </Link>
                 <Link
                   to="/decorations"
@@ -391,7 +402,7 @@ export const Navbar: React.FC = () => {
                   className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#A8B89A]/20 hover:text-[#596B58] transition-colors"
                 >
                   <PartyPopper className="h-4 w-4 text-[#596B58]" />
-                  <span>Party Decoration Shop</span>
+                  <span>{t("navigation.decorations", "Party Decoration Shop")}</span>
                 </Link>
                 <Link
                   to="/offers"
@@ -400,8 +411,8 @@ export const Navbar: React.FC = () => {
                 >
                   <Ticket className="h-4 w-4 text-[#596B58]" />
                   <span className="flex items-center gap-1.5">
-                    <span>Offers & Coupons</span>
-                    <span className="text-[9px] font-extrabold bg-[#D8BE91] text-[#3B302B] px-1.5 py-0.2 rounded-full">Deals</span>
+                    <span>{t("navigation.offers", "Offers & Coupons")}</span>
+                    <span className="text-[9px] font-extrabold bg-[#D8BE91] text-[#3B302B] px-1.5 py-0.2 rounded-full">{t("navigation.deals", "Deals")}</span>
                   </span>
                 </Link>
                 <Link
@@ -410,7 +421,7 @@ export const Navbar: React.FC = () => {
                   className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#A8B89A]/20 hover:text-[#596B58] transition-colors"
                 >
                   <Info className="h-4 w-4 text-[#596B58]" />
-                  <span>About Onebite Bakery</span>
+                  <span>{t("navigation.aboutUs", "About Onebite Bakery")}</span>
                 </Link>
 
                 <div className="pt-2 border-t border-[#E5DEC9] space-y-2">
@@ -421,7 +432,7 @@ export const Navbar: React.FC = () => {
                       className="text-[#596B58] font-bold flex items-center gap-3 p-2 rounded-xl bg-white border border-[#596B58]/30"
                     >
                       <ShieldCheck className="h-4 w-4" />
-                      <span>Central Admin Panel</span>
+                      <span>{t("navigation.centralAdmin", "Central Admin Panel")}</span>
                     </Link>
                   )}
                   {isAuthenticated && user?.role === "branch_admin" && (
@@ -431,7 +442,7 @@ export const Navbar: React.FC = () => {
                       className="text-[#596B58] font-bold flex items-center gap-3 p-2 rounded-xl bg-white border border-[#596B58]/30"
                     >
                       <Building className="h-4 w-4" />
-                      <span>Branch Admin Portal</span>
+                      <span>{t("navigation.branchPortal", "Branch Admin Portal")}</span>
                     </Link>
                   )}
                   {isAuthenticated ? (
@@ -442,7 +453,7 @@ export const Navbar: React.FC = () => {
                         className="flex items-center gap-3 p-2 rounded-xl bg-white text-[#596B58] border border-[#E5DEC9] font-bold transition-colors"
                       >
                         <User className="h-4 w-4 text-[#596B58]" />
-                        <span>My Account Hub</span>
+                        <span>{t("navigation.dashboard", "My Account Hub")}</span>
                       </Link>
                       <Link
                         to="/customer/orders"
@@ -450,7 +461,7 @@ export const Navbar: React.FC = () => {
                         className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#A8B89A]/20 hover:text-[#596B58] transition-colors"
                       >
                         <Package className="h-4 w-4 text-[#596B58]" />
-                        <span>My Orders & Tracking</span>
+                        <span>{t("navigation.myOrders", "My Orders & Tracking")}</span>
                       </Link>
                       <Link
                         to="/customer/addresses"
@@ -458,7 +469,7 @@ export const Navbar: React.FC = () => {
                         className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#A8B89A]/20 hover:text-[#596B58] transition-colors"
                       >
                         <MapPin className="h-4 w-4 text-[#596B58]" />
-                        <span>Saved Delivery Addresses</span>
+                        <span>{t("navigation.addresses", "Saved Delivery Addresses")}</span>
                       </Link>
                     </>
                   ) : (
@@ -468,7 +479,7 @@ export const Navbar: React.FC = () => {
                       className="flex items-center gap-3 p-2 rounded-xl bg-[#596B58] text-[#FFF8EC] font-bold"
                     >
                       <User className="h-4 w-4 text-[#FFF8EC]" />
-                      <span>Log In</span>
+                      <span>{t("navigation.login", "Log In")}</span>
                     </Link>
                   )}
 
@@ -521,7 +532,7 @@ export const Navbar: React.FC = () => {
           <div className={`p-1 rounded-full transition-transform ${location.pathname === "/" ? "bg-[#A8B89A]/25 scale-110" : ""}`}>
             <Home className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${location.pathname === "/" ? "stroke-[2.5]" : ""}`} />
           </div>
-          <span className="text-[10px] font-bold">Home</span>
+          <span className="text-[10px] font-bold">{t("navigation.home", "Home")}</span>
         </Link>
 
         {/* 2. Products */}
@@ -535,7 +546,7 @@ export const Navbar: React.FC = () => {
           <div className={`p-1 rounded-full transition-transform ${location.pathname === "/products" ? "bg-[#A8B89A]/25 scale-110" : ""}`}>
             <Cake className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${location.pathname === "/products" ? "stroke-[2.5]" : ""}`} />
           </div>
-          <span className="text-[10px] font-bold">Products</span>
+          <span className="text-[10px] font-bold">{t("navigation.products", "Products")}</span>
         </Link>
 
         {/* 3. Occasions */}
@@ -549,7 +560,7 @@ export const Navbar: React.FC = () => {
           <div className={`p-1 rounded-full transition-transform ${location.pathname === "/occasions" ? "bg-[#A8B89A]/25 scale-110" : ""}`}>
             <Sparkles className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${location.pathname === "/occasions" ? "stroke-[2.5]" : ""}`} />
           </div>
-          <span className="text-[10px] font-bold">Occasions</span>
+          <span className="text-[10px] font-bold">{t("navigation.occasions", "Occasions")}</span>
         </Link>
 
         {/* 4. Offers & Coupons */}
@@ -564,7 +575,7 @@ export const Navbar: React.FC = () => {
             <Ticket className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${location.pathname === "/offers" ? "stroke-[2.5] rotate-6" : ""}`} />
             <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-[#596B58] ring-2 ring-white" />
           </div>
-          <span className="text-[10px] font-bold">Offers</span>
+          <span className="text-[10px] font-bold">{t("navigation.offers", "Offers")}</span>
         </Link>
 
         {/* 5. Orders & Tracking */}
@@ -584,7 +595,7 @@ export const Navbar: React.FC = () => {
               location.pathname.startsWith("/customer/orders") || location.pathname.startsWith("/orders") ? "stroke-[2.5]" : ""
             }`} />
           </div>
-          <span className="text-[10px] font-bold">Orders</span>
+          <span className="text-[10px] font-bold">{t("navigation.myOrders", "Orders")}</span>
         </Link>
       </nav>
     </>

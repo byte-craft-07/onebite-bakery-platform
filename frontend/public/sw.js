@@ -1,7 +1,7 @@
 // Service Worker for Onebite Bakery Progressive Web App
 // Version: 2.0.0
 
-const CACHE_NAME = 'onebitebakery-pwa-v2';
+const CACHE_NAME = 'onebitebakery-pwa-v3';
 const STATIC_CACHE = `${CACHE_NAME}-static`;
 const RUNTIME_CACHE = `${CACHE_NAME}-runtime`;
 const OFFLINE_CACHE = `${CACHE_NAME}-offline`;
@@ -13,6 +13,7 @@ const PRECACHE_ASSETS = [
   '/favicon.svg',
   '/icons.svg',
   '/logo.svg',
+  '/onebite_text_only.svg',
   '/icons/pwa-192x192.png',
   '/icons/pwa-512x512.png',
   '/icons/pwa-maskable-192x192.png',

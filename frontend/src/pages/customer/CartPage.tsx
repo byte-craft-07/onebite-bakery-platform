@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, ShoppingBag } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { CartItemCard } from "@/components/shopping/CartItemCard";
 import { Button } from "@/components/ui/Button";
@@ -8,8 +9,10 @@ import { Card, EmptyState, Skeleton } from "@/components/ui/DisplayComponents";
 import { cartService, type CartResponse } from "@/services/cart.service";
 import { useAuth } from "@/contexts/auth.context";
 import { toast } from "@/contexts/toast.context";
+import { getLocalizedProductName } from "@/i18n/utils";
 
 export const CartPage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
   const [cart, setCart] = useState<CartResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +46,7 @@ export const CartPage: React.FC = () => {
 
   const handleUpdateQuantity = async (itemId: string, newQty: number) => {
     const item = cart?.items.find((i) => i.id === itemId);
-    const itemName = item?.productId.name || "Item";
+    const itemName = getLocalizedProductName(item?.productId, i18n.language) || "Item";
 
     if (newQty <= 0) {
       handleRemoveItem(itemId);
@@ -52,22 +55,22 @@ export const CartPage: React.FC = () => {
     try {
       const updated = await cartService.updateQuantity(itemId, newQty);
       setCart(updated);
-      toast.update("Cart Updated", `Quantity for "${itemName}" updated to ${newQty}.`);
+      toast.update(t("cart.title", "Cart"), t("cart.itemUpdated", { name: itemName, qty: newQty, defaultValue: `Quantity for "${itemName}" updated to ${newQty}.` }));
     } catch (_err) {
-      toast.error("Update Failed", "Could not update item quantity.");
+      toast.error(t("common.error", "Error"), t("cart.updateFailed", "Could not update item quantity."));
     }
   };
 
   const handleRemoveItem = async (itemId: string) => {
     const item = cart?.items.find((i) => i.id === itemId);
-    const itemName = item?.productId.name || "Item";
+    const itemName = getLocalizedProductName(item?.productId, i18n.language) || "Item";
 
     try {
       const updated = await cartService.removeItem(itemId);
       setCart(updated);
-      toast.delete("Item Removed", `"${itemName}" removed from your cart.`);
+      toast.delete(t("cart.title", "Cart"), t("cart.itemRemoved", { name: itemName, defaultValue: `"${itemName}" removed from your cart.` }));
     } catch (_err) {
-      toast.error("Remove Failed", "Could not remove item from cart.");
+      toast.error(t("common.error", "Error"), t("cart.removeFailed", "Could not remove item from cart."));
     }
   };
 
@@ -90,12 +93,12 @@ export const CartPage: React.FC = () => {
     return (
       <div className="py-16 max-w-2xl mx-auto text-center space-y-4">
         <EmptyState
-          title="Your Shopping Cart is Empty"
-          description="Explore our artisanal cakes, pastries, and freshly baked breads."
+          title={t("cart.emptyTitle", "Your Shopping Cart is Empty")}
+          description={t("cart.emptySubtitle", "Explore our artisanal cakes, pastries, and freshly baked breads.")}
           action={
             <Link to="/products">
               <Button>
-                <span>Browse Products</span>
+                <span>{t("common.browseProducts", "Browse Products")}</span>
                 <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             </Link>
@@ -110,13 +113,15 @@ export const CartPage: React.FC = () => {
       {/* Top Back Link */}
       <Link to="/products" className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors">
         <ArrowLeft className="h-4 w-4" />
-        <span>Continue Shopping</span>
+        <span>{t("common.continueShopping", "Continue Shopping")}</span>
       </Link>
 
       <div className="flex items-center justify-between border-b border-[#E5DEC9] pb-4">
         <div className="flex items-center gap-3">
           <ShoppingBag className="h-6 w-6 text-[#596B58]" />
-          <h1 className="text-2xl font-bold text-[#3B302B]">Your Shopping Cart ({cart.itemCount} Items)</h1>
+          <h1 className="text-2xl font-bold text-[#3B302B]">
+            {t("cart.cartCount", { count: cart.itemCount, defaultValue: `Your Shopping Cart (${cart.itemCount} Items)` })}
+          </h1>
         </div>
       </div>
 
@@ -135,13 +140,17 @@ export const CartPage: React.FC = () => {
 
         {/* Cart Summary */}
         <Card className="space-y-4 bg-[#FFF8EC]">
-          <h3 className="text-lg font-bold text-[#3B302B] border-b border-[#E5DEC9] pb-3">Subtotal Summary</h3>
+          <h3 className="text-lg font-bold text-[#3B302B] border-b border-[#E5DEC9] pb-3">
+            {t("cart.subtotalSummary", "Subtotal Summary")}
+          </h3>
           <div className="flex justify-between items-baseline text-sm text-[#7A6E65]">
-            <span>Items Subtotal</span>
+            <span>{t("cart.itemsSubtotal", "Items Subtotal")}</span>
             <span className="text-xl font-extrabold text-[#3B302B]">₹{cart.subtotal}</span>
           </div>
 
-          <p className="text-xs text-gray-400">Taxes and delivery fees calculated during checkout preview.</p>
+          <p className="text-xs text-gray-400">
+            {t("cart.taxesNotice", "Taxes and delivery fees calculated during checkout preview.")}
+          </p>
 
           <div className="pt-2">
             <Link
@@ -149,7 +158,7 @@ export const CartPage: React.FC = () => {
               className="block"
             >
               <Button className="w-full">
-                <span>Proceed to Checkout</span>
+                <span>{t("cart.proceedToCheckout", "Proceed to Checkout")}</span>
                 <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             </Link>

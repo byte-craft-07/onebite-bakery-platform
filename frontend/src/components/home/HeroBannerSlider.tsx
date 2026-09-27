@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { bannerService, type BannerItem } from "@/services/banner.service";
 
@@ -13,6 +14,7 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({
   autoPlayInterval = 4000,
   className = "",
 }) => {
+  const { t } = useTranslation();
   const [banners, setBanners] = useState<BannerItem[]>(() => bannerService.getStoredBannersSync());
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -112,7 +114,7 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({
       <div className="relative w-full rounded-2xl sm:rounded-3xl bg-[#FFF8EC] border border-[#E5DEC9] aspect-[16/7] sm:aspect-[21/9] flex items-center justify-center animate-pulse">
         <div className="flex items-center gap-2 text-[#596B58] font-semibold text-xs sm:text-sm">
           <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-          <span>Loading posters...</span>
+          <span>{t("home.loadingPosters", "Loading posters...")}</span>
         </div>
       </div>
     );

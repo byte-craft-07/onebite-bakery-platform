@@ -1,7 +1,9 @@
 export interface CreateCategoryDto {
   name: string;
+  nameHi?: string;
   slug?: string;
   description: string;
+  descriptionHi?: string;
   image: string;
   icon?: string;
   displayOrder: number;

@@ -25,8 +25,10 @@ import { UserAvatar, getAvatarFromEmailOrName } from "@/components/common/UserAv
 import { useAuth } from "@/contexts/auth.context";
 import { addressService, type Address } from "@/services/address.service";
 import { googleAuthService } from "@/services/googleAuth.service";
+import { useTranslation } from "react-i18next";
 
 export const CustomerProfilePage: React.FC = () => {
+  const { t } = useTranslation();
   const { user, updateUser, logout, logoutAll } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -60,7 +62,7 @@ export const CustomerProfilePage: React.FC = () => {
 
     setTimeout(() => {
       setIsSaving(false);
-      setStatusMsg("Personal profile information updated successfully!");
+      setStatusMsg(t("profile.profileUpdated", "Personal profile information updated successfully!"));
       setTimeout(() => setStatusMsg(null), 3000);
     }, 400);
   };
@@ -70,7 +72,7 @@ export const CustomerProfilePage: React.FC = () => {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Please select an image smaller than 5MB.");
+      alert(t("profile.photoSizeLimit", "Please select an image smaller than 5MB."));
       return;
     }
 
@@ -80,7 +82,7 @@ export const CustomerProfilePage: React.FC = () => {
       if (dataUrl) {
         setProfileImage(dataUrl);
         updateUser({ profileImage: dataUrl });
-        setStatusMsg("Profile photo uploaded successfully!");
+        setStatusMsg(t("profile.photoUploaded", "Profile photo uploaded successfully!"));
         setTimeout(() => setStatusMsg(null), 3000);
       }
     };
@@ -100,14 +102,14 @@ export const CustomerProfilePage: React.FC = () => {
           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7A6E65] hover:text-[#596B58] transition-colors mb-1"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Back to Account Hub</span>
+          <span>{t("orders.backToHub", "Back to Account Hub")}</span>
         </Link>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B] flex items-center gap-2">
           <User className="h-6 w-6 text-[#596B58]" />
-          <span>Personal Profile & Details</span>
+          <span>{t("profile.title", "Personal Profile & Details")}</span>
         </h1>
         <p className="text-xs text-[#7A6E65]">
-          Manage your personal information, avatar photo, and linked contact credentials
+          {t("profile.subtitle", "Manage your personal information, avatar photo, and linked contact credentials")}
         </p>
       </div>
 
@@ -134,8 +136,8 @@ export const CustomerProfilePage: React.FC = () => {
                 : user?.email || "Google Account"}
             </p>
             <div className="flex flex-wrap items-center gap-2 mt-2">
-              <Badge variant="success">Account: Active</Badge>
-              <Badge variant="primary">Role: {user?.role || "customer"}</Badge>
+              <Badge variant="success">{t("profile.accountActive", "Account: Active")}</Badge>
+              <Badge variant="primary">{t("profile.role", "Role: {{role}}", { role: user?.role || "customer" })}</Badge>
             </div>
           </div>
         </div>
@@ -145,19 +147,19 @@ export const CustomerProfilePage: React.FC = () => {
             <Link to="/admin/dashboard">
               <Button size="sm" className="bg-[#3B302B] text-white hover:bg-[#1E1713] flex items-center gap-1.5 shadow-md">
                 <LayoutDashboard className="h-4 w-4 text-[#596B58]" />
-                <span>Admin Panel</span>
+                <span>{t("profile.adminPanel", "Admin Panel")}</span>
               </Button>
             </Link>
           ) : null}
 
           <Button variant="outline" size="sm" onClick={logout}>
             <LogOut className="h-4 w-4 mr-1 text-gray-500" />
-            <span>Logout</span>
+            <span>{t("profile.logout", "Logout")}</span>
           </Button>
 
           <Button variant="danger" size="sm" onClick={logoutAll}>
             <Shield className="h-4 w-4 mr-1" />
-            <span>Logout All Devices</span>
+            <span>{t("profile.logoutAllDevices", "Logout All Devices")}</span>
           </Button>
         </div>
       </Card>
@@ -167,8 +169,9 @@ export const CustomerProfilePage: React.FC = () => {
         <Card className="space-y-6 border-[#E5DEC9]">
           <div className="flex items-center gap-2 text-sm font-extrabold text-[#3B302B] border-b border-[#E5DEC9] pb-3">
             <User className="h-4 w-4 text-[#596B58]" />
-            <span>Edit Personal Information</span>
+            <span>{t("profile.personalInfo", "Edit Personal Information")}</span>
           </div>
+
 
           {/* Avatar controls */}
           <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-2xl bg-[#FFF8EC] border border-[#E5DEC9]">
@@ -179,9 +182,9 @@ export const CustomerProfilePage: React.FC = () => {
             />
             <div className="space-y-3 text-center sm:text-left flex-1">
               <div>
-                <h4 className="text-xs font-bold text-[#3B302B]">Profile Photo</h4>
+                <h4 className="text-xs font-bold text-[#3B302B]">{t("profile.photo", "Profile Photo")}</h4>
                 <p className="text-[11px] text-[#7A6E65]">
-                  Upload a photo from your device, sync with Google Sign-In, or pick a preset avatar.
+                  {t("profile.photoDesc", "Upload a photo from your device, sync with Google Sign-In, or pick a preset avatar.")}
                 </p>
               </div>
 
@@ -201,7 +204,7 @@ export const CustomerProfilePage: React.FC = () => {
                   className="bg-[#596B58] hover:bg-[#495948] text-white text-xs h-8 flex items-center gap-1.5 shadow-2xs font-bold"
                 >
                   <Upload className="h-3.5 w-3.5" />
-                  <span>Upload Photo from Device</span>
+                  <span>{t("profile.uploadFromDevice", "Upload Photo from Device")}</span>
                 </Button>
 
                 <Button
@@ -229,7 +232,7 @@ export const CustomerProfilePage: React.FC = () => {
                       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                     />
                   </svg>
-                  <span>Sync Google Photo</span>
+                  <span>{t("profile.syncGooglePhoto", "Sync Google Photo")}</span>
                 </Button>
 
                 {profileImage ? (
@@ -240,14 +243,14 @@ export const CustomerProfilePage: React.FC = () => {
                     onClick={() => setProfileImage("")}
                     className="text-xs h-8 text-red-600 hover:bg-red-50"
                   >
-                    Reset to Initial Badge
+                    {t("profile.resetPhoto", "Reset to Initial Badge")}
                   </Button>
                 ) : null}
               </div>
 
               {/* Quick Preset Avatars */}
               <div className="flex flex-wrap items-center gap-1.5 pt-1 justify-center sm:justify-start">
-                <span className="text-[10px] text-[#7A6E65] font-semibold mr-1">Presets:</span>
+                <span className="text-[10px] text-[#7A6E65] font-semibold mr-1">{t("profile.presets", "Presets:")}</span>
                 {[
                   { label: "Chef 👨‍🍳", url: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=150&auto=format&fit=crop&q=80" },
                   { label: "Baker 🥐", url: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=150&auto=format&fit=crop&q=80" },
@@ -273,14 +276,14 @@ export const CustomerProfilePage: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Full Name *"
+              label={`${t("profile.fullName", "Full Name")} *`}
               placeholder="e.g. Ajay Kumar"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
             <Input
-              label="Email Address *"
+              label={`${t("profile.emailAddress", "Email Address")} *`}
               type="email"
               placeholder="customer@example.com"
               value={email}
@@ -291,7 +294,7 @@ export const CustomerProfilePage: React.FC = () => {
 
           <div className="space-y-1">
             <Input
-              label="Custom Profile Image URL (Optional)"
+              label={t("profile.customPhotoUrl", "Custom Profile Image URL (Optional)")}
               type="url"
               placeholder="https://images.unsplash.com/... or paste image URL"
               value={profileImage}
@@ -302,16 +305,16 @@ export const CustomerProfilePage: React.FC = () => {
           {/* Contact Mobile & Address Source of Truth */}
           <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#3B302B]">Contact Mobile & Delivery Address</label>
+              <label className="text-xs font-bold text-[#3B302B]">{t("profile.contactAndAddress", "Contact Mobile & Delivery Address")}</label>
               <Link to="/customer/addresses" className="text-xs font-bold text-[#596B58] hover:underline">
-                {defaultAddress ? "Manage Addresses" : "+ Add Delivery Address"}
+                {defaultAddress ? t("profile.manageAddresses", "Manage Addresses") : t("profile.addDeliveryAddress", "+ Add Delivery Address")}
               </Link>
             </div>
             {defaultAddress ? (
               <div className="p-3.5 rounded-xl bg-[#FFF8EC] border border-[#E5DEC9] space-y-1 text-xs text-[#3B302B]">
                 <div className="flex items-center justify-between">
                   <span className="font-mono font-bold text-sm">📞 +91 {defaultAddress.phone}</span>
-                  <Badge variant="neutral">Address Contact</Badge>
+                  <Badge variant="neutral">{t("profile.addressContact", "Address Contact")}</Badge>
                 </div>
                 <p className="text-[11px] text-[#7A6E65]">
                   📍 {defaultAddress.street}, {defaultAddress.village ? `${defaultAddress.village}, ` : ""}{defaultAddress.district || defaultAddress.city || "Central"} - {defaultAddress.pincode}
@@ -319,26 +322,26 @@ export const CustomerProfilePage: React.FC = () => {
               </div>
             ) : (
               <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 text-xs text-[#7A6E65] flex items-center justify-between">
-                <span>No delivery address saved yet. Save an address to configure contact mobile number.</span>
+                <span>{t("profile.noAddressSaved", "No delivery address saved yet. Save an address to configure contact mobile number.")}</span>
                 <Link to="/customer/addresses">
-                  <Button size="sm" variant="outline" className="text-xs">Add Address</Button>
+                  <Button size="sm" variant="outline" className="text-xs">{t("profile.addAddress", "Add Address")}</Button>
                 </Link>
               </div>
             )}
             <p className="text-[11px] text-[#7A6E65]">
-              Mobile number is required for order and delivery contact, collected with your delivery address.
+              {t("profile.mobileNotice", "Mobile number is required for order and delivery contact, collected with your delivery address.")}
             </p>
           </div>
 
           <Button type="submit" className="w-full sm:w-auto h-10 px-6 shadow-sm" isLoading={isSaving}>
-            Save Profile Changes
+            {t("profile.saveProfileChanges", "Save Profile Changes")}
           </Button>
         </Card>
       </form>
 
       {/* Quick Navigation Cards to Related Sections (Clean & Single-Responsibility) */}
       <div className="space-y-3">
-        <h3 className="text-sm font-extrabold text-[#3B302B]">Related Account Settings</h3>
+        <h3 className="text-sm font-extrabold text-[#3B302B]">{t("profile.relatedSettings", "Related Account Settings")}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Link to="/customer/addresses" className="block group">
             <Card className="p-4 border-[#E5DEC9] group-hover:border-[#596B58] group-hover:shadow-sm transition-all flex items-center justify-between">
@@ -348,9 +351,9 @@ export const CustomerProfilePage: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-xs font-extrabold text-[#3B302B] group-hover:text-[#596B58]">
-                    Delivery Addresses
+                    {t("profile.deliveryAddresses", "Delivery Addresses")}
                   </h4>
-                  <p className="text-[11px] text-[#7A6E65]">Manage saved locations</p>
+                  <p className="text-[11px] text-[#7A6E65]">{t("profile.manageLocations", "Manage saved locations")}</p>
                 </div>
               </div>
               <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-[#596B58] transition-colors" />
@@ -365,9 +368,9 @@ export const CustomerProfilePage: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-xs font-extrabold text-[#3B302B] group-hover:text-[#596B58]">
-                    Notifications
+                    {t("profile.notifications", "Notifications")}
                   </h4>
-                  <p className="text-[11px] text-[#7A6E65]">SMS & email alerts</p>
+                  <p className="text-[11px] text-[#7A6E65]">{t("profile.smsEmailAlerts", "SMS & email alerts")}</p>
                 </div>
               </div>
               <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-[#596B58] transition-colors" />
@@ -382,9 +385,9 @@ export const CustomerProfilePage: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-xs font-extrabold text-[#3B302B] group-hover:text-[#596B58]">
-                    Security Center
+                    {t("profile.securityCenter", "Security Center")}
                   </h4>
-                  <p className="text-[11px] text-[#7A6E65]">Devices & sessions</p>
+                  <p className="text-[11px] text-[#7A6E65]">{t("profile.devicesSessions", "Devices & sessions")}</p>
                 </div>
               </div>
               <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-[#596B58] transition-colors" />

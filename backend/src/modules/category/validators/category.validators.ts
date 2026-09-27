@@ -32,8 +32,10 @@ const seoKeywordsSchema = z
 
 export const createCategorySchema = z.object({
   name: z.string().trim().min(1).max(120),
+  nameHi: z.string().trim().max(150).optional(),
   slug: slugSchema.optional(),
   description: z.string().trim().min(1).max(1000).optional().default("Fresh artisanal category from Onebite Bakery."),
+  descriptionHi: z.string().trim().max(1500).optional(),
   image: z.string().trim().min(1).optional().default("https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80"),
   icon: z.string().trim().min(1).max(120).optional(),
   displayOrder: z.number().int().min(0).default(0),

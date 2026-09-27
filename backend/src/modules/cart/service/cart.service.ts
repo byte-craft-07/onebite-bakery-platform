@@ -224,6 +224,7 @@ export class CartService {
           slug: product.slug,
           thumbnailUrl: product.thumbnailUrl || (product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : undefined),
           productType: product.productType,
+          isInstantAvailable: Boolean(product.isInstantAvailable),
         },
         addedAt: new Date(),
         ...(dto.notes ? { notes: dto.notes } : {}),
@@ -511,6 +512,7 @@ export class CartService {
         slug: product.slug,
         thumbnailUrl: product.thumbnailUrl,
         productType: product.productType,
+        isInstantAvailable: Boolean(product.isInstantAvailable),
       };
 
       if (!item.addedAt) {

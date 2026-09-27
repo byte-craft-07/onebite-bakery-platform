@@ -12,8 +12,10 @@ import type {
 export interface Category extends TimestampedDocument, SoftDeletableDocument {
   _id: Types.ObjectId;
   name: string;
+  nameHi?: string;
   slug: string;
   description: string;
+  descriptionHi?: string;
   image: string;
   icon?: string;
   displayOrder: number;
@@ -36,6 +38,12 @@ const categorySchema = new Schema<Category>(
       minlength: 2,
       maxlength: 120,
     },
+    nameHi: {
+      type: String,
+      trim: true,
+      maxlength: 150,
+      default: undefined,
+    },
     slug: {
       type: String,
       required: true,
@@ -49,6 +57,12 @@ const categorySchema = new Schema<Category>(
       trim: true,
       minlength: 1,
       maxlength: 1000,
+    },
+    descriptionHi: {
+      type: String,
+      trim: true,
+      maxlength: 1500,
+      default: undefined,
     },
     image: {
       type: String,

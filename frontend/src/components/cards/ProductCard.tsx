@@ -8,11 +8,14 @@ import { cartService } from "@/services/cart.service";
 import { favoritesService } from "@/services/favorites.service";
 import { reviewService } from "@/services/review.service";
 import { getOptimizedImageUrl } from "@/utils/cdn.utils";
+import { useTranslation } from "react-i18next";
+import { getLocalizedProductName } from "@/i18n/utils";
 
 const FALLBACK_PRODUCT_IMAGE =
   "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80";
 
 export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [isAdding, setIsAdding] = useState(false);
   const [isOrderingNow, setIsOrderingNow] = useState(false);
@@ -138,6 +141,8 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
     { width: 600, quality: 80 }
   );
 
+  const displayName = getLocalizedProductName(product, i18n.language);
+
   // Compute compare price and discount percentage
   const effectiveComparePrice =
     product.compareAtPrice && product.compareAtPrice > product.price
@@ -162,12 +167,12 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
     try {
       if (nextState) {
         await favoritesService.addFavorite(product);
-        toast.add("Added to Wishlist! ❤️", `"${product.name}" saved to your favorites.`, {
+        toast.add(t("navigation.favorites", "Favorites"), `"${displayName}" saved to your favorites.`, {
           image: activeImageUrl,
         });
       } else {
         await favoritesService.removeFavorite(product.id);
-        toast.delete("Removed from Wishlist", `"${product.name}" removed from favorites.`);
+        toast.delete(t("navigation.favorites", "Favorites"), `"${displayName}" removed from favorites.`);
       }
     } catch {
       setIsFavorite(!nextState);
@@ -203,6 +208,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
           price: product.price,
           mainImage: activeImageUrl,
           slug: product.slug,
+          isInstantAvailable: Boolean(product.isInstantAvailable),
         },
       });
       setIsAdded(true);
@@ -248,6 +254,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
         quantity: 1,
         mainImage: activeImageUrl,
         itemTotal: product.price,
+        isInstantAvailable: Boolean(product.isInstantAvailable),
       };
       sessionStorage.setItem("onebitebakery_direct_order_item", JSON.stringify(directItem));
       navigate("/checkout?direct=1");
@@ -298,6 +305,18 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
           </div>
         </div>
 
+        {/* Top-Right Ready vs Made to Order Badge */}
+        {product.isInstantAvailable ? (
+          <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5 bg-amber-500 text-white font-bold text-[10px] sm:text-[11px] px-2.5 py-1 rounded-full shadow-md backdrop-blur-xs tracking-normal border border-amber-300/40">
+            <Zap className="h-3.5 w-3.5 fill-current shrink-0 text-white" />
+            <span className="tracking-wide">Available in Stock (अभी ऑर्डर करें)</span>
+          </div>
+        ) : (
+          <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5 bg-black/65 text-[#FFF8EC] font-semibold text-[10px] sm:text-[11px] px-2.5 py-1 rounded-full shadow-xs backdrop-blur-xs tracking-normal border border-white/20">
+            <span>📅 Fresh केक बनवाएं</span>
+          </div>
+        )}
+
         {/* Manual Prev / Next Arrow Controls (Visible on mobile and on desktop hover) */}
         {imageList.length > 1 && (
           <>
@@ -323,11 +342,11 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
         {/* Out of Stock Alert or Bestseller Badge */}
         {isOutOfStock ? (
           <div className="absolute bottom-2 left-2 z-10 px-2 py-0.5 rounded-md bg-red-600 text-white text-[10px] font-extrabold shadow-md animate-pulse">
-            Out of Stock
+            {t("common.outOfStock", "Out of Stock")}
           </div>
         ) : isBestseller ? (
           <div className="absolute bottom-2 left-2 z-10 bg-[#596B58] text-[#FFF8EC] font-extrabold text-[10px] sm:text-[11px] px-2.5 py-0.5 rounded-md shadow-xs tracking-tight">
-            Best Seller
+            {t("products.bestseller", "Best Seller")}
           </div>
         ) : null}
 
@@ -372,9 +391,9 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
           <Link to={`/products/${product.slug || product.id}`} className="block">
             <h3
               className="text-xs sm:text-sm md:text-[15px] font-bold text-[#3B302B] hover:text-[#596B58] transition-colors line-clamp-1 leading-snug"
-              title={product.name}
+              title={displayName}
             >
-              {product.name}
+              {displayName}
             </h3>
           </Link>
 
@@ -388,7 +407,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
                 ₹{effectiveComparePrice}
               </span>
               <span className="text-[10px] sm:text-xs font-bold text-[#596B58]">
-                {discountPercent}% OFF
+                {discountPercent}% {t("common.off", "OFF")}
               </span>
             </div>
 
@@ -396,7 +415,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
             <button
               type="button"
               onClick={handleToggleFavorite}
-              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+              aria-label={isFavorite ? t("navigation.favorites", "Remove from favorites") : t("navigation.favorites", "Add to favorites")}
               className="p-1 text-[#7A6E65] hover:text-[#DC2626] transition-transform active:scale-90 cursor-pointer shrink-0"
             >
               <Heart
@@ -416,7 +435,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
           >
             <span className="font-bold text-[#3B302B]">{ratingValue.toFixed(1)}</span>
             <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-[#D8BE91] text-[#D8BE91] shrink-0" />
-            <span className="text-[#7A6E65] font-normal group-hover:underline">({reviewCountValue} Reviews)</span>
+            <span className="text-[#7A6E65] font-normal group-hover:underline">({reviewCountValue} {t("products.reviews", "Reviews")})</span>
           </Link>
         </div>
 
@@ -427,7 +446,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
             type="button"
             onClick={handleAddToCart}
             disabled={isAdding || isOrderingNow}
-            aria-label="Add to cart"
+            aria-label={t("common.addToCart", "Add to cart")}
             className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer select-none min-h-[34px] sm:min-h-[38px] ${
               isOutOfStock
                 ? "bg-red-50 text-red-600 border border-red-200 cursor-not-allowed"
@@ -437,16 +456,16 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
             }`}
           >
             {isOutOfStock ? (
-              <span>Out of Stock</span>
+              <span>{t("common.outOfStock", "Out of Stock")}</span>
             ) : isAdded ? (
               <>
                 <Check className="h-3.5 w-3.5" />
-                <span>Added</span>
+                <span>{t("common.added", "Added")}</span>
               </>
             ) : (
               <>
                 <ShoppingBag className="h-3.5 w-3.5 shrink-0 stroke-[2.2]" />
-                <span>{isAdding ? "..." : "Add"}</span>
+                <span>{isAdding ? "..." : t("common.add", "Add")}</span>
               </>
             )}
           </button>
@@ -456,7 +475,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
             type="button"
             onClick={handleOrderNow}
             disabled={isAdding || isOrderingNow}
-            aria-label="Order now"
+            aria-label={t("common.orderNow", "Order now")}
             className={`flex items-center justify-center gap-1 py-2 px-2.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer select-none min-h-[34px] sm:min-h-[38px] ${
               isOutOfStock
                 ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
@@ -464,7 +483,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
             }`}
           >
             <Zap className="h-3.5 w-3.5 fill-[#D8BE91] text-[#D8BE91] shrink-0" />
-            <span>{isOrderingNow ? "..." : "Order"}</span>
+            <span>{isOrderingNow ? "..." : t("common.order", "Order")}</span>
           </button>
         </div>
       </div>

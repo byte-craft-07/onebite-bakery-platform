@@ -23,9 +23,12 @@ export interface ComboItem {
 export interface Product extends TimestampedDocument, SoftDeletableDocument {
   _id: Types.ObjectId;
   name: string;
+  nameHi?: string;
   slug: string;
   description: string;
+  descriptionHi?: string;
   shortDescription?: string;
+  shortDescriptionHi?: string;
   categoryId: Types.ObjectId;
   productType: ProductType;
   occasionIds: Types.ObjectId[];
@@ -42,6 +45,7 @@ export interface Product extends TimestampedDocument, SoftDeletableDocument {
   allowBackorder: boolean;
   stockStatus: StockStatus;
   isAvailable: boolean;
+  isInstantAvailable?: boolean;
   deliveryEligible: boolean;
   pickupEligible: boolean;
   availableFrom?: Date;
@@ -85,6 +89,12 @@ const productSchema = new Schema<Product>(
       minlength: 2,
       maxlength: 160,
     },
+    nameHi: {
+      type: String,
+      trim: true,
+      maxlength: 200,
+      default: undefined,
+    },
     slug: {
       type: String,
       required: true,
@@ -99,10 +109,22 @@ const productSchema = new Schema<Product>(
       minlength: 1,
       maxlength: 2000,
     },
+    descriptionHi: {
+      type: String,
+      trim: true,
+      maxlength: 3000,
+      default: undefined,
+    },
     shortDescription: {
       type: String,
       trim: true,
       maxlength: 300,
+      default: undefined,
+    },
+    shortDescriptionHi: {
+      type: String,
+      trim: true,
+      maxlength: 400,
       default: undefined,
     },
     categoryId: {
@@ -195,6 +217,11 @@ const productSchema = new Schema<Product>(
       type: Boolean,
       required: true,
       default: true,
+    },
+    isInstantAvailable: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
     deliveryEligible: {
       type: Boolean,

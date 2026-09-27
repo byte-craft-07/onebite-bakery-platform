@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Clock, Download, Mail, MapPin, Phone, Share2, Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { RatingModal } from "@/components/review/RatingModal";
 import { usePWA } from "@/hooks/usePWA";
+import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
 
 export const Footer: React.FC = () => {
+  const { t } = useTranslation();
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const { isStandalone, promptInstall } = usePWA();
 
@@ -42,10 +45,10 @@ export const Footer: React.FC = () => {
         <div className="space-y-3">
           <h4 className="text-sm font-bold text-[#D8BE91] uppercase tracking-wider">Quick Links</h4>
           <ul className="space-y-2 text-xs text-[#FFF8EC]/80">
-            <li><Link to="/products" className="hover:text-[#D8BE91] transition-colors">Our Catalog</Link></li>
-            <li><Link to="/categories" className="hover:text-[#D8BE91] transition-colors">Browse Categories</Link></li>
-            <li><Link to="/occasions" className="hover:text-[#D8BE91] transition-colors">Special Occasions</Link></li>
-            <li><Link to="/offers" className="hover:text-[#D8BE91] text-[#D8BE91] font-bold transition-colors">Offers & Coupons</Link></li>
+            <li><Link to="/products" className="hover:text-[#D8BE91] transition-colors">{t("navigation.products", "Our Catalog")}</Link></li>
+            <li><Link to="/categories" className="hover:text-[#D8BE91] transition-colors">{t("navigation.categories", "Browse Categories")}</Link></li>
+            <li><Link to="/occasions" className="hover:text-[#D8BE91] transition-colors">{t("navigation.occasions", "Special Occasions")}</Link></li>
+            <li><Link to="/offers" className="hover:text-[#D8BE91] text-[#D8BE91] font-bold transition-colors">{t("navigation.offers", "Offers & Coupons")}</Link></li>
             <li>
               <button
                 type="button"
@@ -53,7 +56,7 @@ export const Footer: React.FC = () => {
                 className="text-[#D8BE91] hover:text-[#FFF8EC] font-bold transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <Star className="h-3.5 w-3.5 fill-current" />
-                <span>Rate Our Bakery / Write Review</span>
+                <span>{t("reviews.writeReview", "Rate Our Bakery / Write Review")}</span>
               </button>
             </li>
             {!isStandalone && (
@@ -64,18 +67,18 @@ export const Footer: React.FC = () => {
                   className="text-[#D8BE91] hover:text-[#FFF8EC] font-bold transition-colors flex items-center gap-1 cursor-pointer"
                 >
                   <Download className="h-3.5 w-3.5 text-[#D8BE91]" />
-                  <span>Install App (Mobile & Desktop)</span>
+                  <span>{t("common.installApp", "Install App")}</span>
                 </button>
               </li>
             )}
-            <li><Link to="/about" className="hover:text-[#D8BE91] transition-colors">Our Story & Craft</Link></li>
-            <li><Link to="/contact" className="hover:text-[#D8BE91] transition-colors">Contact & Store Pickup</Link></li>
+            <li><Link to="/about" className="hover:text-[#D8BE91] transition-colors">{t("navigation.aboutUs", "About Us")}</Link></li>
+            <li><Link to="/contact" className="hover:text-[#D8BE91] transition-colors">{t("navigation.contactUs", "Contact & Store Pickup")}</Link></li>
           </ul>
         </div>
 
         {/* Popular Items */}
         <div className="space-y-3">
-          <h4 className="text-sm font-bold text-[#D8BE91] uppercase tracking-wider">Top Favorites</h4>
+          <h4 className="text-sm font-bold text-[#D8BE91] uppercase tracking-wider">{t("products.bestseller", "Top Favorites")}</h4>
           <ul className="space-y-2 text-xs text-[#FFF8EC]/80">
             <li>Belgian Chocolate Truffle</li>
             <li>Classic Red Velvet Cake</li>
@@ -87,7 +90,7 @@ export const Footer: React.FC = () => {
 
         {/* Contact Info */}
         <div className="space-y-3 text-xs text-[#FFF8EC]/80">
-          <h4 className="text-sm font-bold text-[#D8BE91] uppercase tracking-wider">Store Location</h4>
+          <h4 className="text-sm font-bold text-[#D8BE91] uppercase tracking-wider">{t("checkout.pickupStoreAddress", "Store Location")}</h4>
           <div className="flex items-start gap-2.5">
             <MapPin className="h-4 w-4 text-[#D8BE91] shrink-0 mt-0.5" />
             <span>Onebite Bakery, N 80°14, terha 25°49'43.3, 54.7"E, hamirpur, Uttar Pradesh 210502</span>
@@ -102,13 +105,17 @@ export const Footer: React.FC = () => {
           </div>
           <div className="flex items-center gap-2.5">
             <Clock className="h-4 w-4 text-[#D8BE91] shrink-0" />
-            <span>Mon - Sun: 8:00 AM - 10:00 PM</span>
+            <span>{t("checkout.openDaily", "Mon - Sun: 8:00 AM - 10:00 PM")}</span>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pt-12 mt-12 border-t border-white/10 text-center text-xs text-[#FFF8EC]/60">
-        <p>&copy; {new Date().getFullYear()} Onebite Bakery Platform &bull; हर जश्न का पहला निवाला। (Pure Joy in Every Single Bite). All rights reserved.</p>
+      <div className="max-w-7xl mx-auto px-6 pt-12 mt-12 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#FFF8EC]/60">
+        <p>&copy; {new Date().getFullYear()} Onebite Bakery &bull; {t("common.freshBakedDaily", "Freshly Baked Daily")}. {t("common.allRightsReserved", "All rights reserved.")}</p>
+        <div className="flex items-center gap-3">
+          <span className="text-[11px]">{t("common.selectLanguage", "Language")}:</span>
+          <LanguageSwitcher variant="compact" />
+        </div>
       </div>
 
       <RatingModal

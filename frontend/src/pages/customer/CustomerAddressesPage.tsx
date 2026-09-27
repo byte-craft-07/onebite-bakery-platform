@@ -9,8 +9,10 @@ import { useAuth } from "@/contexts/auth.context";
 import { toast } from "@/contexts/toast.context";
 import { addressService, type Address } from "@/services/address.service";
 import { villageService, type Village } from "@/services/village.service";
+import { useTranslation } from "react-i18next";
 
 export const CustomerAddressesPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user, updateCurrentLocation } = useAuth();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -73,7 +75,7 @@ export const CustomerAddressesPage: React.FC = () => {
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.street.trim() || !form.phone.trim()) {
-      setStatusMsg({ type: "error", text: "Please enter your full street address and phone number." });
+      setStatusMsg({ type: "error", text: t("profile.fillStreetAndPhone", "Please enter your full street address and phone number.") });
       toast.error("Invalid Address", "Please fill in your street address and 10-digit phone number.");
       return;
     }
@@ -119,7 +121,7 @@ export const CustomerAddressesPage: React.FC = () => {
         addressType: "HOME",
         isDefault: false,
       });
-      setStatusMsg({ type: "success", text: "Delivery address added successfully!" });
+      setStatusMsg({ type: "success", text: t("profile.addressAddedSuccess", "Delivery address added successfully!") });
       toast.add("Address Added!", `${created.name} (${created.village || created.district}) added to address book.`);
       setTimeout(() => setStatusMsg(null), 3000);
     } catch (err: any) {
@@ -136,7 +138,7 @@ export const CustomerAddressesPage: React.FC = () => {
     try {
       await addressService.deleteAddress(id);
       setAddresses((prev) => prev.filter((a) => a.id !== id));
-      setStatusMsg({ type: "success", text: "Address removed from your address book." });
+      setStatusMsg({ type: "success", text: t("profile.addressRemoved", "Address removed from your address book.") });
       toast.delete("Address Removed", "Delivery address was deleted.");
       setTimeout(() => setStatusMsg(null), 2500);
     } catch (_err) {
@@ -161,7 +163,7 @@ export const CustomerAddressesPage: React.FC = () => {
           void updateCurrentLocation(matched.id, matched.district);
         }
       }
-      setStatusMsg({ type: "success", text: "Default delivery address updated." });
+      setStatusMsg({ type: "success", text: t("profile.defaultUpdated", "Default delivery address updated.") });
       toast.update("Default Address Updated", "Your default delivery location has been set.");
       setTimeout(() => setStatusMsg(null), 2500);
     } catch (_err) {
@@ -179,14 +181,14 @@ export const CustomerAddressesPage: React.FC = () => {
             className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7A6E65] hover:text-[#596B58] transition-colors mb-1"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Account Hub</span>
+            <span>{t("profile.backToHub", "Back to Account Hub")}</span>
           </Link>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B] flex items-center gap-2">
             <MapPin className="h-6 w-6 text-[#596B58]" />
-            <span>Saved Delivery Addresses</span>
+            <span>{t("profile.savedAddresses", "Saved Delivery Addresses")}</span>
           </h1>
           <p className="text-xs text-[#7A6E65]">
-            Manage your home, office, and celebration delivery destinations for 1-click checkout
+            {t("profile.savedAddressesDesc", "Manage your home, office, and celebration delivery destinations for 1-click checkout")}
           </p>
         </div>
 
@@ -195,7 +197,7 @@ export const CustomerAddressesPage: React.FC = () => {
           className="flex items-center justify-center gap-2 w-full sm:w-auto shadow-md"
         >
           <Plus className="h-4 w-4" />
-          <span>Add New Address</span>
+          <span>{t("profile.addNewAddress", "Add New Address")}</span>
         </Button>
       </div>
 
@@ -246,11 +248,15 @@ export const CustomerAddressesPage: React.FC = () => {
                       </div>
                     )}
                     <span className="text-xs font-extrabold uppercase text-[#3B302B]">
-                      {addr.addressType || "HOME"}
+                      {addr.addressType === "WORK"
+                        ? t("profile.workTag", "WORK")
+                        : addr.addressType === "HOME"
+                        ? t("profile.homeTag", "HOME")
+                        : t("profile.otherTag", addr.addressType || "HOME")}
                     </span>
                   </div>
                   {addr.isDefault ? (
-                    <Badge variant="success">Default Address</Badge>
+                    <Badge variant="success">{t("profile.defaultAddressBadge", "Default Address")}</Badge>
                   ) : null}
                 </div>
 
@@ -275,7 +281,7 @@ export const CustomerAddressesPage: React.FC = () => {
                   className="text-xs font-bold text-red-600 hover:text-red-800 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  <span>Delete</span>
+                  <span>{t("profile.deleteAddress", "Delete")}</span>
                 </button>
 
                 {!addr.isDefault ? (
@@ -284,12 +290,12 @@ export const CustomerAddressesPage: React.FC = () => {
                     onClick={() => handleSetDefault(addr.id)}
                     className="text-xs font-bold text-[#596B58] hover:text-[#495948] hover:underline cursor-pointer transition-colors"
                   >
-                    Set as Default
+                    {t("profile.setAsDefault", "Set as Default")}
                   </button>
                 ) : (
                   <span className="text-[11px] text-green-700 font-bold flex items-center gap-1">
                     <CheckCircle2 className="h-3 w-3" />
-                    <span>Active Delivery Location</span>
+                    <span>{t("profile.activeDeliveryLocation", "Active Delivery Location")}</span>
                   </span>
                 )}
               </div>
@@ -298,12 +304,12 @@ export const CustomerAddressesPage: React.FC = () => {
         </div>
       ) : (
         <EmptyState
-          title="No Delivery Addresses Saved"
-          description="Save your delivery address now for seamless 1-click orders and real-time fresh bakery delivery."
+          title={t("profile.noAddressesSaved", "No Delivery Addresses Saved")}
+          description={t("profile.noAddressesDesc", "Save your delivery address now for seamless 1-click orders and real-time fresh bakery delivery.")}
           action={
             <Button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
-              <span>Add Your First Address</span>
+              <span>{t("profile.addFirstAddress", "Add Your First Address")}</span>
             </Button>
           }
         />
@@ -313,19 +319,19 @@ export const CustomerAddressesPage: React.FC = () => {
       <Modal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        title="Add New Delivery Address"
+        title={t("profile.addNewAddressTitle", "Add New Delivery Address")}
       >
         <form onSubmit={handleSaveAddress} className="space-y-4 pt-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Input
-              label="Recipient Full Name *"
+              label={`${t("profile.recipientName", "Recipient Full Name")} *`}
               placeholder="e.g. Ajay Kumar"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
             />
             <Input
-              label="Contact Phone Number *"
+              label={`${t("profile.contactPhone", "Contact Phone Number")} *`}
               placeholder="9876543210"
               maxLength={10}
               value={form.phone}
@@ -337,13 +343,13 @@ export const CustomerAddressesPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-[#3B302B] flex items-center justify-between">
-                <span>Select Village / Area *</span>
-                <span className="text-[10px] text-[#596B58]">Onebite Bakery Delivery Network</span>
+                <span>{t("profile.selectVillage", "Select Village / Area *")}</span>
+                <span className="text-[10px] text-[#596B58]">{t("profile.deliveryNetwork", "Onebite Bakery Delivery Network")}</span>
               </label>
               <CustomSelect
                 value={form.village}
                 onChange={(val) => handleVillageChange(val)}
-                placeholder="-- Select Village / Area --"
+                placeholder={t("profile.selectVillagePlaceholder", "-- Select Village / Area --")}
                 searchable={villages.length > 5}
                 options={villages.map((v) => ({
                   value: v.name,
@@ -353,7 +359,7 @@ export const CustomerAddressesPage: React.FC = () => {
             </div>
 
             <Input
-              label="Pincode / ZIP *"
+              label={`${t("profile.pincode", "Pincode / ZIP")} *`}
               placeholder="110001"
               maxLength={6}
               value={form.pincode}
@@ -364,14 +370,14 @@ export const CustomerAddressesPage: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Input
-              label="District *"
+              label={`${t("profile.district", "District")} *`}
               placeholder="Central"
               value={form.district}
               onChange={(e) => setForm({ ...form, district: e.target.value })}
               required
             />
             <div className="space-y-1">
-              <label className="text-xs font-bold text-[#3B302B]">Address Tag</label>
+              <label className="text-xs font-bold text-[#3B302B]">{t("profile.addressTag", "Address Tag")}</label>
               <div className="flex gap-2">
                 {(["HOME", "WORK", "OTHER"] as const).map((type) => (
                   <button
@@ -384,7 +390,11 @@ export const CustomerAddressesPage: React.FC = () => {
                         : "border-[#E5DEC9] bg-white text-[#7A6E65]"
                     }`}
                   >
-                    {type}
+                    {type === "HOME"
+                      ? t("profile.homeTag", "HOME")
+                      : type === "WORK"
+                      ? t("profile.workTag", "WORK")
+                      : t("profile.otherTag", "OTHER")}
                   </button>
                 ))}
               </div>
@@ -392,7 +402,7 @@ export const CustomerAddressesPage: React.FC = () => {
           </div>
 
           <Input
-            label="Street Address / House / Flat No. *"
+            label={`${t("profile.streetAddress", "Street Address / House / Flat No.")} *`}
             placeholder="Flat 402, Sunshine Heights, Near Temple"
             value={form.street}
             onChange={(e) => setForm({ ...form, street: e.target.value })}
@@ -407,12 +417,12 @@ export const CustomerAddressesPage: React.FC = () => {
                 onChange={(e) => setForm({ ...form, isDefault: e.target.checked })}
                 className="rounded border-gray-300 text-[#596B58] h-4 w-4"
               />
-              <span>Set as default delivery address</span>
+              <span>{t("profile.setDefaultCheckbox", "Set as default delivery address")}</span>
             </label>
           </div>
 
           <Button type="submit" className="w-full mt-4">
-            Save Delivery Address
+            {t("profile.saveDeliveryAddress", "Save Delivery Address")}
           </Button>
         </form>
       </Modal>

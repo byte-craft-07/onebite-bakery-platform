@@ -18,8 +18,10 @@ import {
 import { useAuth } from "@/contexts/auth.context";
 import { authService } from "@/services/auth.service";
 import { googleAuthService } from "@/services/googleAuth.service";
+import { useTranslation } from "react-i18next";
 
 export const CustomerAuthContainer: React.FC = () => {
+  const { t } = useTranslation();
   const [apiError, setApiError] = useState<string | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
@@ -73,17 +75,17 @@ export const CustomerAuthContainer: React.FC = () => {
 
     const errorParam = searchParams.get("error");
     if (errorParam === "google_cancelled") {
-      setApiError("Google authentication was cancelled. Please try again.");
+      setApiError(t("auth.googleCancelled", "Google authentication was cancelled. Please try again."));
     } else if (errorParam === "google_invalid_state") {
       setApiError(
         isLocalhost
           ? "Google Sign-In verification expired or was invalid on localhost. Please use the Password / Test Login below."
-          : "Google Sign-In verification expired or was invalid. Please try again.",
+          : t("auth.googleInvalidState", "Google Sign-In verification expired or was invalid. Please try again."),
       );
     } else if (errorParam === "google_failed") {
-      setApiError("Google Sign-In failed. Please click below to try again.");
+      setApiError(t("auth.googleFailed", "Google Sign-In failed. Please click below to try again."));
     }
-  }, [searchParams, login, navigate]);
+  }, [searchParams, login, navigate, t, isLocalhost]);
 
   const getRedirectPath = (role?: string) => {
     const redirectParam =
@@ -109,7 +111,7 @@ export const CustomerAuthContainer: React.FC = () => {
       googleAuthService.redirectToGoogleOAuth();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Google Sign-In failed. Please try again.";
+        err instanceof Error ? err.message : t("auth.googleFailed", "Google Sign-In failed. Please try again.");
       setApiError(message);
       setIsGoogleLoading(false);
     }
@@ -118,11 +120,11 @@ export const CustomerAuthContainer: React.FC = () => {
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier.trim()) {
-      setApiError("Please enter your Phone number or Email.");
+      setApiError(t("auth.phoneRequired", "Please enter your Phone number or Email."));
       return;
     }
     if (!password) {
-      setApiError("Please enter your password.");
+      setApiError(t("auth.passwordRequired", "Please enter your password."));
       return;
     }
 
@@ -139,7 +141,7 @@ export const CustomerAuthContainer: React.FC = () => {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
           ?.message ||
-        (err instanceof Error ? err.message : "Invalid phone/email or password.");
+        (err instanceof Error ? err.message : t("auth.invalidCredentials", "Invalid phone/email or password."));
       setApiError(message);
     } finally {
       setIsPasswordLoading(false);
@@ -175,10 +177,10 @@ export const CustomerAuthContainer: React.FC = () => {
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">
-            Log in or sign up
+            {t("auth.loginTitle", "Log in or sign up")}
           </h1>
           <p className="text-xs sm:text-sm text-[#A0A0A0] mt-1.5 leading-relaxed">
-            Experience fresh artisanal bakery delicacies delivered to you.
+            {t("auth.loginSubtitle", "Experience fresh artisanal bakery delicacies delivered to you.")}
           </p>
         </div>
 
@@ -205,7 +207,7 @@ export const CustomerAuthContainer: React.FC = () => {
                 className="text-[11px] font-bold text-amber-300 hover:text-amber-200 underline inline-flex items-center gap-1 cursor-pointer"
               >
                 <RefreshCw className="h-3 w-3" />
-                <span>Retry Google Sign-In</span>
+                <span>{t("auth.retryGoogleSignIn", "Retry Google Sign-In")}</span>
               </button>
             </div>
           </div>
@@ -243,7 +245,9 @@ export const CustomerAuthContainer: React.FC = () => {
             </svg>
           )}
           <span>
-            {isGoogleLoading ? "Connecting to Google..." : "Continue with Google"}
+            {isGoogleLoading
+              ? t("auth.connectingToGoogle", "Connecting to Google...")
+              : t("auth.continueWithGoogle", "Continue with Google")}
           </span>
         </button>
 
@@ -254,7 +258,7 @@ export const CustomerAuthContainer: React.FC = () => {
             <div className="relative flex py-2 items-center">
               <div className="flex-grow border-t border-[#333333]"></div>
               <span className="flex-shrink mx-3 text-[11px] font-semibold tracking-wider text-[#737373] uppercase">
-                OR SIGN IN WITH PASSWORD
+                {t("auth.orSignInWithPassword", "OR SIGN IN WITH PASSWORD")}
               </span>
               <div className="flex-grow border-t border-[#333333]"></div>
             </div>
@@ -263,7 +267,7 @@ export const CustomerAuthContainer: React.FC = () => {
             <form onSubmit={handlePasswordLogin} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-medium text-[#c0c0c0] mb-1.5">
-                  Phone Number or Email
+                  {t("auth.phoneOrEmail", "Phone Number or Email")}
                 </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#777]">
@@ -273,7 +277,7 @@ export const CustomerAuthContainer: React.FC = () => {
                     type="text"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="e.g. 7897671632 or ajay@gmail.com"
+                    placeholder={t("auth.phoneOrEmailPlaceholder", "e.g. 7897671632 or ajay@gmail.com")}
                     className="w-full h-11 pl-10 pr-3 rounded-xl bg-[#272727] border border-[#3b3b3b] text-white text-sm placeholder:text-[#666] focus:outline-none focus:border-amber-400/80 transition-colors"
                     autoComplete="username"
                   />
@@ -282,7 +286,7 @@ export const CustomerAuthContainer: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-medium text-[#c0c0c0] mb-1.5">
-                  Password
+                  {t("auth.password", "Password")}
                 </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#777]">
@@ -292,7 +296,7 @@ export const CustomerAuthContainer: React.FC = () => {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    placeholder={t("auth.passwordPlaceholder", "Enter your password")}
                     className="w-full h-11 pl-10 pr-10 rounded-xl bg-[#272727] border border-[#3b3b3b] text-white text-sm placeholder:text-[#666] focus:outline-none focus:border-amber-400/80 transition-colors"
                     autoComplete="current-password"
                   />
@@ -320,7 +324,11 @@ export const CustomerAuthContainer: React.FC = () => {
                 ) : (
                   <KeyRound className="h-4 w-4 text-black" />
                 )}
-                <span>{isPasswordLoading ? "Signing in..." : "Sign In with Password"}</span>
+                <span>
+                  {isPasswordLoading
+                    ? t("auth.loggingIn", "Signing in...")
+                    : t("auth.loginButton", "Sign In with Password")}
+                </span>
               </button>
             </form>
 
@@ -329,7 +337,7 @@ export const CustomerAuthContainer: React.FC = () => {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] font-semibold text-amber-300 flex items-center gap-1.5">
                   <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                  1-Click Quick Test Login (Localhost Only)
+                  {t("auth.quickLoginTitle", "1-Click Quick Test Login (Localhost Only)")}
                 </span>
               </div>
 
@@ -372,7 +380,7 @@ export const CustomerAuthContainer: React.FC = () => {
       {/* Footer Security Badge */}
       <div className="mt-5 pt-3.5 border-t border-[#2a2a2a] flex items-center justify-center gap-2 text-[11px] text-[#7E7E7E]">
         <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-        <span>256-Bit Encrypted & Secure Authentication</span>
+        <span>{t("auth.secureAuthBadge", "256-Bit Encrypted & Secure Authentication")}</span>
       </div>
     </div>
   );

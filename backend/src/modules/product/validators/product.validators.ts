@@ -53,9 +53,12 @@ const booleanQuerySchema = z
 
 const productSchemaBase = z.object({
   name: z.string().trim().min(1).max(160),
+  nameHi: z.string().trim().max(200).optional(),
   slug: slugSchema.optional(),
   shortDescription: z.string().trim().min(1).max(300).optional(),
+  shortDescriptionHi: z.string().trim().max(400).optional(),
   description: z.string().trim().min(1).max(2000).optional().default("Freshly baked artisanal delight from Onebite Bakery."),
+  descriptionHi: z.string().trim().max(3000).optional(),
   categoryId: optionalObjectIdSchema,
   occasionIds: z.array(objectIdSchema).default([]),
   productType: z.enum(PRODUCT_TYPES).default("NORMAL"),
@@ -76,6 +79,7 @@ const productSchemaBase = z.object({
   allowBackorder: z.boolean().default(false),
   stockStatus: z.enum(STOCK_STATUSES).optional(),
   isAvailable: z.boolean().default(true),
+  isInstantAvailable: z.boolean().default(false),
   isEggless: z.boolean().default(true),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),
@@ -192,6 +196,7 @@ export const publicProductQuerySchema = z
     minPrice: z.coerce.number().min(0).optional(),
     maxPrice: z.coerce.number().min(0).optional(),
     isAvailable: booleanQuerySchema,
+    isInstantAvailable: booleanQuerySchema,
     isFeatured: booleanQuerySchema,
     isTrending: booleanQuerySchema,
     isSeasonal: booleanQuerySchema,

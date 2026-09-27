@@ -7,6 +7,7 @@ import { ProductCard } from "@/components/cards/ProductCard";
 import { Badge, EmptyState, Skeleton } from "@/components/ui/DisplayComponents";
 import { catalogService, type OccasionItem, type ProductItem } from "@/services/catalog.service";
 import { useAuth } from "@/contexts/auth.context";
+import { useTranslation } from "react-i18next";
 
 interface OccasionTab {
   id: string;
@@ -61,6 +62,7 @@ const OCCASION_TABS: OccasionTab[] = [
 ];
 
 export const OccasionsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialOccasion = searchParams.get("tab") || "all";
 
@@ -102,6 +104,7 @@ export const OccasionsPage: React.FC = () => {
   };
 
   const currentTabInfo = OCCASION_TABS.find((t) => t.slug === selectedTab) || OCCASION_TABS[0];
+  const localizedTabName = t(`products.occasions.${currentTabInfo.slug}`, currentTabInfo.name);
 
   return (
     <div className="space-y-8 pb-20">
@@ -111,17 +114,17 @@ export const OccasionsPage: React.FC = () => {
         className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
-        <span>Back to Home</span>
+        <span>{t("products.backToHome", "Back to Home")}</span>
       </Link>
 
       {/* Main Header Banner */}
       <div className={`rounded-3xl border border-[#E5DEC9] bg-gradient-to-r ${currentTabInfo.bannerGradient} p-6 sm:p-10 text-center space-y-3 shadow-sm transition-all duration-300`}>
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-[#596B58]/30 text-xs font-bold text-[#596B58] shadow-2xs">
           <span>{currentTabInfo.icon}</span>
-          <span>Occasion Special Collection</span>
+          <span>{t("navigation.occasions", "Occasion Special Collection")}</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-[#3B302B] tracking-tight">
-          {currentTabInfo.name === "All Occasions" ? "Celebration Occasions" : `${currentTabInfo.name} Cakes & Treats`}
+          {currentTabInfo.slug === "all" ? localizedTabName : `${localizedTabName} Cakes & Treats`}
         </h1>
         <p className="text-xs sm:text-sm text-[#7A6E65] max-w-2xl mx-auto leading-relaxed">
           {currentTabInfo.tagline}
@@ -132,6 +135,7 @@ export const OccasionsPage: React.FC = () => {
       <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2 no-scrollbar">
         {OCCASION_TABS.map((tab) => {
           const isSelected = selectedTab === tab.slug;
+          const tabLabel = t(`products.occasions.${tab.slug}`, tab.name);
           return (
             <button
               key={tab.id}
@@ -144,7 +148,7 @@ export const OccasionsPage: React.FC = () => {
               }`}
             >
               <span className="text-base">{tab.icon}</span>
-              <span>{tab.name}</span>
+              <span>{tabLabel}</span>
             </button>
           );
         })}
@@ -154,16 +158,17 @@ export const OccasionsPage: React.FC = () => {
       <div className="flex items-center justify-between border-b border-[#E5DEC9] pb-3">
         <div className="flex items-center gap-2">
           <span className="text-sm font-extrabold text-[#3B302B]">
-            {currentTabInfo.name} Products
+            {localizedTabName}
           </span>
           <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#FFF8EC] text-[#596B58] border border-[#596B58]/30">
-            {products.length} Items
+            {products.length} {t("common.items", "Items")}
           </span>
         </div>
         <Link to="/custom-cake" className="text-xs font-bold text-[#596B58] hover:underline flex items-center gap-1">
           <span>Need Custom Design?</span>
         </Link>
       </div>
+
 
       {/* Products Grid */}
       {isLoading ? (

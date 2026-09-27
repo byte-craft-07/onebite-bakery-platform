@@ -22,6 +22,7 @@ export interface PublicProductQueryDto {
   minPrice?: number;
   maxPrice?: number;
   isAvailable?: boolean;
+  isInstantAvailable?: boolean;
   isFeatured?: boolean;
   isTrending?: boolean;
   isSeasonal?: boolean;

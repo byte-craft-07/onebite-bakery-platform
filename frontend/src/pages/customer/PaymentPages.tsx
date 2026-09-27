@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/DisplayComponents";
 import { paymentService } from "@/services/payment.service";
 import { orderService, type OrderDetails } from "@/services/order.service";
 import { razorpayService } from "@/services/razorpay.service";
+import { useTranslation } from "react-i18next";
 import { OrderReviewForm } from "./OrdersPages";
 
 const getPaymentPageError = (error: unknown): string => {
@@ -56,6 +57,7 @@ const waitForPaidOrder = async (orderId: string): Promise<OrderDetails> => {
 
 
 export const PaymentPage: React.FC = () => {
+  const { t } = useTranslation();
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
 
@@ -113,8 +115,12 @@ export const PaymentPage: React.FC = () => {
       <Card className="text-center space-y-6 bg-white shadow-xl">
         <Smartphone className="h-16 w-16 text-[#596B58] mx-auto" />
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-[#3B302B]">Complete Order Payment</h1>
-          <p className="text-xs text-[#7A6E65]">Secure UPI payment through Razorpay</p>
+          <h1 className="text-2xl font-bold text-[#3B302B]">
+            {t("checkout.title", "Complete Order Payment")}
+          </h1>
+          <p className="text-xs text-[#7A6E65]">
+            {t("checkout.secureUpiNotice", "Secure UPI payment through Razorpay")}
+          </p>
         </div>
 
         {errorMsg ? (
@@ -130,19 +136,21 @@ export const PaymentPage: React.FC = () => {
         ) : null}
 
         <Button onClick={handlePayNow} isLoading={isProcessing} className="w-full h-12 shadow-md">
-          <span>Pay Now with UPI</span>
+          <span>{t("checkout.payNowWithUpi", "Pay Now with UPI")}</span>
         </Button>
 
         <p className="text-[11px] text-gray-400 flex items-center justify-center gap-1">
           <ShieldCheck className="h-3.5 w-3.5 text-[#27AE60]" />
-          <span>Only UPI payments are accepted.</span>
+          <span>{t("checkout.onlyUpiAccepted", "Only UPI payments are accepted.")}</span>
         </p>
       </Card>
     </div>
   );
 };
 
+
 export const OrderSuccessPage: React.FC = () => {
+  const { t } = useTranslation();
   const { orderId } = useParams<{ orderId: string }>();
 
   return (
@@ -150,17 +158,25 @@ export const OrderSuccessPage: React.FC = () => {
       <div className="text-center space-y-4 bg-white border border-[#E5DEC9] rounded-3xl p-8 shadow-lg">
         <CheckCircle className="h-16 w-16 text-[#27AE60] mx-auto animate-in zoom-in" />
         <div className="space-y-2">
-          <h1 className="text-3xl font-extrabold text-[#3B302B]">Payment Successful!</h1>
-          <p className="text-sm text-[#7A6E65]">Thank you for your order. Our master bakers are preparing your items.</p>
+          <h1 className="text-3xl font-extrabold text-[#3B302B]">
+            {t("checkout.paymentSuccessful", "Payment Successful!")}
+          </h1>
+          <p className="text-sm text-[#7A6E65]">
+            {t("checkout.paymentSuccessDesc", "Thank you for your order. Our master bakers are preparing your items.")}
+          </p>
           {orderId ? <p className="text-xs font-mono text-[#596B58]">Order Reference: #{orderId}</p> : null}
         </div>
 
         <div className="pt-2 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
           <Link to="/customer/orders" className="w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto">View Order History</Button>
+            <Button variant="outline" className="w-full sm:w-auto">
+              {t("checkout.viewOrderHistory", "View Order History")}
+            </Button>
           </Link>
           <Link to="/products" className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto">Back to Catalog</Button>
+            <Button className="w-full sm:w-auto">
+              {t("checkout.backToCatalog", "Back to Catalog")}
+            </Button>
           </Link>
         </div>
       </div>
@@ -171,15 +187,18 @@ export const OrderSuccessPage: React.FC = () => {
 };
 
 export const OrderFailurePage: React.FC = () => {
+  const { t } = useTranslation();
   const { orderId } = useParams<{ orderId: string }>();
 
   return (
     <div className="py-10 sm:py-16 max-w-xl mx-auto text-center space-y-6 bg-white border border-red-100 rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-lg">
       <AlertTriangle className="h-14 w-14 sm:h-16 sm:w-16 text-red-500 mx-auto" />
       <div className="space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">Payment Failed</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">
+          {t("checkout.paymentFailed", "Payment Failed")}
+        </h1>
         <p className="text-xs sm:text-sm text-[#7A6E65]">
-          Your payment could not be processed. Don't worry, your order items remain saved.
+          {t("checkout.paymentFailedDesc", "Your payment could not be processed. Don't worry, your order items remain saved.")}
         </p>
       </div>
 
@@ -188,14 +207,17 @@ export const OrderFailurePage: React.FC = () => {
           <Link to={`/payment/${orderId}`} className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto bg-[#596B58] hover:bg-[#495948]">
               <RefreshCw className="h-4 w-4 mr-1.5" />
-              <span>Retry Payment</span>
+              <span>{t("checkout.retryPayment", "Retry Payment")}</span>
             </Button>
           </Link>
         ) : null}
         <Link to="/cart" className="w-full sm:w-auto">
-          <Button variant="outline" className="w-full sm:w-auto">Return to Cart</Button>
+          <Button variant="outline" className="w-full sm:w-auto">
+            {t("checkout.returnToCart", "Return to Cart")}
+          </Button>
         </Link>
       </div>
     </div>
   );
 };
+

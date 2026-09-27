@@ -36,8 +36,10 @@ import {
 } from "@/services/customerDashboard.service";
 import { orderService, type OrderDetails } from "@/services/order.service";
 import { FlipkartOrderTracker } from "@/components/shopping/FlipkartOrderTracker";
+import { useTranslation } from "react-i18next";
 
 export const CustomerDashboardPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -86,10 +88,10 @@ export const CustomerDashboardPage: React.FC = () => {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour >= 4 && hour < 12) return "Good Morning";
-    if (hour >= 12 && hour < 17) return "Good Afternoon";
-    if (hour >= 17 && hour < 22) return "Good Evening";
-    return "Good Night";
+    if (hour >= 4 && hour < 12) return t("profile.goodMorning", "Good Morning");
+    if (hour >= 12 && hour < 17) return t("profile.goodAfternoon", "Good Afternoon");
+    if (hour >= 17 && hour < 22) return t("profile.goodEvening", "Good Evening");
+    return t("profile.goodNight", "Good Night");
   };
 
   // Find active live running orders
@@ -122,8 +124,8 @@ export const CustomerDashboardPage: React.FC = () => {
 
   const navMenuItems = [
     {
-      title: "My Orders & Tracking",
-      description: "Live order status, invoice download, rate past items",
+      title: t("profile.myOrdersAndTracking", "My Orders & Tracking"),
+      description: t("profile.myOrdersAndTrackingDesc", "Live order status, invoice download, rate past items"),
       badge: runningOrders.length > 0 ? `${runningOrders.length} Active` : undefined,
       badgeVariant: "primary" as const,
       icon: Package,
@@ -131,22 +133,22 @@ export const CustomerDashboardPage: React.FC = () => {
       to: "/customer/orders",
     },
     {
-      title: "Saved Delivery Addresses",
-      description: `${addressCount} saved location${addressCount === 1 ? "" : "s"} & village routes`,
+      title: t("profile.savedAddresses", "Saved Delivery Addresses"),
+      description: `${addressCount} ${t("profile.savedAddressesDesc", "saved locations & village routes")}`,
       icon: MapPin,
       color: "text-blue-600 bg-blue-50",
       to: "/customer/addresses",
     },
     {
-      title: "Celebration Reminders",
-      description: `${celebrationsCount} upcoming birthday${celebrationsCount === 1 ? "" : "s"} & anniversaries`,
+      title: t("profile.celebrationReminders", "Celebration Reminders"),
+      description: `${celebrationsCount} ${t("profile.celebrationRemindersDesc", "upcoming birthdays & anniversaries")}`,
       icon: Cake,
       color: "text-pink-600 bg-pink-50",
       to: "/customer/celebrations",
     },
     {
-      title: "Notifications & Alerts",
-      description: "Order status alerts & account updates",
+      title: t("profile.notificationsAlerts", "Notifications & Alerts"),
+      description: t("profile.notificationsAlertsDesc", "Order status alerts & account updates"),
       badge: unreadNotifsCount > 0 ? `${unreadNotifsCount} New` : undefined,
       badgeVariant: "warning" as const,
       icon: Bell,
@@ -154,15 +156,15 @@ export const CustomerDashboardPage: React.FC = () => {
       to: "/customer/notifications",
     },
     {
-      title: "My Favorites / Wishlist",
-      description: "Your saved cakes, pastries, and treats",
+      title: t("profile.myFavorites", "My Favorites / Wishlist"),
+      description: t("profile.myFavoritesDesc", "Your saved cakes, pastries, and treats"),
       icon: Heart,
       color: "text-red-600 bg-red-50",
       to: "/customer/favorites",
     },
     {
-      title: "Bakery Offers & Coupons",
-      description: "Exclusive discount codes & festival deals",
+      title: t("profile.bakeryOffers", "Bakery Offers & Coupons"),
+      description: t("profile.bakeryOffersDesc", "Exclusive discount codes & festival deals"),
       badge: "Save Big",
       badgeVariant: "success" as const,
       icon: Ticket,
@@ -170,29 +172,29 @@ export const CustomerDashboardPage: React.FC = () => {
       to: "/offers",
     },
     {
-      title: "Customer Help & Support",
-      description: "24/7 WhatsApp care & support ticket helpdesk",
+      title: t("profile.customerSupport", "Customer Help & Support"),
+      description: t("profile.customerSupportDesc", "24/7 WhatsApp care & support ticket helpdesk"),
       icon: LifeBuoy,
       color: "text-teal-600 bg-teal-50",
       to: "/customer/support",
     },
     {
-      title: "Personal Profile",
-      description: "Name, email, avatar photo & verified phone",
+      title: t("profile.personalInfo", "Personal Profile"),
+      description: t("profile.subtitle", "Name, email, avatar photo & verified phone"),
       icon: User,
       color: "text-purple-600 bg-purple-50",
       to: "/customer/profile",
     },
     {
-      title: "Notification Preferences",
-      description: "Transactional SMS, WhatsApp updates & promo alerts",
+      title: t("profile.notificationPrefs", "Notification Preferences"),
+      description: t("profile.notificationPrefsDesc", "Transactional SMS, WhatsApp updates & promo alerts"),
       icon: Bell,
       color: "text-orange-600 bg-orange-50",
       to: "/customer/settings",
     },
     {
-      title: "Security & Connected Devices",
-      description: "Active device logins, sessions & encryption logs",
+      title: t("profile.securityDevices", "Security & Connected Devices"),
+      description: t("profile.securityDevicesDesc", "Active device logins, sessions & encryption logs"),
       icon: ShieldCheck,
       color: "text-green-700 bg-green-50",
       to: "/customer/security",
@@ -201,8 +203,8 @@ export const CustomerDashboardPage: React.FC = () => {
 
   const adminMenuItems = user?.role === "admin" ? [
     {
-      title: "Central Admin Dashboard",
-      description: "Manage live orders, catalog products, branches, offers & bakery settings",
+      title: t("profile.centralAdminDashboard", "Central Admin Dashboard"),
+      description: t("profile.centralAdminDashboardDesc", "Manage live orders, catalog products, branches, offers & bakery settings"),
       badge: "👑 Admin Access",
       badgeVariant: "warning" as const,
       icon: ShieldCheck,
@@ -211,8 +213,8 @@ export const CustomerDashboardPage: React.FC = () => {
     },
   ] : user?.role === "branch_admin" ? [
     {
-      title: "Branch Admin Portal",
-      description: "Manage branch inventory, incoming orders & live dispatch status",
+      title: t("profile.branchAdminPortal", "Branch Admin Portal"),
+      description: t("profile.branchAdminPortalDesc", "Manage branch inventory, incoming orders & live dispatch status"),
       badge: "🏪 Branch Admin",
       badgeVariant: "primary" as const,
       icon: Building,
@@ -243,10 +245,14 @@ export const CustomerDashboardPage: React.FC = () => {
                 <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
                   user?.role === "admin" ? "bg-amber-500/30 text-amber-300 border border-amber-400/40 font-black" : "bg-white/10 text-amber-300"
                 }`}>
-                  {user?.role === "admin" ? "👑 Admin Account" : user?.role === "branch_admin" ? "🏪 Branch Admin" : "Customer Hub"}
+                  {user?.role === "admin"
+                    ? t("profile.adminAccount", "👑 Admin Account")
+                    : user?.role === "branch_admin"
+                    ? t("profile.branchAdmin", "🏪 Branch Admin")
+                    : t("profile.customerHub", "Customer Hub")}
                 </span>
                 <span className="text-[10px] font-semibold text-[#E5DEC9]/80">
-                  Member Since {analytics?.memberSince || "2026"}
+                  {t("profile.memberSince", "Member Since {{year}}", { year: analytics?.memberSince || "2026" })}
                 </span>
               </div>
               <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
@@ -263,14 +269,14 @@ export const CustomerDashboardPage: React.FC = () => {
               <Link to="/admin/dashboard">
                 <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white font-bold border-none text-xs shadow-md flex items-center gap-1.5">
                   <ShieldCheck className="h-4 w-4" />
-                  <span>Admin Panel</span>
+                  <span>{t("profile.adminPanel", "Admin Panel")}</span>
                 </Button>
               </Link>
             ) : user?.role === "branch_admin" ? (
               <Link to="/admin/branch/dashboard">
                 <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white font-bold border-none text-xs shadow-md flex items-center gap-1.5">
                   <Building className="h-4 w-4" />
-                  <span>Branch Portal</span>
+                  <span>{t("profile.branchAdminPortal", "Branch Portal")}</span>
                 </Button>
               </Link>
             ) : null}
@@ -278,7 +284,7 @@ export const CustomerDashboardPage: React.FC = () => {
             <Link to="/products">
               <Button size="sm" className="bg-[#596B58] hover:bg-[#495948] text-white border-none shadow-md text-xs">
                 <ShoppingBag className="h-3.5 w-3.5 mr-1" />
-                <span>Shop Fresh</span>
+                <span>{t("profile.shopFresh", "Shop Fresh")}</span>
               </Button>
             </Link>
           </div>
@@ -288,10 +294,10 @@ export const CustomerDashboardPage: React.FC = () => {
       {/* 2. Quick Key Stats Bar */}
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {[
-          { label: "Total Orders", val: orders.length, icon: Package, color: "text-[#596B58]", to: "/customer/orders" },
-          { label: "Live Orders", val: runningOrders.length, icon: Clock, color: "text-amber-500", to: "/customer/orders" },
-          { label: "Addresses", val: addressCount, icon: MapPin, color: "text-blue-600", to: "/customer/addresses" },
-          { label: "Celebrations", val: celebrationsCount, icon: Cake, color: "text-pink-600", to: "/customer/celebrations" },
+          { label: t("profile.totalOrders", "Total Orders"), val: orders.length, icon: Package, color: "text-[#596B58]", to: "/customer/orders" },
+          { label: t("profile.liveOrders", "Live Orders"), val: runningOrders.length, icon: Clock, color: "text-amber-500", to: "/customer/orders" },
+          { label: t("profile.addresses", "Addresses"), val: addressCount, icon: MapPin, color: "text-blue-600", to: "/customer/addresses" },
+          { label: t("profile.celebrations", "Celebrations"), val: celebrationsCount, icon: Cake, color: "text-pink-600", to: "/customer/celebrations" },
         ].map((stat, idx) => {
           const Icon = stat.icon;
           return (
@@ -319,10 +325,10 @@ export const CustomerDashboardPage: React.FC = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#596B58] opacity-75" />
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#596B58]" />
               </span>
-              <h2 className="text-lg font-extrabold text-[#3B302B]">Live Order in Progress</h2>
+              <h2 className="text-lg font-extrabold text-[#3B302B]">{t("profile.liveOrderInProgress", "Live Order in Progress")}</h2>
             </div>
             <Link to={`/customer/orders/${primaryLiveOrder.id}`} className="text-xs font-bold text-[#596B58] hover:underline">
-              Full Order Details →
+              {t("profile.fullOrderDetails", "Full Order Details →")}
             </Link>
           </div>
 
@@ -331,18 +337,18 @@ export const CustomerDashboardPage: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-base font-extrabold text-[#3B302B]">
-                    Order #{primaryLiveOrder.orderNumber}
+                    {t("profile.orderNumber", "Order #{{number}}", { number: primaryLiveOrder.orderNumber })}
                   </span>
                   <Badge variant="primary">{primaryLiveOrder.orderStatus}</Badge>
                 </div>
                 <p className="text-xs text-[#7A6E65] mt-0.5">
-                  Slot: {primaryLiveOrder.deliveryTimePreference || "Standard Delivery"} &bull; Total: ₹{primaryLiveOrder.totalAmount}
+                  {t("profile.slotPrefix", "Slot: {{slot}}", { slot: primaryLiveOrder.deliveryTimePreference || t("profile.standardDelivery", "Standard Delivery") })} &bull; {t("profile.totalPrefix", "Total: ₹{{amount}}", { amount: primaryLiveOrder.totalAmount })}
                 </p>
               </div>
 
               <Link to={`/customer/orders/${primaryLiveOrder.id}`}>
                 <Button size="sm" className="w-full sm:w-auto">
-                  Track Live Status
+                  {t("profile.trackLiveStatus", "Track Live Status")}
                 </Button>
               </Link>
             </div>
@@ -355,9 +361,9 @@ export const CustomerDashboardPage: React.FC = () => {
       {/* 4. Dedicated Pages Menu Grid (Separate Focused Pages) */}
       <section className="space-y-4">
         <div className="space-y-1">
-          <h2 className="text-xl font-extrabold text-[#3B302B]">Account Services & Features</h2>
+          <h2 className="text-xl font-extrabold text-[#3B302B]">{t("profile.accountServices", "Account Services & Features")}</h2>
           <p className="text-xs text-[#7A6E65]">
-            Dedicated separate pages for every service &mdash; tap to manage
+            {t("profile.accountServicesDesc", "Dedicated separate pages for every service — tap to manage")}
           </p>
         </div>
 
@@ -399,8 +405,8 @@ export const CustomerDashboardPage: React.FC = () => {
             <MessageCircle className="h-5 w-5" />
           </div>
           <div>
-            <h4 className="font-extrabold text-sm text-[#3B302B]">Need quick help with an order?</h4>
-            <p className="text-xs text-[#7A6E65]">Our WhatsApp bakery team is available 24/7 to assist you.</p>
+            <h4 className="font-extrabold text-sm text-[#3B302B]">{t("profile.needQuickHelp", "Need quick help with an order?")}</h4>
+            <p className="text-xs text-[#7A6E65]">{t("profile.whatsappAvailable", "Our WhatsApp bakery team is available 24/7 to assist you.")}</p>
           </div>
         </div>
 
@@ -412,7 +418,7 @@ export const CustomerDashboardPage: React.FC = () => {
           className="px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
         >
           <MessageCircle className="h-4 w-4" />
-          <span>Chat on WhatsApp</span>
+          <span>{t("profile.chatOnWhatsApp", "Chat on WhatsApp")}</span>
         </button>
       </div>
 
@@ -423,7 +429,7 @@ export const CustomerDashboardPage: React.FC = () => {
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition-colors cursor-pointer"
         >
           <LogOut className="h-4 w-4" />
-          <span>Log Out of Onebite Bakery Account</span>
+          <span>{t("profile.logoutOfAccount", "Log Out of Onebite Bakery Account")}</span>
         </button>
       </div>
     </div>

@@ -26,6 +26,7 @@ export interface ProductResponse {
   };
   locationBranchName?: string;
   isAvailable: boolean;
+  isInstantAvailable?: boolean;
   availableFrom?: Date;
   availableUntil?: Date;
   isActive: boolean;

@@ -5,8 +5,11 @@ import { ArrowLeft } from "lucide-react";
 import { CategoryCard } from "@/components/cards/DomainCards";
 import { Skeleton } from "@/components/ui/DisplayComponents";
 import { catalogService, type CategoryItem } from "@/services/catalog.service";
+import { useTranslation } from "react-i18next";
+import { getLocalizedCategoryName } from "@/i18n/utils";
 
 export const CategoriesPage: React.FC = () => {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -23,13 +26,15 @@ export const CategoriesPage: React.FC = () => {
       {/* Top Back Link */}
       <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors">
         <ArrowLeft className="h-4 w-4" />
-        <span>Back to Home</span>
+        <span>{t("products.backToHome", "Back to Home")}</span>
       </Link>
 
       <div className="rounded-3xl bg-[#FFF8EC] border border-[#E5DEC9] p-6 sm:p-10 text-center space-y-2 sm:space-y-3">
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-[#3B302B]">Product Categories</h1>
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-[#3B302B]">
+          {t("navigation.categories", "Product Categories")}
+        </h1>
         <p className="text-xs sm:text-sm text-[#7A6E65] max-w-xl mx-auto">
-          Browse by category to find your favorite cakes, pastries, sourdough breads, and biscuits.
+          {t("products.catalogSubtitle", "Browse by category to find your favorite cakes, pastries, sourdough breads, and biscuits.")}
         </p>
       </div>
 

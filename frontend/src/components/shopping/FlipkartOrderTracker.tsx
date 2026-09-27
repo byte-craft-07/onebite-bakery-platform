@@ -10,6 +10,8 @@ import {
   Truck,
 } from "lucide-react";
 import type { OrderDetails } from "@/services/order.service";
+import { useTranslation } from "react-i18next";
+import { getLocalizedProductName } from "@/i18n/utils";
 
 export interface FlipkartOrderTrackerProps {
   order: OrderDetails;
@@ -77,12 +79,40 @@ export const FlipkartOrderTracker: React.FC<FlipkartOrderTrackerProps> = ({
   onRateClick,
   isRated = false,
 }) => {
+  const { t } = useTranslation();
   const [isStagesOpen, setIsStagesOpen] = useState(false);
+
+  const trackerSteps = [
+    {
+      id: 0,
+      label: t("orders.stages.confirmed", "Order Confirmed"),
+      sublabel: t("orders.stages.confirmedSub", "Order received & verified"),
+      icon: Package,
+    },
+    {
+      id: 1,
+      label: t("orders.stages.packed", "Order Packed"),
+      sublabel: t("orders.stages.packedSub", "Freshly baked & packed for delivery"),
+      icon: Sparkles,
+    },
+    {
+      id: 2,
+      label: t("orders.stages.outForDelivery", "Out for Delivery"),
+      sublabel: t("orders.stages.outForDeliverySub", "Delivery agent on the way"),
+      icon: Truck,
+    },
+    {
+      id: 3,
+      label: t("orders.stages.delivered", "Delivered"),
+      sublabel: t("orders.stages.deliveredSub", "Delivered at doorstep"),
+      icon: CheckCircle2,
+    },
+  ];
 
   const isDelivered = order.orderStatus === "DELIVERED";
   const isCancelled = order.orderStatus === "CANCELLED" || order.orderStatus === "REFUNDED";
   const currentStep = getFlipkartStageIndex(order.orderStatus);
-  const currentStepInfo = TRACKER_STEPS[currentStep];
+  const currentStepInfo = trackerSteps[currentStep] || trackerSteps[0];
 
   const primaryItem = order.items?.[0];
   const itemCount = order.items?.length || 1;
@@ -104,7 +134,7 @@ export const FlipkartOrderTracker: React.FC<FlipkartOrderTrackerProps> = ({
             <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl overflow-hidden bg-[#FFF8EC] border border-[#E5DEC9] shrink-0 shadow-2xs">
               <img
                 src={itemImage}
-                alt={primaryItem?.name || "Bakery Item"}
+                alt={getLocalizedProductName(primaryItem) || "Bakery Item"}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = FALLBACK_ITEM_IMAGE;
@@ -115,16 +145,16 @@ export const FlipkartOrderTracker: React.FC<FlipkartOrderTrackerProps> = ({
 
             <div className="space-y-1">
               <h4 className="text-sm sm:text-base font-extrabold text-[#3B302B] line-clamp-1">
-                {primaryItem?.name || "Artisanal Celebration Cake"}
+                {getLocalizedProductName(primaryItem) || "Artisanal Celebration Cake"}
               </h4>
               <p className="text-xs text-[#7A6E65]">
-                Qty: <strong>{primaryItem?.quantity || 1}</strong>
-                {itemCount > 1 ? ` • +${itemCount - 1} more item(s)` : ""}
+                {t("cart.quantity", "Qty")}: <strong>{primaryItem?.quantity || 1}</strong>
+                {itemCount > 1 ? ` • +${itemCount - 1} ${t("orders.moreItems", { count: itemCount - 1, defaultValue: "more item(s)" })}` : ""}
                 {" • "}
-                Total: <strong className="text-[#3B302B]">₹{order.totalAmount}</strong>
+                {t("checkout.totalAmount", "Total")}: <strong className="text-[#3B302B]">₹{order.totalAmount}</strong>
               </p>
               <span className="inline-block text-[10px] font-bold text-[#596B58] bg-[#FFF8EC] border border-[#596B58]/30 px-2 py-0.5 rounded-full">
-                100% Fresh Daily Baked
+                {t("orders.freshDailyBaked", "100% Fresh Daily Baked")}
               </span>
             </div>
           </div>
@@ -133,7 +163,7 @@ export const FlipkartOrderTracker: React.FC<FlipkartOrderTrackerProps> = ({
           <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 pt-3 sm:pt-0">
             <div className="text-left sm:text-right">
               <span className="text-[10px] font-bold text-[#7A6E65] uppercase tracking-wider block">
-                Current Stage:
+                {t("orders.currentStage", "Current Stage:")}
               </span>
               <span
                 className={`text-xs sm:text-sm font-extrabold ${
@@ -145,9 +175,9 @@ export const FlipkartOrderTracker: React.FC<FlipkartOrderTrackerProps> = ({
                 }`}
               >
                 {isDelivered
-                  ? "✓ Delivered"
+                  ? `✓ ${t("orders.statuses.DELIVERED", "Delivered")}`
                   : isCancelled
-                  ? "✕ Cancelled"
+                  ? `✕ ${t("orders.statuses.CANCELLED", "Cancelled")}`
                   : currentStepInfo.label}
               </span>
             </div>
@@ -162,7 +192,13 @@ export const FlipkartOrderTracker: React.FC<FlipkartOrderTrackerProps> = ({
                 }`}
               >
                 <Star className="h-3.5 w-3.5 fill-current text-[#D8BE91]" />
-                <span>{isRated ? "⭐ View / Edit Review" : isDelivered ? "⭐ Rate & Review" : "⭐ Leave Feedback"}</span>
+                <span>
+                  {isRated
+                    ? `⭐ ${t("orders.rated", "Rated")}`
+                    : isDelivered
+                    ? `⭐ ${t("orders.rateExperience", "Rate & Review")}`
+                    : "⭐ Leave Feedback"}
+                </span>
               </button>
             ) : null}
           </div>
@@ -193,17 +229,17 @@ export const FlipkartOrderTracker: React.FC<FlipkartOrderTrackerProps> = ({
             <div>
               <p className="text-xs font-extrabold text-[#3B302B]">
                 {isDelivered
-                  ? `Order Delivered on ${new Date(order.createdAt).toLocaleDateString()}`
+                  ? `${t("orders.stages.delivered", "Order Delivered")} (${new Date(order.createdAt).toLocaleDateString()})`
                   : isCancelled
-                  ? "Order Cancelled"
-                  : `Stage: ${currentStepInfo.label}`}
+                  ? t("orders.statuses.CANCELLED", "Order Cancelled")
+                  : `${t("orders.currentStage", "Stage:")} ${currentStepInfo.label}`}
               </p>
               <p className="text-[11px] text-[#7A6E65]">
                 {isDelivered
-                  ? "Your fresh baked order was successfully delivered."
+                  ? t("orders.stages.deliveredSub", "Your fresh baked order was successfully delivered.")
                   : isCancelled
                   ? "This order was cancelled. Refund processed."
-                  : `${currentStepInfo.sublabel} • Expected delivery: ${
+                  : `${currentStepInfo.sublabel} • ${
                       order.deliveryTimePreference || "Today within 30-45 mins"
                     }`}
               </p>
@@ -214,7 +250,7 @@ export const FlipkartOrderTracker: React.FC<FlipkartOrderTrackerProps> = ({
             type="button"
             className="flex items-center gap-1 text-xs font-bold text-[#596B58] shrink-0 bg-white/80 px-2.5 py-1 rounded-lg border border-[#E5DEC9]"
           >
-            <span>{isStagesOpen ? "Hide Stages" : "View All Stages"}</span>
+            <span>{isStagesOpen ? t("orders.hideTimeline", "Hide Stages") : t("orders.viewTimeline", "View All Stages")}</span>
             {isStagesOpen ? (
               <ChevronUp className="h-3.5 w-3.5" />
             ) : (
@@ -229,7 +265,7 @@ export const FlipkartOrderTracker: React.FC<FlipkartOrderTrackerProps> = ({
         <div className="rounded-2xl border border-[#E5DEC9] bg-white p-5 sm:p-6 space-y-3 shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-center justify-between border-b border-[#E5DEC9] pb-2">
             <h5 className="text-xs font-extrabold uppercase tracking-wider text-[#3B302B]">
-              All 4 Bakery Delivery Stages:
+              {t("orders.viewTimeline", "Bakery Delivery Stages:")}
             </h5>
             <span className="text-[11px] font-bold text-[#7A6E65]">
               {isDelivered ? "4 / 4 Completed" : `Step ${currentStep + 1} of 4`}
@@ -245,12 +281,12 @@ export const FlipkartOrderTracker: React.FC<FlipkartOrderTrackerProps> = ({
                   style={{
                     width: isDelivered
                       ? "100%"
-                      : `${(currentStep / (TRACKER_STEPS.length - 1)) * 100}%`,
+                      : `${(currentStep / (trackerSteps.length - 1)) * 100}%`,
                   }}
                 />
               </div>
 
-              {TRACKER_STEPS.map((step) => {
+              {trackerSteps.map((step) => {
                 const isPassed = isDelivered || step.id < currentStep;
                 const isCurrent = !isDelivered && step.id === currentStep;
                 const Icon = step.icon;
@@ -304,3 +340,4 @@ export const FlipkartOrderTracker: React.FC<FlipkartOrderTrackerProps> = ({
     </div>
   );
 };
+

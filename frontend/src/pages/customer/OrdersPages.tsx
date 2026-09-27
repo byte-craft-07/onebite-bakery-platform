@@ -30,8 +30,15 @@ import { RatingModal } from "@/components/review/RatingModal";
 import { PerOrderRatingModal } from "@/components/review/PerOrderRatingModal";
 import { FlipkartOrderTracker } from "@/components/shopping/FlipkartOrderTracker";
 import { toast } from "@/contexts/toast.context";
+import { useTranslation } from "react-i18next";
+import {
+  getLocalizedProductName,
+  getLocalizedOrderStatus,
+  getLocalizedPaymentStatus,
+} from "@/i18n/utils";
 
 export const OrderReviewForm: React.FC<{ orderId: string; productName?: string }> = ({ orderId, productName }) => {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,8 +68,12 @@ export const OrderReviewForm: React.FC<{ orderId: string; productName?: string }
     return (
       <Card className="bg-green-50 border-green-200 text-center p-6 space-y-2">
         <CheckCircle2 className="h-8 w-8 text-green-600 mx-auto animate-in zoom-in" />
-        <h4 className="text-base font-bold text-green-900">Thank You for Your Feedback!</h4>
-        <p className="text-xs text-green-700">Your review has been submitted and is now featured live in the moving marquee on our Home Page.</p>
+        <h4 className="text-base font-bold text-green-900">
+          {t("orders.thankYouFeedback", "Thank You for Your Feedback!")}
+        </h4>
+        <p className="text-xs text-green-700">
+          {t("orders.feedbackSubmitted", "Your review has been submitted and is now featured live on our Home Page.")}
+        </p>
       </Card>
     );
   }
@@ -71,13 +82,17 @@ export const OrderReviewForm: React.FC<{ orderId: string; productName?: string }
     <Card className="space-y-4 bg-[#FFF8EC]/40 border-[#596B58]/30">
       <div className="flex items-center gap-2">
         <Star className="h-5 w-5 text-amber-500 fill-current" />
-        <h3 className="text-lg font-bold text-[#3B302B]">Rate Your Order & Write a Review</h3>
+        <h3 className="text-lg font-bold text-[#3B302B]">
+          {t("orders.writeReviewTitle", "Rate Your Order & Write a Review")}
+        </h3>
       </div>
-      <p className="text-xs text-[#7A6E65]">How was your cake quality, taste, and delivery service? Share your feedback with other customers!</p>
+      <p className="text-xs text-[#7A6E65]">
+        {t("orders.rateDescription", "How was your cake quality, taste, and delivery service? Share your feedback with other customers!")}
+      </p>
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-[#3B302B]">Your Rating:</span>
+          <span className="text-xs font-bold text-[#3B302B]">{t("orders.yourRating", "Your Rating:")}</span>
           <div className="flex text-amber-500 cursor-pointer">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
@@ -91,7 +106,7 @@ export const OrderReviewForm: React.FC<{ orderId: string; productName?: string }
 
         <textarea
           rows={3}
-          placeholder="Describe your cake taste, packaging quality, and delivery speed..."
+          placeholder={t("orders.feedbackPlaceholder", "Describe your cake taste, packaging quality, and delivery speed...")}
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           className="w-full p-3 rounded-xl border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58] bg-white"
@@ -99,14 +114,16 @@ export const OrderReviewForm: React.FC<{ orderId: string; productName?: string }
         />
 
         <Button type="submit" size="sm" isLoading={isSubmitting} disabled={!comment.trim()}>
-          Submit Review to Home Page
+          {t("reviews.submitReview", "Submit Review")}
         </Button>
       </form>
     </Card>
   );
 };
 
+
 export const OrdersHistoryPage: React.FC = () => {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<OrderDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
@@ -151,11 +168,11 @@ export const OrdersHistoryPage: React.FC = () => {
     return (
       <div className="py-16 max-w-xl mx-auto text-center space-y-4">
         <EmptyState
-          title="No Orders Found"
-          description="You haven't placed any bakery orders yet."
+          title={t("orders.noOrdersYet", "No Orders Found")}
+          description={t("orders.noOrdersDescription", "You haven't placed any bakery orders yet.")}
           action={
             <Link to="/products">
-              <Button>Explore Fresh Baked Goods</Button>
+              <Button>{t("products.allProducts", "Explore Fresh Baked Goods")}</Button>
             </Link>
           }
         />
@@ -170,13 +187,15 @@ export const OrdersHistoryPage: React.FC = () => {
         className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7A6E65] hover:text-[#596B58] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
-        <span>Back to Account Hub</span>
+        <span>{t("orders.backToHub", "Back to Account Hub")}</span>
       </Link>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">Your Order History</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">
+          {t("orders.title", "Your Order History")}
+        </h1>
         <p className="text-xs text-[#7A6E65]">
-          Rate past delivered orders to help other customers find top treats!
+          {t("orders.subtitle", "Rate past delivered orders to help other customers find top treats!")}
         </p>
       </div>
 
@@ -185,7 +204,9 @@ export const OrdersHistoryPage: React.FC = () => {
           <Card key={ord.id} className="space-y-4 border-[#E5DEC9]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#E5DEC9] pb-3 gap-2">
               <div>
-                <p className="text-xs font-bold text-[#3B302B]">Order #{ord.orderNumber}</p>
+                <p className="text-xs font-bold text-[#3B302B]">
+                  {t("orders.orderNumber", { number: ord.orderNumber, defaultValue: `Order #${ord.orderNumber}` })}
+                </p>
                 <p className="text-xs text-[#7A6E65]">
                   {new Date(ord.createdAt).toLocaleDateString()}
                   {ord.locationSnapshot ? (
@@ -204,14 +225,14 @@ export const OrdersHistoryPage: React.FC = () => {
               <div className="flex flex-wrap items-center gap-2">
                 {ord.paymentMethod === "MANUAL_UPI" && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300">
-                    ⚡ Direct UPI (1.5% Off)
+                    ⚡ {t("checkout.manualUpi", "Direct UPI (1.5% Off)")}
                   </span>
                 )}
                 <Badge variant={ord.orderStatus === "DELIVERED" ? "success" : "primary"}>
-                  {ord.orderStatus}
+                  {getLocalizedOrderStatus(ord.orderStatus)}
                 </Badge>
                 <Badge variant={ord.paymentStatus === "PAID" ? "success" : "warning"}>
-                  Payment: {ord.paymentStatus}
+                  {getLocalizedPaymentStatus(ord.paymentStatus)}
                 </Badge>
               </div>
             </div>
@@ -231,7 +252,7 @@ export const OrdersHistoryPage: React.FC = () => {
                       <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl overflow-hidden bg-[#FFF8EC] border border-[#E5DEC9] shrink-0 shadow-2xs">
                         <img
                           src={itemImg}
-                          alt={item.name}
+                          alt={getLocalizedProductName(item) || item.name}
                           onError={(e) => {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=400&q=80";
@@ -240,9 +261,11 @@ export const OrdersHistoryPage: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-0.5">
-                        <p className="font-bold text-sm text-[#3B302B]">{item.name}</p>
+                        <p className="font-bold text-sm text-[#3B302B]">
+                          {getLocalizedProductName(item) || item.name}
+                        </p>
                         <p className="text-[11px] text-[#7A6E65]">
-                          Qty: <strong>{item.quantity}</strong> • Unit: ₹{item.unitPrice || Math.round(item.itemTotal / (item.quantity || 1))}
+                          {t("cart.quantity", "Qty")}: <strong>{item.quantity}</strong> • Unit: ₹{item.unitPrice || Math.round(item.itemTotal / (item.quantity || 1))}
                         </p>
                       </div>
                     </div>
@@ -253,7 +276,9 @@ export const OrdersHistoryPage: React.FC = () => {
             </div>
 
             <div className="pt-3 border-t border-[#E5DEC9] flex flex-wrap items-center justify-between gap-3">
-              <span className="text-sm font-extrabold text-[#3B302B]">Total: ₹{ord.totalAmount}</span>
+              <span className="text-sm font-extrabold text-[#3B302B]">
+                {t("checkout.totalAmount", "Total")}: ₹{ord.totalAmount}
+              </span>
 
               <div className="flex flex-wrap items-center gap-2">
                 {ord.orderStatus === "DELIVERED" || ord.orderStatus === "CANCELLED" ? (
@@ -263,7 +288,7 @@ export const OrdersHistoryPage: React.FC = () => {
                     className="px-3 py-1.5 rounded-xl border border-[#596B58]/40 bg-[#FFF8EC] hover:bg-[#F7F2E7] text-[#596B58] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                   >
                     <Star className="h-3.5 w-3.5 fill-current text-amber-500" />
-                    <span>Rate Products & Quality</span>
+                    <span>{t("orders.rateExperience", "Rate Products & Quality")}</span>
                   </button>
                 ) : null}
 
@@ -275,17 +300,18 @@ export const OrdersHistoryPage: React.FC = () => {
                   className="flex items-center gap-1.5"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
-                  <span>Order Again</span>
+                  <span>{t("orders.orderAgain", "Order Again")}</span>
                 </Button>
 
                 <Link to={`/customer/orders/${ord.id}`}>
-                  <Button size="sm">View Details & Tracking</Button>
+                  <Button size="sm">{t("orders.trackOrder", "View Details & Tracking")}</Button>
                 </Link>
               </div>
             </div>
           </Card>
         ))}
       </div>
+
 
       <PerOrderRatingModal
         isOpen={Boolean(ratingOrder)}
@@ -297,6 +323,7 @@ export const OrdersHistoryPage: React.FC = () => {
 };
 
 export const OrderDetailsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
 
   const [order, setOrder] = useState<OrderDetails | null>(null);
@@ -407,21 +434,15 @@ export const OrderDetailsPage: React.FC = () => {
   if (!order) {
     return (
       <div className="text-center py-16 space-y-4">
-        <h2 className="text-2xl font-bold text-[#3B302B]">Order Details Not Found</h2>
+        <h2 className="text-2xl font-bold text-[#3B302B]">
+          {t("orders.orderDetails", "Order Details Not Found")}
+        </h2>
         <Link to="/customer/orders">
-          <Button variant="outline">Return to Order History</Button>
+          <Button variant="outline">{t("orders.backToHub", "Return to Order History")}</Button>
         </Link>
       </div>
     );
   }
-
-  const timelineSteps = [
-    { label: "Order Placed", status: "PENDING", isPassed: true },
-    { label: "Confirmed", status: "CONFIRMED", isPassed: ["CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED"].includes(order.orderStatus) },
-    { label: "Baking & Preparing", status: "PREPARING", isPassed: ["PREPARING", "OUT_FOR_DELIVERY", "DELIVERED"].includes(order.orderStatus) },
-    { label: "Out for Delivery", status: "OUT_FOR_DELIVERY", isPassed: ["OUT_FOR_DELIVERY", "DELIVERED"].includes(order.orderStatus) },
-    { label: "Delivered", status: "DELIVERED", isPassed: order.orderStatus === "DELIVERED" },
-  ];
 
   const ratedItemsMap = reviewService.getOrderRatingsMap(order.id);
 
@@ -430,13 +451,13 @@ export const OrderDetailsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <Link to="/customer/orders" className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58]">
           <ArrowLeft className="h-4 w-4" />
-          <span>Back to Order History</span>
+          <span>{t("orders.backToHub", "Back to Order History")}</span>
         </Link>
 
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleExportPDF} className="flex items-center gap-1.5 flex-1 sm:flex-initial justify-center">
             <Download className="h-3.5 w-3.5" />
-            <span>Download Invoice PDF</span>
+            <span>{t("orders.downloadInvoice", "Download Invoice PDF")}</span>
           </Button>
 
           <Button variant="outline" size="sm" onClick={handleWhatsAppSupport} className="flex items-center gap-1.5 border-green-600 text-green-700 hover:bg-green-50 flex-1 sm:flex-initial justify-center">
@@ -448,11 +469,15 @@ export const OrderDetailsPage: React.FC = () => {
 
       <div className="flex items-center justify-between border-b border-[#E5DEC9] pb-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-[#3B302B]">Order #{order.orderNumber}</h1>
-          <p className="text-xs text-[#7A6E65]">Placed on {new Date(order.createdAt).toLocaleString()}</p>
+          <h1 className="text-3xl font-extrabold text-[#3B302B]">
+            {t("orders.orderNumber", { number: order.orderNumber, defaultValue: `Order #${order.orderNumber}` })}
+          </h1>
+          <p className="text-xs text-[#7A6E65]">
+            {t("orders.orderDate", { date: new Date(order.createdAt).toLocaleString(), defaultValue: `Placed on ${new Date(order.createdAt).toLocaleString()}` })}
+          </p>
         </div>
         <Badge variant={order.orderStatus === "DELIVERED" ? "success" : "primary"}>
-          {order.orderStatus}
+          {getLocalizedOrderStatus(order.orderStatus)}
         </Badge>
       </div>
 
@@ -460,13 +485,13 @@ export const OrderDetailsPage: React.FC = () => {
         <Card className="p-4 space-y-2 bg-[#FFF8EC]">
           <div className="flex items-center gap-2 font-bold text-xs text-[#3B302B]">
             <Clock className="h-4 w-4 text-[#596B58]" />
-            <span>Delivery Timing Preference</span>
+            <span>{t("checkout.deliveryTiming", "Delivery Timing Preference")}</span>
           </div>
           <p className="font-extrabold text-sm text-[#3B302B]">
-            {order.deliveryTimePreference || (order.deliveryTimingType === "INSTANT" ? "⚡ Instant Delivery (Within 30-45 mins)" : "📅 Scheduled Delivery")}
+            {order.deliveryTimePreference || (order.deliveryTimingType === "INSTANT" ? `⚡ ${t("checkout.instantAsap", "Instant Delivery")}` : `📅 ${t("checkout.scheduled", "Scheduled Delivery")}`)}
           </p>
           <p className="text-[11px] text-[#7A6E65]">
-            Method: <strong>{order.fulfillmentType === "HOME_DELIVERY" ? "Home Doorstep Delivery" : "Store Counter Pickup"}</strong>
+            {t("common.method", "Method")}: <strong>{order.fulfillmentType === "HOME_DELIVERY" ? t("checkout.homeDelivery", "Home Doorstep Delivery") : t("checkout.storePickup", "Store Counter Pickup")}</strong>
           </p>
         </Card>
 
@@ -475,12 +500,12 @@ export const OrderDetailsPage: React.FC = () => {
             {order.fulfillmentType === "STORE_PICKUP" ? (
               <>
                 <Building className="h-4 w-4 text-[#596B58]" />
-                <span>Store Pickup Location</span>
+                <span>{t("checkout.storePickupDirections", "Store Pickup Location")}</span>
               </>
             ) : (
               <>
                 <MapPin className="h-4 w-4 text-[#596B58]" />
-                <span>Delivery Destination</span>
+                <span>{t("checkout.deliveryAddress", "Delivery Destination")}</span>
               </>
             )}
           </div>
@@ -495,7 +520,7 @@ export const OrderDetailsPage: React.FC = () => {
                 className="inline-flex items-center gap-1 text-xs font-bold text-[#596B58] hover:text-[#495948] underline pt-1"
               >
                 <Navigation className="h-3.5 w-3.5" />
-                <span>Open in Google Maps & Get Directions</span>
+                <span>{t("checkout.viewOnGoogleMaps", "Open in Google Maps & Get Directions")}</span>
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>
@@ -517,7 +542,7 @@ export const OrderDetailsPage: React.FC = () => {
                 className="inline-flex items-center gap-1 text-xs font-bold text-[#596B58] hover:text-[#495948] underline"
               >
                 <Navigation className="h-3.5 w-3.5" />
-                <span>View Google Map Address</span>
+                <span>{t("checkout.viewOnGoogleMaps", "View Google Map Address")}</span>
               </a>
             </div>
           )}
@@ -527,8 +552,12 @@ export const OrderDetailsPage: React.FC = () => {
       {/* Flipkart-Style Order Tracking Card */}
       <Card className="p-5 sm:p-6 space-y-4 bg-[#FFF8EC] border-[#E5DEC9]">
         <div className="flex items-center justify-between border-b border-[#E5DEC9] pb-3">
-          <h3 className="text-sm font-bold text-[#3B302B]">Live Order Tracking</h3>
-          <span className="text-xs text-[#7A6E65]">Status: <strong className="text-[#596B58]">{order.orderStatus}</strong></span>
+          <h3 className="text-sm font-bold text-[#3B302B]">
+            {t("orders.viewTimeline", "Live Order Tracking")}
+          </h3>
+          <span className="text-xs text-[#7A6E65]">
+            {t("orders.orderStatus", "Status")}: <strong className="text-[#596B58]">{getLocalizedOrderStatus(order.orderStatus)}</strong>
+          </span>
         </div>
         <FlipkartOrderTracker
           order={order}
@@ -545,8 +574,8 @@ export const OrderDetailsPage: React.FC = () => {
         {/* Ordered Items List */}
         <Card className="lg:col-span-2 p-5 sm:p-6 space-y-4 bg-white border-[#E5DEC9]">
           <h3 className="text-sm font-bold text-[#3B302B] border-b border-[#E5DEC9] pb-3 flex items-center justify-between">
-            <span>Ordered Items ({order.items.length})</span>
-            <span className="text-xs font-normal text-[#7A6E65]">Freshly prepared</span>
+            <span>{t("orders.itemsOrdered", "Ordered Items")} ({order.items.length})</span>
+            <span className="text-xs font-normal text-[#7A6E65]">{t("orders.freshDailyBaked", "Freshly prepared")}</span>
           </h3>
           <div className="divide-y divide-[#E5DEC9]/60">
             {order.items.map((item, idx) => {
@@ -563,7 +592,7 @@ export const OrderDetailsPage: React.FC = () => {
                     <div className="h-14 w-14 rounded-xl overflow-hidden bg-[#FFF8EC] border border-[#E5DEC9] shrink-0">
                       <img
                         src={itemImg}
-                        alt={item.name}
+                        alt={getLocalizedProductName(item) || item.name}
                         className="h-full w-full object-cover"
                         onError={(e) => {
                           e.currentTarget.onerror = null;
@@ -573,9 +602,9 @@ export const OrderDetailsPage: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <p className="font-bold text-sm text-[#3B302B]">{item.name}</p>
+                      <p className="font-bold text-sm text-[#3B302B]">{getLocalizedProductName(item) || item.name}</p>
                       <p className="text-[11px] text-[#7A6E65]">
-                        Qty: <strong>{item.quantity}</strong> • Rate: ₹
+                        {t("cart.quantity", "Qty")}: <strong>{item.quantity}</strong> • Rate: ₹
                         {item.unitPrice || Math.round(item.itemTotal / (item.quantity || 1))}
                       </p>
                     </div>
@@ -591,7 +620,7 @@ export const OrderDetailsPage: React.FC = () => {
         <div className="space-y-4">
           <Card className="p-5 space-y-4 bg-white border-[#E5DEC9]">
             <h3 className="text-sm font-bold text-[#3B302B] border-b border-[#E5DEC9] pb-2 flex items-center justify-between">
-              <span>Payment &amp; Bill</span>
+              <span>{t("checkout.orderSummary", "Payment & Bill")}</span>
               <span
                 className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
                   order.paymentStatus === "PAID"
@@ -599,25 +628,25 @@ export const OrderDetailsPage: React.FC = () => {
                     : "bg-amber-100 text-amber-800"
                 }`}
               >
-                {order.paymentStatus === "PAID" ? "✓ Paid" : "⏳ " + order.paymentStatus}
+                {getLocalizedPaymentStatus(order.paymentStatus)}
               </span>
             </h3>
 
             {/* Bill Lines */}
             <div className="space-y-2 text-xs text-[#7A6E65]">
               <div className="flex justify-between">
-                <span>Items Subtotal</span>
+                <span>{t("checkout.subtotal", "Items Subtotal")}</span>
                 <span className="font-bold text-[#3B302B]">₹{order.subtotal}</span>
               </div>
               <div className="flex justify-between">
-                <span>Delivery Charge</span>
+                <span>{t("checkout.deliveryCharge", "Delivery Charge")}</span>
                 <span className="font-bold text-[#3B302B]">
-                  {order.deliveryFee === 0 ? "FREE" : `₹${order.deliveryFee}`}
+                  {order.deliveryFee === 0 ? t("checkout.freeDelivery", "FREE") : `₹${order.deliveryFee}`}
                 </span>
               </div>
               {order.discountAmount > 0 && (
                 <div className="flex justify-between text-emerald-700 font-bold">
-                  <span>Coupon Discount</span>
+                  <span>{t("checkout.promoDiscount", "Coupon Discount")}</span>
                   <span>-₹{order.discountAmount}</span>
                 </div>
               )}
@@ -626,13 +655,13 @@ export const OrderDetailsPage: React.FC = () => {
                 <div className="flex justify-between text-emerald-700 font-bold bg-emerald-50 p-2 rounded-lg border border-emerald-200">
                   <span className="flex items-center gap-1.5">
                     <Zap className="h-3.5 w-3.5 fill-emerald-600 text-emerald-600" />
-                    Direct UPI Discount (1.5% OFF)
+                    {t("checkout.upiDiscount", "Direct UPI Discount (1.5% OFF)")}
                   </span>
                   <span>-₹{order.manualUpiDiscount || Math.round((order.subtotal || 0) * 0.015)}</span>
                 </div>
               )}
               <div className="border-t border-[#E5DEC9] pt-2 flex justify-between text-sm font-extrabold text-[#3B302B]">
-                <span>Total Amount</span>
+                <span>{t("checkout.totalAmount", "Total Amount")}</span>
                 <span className="text-[#596B58]">₹{order.totalAmount}</span>
               </div>
             </div>
@@ -640,13 +669,13 @@ export const OrderDetailsPage: React.FC = () => {
             {/* Payment Method Details */}
             <div className="pt-2 border-t border-[#E5DEC9] space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#7A6E65]">Payment Method:</span>
+                <span className="text-[#7A6E65]">{t("checkout.paymentMethod", "Payment Method")}:</span>
                 <span className="font-bold text-[#3B302B]">
                   {order.paymentMethod === "MANUAL_UPI"
-                    ? "Direct UPI / QR (1.5% Instant Off)"
+                    ? t("checkout.manualUpi", "Direct UPI / QR (1.5% Instant Off)")
                     : order.paymentMethod === "COD"
-                    ? "Cash on Delivery"
-                    : "Razorpay Online"}
+                    ? t("checkout.cashOnDelivery", "Cash on Delivery")
+                    : t("checkout.onlinePaymentRazorpay", "Razorpay Online")}
                 </span>
               </div>
 
@@ -659,6 +688,7 @@ export const OrderDetailsPage: React.FC = () => {
                 </div>
               )}
             </div>
+
 
             {/* Payment Receipt Section for MANUAL_UPI */}
             {order.paymentMethod === "MANUAL_UPI" && (

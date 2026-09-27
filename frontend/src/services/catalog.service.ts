@@ -4,9 +4,12 @@ import { authService } from "./auth.service";
 export interface ProductItem {
   id: string;
   name: string;
+  nameHi?: string;
   slug: string;
   description: string;
+  descriptionHi?: string;
   shortDescription?: string;
+  shortDescriptionHi?: string;
   productType: "NORMAL" | "COMBO" | "CUSTOM_CAKE" | "DECORATION";
   price: number;
   compareAtPrice?: number;
@@ -14,10 +17,11 @@ export interface ProductItem {
   sku: string;
   isEggless: boolean;
   isAvailable: boolean;
+  isInstantAvailable?: boolean;
   isFeatured?: boolean;
   isBestseller?: boolean;
-  categoryId?: { id: string; name: string; slug: string };
-  occasionIds?: Array<{ id: string; name: string; slug: string }>;
+  categoryId?: { id: string; name: string; nameHi?: string; slug: string };
+  occasionIds?: Array<{ id: string; name: string; nameHi?: string; slug: string }>;
   images?: string[];
   mainImage?: string;
   rating?: number;
@@ -28,8 +32,10 @@ export interface ProductItem {
 export interface CategoryItem {
   id: string;
   name: string;
+  nameHi?: string;
   slug: string;
   description?: string;
+  descriptionHi?: string;
   image?: string;
   itemCount?: number;
 }
@@ -49,6 +55,7 @@ export interface SearchProductsQueryParams {
   productType?: string;
   minPrice?: number;
   maxPrice?: number;
+  isInstantAvailable?: boolean;
   sort?: string;
   page?: number;
   limit?: number;

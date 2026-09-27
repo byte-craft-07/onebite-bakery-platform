@@ -20,6 +20,7 @@ export interface ProductSnapshot {
   slug: string;
   thumbnailUrl?: string;
   productType: ProductType;
+  isInstantAvailable?: boolean;
 }
 
 export interface CartItem {
@@ -87,6 +88,10 @@ const productSnapshotSchema = new Schema<ProductSnapshot>(
       type: String,
       required: true,
       enum: ["NORMAL", "COMBO", "CUSTOM_CAKE", "DECORATION"],
+    },
+    isInstantAvailable: {
+      type: Boolean,
+      default: false,
     },
   },
   { _id: false },

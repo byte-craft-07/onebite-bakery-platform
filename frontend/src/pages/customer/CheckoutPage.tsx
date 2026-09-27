@@ -129,6 +129,7 @@ export const CheckoutPage: React.FC = () => {
 
   // Delivery Timing Preference State
   const [hasCustomCake, setHasCustomCake] = useState<boolean>(false);
+  const [isInstantOrder, setIsInstantOrder] = useState<boolean>(false);
   const [timingType, setTimingType] = useState<"INSTANT" | "SCHEDULED">("INSTANT");
   const [scheduledDate, setScheduledDate] = useState<string>(() => {
     const d = new Date();
@@ -194,11 +195,27 @@ export const CheckoutPage: React.FC = () => {
           );
       setHasCustomCake(isCustomCake);
 
-      if (isCustomCake) {
+      // Check if order is eligible for "⚡ Ready to Deliver (Instant)":
+      // If yes: specific date/time is hidden and instant is active.
+      // If no (made to order / custom cake / advance prep): instant is hidden and date/time slot is required.
+      const instantOrderFlag = directItem
+        ? Boolean((directItem as any).isInstantAvailable) && !isCustomCake
+        : (currentCart.items || []).length > 0 &&
+          (currentCart.items || []).every(
+            (i) => Boolean(i.productId?.isInstantAvailable)
+          ) &&
+          !isCustomCake;
+      setIsInstantOrder(instantOrderFlag);
+
+      if (instantOrderFlag) {
+        setTimingType("INSTANT");
+      } else {
         setTimingType("SCHEDULED");
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        setScheduledDate(tomorrow.toISOString().split("T")[0]);
+        const targetDate = new Date();
+        if (isCustomCake) {
+          targetDate.setDate(targetDate.getDate() + 1);
+        }
+        setScheduledDate(targetDate.toISOString().split("T")[0]);
       }
 
       if (villageList.length > 0 && !addressForm.getValues("village")) {
@@ -490,7 +507,7 @@ export const CheckoutPage: React.FC = () => {
 
   const validateStep2 = (): boolean => {
     setErrorMsg(null);
-    const effectiveTimingType = hasCustomCake ? "SCHEDULED" : timingType;
+    const effectiveTimingType = isInstantOrder ? "INSTANT" : "SCHEDULED";
     if (effectiveTimingType === "SCHEDULED" && !scheduledDate) {
       setErrorMsg("Please select a delivery date.");
       toast.error("Date Required", "Please select a delivery date.");
@@ -581,7 +598,7 @@ export const CheckoutPage: React.FC = () => {
     const selectedAddr = addresses.find((address) => address.id === selectedAddressId);
     const checkoutPhone = (selectedAddr?.phone || user?.phone || "9876543210").replace(/\D/g, "").slice(-10);
 
-    const effectiveTimingType = hasCustomCake ? "SCHEDULED" : timingType;
+    const effectiveTimingType = isInstantOrder ? "INSTANT" : "SCHEDULED";
     let deliveryPreference = "";
     if (effectiveTimingType === "SCHEDULED") {
       const formattedDate = scheduledDate
@@ -593,7 +610,7 @@ export const CheckoutPage: React.FC = () => {
         : "Selected Date";
       deliveryPreference = `📅 Scheduled: ${formattedDate} (${scheduledTimeSlot})`;
     } else {
-      deliveryPreference = "⚡ Instant Delivery (Within 30-45 mins)";
+      deliveryPreference = "⚡ Ready to Deliver (Instant - Within 30-45 mins)";
     }
 
     try {
@@ -1084,7 +1101,7 @@ export const CheckoutPage: React.FC = () => {
             <div className="hidden sm:block min-w-0">
               <p className="text-xs font-bold leading-tight truncate">2. Delivery Timing</p>
               <p className={`text-[10px] truncate ${currentStep === 2 ? "text-emerald-100" : "text-[#7A6E65]"}`}>
-                {timingType === "INSTANT" && !hasCustomCake ? "Instant (30-45m)" : "Scheduled Slot"}
+                {isInstantOrder ? "⚡ Instant (30-45m)" : "📅 Scheduled Slot"}
               </p>
             </div>
             <span className="sm:hidden text-xs font-bold truncate">2. Timing</span>
@@ -1311,6 +1328,7 @@ export const CheckoutPage: React.FC = () => {
 
                   <DeliveryTimingSelector
                     hasCustomCake={hasCustomCake}
+                    isInstantOrder={isInstantOrder}
                     timingType={timingType}
                     onTimingTypeChange={setTimingType}
                     scheduledDate={scheduledDate}
@@ -1376,11 +1394,11 @@ export const CheckoutPage: React.FC = () => {
                       <Clock className="h-4 w-4 text-[#596B58] shrink-0" />
                       <div className="min-w-0">
                         <p className="font-bold text-xs truncate">
-                          {timingType === "INSTANT" && !hasCustomCake ? "Instant Delivery" : "Scheduled Slot"}
+                          {isInstantOrder ? "⚡ Ready to Deliver (Instant)" : "📅 Specific Date & Time Slot"}
                         </p>
                         <p className="text-[11px] text-[#7A6E65] truncate">
-                          {timingType === "INSTANT" && !hasCustomCake
-                            ? "Within 30-45 mins"
+                          {isInstantOrder
+                            ? "Dispatched immediately (Within 30-45 mins)"
                             : `${scheduledDate ? new Date(scheduledDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "Scheduled"} (${scheduledTimeSlot})`}
                         </p>
                       </div>

@@ -1,0 +1,15 @@
+export default {
+  nameRequired: "पूरा नाम आवश्यक है।",
+  emailRequired: "ईमेल पता आवश्यक है।",
+  validEmail: "कृपया एक मान्य ईमेल पता दर्ज करें।",
+  phoneRequired: "मोबाइल नंबर आवश्यक है।",
+  validPhone: "कृपया एक मान्य 10-अंकीय मोबाइल नंबर दर्ज करें।",
+  villageRequired: "कृपया अपना गाँव चुनें या दर्ज करें।",
+  districtRequired: "ज़िला आवश्यक है।",
+  pincodeRequired: "पिन कोड आवश्यक है।",
+  validPincode: "कृपया एक मान्य 6-अंकीय पिन कोड दर्ज करें।",
+  streetRequired: "सड़क व मकान का विवरण आवश्यक है।",
+  fieldRequired: "यह फ़ील्ड आवश्यक है।",
+  minLength: "कम से कम {{min}} अक्षर होने चाहिए।",
+  maxLength: "{{max}} अक्षरों से अधिक नहीं होना चाहिए।",
+};

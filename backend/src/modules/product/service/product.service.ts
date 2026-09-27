@@ -758,6 +758,9 @@ export class ProductService {
       ...(typeof dto.isAvailable === "boolean"
         ? { isAvailable: dto.isAvailable }
         : {}),
+      ...(typeof dto.isInstantAvailable === "boolean"
+        ? { isInstantAvailable: dto.isInstantAvailable }
+        : {}),
       ...(dto.availableFrom ? { availableFrom: dto.availableFrom } : {}),
       ...(dto.availableUntil ? { availableUntil: dto.availableUntil } : {}),
       ...(typeof dto.displayOrder === "number"
@@ -804,6 +807,7 @@ export class ProductService {
       thumbnailUrl: product.thumbnailUrl,
       stockStatus: product.stockStatus,
       isAvailable: product.isAvailable,
+      isInstantAvailable: Boolean(product.isInstantAvailable),
       ...(product.availableFrom ? { availableFrom: product.availableFrom } : {}),
       ...(product.availableUntil ? { availableUntil: product.availableUntil } : {}),
       isActive: product.isActive,

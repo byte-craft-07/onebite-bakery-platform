@@ -21,9 +21,11 @@ const cleanSlug = (text: string): string => {
 const productSchema = z
   .object({
     name: z.string().trim().min(2, "Product name is required."),
+    nameHi: z.string().trim().optional(),
     slug: z.string().trim().optional(),
     categoryId: z.string().optional(),
     description: z.string().trim().min(2, "Description required."),
+    descriptionHi: z.string().trim().optional(),
     productType: z.enum(["NORMAL", "COMBO", "CUSTOM_CAKE", "DECORATION"]).optional(),
     price: z.coerce.number().min(1, "Valid price greater than 0 is required."),
     compareAtPrice: z.coerce.number().optional().nullable(),
@@ -32,6 +34,7 @@ const productSchema = z
     stockQuantity: z.coerce.number().min(0).optional(),
     isEggless: z.boolean().optional(),
     isAvailable: z.boolean().optional(),
+    isInstantAvailable: z.boolean().optional(),
   })
   .refine(
     (data) => {
@@ -97,9 +100,11 @@ export const ProductFormModal: React.FC<{
       if (initialData) {
         form.reset({
           name: initialData.name || "",
+          nameHi: initialData.nameHi || "",
           slug: initialData.slug || "",
           categoryId: initialData.categoryId || (typeof initialData.category === "object" ? initialData.category?.id || initialData.category?._id : initialData.category) || "",
           description: initialData.description || "",
+          descriptionHi: initialData.descriptionHi || "",
           productType: initialData.productType || "NORMAL",
           price: initialData.price ?? 499,
           compareAtPrice: initialData.compareAtPrice || undefined,
@@ -107,6 +112,7 @@ export const ProductFormModal: React.FC<{
           stockQuantity: initialData.stockQuantity ?? 50,
           isEggless: initialData.isEggless ?? true,
           isAvailable: initialData.isAvailable ?? true,
+          isInstantAvailable: initialData.isInstantAvailable ?? false,
         });
 
         const imgs: string[] = [];
@@ -124,9 +130,11 @@ export const ProductFormModal: React.FC<{
       } else {
         form.reset({
           name: "",
+          nameHi: "",
           slug: "",
           categoryId: "",
           description: "",
+          descriptionHi: "",
           productType: "NORMAL",
           price: 499,
           compareAtPrice: undefined,
@@ -134,6 +142,7 @@ export const ProductFormModal: React.FC<{
           stockQuantity: 50,
           isEggless: true,
           isAvailable: true,
+          isInstantAvailable: false,
         });
         setImageUrls([]);
       }
@@ -180,8 +189,10 @@ export const ProductFormModal: React.FC<{
 
       const payload: CreateProductPayload = {
         name: data.name.trim(),
+        nameHi: data.nameHi?.trim() || undefined,
         slug: sanitizedSlug,
         description: data.description.trim(),
+        descriptionHi: data.descriptionHi?.trim() || undefined,
         productType: data.productType || "NORMAL",
         price: Number(data.price),
         compareAtPrice:
@@ -192,6 +203,7 @@ export const ProductFormModal: React.FC<{
         stockQuantity: Number(data.stockQuantity ?? 50),
         isEggless: data.isEggless ?? true,
         isAvailable: data.isAvailable ?? true,
+        isInstantAvailable: Boolean(data.isInstantAvailable),
         mainImage: finalImages[0],
         thumbnailUrl: finalImages[0],
         imageUrls: finalImages,
@@ -251,7 +263,7 @@ export const ProductFormModal: React.FC<{
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <Input
-            label="Product Name *"
+            label="Product Name (English) *"
             placeholder="Belgian Truffle Cake"
             {...form.register("name")}
             onChange={handleNameChange}
@@ -263,6 +275,14 @@ export const ProductFormModal: React.FC<{
             {...form.register("slug")}
             onChange={handleSlugChange}
             error={form.formState.errors.slug?.message}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <Input
+            label="Product Name (Hindi / हिंदी) (Optional)"
+            placeholder="उदा. बेल्जियन ट्रफल केक"
+            {...form.register("nameHi")}
           />
         </div>
 
@@ -295,7 +315,7 @@ export const ProductFormModal: React.FC<{
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#3B302B] mb-1">Description *</label>
+          <label className="block text-xs font-bold text-[#3B302B] mb-1">Description (English) *</label>
           <textarea
             rows={3}
             placeholder="Rich Belgian chocolate truffle cake with ganache layers..."
@@ -307,6 +327,16 @@ export const ProductFormModal: React.FC<{
               {form.formState.errors.description.message}
             </p>
           ) : null}
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-[#3B302B] mb-1">Description (Hindi / हिंदी) (Optional)</label>
+          <textarea
+            rows={2}
+            placeholder="रिच बेल्जियन चॉकलेट ट्रफल केक गनाश परतों के साथ..."
+            {...form.register("descriptionHi")}
+            className="w-full p-3 rounded-lg border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58]"
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -390,23 +420,41 @@ export const ProductFormModal: React.FC<{
           />
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6 pt-2">
-          <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
-            <input
-              type="checkbox"
-              {...form.register("isEggless")}
-              className="rounded border-gray-300 text-[#596B58]"
-            />
-            <span>100% Eggless Option</span>
-          </label>
+        <div className="space-y-3 pt-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
+            <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                {...form.register("isEggless")}
+                className="rounded border-gray-300 text-[#596B58]"
+              />
+              <span>100% Eggless Option</span>
+            </label>
 
-          <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+            <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                {...form.register("isAvailable")}
+                className="rounded border-gray-300 text-[#596B58]"
+              />
+              <span>Available for Sale</span>
+            </label>
+          </div>
+
+          <label className="flex items-start gap-2.5 text-xs font-medium cursor-pointer p-3 rounded-xl bg-amber-50/80 border border-amber-200/90 text-amber-950 hover:bg-amber-100/70 transition-colors">
             <input
               type="checkbox"
-              {...form.register("isAvailable")}
-              className="rounded border-gray-300 text-[#596B58]"
+              {...form.register("isInstantAvailable")}
+              className="mt-0.5 rounded border-amber-400 text-[#596B58] focus:ring-[#596B58]"
             />
-            <span>Available for Sale</span>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-black text-xs text-[#3B302B] flex items-center gap-1.5">
+                ⚡ Ready to Deliver (Instant)
+              </span>
+              <span className="text-[11px] text-gray-600 font-normal">
+                Check this if the item is already made/in-stock for fast 30-45m instant delivery. Leave unchecked for made-to-order items that require preparation and a specific delivery date/slot.
+              </span>
+            </div>
           </label>
         </div>
 

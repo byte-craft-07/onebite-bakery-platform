@@ -70,6 +70,10 @@ export class ProductRepository extends BaseRepository<Product> {
       filter.isAvailable = query.isAvailable;
     }
 
+    if (query.isInstantAvailable !== undefined) {
+      filter.isInstantAvailable = query.isInstantAvailable;
+    }
+
     if (query.isFeatured !== undefined) {
       filter.isFeatured = query.isFeatured;
     }

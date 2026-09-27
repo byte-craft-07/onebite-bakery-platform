@@ -5,11 +5,16 @@ import { ArrowRight, Check, Star } from "lucide-react";
 import type { MockCategory, MockCombo, MockOccasion, MockReview } from "@/data/mockData";
 import { cartService } from "@/services/cart.service";
 import { getOptimizedImageUrl } from "@/utils/cdn.utils";
+import { useTranslation } from "react-i18next";
+import { getLocalizedCategoryName } from "@/i18n/utils";
 
 const FALLBACK_CATEGORY_IMAGE = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=360&q=75";
 const FALLBACK_OCCASION_IMAGE = "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=360&q=75";
 
 export const CategoryCard: React.FC<{ category: MockCategory }> = ({ category }) => {
+  const { t } = useTranslation();
+  const categoryName = getLocalizedCategoryName(category);
+
   return (
     <Link
       to={`/categories/${category.slug}`}
@@ -17,7 +22,7 @@ export const CategoryCard: React.FC<{ category: MockCategory }> = ({ category })
     >
       <img
         src={getOptimizedImageUrl(category.image || FALLBACK_CATEGORY_IMAGE, { width: 360, quality: 75 })}
-        alt={category.name}
+        alt={categoryName}
         onError={(e) => {
           if (e.currentTarget.dataset.failed !== "true") {
             e.currentTarget.dataset.failed = "true";
@@ -32,13 +37,14 @@ export const CategoryCard: React.FC<{ category: MockCategory }> = ({ category })
 
       <div className="relative z-10 text-white space-y-0.5 sm:space-y-1">
         <h3 className="text-sm sm:text-lg font-bold group-hover:text-[#D8BE91] transition-colors line-clamp-1">
-          {category.name}
+          {categoryName}
         </h3>
-        <p className="text-[10px] sm:text-xs text-white/80">{category.itemCount} Items</p>
+        <p className="text-[10px] sm:text-xs text-white/80">{category.itemCount} {t("common.items", "Items")}</p>
       </div>
     </Link>
   );
 };
+
 
 export const OccasionCard: React.FC<{ occasion: MockOccasion }> = ({ occasion }) => {
   return (
@@ -72,6 +78,7 @@ export const OccasionCard: React.FC<{ occasion: MockOccasion }> = ({ occasion })
 };
 
 export const ComboCard: React.FC<{ combo: MockCombo }> = ({ combo }) => {
+  const { t } = useTranslation();
   const [isAdded, setIsAdded] = useState(false);
   const navigate = useNavigate();
 
@@ -149,11 +156,11 @@ export const ComboCard: React.FC<{ combo: MockCombo }> = ({ combo }) => {
             {isAdded ? (
               <>
                 <Check className="h-3.5 w-3.5" />
-                <span>Combo Added to Cart</span>
+                <span>{t("home.comboAdded", "Combo Added to Cart")}</span>
               </>
             ) : (
               <>
-                <span>Explore Combo</span>
+                <span>{t("home.exploreCombo", "Explore Combo")}</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </>
             )}
@@ -185,6 +192,7 @@ export function formatTimeAgo(dateString?: string): string {
 }
 
 export const ReviewCard: React.FC<{ review: MockReview }> = ({ review }) => {
+  const { t } = useTranslation();
   const prodName = review.productName || (review as any).product_name;
   const rawName = (review as any).customerName || review.name;
   const displayName =
@@ -248,7 +256,7 @@ export const ReviewCard: React.FC<{ review: MockReview }> = ({ review }) => {
 
       <div className="flex items-center justify-between pt-1 border-t border-[#E5DEC9]/60 text-[10px] text-[#7A6E65]">
         <span className="text-[#596B58] font-semibold flex items-center gap-1">
-          ✓ Verified Quality
+          {t("home.verifiedQuality", "✓ Verified Quality")}
         </span>
         <span>{formatTimeAgo((review as any).createdAt || review.date)}</span>
       </div>

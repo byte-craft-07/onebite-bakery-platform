@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Award, Cake, Clock, Gift, PartyPopper, ShieldCheck, Sparkles, Star, Tag, Zap } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { CategoryCard, ComboCard, OccasionCard, ReviewCard } from "@/components/cards/DomainCards";
 import { ProductCard } from "@/components/cards/ProductCard";
@@ -16,6 +17,7 @@ import { ContactUsFloatingButton } from "@/components/common/ContactUsFloatingBu
 import { HeroBannerSlider } from "@/components/home/HeroBannerSlider";
 
 export const HomePage: React.FC = () => {
+  const { t } = useTranslation();
   const { currentLocation } = useAuth();
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [allProducts, setAllProducts] = useState<ProductItem[]>([]);
@@ -126,11 +128,11 @@ export const HomePage: React.FC = () => {
       <section className="space-y-4 sm:space-y-8">
         <div className="flex items-end justify-between gap-2">
           <div>
-            <h2 className="text-xl sm:text-3xl font-extrabold text-[#3B302B]">Browse Categories</h2>
-            <p className="text-[11px] sm:text-sm text-[#7A6E65] mt-0.5 sm:mt-1">Explore our complete range of baked goods & party items</p>
+            <h2 className="text-xl sm:text-3xl font-extrabold text-[#3B302B]">{t("home.browseCategories", "Browse Categories")}</h2>
+            <p className="text-[11px] sm:text-sm text-[#7A6E65] mt-0.5 sm:mt-1">{t("home.browseCategoriesSubtitle", "Explore our complete range of baked goods & party items")}</p>
           </div>
           <Link to="/categories" className="text-xs sm:text-sm font-bold text-[#596B58] hover:underline flex items-center gap-1 shrink-0">
-            <span>View All</span>
+            <span>{t("common.viewAll", "View All")}</span>
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -152,7 +154,7 @@ export const HomePage: React.FC = () => {
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-[#E5DEC9] p-6 text-center text-xs sm:text-sm text-[#7A6E65]">
-            No categories available.
+            {t("home.noCategories", "No categories available.")}
           </div>
         )}
       </section>
@@ -162,20 +164,20 @@ export const HomePage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
           <div>
             <h2 className="text-xl sm:text-3xl font-extrabold text-[#3B302B]">
-              All Bakery & Party Products
+              {t("home.allProductsTitle", "All Bakery & Party Products")}
             </h2>
             <p className="text-[11px] sm:text-sm text-[#7A6E65] mt-0.5 sm:mt-1">
-              Handcrafted cakes, fresh pastries, sourdough breads, and party decorations
+              {t("home.allProductsSubtitle", "Handcrafted cakes, fresh pastries, sourdough breads, and party decorations")}
             </p>
           </div>
 
           {/* Filter Pills */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
             {[
-              { id: "all", label: "🌟 All Items" },
-              { id: "cakes", label: "🎂 Cakes" },
-              { id: "pastries", label: "🥐 Pastries" },
-              { id: "decorations", label: "🎉 Decorations" },
+              { id: "all", label: t("home.tabAll", "🌟 All Items") },
+              { id: "cakes", label: t("home.tabCakes", "🎂 Cakes") },
+              { id: "pastries", label: t("home.tabPastries", "🥐 Pastries") },
+              { id: "decorations", label: t("home.tabDecorations", "🎉 Decorations") },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -201,7 +203,7 @@ export const HomePage: React.FC = () => {
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-[#E5DEC9] p-8 text-center text-xs sm:text-sm text-[#7A6E65]">
-            No products available in this section.
+            {t("home.noProducts", "No products available in this section.")}
           </div>
         )}
 
@@ -209,7 +211,7 @@ export const HomePage: React.FC = () => {
           <div className="text-center pt-2">
             <Link to="/products">
               <Button variant="outline" size="lg" className="w-full sm:w-auto border-[#596B58] text-[#596B58] hover:bg-[#FFF8EC]">
-                <span>Explore All {allProducts.length}+ Products</span>
+                <span>{t("home.exploreAllProducts", { count: allProducts.length, defaultValue: `Explore All ${allProducts.length}+ Products` })}</span>
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
@@ -224,20 +226,20 @@ export const HomePage: React.FC = () => {
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#596B58]/10 text-[#596B58] text-xs font-bold uppercase tracking-wider mb-1 sm:mb-2">
                 <PartyPopper className="h-3.5 w-3.5" />
-                <span>Party Ready Accessories</span>
+                <span>{t("home.partyReadyAccessories", "Party Ready Accessories")}</span>
               </div>
               <h2 className="text-xl sm:text-3xl font-extrabold text-[#3B302B]">
-                Celebration Party Decorations
+                {t("home.partyDecorationsTitle", "Celebration Party Decorations")}
               </h2>
               <p className="text-[11px] sm:text-sm text-[#7A6E65] mt-0.5 sm:mt-1">
-                Metallic candles, custom cake toppers, pastel balloons, and confetti poppers
+                {t("home.partyDecorationsSubtitle", "Metallic candles, custom cake toppers, pastel balloons, and confetti poppers")}
               </p>
             </div>
             <Link
               to="/decorations"
               className="text-xs sm:text-sm font-bold text-[#596B58] hover:underline flex items-center gap-1 shrink-0"
             >
-              <span>Open Party Shop</span>
+              <span>{t("home.openPartyShop", "Open Party Shop")}</span>
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -255,11 +257,11 @@ export const HomePage: React.FC = () => {
         <section className="space-y-4 sm:space-y-8">
           <div className="flex items-end justify-between gap-2">
             <div>
-              <h2 className="text-xl sm:text-3xl font-extrabold text-[#3B302B]">Baking for Occasions</h2>
-              <p className="text-[11px] sm:text-sm text-[#7A6E65] mt-0.5 sm:mt-1">Custom tier designs tailored for your milestone events</p>
+              <h2 className="text-xl sm:text-3xl font-extrabold text-[#3B302B]">{t("home.occasionsTitle", "Baking for Occasions")}</h2>
+              <p className="text-[11px] sm:text-sm text-[#7A6E65] mt-0.5 sm:mt-1">{t("home.occasionsSubtitle", "Custom tier designs tailored for your milestone events")}</p>
             </div>
             <Link to="/occasions" className="text-xs sm:text-sm font-bold text-[#596B58] hover:underline flex items-center gap-1 shrink-0">
-              <span>View All</span>
+              <span>{t("common.viewAll", "View All")}</span>
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -285,11 +287,11 @@ export const HomePage: React.FC = () => {
       <section className="space-y-6 sm:space-y-8">
         <div className="flex items-end justify-between gap-2">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">Special Celebration Combos</h2>
-            <p className="text-xs sm:text-sm text-[#7A6E65] mt-1">Curated party hampers offering unbeatable savings</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">{t("home.combosTitle", "Special Celebration Combos")}</h2>
+            <p className="text-xs sm:text-sm text-[#7A6E65] mt-1">{t("home.combosSubtitle", "Curated party hampers offering unbeatable savings")}</p>
           </div>
           <Link to="/combos" className="text-xs sm:text-sm font-bold text-[#596B58] hover:underline flex items-center gap-1 shrink-0">
-            <span>View Combos</span>
+            <span>{t("home.viewCombos", "View Combos")}</span>
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -302,7 +304,7 @@ export const HomePage: React.FC = () => {
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-[#E5DEC9] p-8 text-center text-xs sm:text-sm text-[#7A6E65]">
-            No combos available at this time.
+            {t("home.noCombos", "No combos available at this time.")}
           </div>
         )}
       </section>
@@ -312,18 +314,18 @@ export const HomePage: React.FC = () => {
         <div className="space-y-3 text-center md:text-left max-w-xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#596B58]/20 border border-[#596B58]/40 text-amber-300 text-xs font-bold">
             <Cake className="h-4 w-4" />
-            <span>Interactive 3D Studio</span>
+            <span>{t("home.customCakeStudioBadge", "Interactive 3D Studio")}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-            Design Your Own Dream Celebration Cake
+            {t("home.customCakeStudioTitle", "Design Your Own Dream Celebration Cake")}
           </h2>
           <p className="text-xs sm:text-sm text-[#E5DEC9]/80">
-            Choose tiers, gourmet flavors, cream frostings, custom messages, and photo uploads. Real-time pricing & fresh delivery.
+            {t("home.customCakeStudioDesc", "Choose tiers, gourmet flavors, cream frostings, custom messages, and photo uploads. Real-time pricing & fresh delivery.")}
           </p>
         </div>
         <Link to="/custom-cake" className="shrink-0">
           <Button size="lg" className="bg-[#596B58] hover:bg-[#495948] text-white font-extrabold shadow-lg">
-            <span>Launch Custom Cake Studio</span>
+            <span>{t("home.launchCustomCakeStudio", "Launch Custom Cake Studio")}</span>
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
         </Link>
@@ -332,30 +334,30 @@ export const HomePage: React.FC = () => {
       {/* Why Choose Onebite Bakery */}
       <section className="rounded-3xl bg-[#3B302B] text-[#FFF8EC] p-6 sm:p-10 md:p-16 space-y-8 sm:space-y-10">
         <div className="text-center max-w-2xl mx-auto space-y-2 sm:space-y-3">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#596B58]">Why Choose Onebite Bakery?</h2>
-          <p className="text-xs sm:text-sm text-[#E5DEC9]/80">We take pride in baking with uncompromised quality and passion.</p>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#596B58]">{t("home.whyChooseTitle", "Why Choose Onebite Bakery?")}</h2>
+          <p className="text-xs sm:text-sm text-[#E5DEC9]/80">{t("home.whyChooseSubtitle", "We take pride in baking with uncompromised quality and passion.")}</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
           <div className="space-y-2 sm:space-y-3 p-3 sm:p-4">
             <Cake className="h-9 w-9 sm:h-10 sm:w-10 text-[#596B58] mx-auto" />
-            <h3 className="text-base sm:text-lg font-bold">100% Fresh Daily</h3>
-            <p className="text-xs text-[#E5DEC9]/70">Baked fresh every single morning using premium ingredients.</p>
+            <h3 className="text-base sm:text-lg font-bold">{t("home.freshDailyTitle", "100% Fresh Daily")}</h3>
+            <p className="text-xs text-[#E5DEC9]/70">{t("home.freshDailyDesc", "Baked fresh every single morning using premium ingredients.")}</p>
           </div>
           <div className="space-y-2 sm:space-y-3 p-3 sm:p-4">
             <Award className="h-9 w-9 sm:h-10 sm:w-10 text-[#596B58] mx-auto" />
-            <h3 className="text-base sm:text-lg font-bold">Artisanal Master Bakers</h3>
-            <p className="text-xs text-[#E5DEC9]/70">Crafted by award-winning pastry chefs with years of experience.</p>
+            <h3 className="text-base sm:text-lg font-bold">{t("home.artisanalBakersTitle", "Artisanal Master Bakers")}</h3>
+            <p className="text-xs text-[#E5DEC9]/70">{t("home.artisanalBakersDesc", "Crafted by award-winning pastry chefs with years of experience.")}</p>
           </div>
           <div className="space-y-2 sm:space-y-3 p-3 sm:p-4">
             <Clock className="h-9 w-9 sm:h-10 sm:w-10 text-[#596B58] mx-auto" />
-            <h3 className="text-base sm:text-lg font-bold">Fast Home Delivery</h3>
-            <p className="text-xs text-[#E5DEC9]/70">Temperature controlled delivery ensures fresh & pristine cakes.</p>
+            <h3 className="text-base sm:text-lg font-bold">{t("home.fastDeliveryTitle", "Fast Home Delivery")}</h3>
+            <p className="text-xs text-[#E5DEC9]/70">{t("home.fastDeliveryDesc", "Temperature controlled delivery ensures fresh & pristine cakes.")}</p>
           </div>
           <div className="space-y-2 sm:space-y-3 p-3 sm:p-4">
             <ShieldCheck className="h-9 w-9 sm:h-10 sm:w-10 text-[#596B58] mx-auto" />
-            <h3 className="text-base sm:text-lg font-bold">100% Eggless Option</h3>
-            <p className="text-xs text-[#E5DEC9]/70">Dedicated eggless baking station for your dietary choices.</p>
+            <h3 className="text-base sm:text-lg font-bold">{t("home.egglessOptionTitle", "100% Eggless Option")}</h3>
+            <p className="text-xs text-[#E5DEC9]/70">{t("home.egglessOptionDesc", "Dedicated eggless baking station for your dietary choices.")}</p>
           </div>
         </div>
       </section>
@@ -390,17 +392,19 @@ export const HomePage: React.FC = () => {
                   <Star className="h-5 w-5 fill-current" />
                 </div>
                 <span className="text-lg font-extrabold text-[#3B302B]">{avgRating} / 5.0</span>
-                <span className="text-xs font-semibold text-[#7A6E65]">({reviews.length} Verified Customer Reviews)</span>
+                <span className="text-xs font-semibold text-[#7A6E65]">
+                  {t("home.verifiedReviewsCount", { count: reviews.length, defaultValue: `(${reviews.length} Verified Customer Reviews)` })}
+                </span>
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
-                  Customer Reviews
+                  {t("home.customerReviewsBadge", "Customer Reviews")}
                 </span>
               </div>
             )}
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">What Our Customers Say</h2>
-            <p className="text-xs sm:text-sm text-[#7A6E65]">Live testimonials from celebrations across our delivery villages.</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">{t("home.reviewsTitle", "What Our Customers Say")}</h2>
+            <p className="text-xs sm:text-sm text-[#7A6E65]">{t("home.reviewsSubtitle", "Live testimonials from celebrations across our delivery villages.")}</p>
           </div>
 
           <Button
@@ -409,7 +413,7 @@ export const HomePage: React.FC = () => {
             className="border-[#596B58] text-[#596B58] hover:bg-[#FFF8EC] self-start sm:self-auto shrink-0 font-bold"
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            <span>Write a Review</span>
+            <span>{t("home.writeReview", "Write a Review")}</span>
           </Button>
         </div>
 
@@ -429,9 +433,9 @@ export const HomePage: React.FC = () => {
               <Sparkles className="h-6 w-6 text-[#596B58]" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base sm:text-lg font-bold text-[#3B302B]">It has no reviews yet</h3>
+              <h3 className="text-base sm:text-lg font-bold text-[#3B302B]">{t("home.noReviewsTitle", "It has no reviews yet")}</h3>
               <p className="text-xs text-[#7A6E65] max-w-md mx-auto">
-                No customer reviews have been posted yet. Be the first to share your celebration experience!
+                {t("home.noReviewsDesc", "No customer reviews have been posted yet. Be the first to share your celebration experience!")}
               </p>
             </div>
             <Button
@@ -439,7 +443,7 @@ export const HomePage: React.FC = () => {
               className="font-bold text-xs"
             >
               <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-              <span>Write the First Review</span>
+              <span>{t("home.writeFirstReview", "Write the First Review")}</span>
             </Button>
           </div>
         )}

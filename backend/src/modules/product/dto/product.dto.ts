@@ -7,9 +7,12 @@ export interface ComboItemDto {
 
 export interface CreateProductDto {
   name: string;
+  nameHi?: string;
   slug?: string;
   shortDescription?: string;
+  shortDescriptionHi?: string;
   description: string;
+  descriptionHi?: string;
   categoryId: string;
   occasionIds: string[];
   productType: ProductType;
@@ -26,6 +29,7 @@ export interface CreateProductDto {
   allowBackorder: boolean;
   stockStatus?: StockStatus;
   isAvailable: boolean;
+  isInstantAvailable?: boolean;
   isActive: boolean;
   isFeatured: boolean;
   isTrending: boolean;
