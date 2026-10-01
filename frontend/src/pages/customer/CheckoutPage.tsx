@@ -56,6 +56,33 @@ import { razorpayService } from "@/services/razorpay.service";
 import { villageService, type Village } from "@/services/village.service";
 import { adminOperationsService } from "@/features/admin/services/adminOperations.service";
 
+/**
+ * Build a clean, standards-compliant UPI payment URI.
+ *
+ * Uses URLSearchParams for safe encoding. Only includes the four required
+ * parameters: pa (payee address), pn (payee name), am (amount), cu (currency).
+ *
+ * The `tn` (transaction note) parameter is intentionally omitted because
+ * business UPI handles (e.g. @okbizaxis) can reject payments that include
+ * extra parameters not registered with the merchant's PSP.
+ *
+ * Amount is formatted to exactly 2 decimal places (e.g. "100.00") per
+ * NPCI UPI specification.
+ */
+const buildUpiUri = (upiId: string, amount: number): string => {
+  // Format amount to exactly 2 decimal places to avoid floating point artifacts
+  const formattedAmount = Number(amount).toFixed(2);
+
+  const params = new URLSearchParams({
+    pa: upiId.trim(),
+    pn: "Onebite Bakery",
+    am: formattedAmount,
+    cu: "INR",
+  });
+
+  return `upi://pay?${params.toString()}`;
+};
+
 const inlineAddressSchema = z.object({
   name: z.string().trim().min(2, "Name is required."),
   email: z.string().trim().email("Valid email required."),
@@ -431,7 +458,7 @@ export const CheckoutPage: React.FC = () => {
   const handleDownloadQr = async () => {
     setIsDownloadingQr(true);
     const dynamicQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(
-      `upi://pay?pa=${bakeryUpiId}&pn=Onebite%20Bakery&am=${payableAmount}&cu=INR&tn=Order%20Payment`
+      buildUpiUri(bakeryUpiId, payableAmount)
     )}`;
     const qrDisplayUrl = qrCropMode === "full" && bakeryUpiQr ? bakeryUpiQr : dynamicQrUrl;
 
@@ -487,7 +514,7 @@ export const CheckoutPage: React.FC = () => {
   const handleDownloadCodQr = async () => {
     setIsDownloadingCodQr(true);
     const dynamicQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(
-      `upi://pay?pa=${bakeryUpiId}&pn=Onebite%20Bakery&am=${codAdvanceAmount}&cu=INR&tn=COD%2050%20Percent%20Advance`
+      buildUpiUri(bakeryUpiId, codAdvanceAmount)
     )}`;
     const qrDisplayUrl = codQrCropMode === "full" && bakeryUpiQr ? bakeryUpiQr : dynamicQrUrl;
 
@@ -1776,7 +1803,7 @@ export const CheckoutPage: React.FC = () => {
                                   ) : qrCropMode === "dynamic" ? (
                                     <img
                                       src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-                                        `upi://pay?pa=${bakeryUpiId}&pn=Onebite%20Bakery&am=${payableAmount}&cu=INR&tn=Order%20Payment`
+                                        buildUpiUri(bakeryUpiId, payableAmount)
                                       )}`}
                                       alt="Dynamic UPI QR Code"
                                       className="w-full h-full object-contain rounded-lg"
@@ -1786,7 +1813,7 @@ export const CheckoutPage: React.FC = () => {
                                       src={
                                         bakeryUpiQr ||
                                         `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-                                          `upi://pay?pa=${bakeryUpiId}&pn=Onebite%20Bakery&am=${payableAmount}&cu=INR&tn=Order%20Payment`
+                                          buildUpiUri(bakeryUpiId, payableAmount)
                                         )}`
                                       }
                                       alt="Bakery UPI QR Code"
@@ -1817,7 +1844,7 @@ export const CheckoutPage: React.FC = () => {
 
                                 {/* Direct Mobile UPI App Button */}
                                 <a
-                                  href={`upi://pay?pa=${bakeryUpiId}&pn=Onebite%20Bakery&am=${payableAmount}&cu=INR&tn=Order%20Payment`}
+                                  href={buildUpiUri(bakeryUpiId, payableAmount)}
                                   className="w-full py-3 px-4 bg-[#596B58] hover:bg-[#495948] text-white rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 shadow-sm transition-all"
                                 >
                                   <Zap className="h-4 w-4 text-amber-300 shrink-0 fill-amber-300" />
@@ -2126,7 +2153,7 @@ export const CheckoutPage: React.FC = () => {
                                 ) : codQrCropMode === "dynamic" ? (
                                   <img
                                     src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-                                      `upi://pay?pa=${bakeryUpiId}&pn=Onebite%20Bakery&am=${codAdvanceAmount}&cu=INR&tn=COD%2050%20Percent%20Advance`
+                                      buildUpiUri(bakeryUpiId, codAdvanceAmount)
                                     )}`}
                                     alt="Dynamic UPI QR Code"
                                     className="w-full h-full object-contain rounded-lg"
@@ -2136,7 +2163,7 @@ export const CheckoutPage: React.FC = () => {
                                     src={
                                       bakeryUpiQr ||
                                       `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-                                        `upi://pay?pa=${bakeryUpiId}&pn=Onebite%20Bakery&am=${codAdvanceAmount}&cu=INR&tn=COD%2050%20Percent%20Advance`
+                                        buildUpiUri(bakeryUpiId, codAdvanceAmount)
                                       )}`
                                     }
                                     alt="Bakery UPI QR Code"
@@ -2167,7 +2194,7 @@ export const CheckoutPage: React.FC = () => {
 
                               {/* Direct UPI App Button */}
                               <a
-                                href={`upi://pay?pa=${bakeryUpiId}&pn=Onebite%20Bakery&am=${codAdvanceAmount}&cu=INR&tn=COD%2050%20Percent%20Advance`}
+                                href={buildUpiUri(bakeryUpiId, codAdvanceAmount)}
                                 className="w-full py-3 px-4 bg-[#596B58] hover:bg-[#495948] text-white rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 shadow-sm transition-all"
                               >
                                 <Zap className="h-4 w-4 text-amber-300 shrink-0 fill-amber-300" />
