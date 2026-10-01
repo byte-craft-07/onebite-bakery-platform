@@ -1894,73 +1894,64 @@ export const CheckoutPage: React.FC = () => {
                                     </p>
                                   </div>
 
-                                  {/* Way 2: PhonePe Mobile Number */}
-                                  <div className="p-3 bg-[#FFF8EC] border border-[#E5DEC9] rounded-xl space-y-2">
+                                  {/* Way 2: PhonePe Mobile Number (Fastest Method) */}
+                                  <div className="p-3.5 bg-[#FFF8EC] border-2 border-[#596B58]/30 rounded-xl space-y-2.5">
                                     <div className="flex items-center justify-between">
                                       <span className="text-xs font-bold text-[#3B302B] flex items-center gap-1.5">
-                                        <Phone className="h-3.5 w-3.5 text-[#596B58]" />
-                                        <span>तरीका 2: PhonePe मोबाइल नंबर पर भेजें</span>
+                                        <Phone className="h-4 w-4 text-[#596B58]" />
+                                        <span>तरीका 2: PhonePe मोबाइल नंबर (सबसे तेज़ और आसान)</span>
                                       </span>
-                                      <span className="text-[9px] text-[#596B58] font-bold bg-[#596B58]/10 px-2 py-0.5 rounded-full">
-                                        Ajay Kumar
+                                      <span className="text-[10px] text-emerald-800 font-extrabold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
+                                        ⚡ 2 सेकंड में पेमेंट
                                       </span>
                                     </div>
-                                    <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-[#E5DEC9]">
+                                    <p className="text-[11px] text-[#7A6E65] leading-relaxed">
+                                      💡 <em>PhonePe ऐप खुद सलाह देता है:</em> <strong>"Please try using a mobile number"</strong>. आप सीधे मोबाइल नंबर पर बिना किसी रुकावट के पेमेंट कर सकते हैं:
+                                    </p>
+                                    <div className="flex items-center justify-between gap-2 p-2.5 bg-white rounded-xl border border-[#E5DEC9] shadow-2xs">
                                       <div>
-                                        <span className="text-xs font-mono font-extrabold text-[#3B302B] block">{bakeryUpiPhone}</span>
-                                        <span className="text-[9px] text-gray-500">नाम: Ajay Kumar • PhonePe / GPay / Paytm</span>
+                                        <span className="text-sm font-mono font-black text-[#3B302B] tracking-wide block">{bakeryUpiPhone}</span>
+                                        <span className="text-[10px] text-gray-600 font-medium">नाम: Ajay Kumar • PhonePe / GPay / Paytm</span>
                                       </div>
                                       <button
                                         type="button"
                                         onClick={handleCopyPhone}
-                                        className="px-2.5 py-1.5 bg-[#596B58] hover:bg-[#495948] text-white rounded-md text-[10px] font-bold flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                                        className="px-3 py-1.5 bg-[#596B58] hover:bg-[#495948] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-2xs cursor-pointer"
                                       >
-                                        {isCopiedPhone ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                                        {isCopiedPhone ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                                         <span>{isCopiedPhone ? "कॉपी हो गया!" : "नंबर कॉपी करें"}</span>
                                       </button>
                                     </div>
-                                    <p className="text-[10px] text-[#7A6E65] leading-tight">
-                                      PhonePe खोलें ➔ <strong>To Mobile Number</strong> में <strong>{bakeryUpiPhone}</strong> डालकर सीधे <strong>₹{payableAmount}</strong> भेजें।
-                                    </p>
+                                    <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-[10.5px] text-emerald-950 space-y-0.5">
+                                      <p className="font-bold">📱 भुगतान कैसे करें (How to Pay):</p>
+                                      <p>1. ऊपर <strong>"नंबर कॉपी करें"</strong> बटन दबाएं।</p>
+                                      <p>2. अपना <strong>PhonePe</strong> ऐप खोलें ➔ <strong>"To Mobile Number"</strong> (मोबाइल नंबर) पर क्लिक करें।</p>
+                                      <p>3. यह नंबर <strong>{bakeryUpiPhone}</strong> डालें ➔ <strong>Ajay Kumar</strong> नाम आएगा ➔ <strong>₹{payableAmount}</strong> डालकर UPI PIN डालें।</p>
+                                      <p className="text-emerald-700 font-bold">✅ पेमेंट 2 सेकंड में तुरंत सफल हो जाएगा!</p>
+                                    </div>
                                   </div>
 
                                   {/* Way 3: UPI ID */}
                                   <div className="p-3 bg-[#FFF8EC] border border-[#E5DEC9] rounded-xl space-y-2">
                                     <span className="text-xs font-bold text-[#3B302B] block">
-                                      तरीका 3: UPI ID पर भेजें
+                                      तरीका 3: UPI ID कॉपी करके भेजें
                                     </span>
-                                    <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-[#E5DEC9]">
-                                      <span className="text-xs font-mono font-bold text-[#3B302B] truncate">{bakeryUpiId}</span>
+                                    <div className="flex items-center justify-between gap-2 p-2.5 bg-white rounded-lg border border-[#E5DEC9]">
+                                      <div>
+                                        <span className="text-xs font-mono font-extrabold text-[#3B302B] block">{bakeryUpiId}</span>
+                                        <span className="text-[9px] text-gray-500">Onebite Bakery Official UPI</span>
+                                      </div>
                                       <button
                                         type="button"
                                         onClick={handleCopyUpiId}
-                                        className="px-2.5 py-1.5 bg-[#596B58] hover:bg-[#495948] text-white rounded-md text-[10px] font-bold flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                                        className="px-3 py-1.5 bg-[#596B58] hover:bg-[#495948] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
                                       >
-                                        {isCopiedUpi ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                                        {isCopiedUpi ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                                         <span>{isCopiedUpi ? "कॉपी हो गया!" : "UPI ID कॉपी करें"}</span>
                                       </button>
                                     </div>
                                     <p className="text-[10px] text-[#7A6E65] leading-tight">
-                                      PhonePe / GPay खोलें ➔ <strong>To UPI ID</strong> पर पेस्ट करें और ₹{payableAmount} भेजें।
-                                    </p>
-                                  </div>
-
-                                  {/* Direct App Link with Guidance */}
-                                  <div className="pt-1 space-y-1.5">
-                                    <a
-                                      href={buildUpiUri(bakeryUpiId, payableAmount)}
-                                      onClick={() => {
-                                        if (typeof navigator !== "undefined" && navigator.clipboard) {
-                                          navigator.clipboard.writeText(bakeryUpiId);
-                                        }
-                                      }}
-                                      className="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-[#3B302B] border border-gray-300 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
-                                    >
-                                      <Zap className="h-3.5 w-3.5 text-amber-600" />
-                                      <span>सीधे UPI ऐप खोलें (यदि आपके फोन में समर्थित हो)</span>
-                                    </a>
-                                    <p className="text-[9.5px] text-amber-900 bg-amber-50 p-2.5 rounded-lg border border-amber-200 leading-tight">
-                                      ⚠️ <strong>PhonePe सुरक्षा अलर्ट:</strong> यदि सीधे ऐप खोलने पर <em>"Declined for security reasons"</em> आए, तो यह RBI का नया पर्सनल UPI सुरक्षा नियम है। कृपया ऊपर <strong>तरीका 1 (QR कोड डाउनलोड)</strong> या <strong>तरीका 2 (मोबाइल नंबर 7897671632)</strong> से भुगतान करें — वह 100% तुरंत सफल होगा!
+                                      PhonePe / GPay / Paytm खोलें ➔ <strong>"To UPI ID"</strong> पर यह ID पेस्ट करें और ₹{payableAmount} भेजें।
                                     </p>
                                   </div>
                                 </div>
@@ -2296,73 +2287,64 @@ export const CheckoutPage: React.FC = () => {
                                     </p>
                                   </div>
 
-                                  {/* Way 2: PhonePe Mobile Number */}
-                                  <div className="p-3 bg-[#FFF8EC] border border-[#E5DEC9] rounded-xl space-y-2">
+                                  {/* Way 2: PhonePe Mobile Number (Fastest Method) */}
+                                  <div className="p-3.5 bg-[#FFF8EC] border-2 border-[#596B58]/30 rounded-xl space-y-2.5">
                                     <div className="flex items-center justify-between">
                                       <span className="text-xs font-bold text-[#3B302B] flex items-center gap-1.5">
-                                        <Phone className="h-3.5 w-3.5 text-[#596B58]" />
-                                        <span>तरीका 2: PhonePe मोबाइल नंबर पर ₹{codAdvanceAmount} भेजें</span>
+                                        <Phone className="h-4 w-4 text-[#596B58]" />
+                                        <span>तरीका 2: PhonePe मोबाइल नंबर (सबसे तेज़ और आसान)</span>
                                       </span>
-                                      <span className="text-[9px] text-[#596B58] font-bold bg-[#596B58]/10 px-2 py-0.5 rounded-full">
-                                        Ajay Kumar
+                                      <span className="text-[10px] text-emerald-800 font-extrabold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
+                                        ⚡ 2 सेकंड में पेमेंट
                                       </span>
                                     </div>
-                                    <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-[#E5DEC9]">
+                                    <p className="text-[11px] text-[#7A6E65] leading-relaxed">
+                                      💡 <em>PhonePe ऐप खुद सलाह देता है:</em> <strong>"Please try using a mobile number"</strong>. आप सीधे मोबाइल नंबर पर 50% एडवांस (₹{codAdvanceAmount}) बिना किसी रुकावट के भेज सकते हैं:
+                                    </p>
+                                    <div className="flex items-center justify-between gap-2 p-2.5 bg-white rounded-xl border border-[#E5DEC9] shadow-2xs">
                                       <div>
-                                        <span className="text-xs font-mono font-extrabold text-[#3B302B] block">{bakeryUpiPhone}</span>
-                                        <span className="text-[9px] text-gray-500">नाम: Ajay Kumar • PhonePe / GPay / Paytm</span>
+                                        <span className="text-sm font-mono font-black text-[#3B302B] tracking-wide block">{bakeryUpiPhone}</span>
+                                        <span className="text-[10px] text-gray-600 font-medium">नाम: Ajay Kumar • PhonePe / GPay / Paytm</span>
                                       </div>
                                       <button
                                         type="button"
                                         onClick={handleCopyCodPhone}
-                                        className="px-2.5 py-1.5 bg-[#596B58] hover:bg-[#495948] text-white rounded-md text-[10px] font-bold flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                                        className="px-3 py-1.5 bg-[#596B58] hover:bg-[#495948] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-2xs cursor-pointer"
                                       >
-                                        {isCopiedCodPhone ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                                        {isCopiedCodPhone ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                                         <span>{isCopiedCodPhone ? "कॉपी हो गया!" : "नंबर कॉपी करें"}</span>
                                       </button>
                                     </div>
-                                    <p className="text-[10px] text-[#7A6E65] leading-tight">
-                                      PhonePe खोलें ➔ <strong>To Mobile Number</strong> में <strong>{bakeryUpiPhone}</strong> डालकर सीधे ₹{codAdvanceAmount} भेजें।
-                                    </p>
+                                    <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-[10.5px] text-emerald-950 space-y-0.5">
+                                      <p className="font-bold">📱 50% एडवांस कैसे भेजें (How to Pay):</p>
+                                      <p>1. ऊपर <strong>"नंबर कॉपी करें"</strong> बटन दबाएं।</p>
+                                      <p>2. अपना <strong>PhonePe</strong> ऐप खोलें ➔ <strong>"To Mobile Number"</strong> (मोबाइल नंबर) पर क्लिक करें।</p>
+                                      <p>3. यह नंबर <strong>{bakeryUpiPhone}</strong> डालें ➔ <strong>Ajay Kumar</strong> नाम आएगा ➔ <strong>₹{codAdvanceAmount}</strong> डालकर UPI PIN डालें।</p>
+                                      <p className="text-emerald-700 font-bold">✅ 50% एडवांस पेमेंट 2 सेकंड में तुरंत सफल हो जाएगा!</p>
+                                    </div>
                                   </div>
 
                                   {/* Way 3: UPI ID */}
                                   <div className="p-3 bg-[#FFF8EC] border border-[#E5DEC9] rounded-xl space-y-2">
                                     <span className="text-xs font-bold text-[#3B302B] block">
-                                      तरीका 3: UPI ID पर भेजें
+                                      तरीका 3: UPI ID कॉपी करके भेजें
                                     </span>
-                                    <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-[#E5DEC9]">
-                                      <span className="text-xs font-mono font-bold text-[#3B302B] truncate">{bakeryUpiId}</span>
+                                    <div className="flex items-center justify-between gap-2 p-2.5 bg-white rounded-lg border border-[#E5DEC9]">
+                                      <div>
+                                        <span className="text-xs font-mono font-extrabold text-[#3B302B] block">{bakeryUpiId}</span>
+                                        <span className="text-[9px] text-gray-500">Onebite Bakery Official UPI</span>
+                                      </div>
                                       <button
                                         type="button"
                                         onClick={handleCopyCodUpiId}
-                                        className="px-2.5 py-1.5 bg-[#596B58] hover:bg-[#495948] text-white rounded-md text-[10px] font-bold flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                                        className="px-3 py-1.5 bg-[#596B58] hover:bg-[#495948] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
                                       >
-                                        {isCopiedCodUpi ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                                        {isCopiedCodUpi ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                                         <span>{isCopiedCodUpi ? "कॉपी हो गया!" : "UPI ID कॉपी करें"}</span>
                                       </button>
                                     </div>
                                     <p className="text-[10px] text-[#7A6E65] leading-tight">
-                                      PhonePe / GPay खोलें ➔ <strong>To UPI ID</strong> पर पेस्ट करें और ₹{codAdvanceAmount} भेजें।
-                                    </p>
-                                  </div>
-
-                                  {/* Direct App Link with Guidance */}
-                                  <div className="pt-1 space-y-1.5">
-                                    <a
-                                      href={buildUpiUri(bakeryUpiId, codAdvanceAmount)}
-                                      onClick={() => {
-                                        if (typeof navigator !== "undefined" && navigator.clipboard) {
-                                          navigator.clipboard.writeText(bakeryUpiId);
-                                        }
-                                      }}
-                                      className="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-[#3B302B] border border-gray-300 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
-                                    >
-                                      <Zap className="h-3.5 w-3.5 text-amber-600" />
-                                      <span>सीधे UPI ऐप खोलें (₹{codAdvanceAmount} 50% एडवांस)</span>
-                                    </a>
-                                    <p className="text-[9.5px] text-amber-900 bg-amber-50 p-2.5 rounded-lg border border-amber-200 leading-tight">
-                                      ⚠️ <strong>PhonePe सुरक्षा अलर्ट:</strong> यदि सीधे ऐप खोलने पर <em>"Declined for security reasons"</em> आए, तो यह RBI का नया पर्सनल UPI सुरक्षा नियम है। कृपया ऊपर <strong>तरीका 1 (QR कोड डाउनलोड)</strong> या <strong>तरीका 2 (मोबाइल नंबर 7897671632)</strong> से भुगतान करें — वह 100% तुरंत सफल होगा!
+                                      PhonePe / GPay / Paytm खोलें ➔ <strong>"To UPI ID"</strong> पर यह ID पेस्ट करें और ₹{codAdvanceAmount} भेजें।
                                     </p>
                                   </div>
                                 </div>
