@@ -59,8 +59,15 @@ import { adminOperationsService } from "@/features/admin/services/adminOperation
 /**
  * Build a clean, standards-compliant UPI payment URI.
  *
- * Uses URLSearchParams for safe encoding. Only includes the four required
- * parameters: pa (payee address), pn (payee name), am (amount), cu (currency).
+ * IMPORTANT: Do NOT use URLSearchParams here — it encodes `@` as `%40`,
+ * which corrupts the VPA (e.g. `7897671632%40okbizaxis`). UPI apps like
+ * PhonePe do NOT decode `%40` back to `@`, causing them to fall back to
+ * phone-number resolution and connect to the wrong VPA entirely.
+ *
+ * The `@` in the UPI ID (pa) MUST remain a literal character.
+ *
+ * Only includes the four required parameters:
+ *   pa (payee address), pn (payee name), am (amount), cu (currency).
  *
  * The `tn` (transaction note) parameter is intentionally omitted because
  * business UPI handles (e.g. @okbizaxis) can reject payments that include
@@ -73,14 +80,11 @@ const buildUpiUri = (upiId: string, amount: number): string => {
   // Format amount to exactly 2 decimal places to avoid floating point artifacts
   const formattedAmount = Number(amount).toFixed(2);
 
-  const params = new URLSearchParams({
-    pa: upiId.trim(),
-    pn: "Onebite Bakery",
-    am: formattedAmount,
-    cu: "INR",
-  });
+  // encodeURIComponent for payee name only (handles spaces → %20)
+  // Keep pa= with literal @ — UPI apps expect unencoded @ in VPA
+  const payeeName = encodeURIComponent("Onebite Bakery");
 
-  return `upi://pay?${params.toString()}`;
+  return `upi://pay?pa=${upiId.trim()}&pn=${payeeName}&am=${formattedAmount}&cu=INR`;
 };
 
 const inlineAddressSchema = z.object({

@@ -214,7 +214,7 @@ export const LanguageSelectModal: React.FC<LanguageSelectModalProps> = ({
           onClick={handleConfirm}
           className="w-full py-3.5 px-4 rounded-2xl bg-[#596B58] hover:bg-[#495948] active:scale-[0.99] text-[#FFF8EC] font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
         >
-          <span>{selectedLang === "hi" ? "आगे बढ़ें (Continue)" : "Continue &bull; आगे बढ़ें"}</span>
+          <span>{selectedLang === "hi" ? "आगे बढ़ें (Continue)" : "Continue ; आगे बढ़ें"}</span>
           <ArrowRight className="h-4 w-4" />
         </button>
 
