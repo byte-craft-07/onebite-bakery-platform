@@ -1890,7 +1890,7 @@ export const CheckoutPage: React.FC = () => {
                                       <span>₹{payableAmount} का QR कोड डाउनलोड करें</span>
                                     </Button>
                                     <p className="text-[10px] text-emerald-900 leading-tight">
-                                      💡 <strong>आसान स्टेप्स:</strong> QR डाउनलोड करें ➔ PhonePe / GPay खोलें ➔ ऊपर 📷 Scan आइकन दबाएं ➔ Gallery से यह QR चुनें और PIN डालें!
+                                      💡 <strong>आसान स्टेप्स:</strong> QR डाउनलोड करें ➔ PhonePe / GPay खोलें ➔ ऊपर 📷 Scan आइकन दबाएं ➔ Gallery से यह QR चुनें और PIN डालें ➔ <strong>पेमेंट के बाद स्क्रीनशॉट लेकर नीचे रसीद अपलोड करें!</strong>
                                     </p>
                                   </div>
 
@@ -1922,12 +1922,13 @@ export const CheckoutPage: React.FC = () => {
                                         <span>{isCopiedPhone ? "कॉपी हो गया!" : "नंबर कॉपी करें"}</span>
                                       </button>
                                     </div>
-                                    <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-[10.5px] text-emerald-950 space-y-0.5">
-                                      <p className="font-bold">📱 भुगतान कैसे करें (How to Pay):</p>
+                                    <div className="p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-950 space-y-1">
+                                      <p className="font-extrabold text-emerald-900">📱 भुगतान व रसीद अपलोड करने के स्टेप्स (Steps to Pay & Upload Receipt):</p>
                                       <p>1. ऊपर <strong>"नंबर कॉपी करें"</strong> बटन दबाएं।</p>
-                                      <p>2. अपना <strong>PhonePe</strong> ऐप खोलें ➔ <strong>"To Mobile Number"</strong> (मोबाइल नंबर) पर क्लिक करें।</p>
+                                      <p>2. <strong>PhonePe</strong> ऐप खोलें ➔ <strong>"To Mobile Number"</strong> (मोबाइल नंबर) पर क्लिक करें।</p>
                                       <p>3. यह नंबर <strong>{bakeryUpiPhone}</strong> डालें ➔ <strong>Ajay Kumar</strong> नाम आएगा ➔ <strong>₹{payableAmount}</strong> डालकर UPI PIN डालें।</p>
-                                      <p className="text-emerald-700 font-bold">✅ पेमेंट 2 सेकंड में तुरंत सफल हो जाएगा!</p>
+                                      <p>4. 📸 <strong>पेमेंट होने के बाद:</strong> स्क्रीनशॉट (Screenshot) ले लें या 12 अंकों का UTR नंबर नोट करें।</p>
+                                      <p className="text-emerald-800 font-bold">5. 📥 वापस इस पेज पर आकर नीचे दिए गए <strong>"पेमेंट पूरा हो गया? रसीद / UTR अपलोड करें"</strong> बटन पर क्लिक करें और रसीद लगाएं!</p>
                                     </div>
                                   </div>
 
@@ -1951,7 +1952,7 @@ export const CheckoutPage: React.FC = () => {
                                       </button>
                                     </div>
                                     <p className="text-[10px] text-[#7A6E65] leading-tight">
-                                      PhonePe / GPay / Paytm खोलें ➔ <strong>"To UPI ID"</strong> पर यह ID पेस्ट करें और ₹{payableAmount} भेजें।
+                                      PhonePe / GPay / Paytm खोलें ➔ <strong>"To UPI ID"</strong> पर यह ID पेस्ट करें और ₹{payableAmount} भेजें ➔ पेमेंट के बाद स्क्रीनशॉट लेकर नीचे रसीद अपलोड करें।
                                     </p>
                                   </div>
                                 </div>
@@ -1960,9 +1961,9 @@ export const CheckoutPage: React.FC = () => {
                                 <Button
                                   type="button"
                                   onClick={() => setManualUpiStep(2)}
-                                  className="w-full h-11 bg-[#596B58] hover:bg-[#495948] text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 mt-2"
+                                  className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 mt-3 cursor-pointer"
                                 >
-                                  <span>{t("checkout.proceedToStep2", "भुगतान पूरा हो गया? रसीद / UTR डालें ➔")}</span>
+                                  <span>📸 पेमेंट पूरा हो गया? रसीद / UTR अपलोड करें ➔</span>
                                 </Button>
                               </div>
                             </div>
@@ -2283,7 +2284,7 @@ export const CheckoutPage: React.FC = () => {
                                       <span>₹{codAdvanceAmount} का 50% एडवांस QR डाउनलोड करें</span>
                                     </Button>
                                     <p className="text-[10px] text-emerald-900 leading-tight">
-                                      💡 <strong>आसान स्टेप्स:</strong> QR डाउनलोड करें ➔ PhonePe / GPay खोलें ➔ ऊपर 📷 Scan आइकन दबाएं ➔ Gallery से यह QR चुनें और PIN डालें!
+                                      💡 <strong>आसान स्टेप्स:</strong> QR डाउनलोड करें ➔ PhonePe / GPay खोलें ➔ ऊपर 📷 Scan आइकन दबाएं ➔ Gallery से यह QR चुनें और PIN डालें ➔ <strong>पेमेंट के बाद स्क्रीनशॉट लेकर नीचे रसीद अपलोड करें!</strong>
                                     </p>
                                   </div>
 
@@ -2315,12 +2316,13 @@ export const CheckoutPage: React.FC = () => {
                                         <span>{isCopiedCodPhone ? "कॉपी हो गया!" : "नंबर कॉपी करें"}</span>
                                       </button>
                                     </div>
-                                    <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-[10.5px] text-emerald-950 space-y-0.5">
-                                      <p className="font-bold">📱 50% एडवांस कैसे भेजें (How to Pay):</p>
+                                    <div className="p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-950 space-y-1">
+                                      <p className="font-extrabold text-emerald-900">📱 50% एडवांस व रसीद अपलोड करने के स्टेप्स (Steps to Pay & Upload Receipt):</p>
                                       <p>1. ऊपर <strong>"नंबर कॉपी करें"</strong> बटन दबाएं।</p>
-                                      <p>2. अपना <strong>PhonePe</strong> ऐप खोलें ➔ <strong>"To Mobile Number"</strong> (मोबाइल नंबर) पर क्लिक करें।</p>
+                                      <p>2. <strong>PhonePe</strong> ऐप खोलें ➔ <strong>"To Mobile Number"</strong> (मोबाइल नंबर) पर क्लिक करें।</p>
                                       <p>3. यह नंबर <strong>{bakeryUpiPhone}</strong> डालें ➔ <strong>Ajay Kumar</strong> नाम आएगा ➔ <strong>₹{codAdvanceAmount}</strong> डालकर UPI PIN डालें।</p>
-                                      <p className="text-emerald-700 font-bold">✅ 50% एडवांस पेमेंट 2 सेकंड में तुरंत सफल हो जाएगा!</p>
+                                      <p>4. 📸 <strong>पेमेंट होने के बाद:</strong> स्क्रीनशॉट (Screenshot) ले लें या 12 अंकों का UTR नंबर नोट करें।</p>
+                                      <p className="text-emerald-800 font-bold">5. 📥 वापस इस पेज पर आकर नीचे दिए गए <strong>"50% एडवांस रसीद / UTR अपलोड करें"</strong> बटन पर क्लिक करें और रसीद लगाएं!</p>
                                     </div>
                                   </div>
 
@@ -2344,7 +2346,7 @@ export const CheckoutPage: React.FC = () => {
                                       </button>
                                     </div>
                                     <p className="text-[10px] text-[#7A6E65] leading-tight">
-                                      PhonePe / GPay / Paytm खोलें ➔ <strong>"To UPI ID"</strong> पर यह ID पेस्ट करें और ₹{codAdvanceAmount} भेजें।
+                                      PhonePe / GPay / Paytm खोलें ➔ <strong>"To UPI ID"</strong> पर यह ID पेस्ट करें और ₹{codAdvanceAmount} भेजें ➔ पेमेंट के बाद स्क्रीनशॉट लेकर नीचे रसीद अपलोड करें।
                                     </p>
                                   </div>
                                 </div>
@@ -2353,9 +2355,9 @@ export const CheckoutPage: React.FC = () => {
                               <Button
                                 type="button"
                                 onClick={() => setCodStep(2)}
-                                className="w-full h-11 bg-[#596B58] hover:bg-[#495948] text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 mt-2"
+                                className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 mt-3 cursor-pointer"
                               >
-                                <span>भुगतान पूरा हो गया? रसीद / UTR डालें ➔</span>
+                                <span>📸 50% एडवांस भुगतान पूरा हो गया? रसीद / UTR अपलोड करें ➔</span>
                               </Button>
                             </div>
                           )}
