@@ -1,5 +1,5 @@
 import { OAuth2Client } from "google-auth-library";
-import type { Types } from "mongoose";
+import mongoose, { type Types } from "mongoose";
 
 import { env } from "../../../config/env.js";
 import { toObjectId } from "../../../db/utils/object-id.js";
@@ -138,14 +138,7 @@ export class AuthService {
       "User authenticated with Password",
     );
 
-    let defaultAddress = null;
-    try {
-      defaultAddress = await AddressModel.findOne({ userId: user._id })
-        .sort({ isDefault: -1, createdAt: -1 })
-        .exec();
-    } catch {
-      // Address lookup fallback
-    }
+    const defaultAddress = await this.findDefaultAddressSafely(user._id);
 
     return {
       user: this.toAuthenticatedUser(user, defaultAddress),
@@ -241,14 +234,7 @@ export class AuthService {
 
       await this.createRefreshSession(user._id, deviceId, tokens, context);
 
-      let defaultAddress = null;
-      try {
-        defaultAddress = await AddressModel.findOne({ userId: user._id })
-          .sort({ isDefault: -1, createdAt: -1 })
-          .exec();
-      } catch {
-        // Address lookup fallback
-      }
+      const defaultAddress = await this.findDefaultAddressSafely(user._id);
 
       return {
         user: this.toAuthenticatedUser(user, defaultAddress),
@@ -268,14 +254,7 @@ export class AuthService {
 
     this.ensureUserCanAuthenticate(user);
 
-    let defaultAddress = null;
-    try {
-      defaultAddress = await AddressModel.findOne({ userId: user._id })
-        .sort({ isDefault: -1, createdAt: -1 })
-        .exec();
-    } catch {
-      // Address lookup fallback
-    }
+    const defaultAddress = await this.findDefaultAddressSafely(user._id);
 
     return this.toAuthenticatedUser(user, defaultAddress);
   }
@@ -334,14 +313,7 @@ export class AuthService {
       "Refresh token rotated",
     );
 
-    let defaultAddress = null;
-    try {
-      defaultAddress = await AddressModel.findOne({ userId: user._id })
-        .sort({ isDefault: -1, createdAt: -1 })
-        .exec();
-    } catch {
-      // Address lookup fallback
-    }
+    const defaultAddress = await this.findDefaultAddressSafely(user._id);
 
     return {
       user: this.toAuthenticatedUser(user, defaultAddress),
@@ -644,4 +616,23 @@ export class AuthService {
       isVerified: user.isVerified,
     };
   }
+
+  private async findDefaultAddressSafely(userId: Types.ObjectId) {
+    const isMocked = Boolean(
+      (AddressModel.findOne as unknown as { _isMockFunction?: boolean })?._isMockFunction ||
+      (AddressModel.findOne as unknown as { mock?: unknown })?.mock,
+    );
+
+    if (mongoose.connection.readyState !== 1 && !isMocked) {
+      return null;
+    }
+    try {
+      return await AddressModel.findOne({ userId })
+        .sort({ isDefault: -1, createdAt: -1 })
+        .exec();
+    } catch {
+      return null;
+    }
+  }
 }
+

@@ -72,6 +72,9 @@ export const ProductDetailsPage: React.FC = () => {
             setIsFavorite(favoritesService.isFavorite(prod.id));
             const rData = reviewService.getProductRating(prod);
             setLiveRatingData(rData);
+            if (Array.isArray(prod.weightOptions) && prod.weightOptions.length > 0) {
+              setSelectedWeight(prod.weightOptions[0].weight);
+            }
           }
         })
         .catch(() => {
@@ -191,18 +194,39 @@ export const ProductDetailsPage: React.FC = () => {
     };
   }, [product, activeImageUrl]);
 
-  // 4. Pricing & Discount Calculations
-  const effectiveComparePrice = useMemo(() => {
-    if (!product) return 0;
-    return product.compareAtPrice && product.compareAtPrice > product.price
-      ? product.compareAtPrice
-      : Math.round(product.price * 1.15);
+  // 4. Dynamic Weight Options & Weight-based Pricing
+  const availableWeightOptions = useMemo(() => {
+    if (!product) return [];
+    if (Array.isArray(product.weightOptions) && product.weightOptions.length > 0) {
+      return product.weightOptions.map((w) => ({
+        weight: w.weight,
+        serves: w.serves || undefined,
+        price: Number(w.price),
+        compareAtPrice: w.compareAtPrice ? Number(w.compareAtPrice) : Math.round(Number(w.price) * 1.18),
+      }));
+    }
+    const baseP = Number(product.price) || 499;
+    const baseC = product.compareAtPrice && product.compareAtPrice > baseP ? product.compareAtPrice : Math.round(baseP * 1.2);
+    return [
+      { weight: "500g", serves: "4-6 Servings", price: baseP, compareAtPrice: baseC },
+      { weight: "1kg", serves: "8-12 Servings", price: Math.round(baseP * 1.8), compareAtPrice: Math.round(baseC * 1.8) },
+      { weight: "2kg", serves: "16-20 Servings", price: Math.round(baseP * 3.4), compareAtPrice: Math.round(baseC * 3.4) },
+    ];
   }, [product]);
 
+  const currentWeightOption = useMemo(() => {
+    return availableWeightOptions.find((w) => w.weight === selectedWeight) || availableWeightOptions[0];
+  }, [availableWeightOptions, selectedWeight]);
+
+  const activePrice = currentWeightOption ? currentWeightOption.price : (product?.price ?? 0);
+  const activeComparePrice = currentWeightOption?.compareAtPrice
+    ? currentWeightOption.compareAtPrice
+    : Math.round(activePrice * 1.18);
+
   const discountPercent = useMemo(() => {
-    if (!product || effectiveComparePrice <= product.price) return 10;
-    return Math.round(((effectiveComparePrice - product.price) / effectiveComparePrice) * 100);
-  }, [product, effectiveComparePrice]);
+    if (activeComparePrice <= activePrice) return 10;
+    return Math.round(((activeComparePrice - activePrice) / activeComparePrice) * 100);
+  }, [activePrice, activeComparePrice]);
 
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
@@ -281,17 +305,18 @@ export const ProductDetailsPage: React.FC = () => {
         productId: product.id,
         quantity,
         customization: {
+          weight: selectedWeight,
           message: `Portion: ${selectedWeight}`,
         },
         productDetails: {
-          name: product.name,
-          price: product.price,
+          name: `${product.name} (${selectedWeight})`,
+          price: activePrice,
           mainImage: activeImageUrl,
           slug: product.slug,
           isInstantAvailable: Boolean(product.isInstantAvailable),
         },
       });
-      toast.add("Added to Cart! 🛒", `${quantity}x "${product.name}" (${selectedWeight}) added to your cart.`, {
+      toast.add("Added to Cart! 🛒", `${quantity}x "${product.name}" (${selectedWeight} - ₹${activePrice}) added to your cart.`, {
         image: activeImageUrl,
         action: {
           label: "View Cart",
@@ -319,15 +344,16 @@ export const ProductDetailsPage: React.FC = () => {
     try {
       const directItem = {
         productId: product.id,
-        name: product.name,
+        name: `${product.name} (${selectedWeight})`,
         slug: product.slug,
-        price: product.price,
+        price: activePrice,
         quantity,
         mainImage: activeImageUrl,
         customization: {
+          weight: selectedWeight,
           message: `Portion: ${selectedWeight}`,
         },
-        itemTotal: product.price * quantity,
+        itemTotal: activePrice * quantity,
         isInstantAvailable: Boolean(product.isInstantAvailable),
       };
       sessionStorage.setItem("onebitebakery_direct_order_item", JSON.stringify(directItem));
@@ -644,8 +670,13 @@ export const ProductDetailsPage: React.FC = () => {
           {/* Price Tag with Big Highlight */}
           <div className="p-4 rounded-2xl bg-[#FFF8EC] border border-[#E5DEC9] flex items-baseline justify-between shadow-2xs">
             <div className="flex items-baseline gap-2.5">
-              <span className="text-3xl sm:text-4xl font-black text-[#111111]">₹{product.price}</span>
-              <span className="text-sm sm:text-base text-gray-400 line-through font-medium">₹{effectiveComparePrice}</span>
+              <span className="text-3xl sm:text-4xl font-black text-[#111111]">₹{activePrice}</span>
+              {activeComparePrice > activePrice && (
+                <span className="text-sm sm:text-base text-gray-400 line-through font-medium">₹{activeComparePrice}</span>
+              )}
+              <span className="text-xs font-bold text-[#596B58] bg-[#596B58]/10 px-2 py-0.5 rounded-md">
+                {selectedWeight}
+              </span>
             </div>
             <span className="text-xs font-black text-white bg-[#DC2626] px-2.5 py-1 rounded-lg shadow-2xs">
               {discountPercent}% OFF
@@ -657,29 +688,31 @@ export const ProductDetailsPage: React.FC = () => {
             {getLocalizedProductDescription(product) || product.description}
           </p>
 
-          {/* Weight & Portion Selection */}
+          {/* Weight & Portion Selection with individual prices */}
           <div className="space-y-2 pt-1">
-            <label className="block text-xs font-black uppercase tracking-wider text-[#3B302B]">
-              {t("products.weightSize", "Select Weight / Portion:")}
-            </label>
-            <div className="grid grid-cols-3 gap-2.5">
-              {[
-                { weight: "500g", serves: "4-6 Servings" },
-                { weight: "1kg", serves: "8-12 Servings" },
-                { weight: "2kg", serves: "16-20 Servings" },
-              ].map((wItem) => (
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-black uppercase tracking-wider text-[#3B302B]">
+                {t("products.weightSize", "Select Weight / Portion:")}
+              </label>
+              <span className="text-xs font-bold text-[#596B58]">
+                {selectedWeight} • ₹{activePrice}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              {availableWeightOptions.map((wItem) => (
                 <button
                   key={wItem.weight}
                   type="button"
                   onClick={() => setSelectedWeight(wItem.weight)}
-                  className={`p-2.5 rounded-2xl text-center border transition-all cursor-pointer shadow-2xs ${
+                  className={`p-3 rounded-2xl text-center border transition-all cursor-pointer shadow-2xs ${
                     selectedWeight === wItem.weight
-                      ? "border-[#596B58] bg-[#FFF8EC] text-[#596B58] ring-2 ring-[#596B58]/30 scale-102 font-extrabold"
+                      ? "border-[#596B58] bg-[#FFF8EC] text-[#596B58] ring-2 ring-[#596B58]/30 scale-102 font-extrabold shadow-sm"
                       : "border-[#E5DEC9] bg-white text-[#3B302B] hover:border-gray-400 font-bold"
                   }`}
                 >
-                  <span className="block text-xs sm:text-sm">{wItem.weight}</span>
-                  <span className="block text-[10px] text-gray-400 font-medium">{wItem.serves}</span>
+                  <span className="block text-xs sm:text-sm font-extrabold">{wItem.weight}</span>
+                  <span className="block text-xs font-black text-[#596B58] my-0.5">₹{wItem.price}</span>
+                  {wItem.serves && <span className="block text-[10px] text-gray-400 font-medium">{wItem.serves}</span>}
                 </button>
               ))}
             </div>

@@ -8,11 +8,23 @@ import type { ProductType } from "../../product/constants/index.js";
 
 export interface CustomCakeConfig {
   flavour?: string;
+  flavor?: string;
   weightKg?: number;
+  weight?: string;
   tierCount?: number;
+  tiers?: number;
+  shape?: string;
+  designTheme?: string;
   eggPreference?: "EGG" | "EGGLESS";
+  eggless?: boolean;
+  isEggless?: boolean;
   messageOnCake?: string;
+  message?: string;
   specialInstructions?: string;
+  referenceImageUrl?: string;
+  inquiryNumber?: string;
+  estimatedPrice?: number;
+  [key: string]: unknown;
 }
 
 export interface ProductSnapshot {
@@ -61,22 +73,32 @@ export interface Cart extends TimestampedDocument {
 const customCakeConfigSchema = new Schema<CustomCakeConfig>(
   {
     flavour: { type: String, trim: true, default: undefined },
-    weightKg: { type: Number, min: 0.25, max: 20, default: undefined },
-    tierCount: { type: Number, min: 1, max: 5, default: undefined },
+    flavor: { type: String, trim: true, default: undefined },
+    weightKg: { type: Number, default: undefined },
+    weight: { type: String, trim: true, default: undefined },
+    tierCount: { type: Number, default: undefined },
+    tiers: { type: Number, default: undefined },
+    shape: { type: String, trim: true, default: undefined },
+    designTheme: { type: String, trim: true, default: undefined },
     eggPreference: {
       type: String,
       enum: ["EGG", "EGGLESS"],
       default: undefined,
     },
-    messageOnCake: { type: String, trim: true, maxlength: 100, default: undefined },
+    eggless: { type: Boolean, default: undefined },
+    isEggless: { type: Boolean, default: undefined },
+    messageOnCake: { type: String, trim: true, default: undefined },
+    message: { type: String, trim: true, default: undefined },
     specialInstructions: {
       type: String,
       trim: true,
-      maxlength: 500,
       default: undefined,
     },
+    referenceImageUrl: { type: String, trim: true, default: undefined },
+    inquiryNumber: { type: String, trim: true, default: undefined },
+    estimatedPrice: { type: Number, default: undefined },
   },
-  { _id: false },
+  { _id: false, strict: false },
 );
 
 const productSnapshotSchema = new Schema<ProductSnapshot>(

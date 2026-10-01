@@ -182,9 +182,20 @@ apiClient.interceptors.response.use(
       error.response.status >= 500 &&
       shouldShowGlobalToast(error.response.status)
     ) {
+      console.error("[API Server Error 500+]", {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response.status,
+        data: error.response.data,
+      });
+
+      const serverMsg =
+        (error.response.data as any)?.message ||
+        (error.config?.url ? `Error on: ${error.config.url}` : "Something went wrong on our end. Please try again later.");
+
       toast.error(
-        "Server Error",
-        "Something went wrong on our end. Please try again later.",
+        `Server Error (${error.response.status})`,
+        serverMsg,
       );
     }
 

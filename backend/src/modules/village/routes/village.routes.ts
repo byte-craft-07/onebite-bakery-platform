@@ -20,8 +20,8 @@ const villagePayloadSchema = z.object({
   name: z.string().trim().min(2).max(120),
   district: z.string().trim().min(2).max(120),
   pincode: z.string().trim().regex(/^[0-9]{4,10}$/),
-  deliveryCharge: z.number().min(0).optional(),
-  freeDeliveryThreshold: z.number().min(0).optional(),
+  deliveryCharge: z.coerce.number().min(0).optional(),
+  freeDeliveryThreshold: z.coerce.number().min(0).optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -32,8 +32,8 @@ const toVillageResponse = (village: Village) => ({
   name: village.name,
   district: village.district,
   pincode: village.pincode,
-  deliveryCharge: village.deliveryCharge ?? 49,
-  freeDeliveryThreshold: village.freeDeliveryThreshold ?? 799,
+  deliveryCharge: typeof village.deliveryCharge === "number" ? village.deliveryCharge : 49,
+  freeDeliveryThreshold: typeof village.freeDeliveryThreshold === "number" ? village.freeDeliveryThreshold : 799,
   isActive: village.isActive,
   createdAt: village.createdAt,
   updatedAt: village.updatedAt,
@@ -117,8 +117,8 @@ villageRouter.post(
       district: payload.district,
       pincode: payload.pincode,
       branchId: mainBranch ? mainBranch._id : undefined,
-      deliveryCharge: payload.deliveryCharge ?? 49,
-      freeDeliveryThreshold: payload.freeDeliveryThreshold ?? 799,
+      deliveryCharge: typeof payload.deliveryCharge === "number" ? payload.deliveryCharge : 49,
+      freeDeliveryThreshold: typeof payload.freeDeliveryThreshold === "number" ? payload.freeDeliveryThreshold : 799,
       isActive: payload.isActive ?? true,
     });
 
@@ -138,9 +138,17 @@ villageRouter.patch(
     const id = req.params.id as string;
     const payload = req.body as z.infer<typeof updateVillagePayloadSchema>;
 
+    const updateData: Record<string, unknown> = { ...payload };
+    if (payload.deliveryCharge !== undefined) {
+      updateData.deliveryCharge = Number(payload.deliveryCharge);
+    }
+    if (payload.freeDeliveryThreshold !== undefined) {
+      updateData.freeDeliveryThreshold = Number(payload.freeDeliveryThreshold);
+    }
+
     const village = await VillageModel.findByIdAndUpdate(
       id,
-      { $set: payload },
+      { $set: updateData },
       { new: true, runValidators: true },
     ).exec();
 

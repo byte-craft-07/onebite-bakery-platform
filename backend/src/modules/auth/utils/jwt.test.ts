@@ -24,5 +24,19 @@ describe("JWT utilities", () => {
     expect(accessPayload.type).toBe(AUTH_TOKEN_TYPES.ACCESS);
     expect(refreshPayload.deviceId).toBe(deviceId);
     expect(refreshPayload.type).toBe(AUTH_TOKEN_TYPES.REFRESH);
+
+    // 60 days in milliseconds: 60 * 24 * 60 * 60 * 1000 = 5,184,000,000 ms
+    const sixtyDaysMs = 60 * 24 * 60 * 60 * 1000;
+    expect(tokens.accessTokenMaxAgeMs).toBe(sixtyDaysMs);
+    expect(tokens.refreshTokenMaxAgeMs).toBe(sixtyDaysMs);
+  });
+
+  it("calculates 2 months / 60 days correctly with durationToMs", async () => {
+    const { durationToMs, durationToSeconds } = await import("./token-expiry.js");
+    expect(durationToMs("60d")).toBe(60 * 24 * 60 * 60 * 1000);
+    expect(durationToSeconds("60d")).toBe(60 * 24 * 60 * 60);
+    expect(durationToMs("2M")).toBe(60 * 24 * 60 * 60 * 1000);
+    expect(durationToMs("2mo")).toBe(60 * 24 * 60 * 60 * 1000);
+    expect(durationToMs("2months")).toBe(60 * 24 * 60 * 60 * 1000);
   });
 });

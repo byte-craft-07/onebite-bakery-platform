@@ -222,7 +222,7 @@ export const OrderPlacedCelebrationModal: React.FC<OrderPlacedCelebrationModalPr
                   />
                   <span>
                     {order.paymentMethod === "COD"
-                      ? `COD (₹${order.totalAmount} Due)`
+                      ? `COD (50% Adv Paid | ₹${Math.max(0, order.totalAmount - Math.ceil(order.totalAmount * 0.5))} Due)`
                       : `UPI Paid (₹${order.totalAmount})`}
                   </span>
                 </p>

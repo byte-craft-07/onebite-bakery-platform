@@ -1,4 +1,5 @@
 import { apiClient } from "./api.client";
+import { clientCache } from "@/utils/clientCache";
 
 export interface Combo {
   id: string;
@@ -35,12 +36,19 @@ export interface CreateComboPayload {
 }
 
 export class ComboService {
-  async getCombos(): Promise<Combo[]> {
-    const res = await apiClient.get<{ success: boolean; data: any[] }>("/combos");
-    return (res.data.data || []).map((c) => ({
-      ...c,
-      id: c._id || c.id,
-    }));
+  async getCombos(forceRefresh: boolean = false): Promise<Combo[]> {
+    return clientCache.withCache(
+      "combos_list",
+      async () => {
+        const res = await apiClient.get<{ success: boolean; data: any[] }>("/combos");
+        return (res.data.data || []).map((c) => ({
+          ...c,
+          id: c._id || c.id,
+        }));
+      },
+      5 * 60 * 1000,
+      forceRefresh
+    );
   }
 
   async getComboById(id: string): Promise<Combo> {
@@ -62,6 +70,7 @@ export class ComboService {
 
   async createCombo(payload: CreateComboPayload): Promise<Combo> {
     const res = await apiClient.post<{ success: boolean; data: any }>("/combos", payload);
+    clientCache.invalidate("combos_list");
     const c = res.data.data;
     return {
       ...c,
@@ -71,6 +80,7 @@ export class ComboService {
 
   async updateCombo(id: string, payload: Partial<CreateComboPayload>): Promise<Combo> {
     const res = await apiClient.put<{ success: boolean; data: any }>(`/combos/${id}`, payload);
+    clientCache.invalidate("combos_list");
     const c = res.data.data;
     return {
       ...c,
@@ -80,6 +90,7 @@ export class ComboService {
 
   async toggleComboStatus(id: string): Promise<Combo> {
     const res = await apiClient.patch<{ success: boolean; data: any }>(`/combos/${id}/toggle`);
+    clientCache.invalidate("combos_list");
     const c = res.data.data;
     return {
       ...c,
@@ -89,6 +100,7 @@ export class ComboService {
 
   async deleteCombo(id: string): Promise<boolean> {
     const res = await apiClient.delete<{ success: boolean }>(`/combos/${id}`);
+    clientCache.invalidate("combos_list");
     return res.data.success;
   }
 }

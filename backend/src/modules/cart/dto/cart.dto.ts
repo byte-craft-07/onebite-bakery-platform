@@ -5,6 +5,13 @@ export interface AddCartItemDto {
   quantity: number;
   customization?: CustomCakeConfig;
   customCakeConfig?: CustomCakeConfig;
+  productDetails?: {
+    name?: string;
+    price?: number;
+    mainImage?: string;
+    slug?: string;
+    isInstantAvailable?: boolean;
+  };
   selectedVariant?: Record<string, unknown>;
   notes?: string;
   sessionId?: string;

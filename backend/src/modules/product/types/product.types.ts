@@ -27,6 +27,13 @@ export interface ProductResponse {
   locationBranchName?: string;
   isAvailable: boolean;
   isInstantAvailable?: boolean;
+  isEggless?: boolean;
+  weightOptions?: Array<{
+    weight: string;
+    serves?: string;
+    price: number;
+    compareAtPrice?: number;
+  }>;
   availableFrom?: Date;
   availableUntil?: Date;
   isActive: boolean;

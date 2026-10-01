@@ -90,18 +90,61 @@ export class CartService {
     const targetSessionId = dto.sessionId ?? sessionId;
     const cart = await this.getOrCreateCartDocument(customerId, targetSessionId);
 
-    const productObjId = toObjectId(dto.productId);
-    let product: any = await ProductModel.findOne({
-      _id: productObjId,
-      isDeleted: false,
-    }).exec();
+    const isCustomCakeItem =
+      String(dto.productId).startsWith("custom") ||
+      dto.productDetails?.name?.toLowerCase().includes("custom") ||
+      Boolean(dto.customization?.tierCount || (dto.customization as any)?.tiers || dto.customCakeConfig?.tierCount || (dto.customCakeConfig as any)?.tiers);
+
+    let productObjId: Types.ObjectId;
+    let product: any = null;
+
+    if (Types.ObjectId.isValid(dto.productId)) {
+      productObjId = toObjectId(dto.productId);
+      product = await ProductModel.findOne({
+        _id: productObjId,
+        isDeleted: false,
+      }).exec();
+    } else {
+      productObjId = new Types.ObjectId();
+    }
+
+    if (!product && isCustomCakeItem) {
+      let customCakeProduct = await ProductModel.findOne({
+        slug: "custom-celebration-cake",
+        isDeleted: false,
+      }).exec();
+
+      if (!customCakeProduct) {
+        const { CategoryModel } = await import("../../category/model/category.model.js");
+        const firstCat = await CategoryModel.findOne({ isDeleted: false }).exec();
+        customCakeProduct = await ProductModel.create({
+          name: dto.productDetails?.name || "Custom Celebration Cake",
+          nameHi: "कस्टमाइज़्ड सेलिब्रेशन केक",
+          slug: "custom-celebration-cake",
+          description: "Handcrafted custom tier celebration cake tailored to your specific flavor, design, and size.",
+          categoryId: firstCat?._id || new Types.ObjectId(),
+          productType: "CUSTOM_CAKE",
+          price: dto.productDetails?.price || 649,
+          isEggless: true,
+          isAvailable: true,
+          isActive: true,
+          stockStatus: "IN_STOCK",
+          trackInventory: false,
+          allowBackorder: true,
+          imageUrls: [dto.productDetails?.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80"],
+          thumbnailUrl: dto.productDetails?.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
+        });
+      }
+      product = customCakeProduct;
+      productObjId = customCakeProduct._id;
+    }
 
     let isDecoration = false;
     if (!product) {
       try {
         const { DecorationModel } = await import("../../decoration/model/decoration.model.js");
-        if (DecorationModel.db?.readyState === 1) {
-          const dec = await DecorationModel.findOne({ _id: productObjId, isActive: true }).exec();
+        if (DecorationModel.db?.readyState === 1 && Types.ObjectId.isValid(dto.productId)) {
+          const dec = await DecorationModel.findOne({ _id: toObjectId(dto.productId), isActive: true }).exec();
           if (dec) {
             isDecoration = true;
             product = {
@@ -119,6 +162,7 @@ export class CartService {
               trackInventory: false,
               allowBackorder: true,
             };
+            productObjId = dec._id;
           }
         }
       } catch (_err) {
@@ -195,6 +239,21 @@ export class CartService {
           APP_ERROR_CODES.CART_ITEM_NOT_FOUND,
         );
       }
+      const itemPrice =
+        typeof dto.productDetails?.price === "number" && dto.productDetails.price > 0
+          ? dto.productDetails.price
+          : typeof (dto.selectedVariant as any)?.price === "number"
+          ? (dto.selectedVariant as any).price
+          : typeof (customization as any)?.estimatedPrice === "number" && (customization as any).estimatedPrice > 0
+          ? (customization as any).estimatedPrice
+          : product.price;
+
+      const itemName = dto.productDetails?.name || product.name;
+      const itemImage =
+        dto.productDetails?.mainImage ||
+        product.thumbnailUrl ||
+        (product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : undefined);
+
       const newQuantity = existingItem.quantity + dto.quantity;
 
       if (
@@ -207,23 +266,41 @@ export class CartService {
         existingItem.quantity = newQuantity;
       }
 
+      existingItem.unitPrice = itemPrice;
+      existingItem.unitPriceSnapshot = itemPrice;
+      existingItem.totalPrice = itemPrice * existingItem.quantity;
       if (dto.notes) existingItem.notes = dto.notes;
     } else {
+      const itemPrice =
+        typeof dto.productDetails?.price === "number" && dto.productDetails.price > 0
+          ? dto.productDetails.price
+          : typeof (dto.selectedVariant as any)?.price === "number"
+          ? (dto.selectedVariant as any).price
+          : typeof (customization as any)?.estimatedPrice === "number" && (customization as any).estimatedPrice > 0
+          ? (customization as any).estimatedPrice
+          : product.price;
+
+      const itemName = dto.productDetails?.name || product.name;
+      const itemImage =
+        dto.productDetails?.mainImage ||
+        product.thumbnailUrl ||
+        (product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : undefined);
+
       const newItem: Partial<CartItem> = {
         _id: new Types.ObjectId(),
         productId: productObjId,
         quantity: dto.quantity,
-        unitPriceSnapshot: product.price,
-        unitPrice: product.price,
-        totalPrice: product.price * dto.quantity,
-        productType: product.productType,
+        unitPriceSnapshot: itemPrice,
+        unitPrice: itemPrice,
+        totalPrice: itemPrice * dto.quantity,
+        productType: isCustomCakeItem ? "CUSTOM_CAKE" : product.productType,
         ...(customization ? { customization, customCakeConfig: customization } : {}),
         ...(dto.selectedVariant ? { selectedVariant: dto.selectedVariant } : {}),
         productSnapshot: {
-          name: product.name,
-          slug: product.slug,
-          thumbnailUrl: product.thumbnailUrl || (product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : undefined),
-          productType: product.productType,
+          name: itemName,
+          slug: dto.productDetails?.slug || product.slug,
+          thumbnailUrl: itemImage,
+          productType: isCustomCakeItem ? "CUSTOM_CAKE" : product.productType,
           isInstantAvailable: Boolean(product.isInstantAvailable),
         },
         addedAt: new Date(),

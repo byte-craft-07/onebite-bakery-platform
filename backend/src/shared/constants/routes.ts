@@ -26,5 +26,7 @@ export const ROUTES = {
   COMBOS: "/combos",
   BANNER: "/banners",
   DECORATIONS: "/decorations",
+  BUSINESS_HUB: "/business-hub",
+  ADMIN_BUSINESS_HUB: "/admin/business-hub",
 } as const;
 

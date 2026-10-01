@@ -15,27 +15,37 @@ import { reviewService } from "@/services/review.service";
 import { MobileHeroQuickBar } from "@/components/navigation/MobileHeroQuickBar";
 import { ContactUsFloatingButton } from "@/components/common/ContactUsFloatingButton";
 import { HeroBannerSlider } from "@/components/home/HeroBannerSlider";
+import { clientCache } from "@/utils/clientCache";
 
 export const HomePage: React.FC = () => {
   const { t } = useTranslation();
   const { currentLocation } = useAuth();
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [allProducts, setAllProducts] = useState<ProductItem[]>([]);
-  const [occasions, setOccasions] = useState<OccasionItem[]>([]);
-  const [reviews, setReviews] = useState<MockReview[]>([]);
-  const [combos, setCombos] = useState<Combo[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("all");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const fetchHomeData = async () => {
-    setIsLoading(true);
+  // Instant render from cache if available (0ms loading)
+  const cachedCategories = clientCache.get<CategoryItem[]>("catalog_categories");
+  const cachedOccasions = clientCache.get<OccasionItem[]>("catalog_occasions");
+  const cachedCombos = clientCache.get<Combo[]>("combos_list");
+
+  const [categories, setCategories] = useState<CategoryItem[]>(() => cachedCategories || []);
+  const [allProducts, setAllProducts] = useState<ProductItem[]>([]);
+  const [occasions, setOccasions] = useState<OccasionItem[]>(() => cachedOccasions || []);
+  const [reviews, setReviews] = useState<MockReview[]>([]);
+  const [combos, setCombos] = useState<Combo[]>(() => cachedCombos || []);
+  const [activeTab, setActiveTab] = useState<string>("all");
+  const [isLoading, setIsLoading] = useState<boolean>(() => !cachedCategories || cachedCategories.length === 0);
+
+  const fetchHomeData = async (forceRefresh: boolean = false) => {
+    // Only show full loading spinner if we don't have any cached categories
+    if (!cachedCategories || cachedCategories.length === 0 || forceRefresh) {
+      setIsLoading(true);
+    }
     try {
       const [catList, prodRes, occList, revList, comboList] = await Promise.all([
-        catalogService.getCategories(),
-        catalogService.searchProducts({ limit: 20 }),
-        catalogService.getOccasions(),
+        catalogService.getCategories(forceRefresh),
+        catalogService.searchProducts({ limit: 20 }, forceRefresh),
+        catalogService.getOccasions(forceRefresh),
         reviewService.getReviews(),
-        comboService.getCombos().catch(() => []),
+        comboService.getCombos(forceRefresh).catch(() => []),
       ]);
       setCategories(catList || []);
       setAllProducts(prodRes?.products || []);
@@ -43,11 +53,13 @@ export const HomePage: React.FC = () => {
       setReviews(revList || []);
       setCombos(comboList || []);
     } catch (_err) {
-      setCategories([]);
-      setAllProducts([]);
-      setOccasions([]);
-      setReviews([]);
-      setCombos([]);
+      if (!cachedCategories || cachedCategories.length === 0) {
+        setCategories([]);
+        setAllProducts([]);
+        setOccasions([]);
+        setReviews([]);
+        setCombos([]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -56,12 +68,15 @@ export const HomePage: React.FC = () => {
   useEffect(() => {
     fetchHomeData();
     const handleLocationChange = () => {
-      fetchHomeData();
+      fetchHomeData(true);
     };
-    window.addEventListener("onebitebakery_review_submitted", fetchHomeData);
+    const handleReviewSubmitted = () => {
+      fetchHomeData(true);
+    };
+    window.addEventListener("onebitebakery_review_submitted", handleReviewSubmitted);
     window.addEventListener("onebitebakery_location_changed", handleLocationChange);
     return () => {
-      window.removeEventListener("onebitebakery_review_submitted", fetchHomeData);
+      window.removeEventListener("onebitebakery_review_submitted", handleReviewSubmitted);
       window.removeEventListener("onebitebakery_location_changed", handleLocationChange);
     };
   }, [currentLocation]);
@@ -73,36 +88,18 @@ export const HomePage: React.FC = () => {
       ? (reviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0) / reviews.length).toFixed(1)
       : null;
 
-  // Filtered Products for the dynamic tab
+  // Filtered Products dynamically based on database categories
   const filteredProducts = allProducts.filter((p) => {
     if (activeTab === "all") return true;
-    if (activeTab === "cakes") {
-      return (
-        p.name.toLowerCase().includes("cake") ||
-        (p.categoryId?.name || "").toLowerCase().includes("cake")
-      );
+    const catId = p.categoryId?.id || (p.categoryId as any)?._id;
+    if (catId && catId === activeTab) return true;
+    if (p.categoryId?.slug && p.categoryId.slug === activeTab) return true;
+    const selectedCat = categories.find((c) => c.id === activeTab || c.slug === activeTab);
+    if (selectedCat) {
+      if (p.categoryId?.name && p.categoryId.name.toLowerCase() === selectedCat.name.toLowerCase()) return true;
+      if (p.name.toLowerCase().includes(selectedCat.name.toLowerCase())) return true;
     }
-    if (activeTab === "pastries") {
-      return (
-        p.name.toLowerCase().includes("tart") ||
-        p.name.toLowerCase().includes("croissant") ||
-        p.name.toLowerCase().includes("bread") ||
-        p.name.toLowerCase().includes("pastry") ||
-        (p.categoryId?.name || "").toLowerCase().includes("pastr") ||
-        (p.categoryId?.name || "").toLowerCase().includes("bread")
-      );
-    }
-    if (activeTab === "decorations") {
-      return (
-        p.name.toLowerCase().includes("candle") ||
-        p.name.toLowerCase().includes("balloon") ||
-        p.name.toLowerCase().includes("topper") ||
-        p.name.toLowerCase().includes("popper") ||
-        p.name.toLowerCase().includes("decor") ||
-        (p.categoryId?.name || "").toLowerCase().includes("decor")
-      );
-    }
-    return true;
+    return false;
   });
 
   const decorationProducts = allProducts.filter((p) =>
@@ -147,7 +144,7 @@ export const HomePage: React.FC = () => {
                   name: category.name,
                   slug: category.slug,
                   image: category.image || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
-                  itemCount: category.itemCount || 1,
+                  itemCount: category.itemCount !== undefined ? category.itemCount : 0,
                 }}
               />
             ))}
@@ -171,13 +168,14 @@ export const HomePage: React.FC = () => {
             </p>
           </div>
 
-          {/* Filter Pills */}
+          {/* Filter Pills dynamically generated from database categories */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
             {[
               { id: "all", label: t("home.tabAll", "🌟 All Items") },
-              { id: "cakes", label: t("home.tabCakes", "🎂 Cakes") },
-              { id: "pastries", label: t("home.tabPastries", "🥐 Pastries") },
-              { id: "decorations", label: t("home.tabDecorations", "🎉 Decorations") },
+              ...categories.map((c) => ({
+                id: c.id,
+                label: c.name,
+              })),
             ].map((tab) => (
               <button
                 key={tab.id}

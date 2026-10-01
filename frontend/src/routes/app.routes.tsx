@@ -34,6 +34,8 @@ const ContactPage = lazyRetry(() => import("@/pages/public/InformationPages").th
 const CartPage = lazyRetry(() => import("@/pages/customer/CartPage").then((m) => ({ default: m.CartPage })));
 const RazorpayDemoPage = lazyRetry(() => import("@/pages/public/RazorpayDemoPage").then((m) => ({ default: m.RazorpayDemoPage })));
 const NotFoundPage = lazyRetry(() => import("@/pages/public/NotFoundPage").then((m) => ({ default: m.NotFoundPage })));
+const PublicBusinessHubPage = lazyRetry(() => import("@/features/business-hub").then((m) => ({ default: m.PublicBusinessHubPage })));
+const AdminBusinessHubPage = lazyRetry(() => import("@/features/business-hub").then((m) => ({ default: m.AdminBusinessHubPage })));
 
 // Customer Protected Pages (Lazy Loaded)
 const CustomerDashboardPage = lazyRetry(() => import("@/pages/customer/CustomerDashboardPage").then((m) => ({ default: m.CustomerDashboardPage })));
@@ -146,6 +148,11 @@ export const AppRoutes: React.FC = () => {
             <Route path="*" element={<NotFoundPage />} />
           </Route>
 
+          {/* Standalone Digital Business Hub Public Page */}
+          <Route path="/business" element={<PublicBusinessHubPage />} />
+          <Route path="/onebite" element={<PublicBusinessHubPage />} />
+          <Route path="/welcome" element={<PublicBusinessHubPage />} />
+
           {/* Guest Auth Routes & Aliases */}
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/auth" element={<GuestRoute />}>
@@ -199,6 +206,7 @@ export const AppRoutes: React.FC = () => {
               <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="logs" element={<AdminLogsPage />} />
               <Route path="security" element={<AdminSecurityPage />} />
+              <Route path="business-hub" element={<AdminBusinessHubPage />} />
             </Route>
           </Route>
 

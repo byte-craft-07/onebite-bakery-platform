@@ -52,4 +52,8 @@ export const INDEX_NAMES = {
   BRANCH_PRODUCT_PRODUCT: "branch_products_product",
   BANNER_DISPLAY_ORDER: "banners_display_order",
   BANNER_ACTIVE: "banners_active",
+  BUSINESS_LINK_SORT_ORDER: "business_links_sort_order",
+  BUSINESS_LINK_ACTIVE: "business_links_active",
+  BUSINESS_ANALYTICS_TIMESTAMP: "business_analytics_timestamp",
+  BUSINESS_ANALYTICS_TARGET: "business_analytics_target",
 } as const;

@@ -168,11 +168,11 @@ export class CheckoutService {
 
       itemSummaries.push({
         productId: product._id.toString(),
-        productName: product.name,
-        productType: product.productType,
+        productName: item.productSnapshot?.name || product.name,
+        productType: item.productType || product.productType,
         quantity: item.quantity,
         unitPriceSnapshot: item.unitPriceSnapshot ?? item.unitPrice,
-        totalPrice: item.unitPrice * item.quantity,
+        totalPrice: (item.unitPriceSnapshot ?? item.unitPrice ?? product.price) * item.quantity,
         isAvailable: isBranchAvailable,
       });
     }

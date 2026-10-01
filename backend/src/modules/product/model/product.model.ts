@@ -20,6 +20,13 @@ export interface ComboItem {
   quantity: number;
 }
 
+export interface ProductWeightOption {
+  weight: string;
+  serves?: string;
+  price: number;
+  compareAtPrice?: number;
+}
+
 export interface Product extends TimestampedDocument, SoftDeletableDocument {
   _id: Types.ObjectId;
   name: string;
@@ -46,6 +53,8 @@ export interface Product extends TimestampedDocument, SoftDeletableDocument {
   stockStatus: StockStatus;
   isAvailable: boolean;
   isInstantAvailable?: boolean;
+  isEggless?: boolean;
+  weightOptions?: ProductWeightOption[];
   deliveryEligible: boolean;
   pickupEligible: boolean;
   availableFrom?: Date;
@@ -222,6 +231,21 @@ const productSchema = new Schema<Product>(
       type: Boolean,
       required: true,
       default: false,
+    },
+    isEggless: {
+      type: Boolean,
+      default: true,
+    },
+    weightOptions: {
+      type: [
+        {
+          weight: { type: String, required: true },
+          serves: { type: String },
+          price: { type: Number, required: true },
+          compareAtPrice: { type: Number },
+        },
+      ],
+      default: undefined,
     },
     deliveryEligible: {
       type: Boolean,

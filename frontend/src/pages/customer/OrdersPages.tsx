@@ -674,10 +674,23 @@ export const OrderDetailsPage: React.FC = () => {
                   {order.paymentMethod === "MANUAL_UPI"
                     ? t("checkout.manualUpi", "Direct UPI / QR (1.5% Instant Off)")
                     : order.paymentMethod === "COD"
-                    ? t("checkout.cashOnDelivery", "Cash on Delivery")
+                    ? "Cash on Delivery (50% Advance via UPI)"
                     : t("checkout.onlinePaymentRazorpay", "Razorpay Online")}
                 </span>
               </div>
+
+              {order.paymentMethod === "COD" && (
+                <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-xs space-y-1">
+                  <div className="flex justify-between font-bold text-amber-950">
+                    <span>50% Advance Paid (UPI):</span>
+                    <span className="text-emerald-700 font-extrabold">₹{Math.ceil(order.totalAmount * 0.5)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-amber-950">
+                    <span>Due on Delivery (Cash):</span>
+                    <span className="font-extrabold">₹{Math.max(0, order.totalAmount - Math.ceil(order.totalAmount * 0.5))}</span>
+                  </div>
+                </div>
+              )}
 
               {order.transactionId && (
                 <div className="flex items-center justify-between text-xs">
@@ -689,14 +702,13 @@ export const OrderDetailsPage: React.FC = () => {
               )}
             </div>
 
-
-            {/* Payment Receipt Section for MANUAL_UPI */}
-            {order.paymentMethod === "MANUAL_UPI" && (
+            {/* Payment Receipt Section for MANUAL_UPI and COD Advance */}
+            {(order.paymentMethod === "MANUAL_UPI" || Boolean(order.paymentReceiptUrl) || (order.paymentMethod === "COD" && Boolean(order.transactionId))) && (
               <div className="pt-3 border-t border-[#E5DEC9] space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-[#3B302B] flex items-center gap-1.5">
                     <Receipt className="h-3.5 w-3.5 text-[#596B58]" />
-                    Payment Screenshot
+                    {order.paymentMethod === "COD" ? "50% Advance Payment Screenshot" : "Payment Screenshot"}
                   </span>
                   {order.paymentReceiptUrl && (
                     <button

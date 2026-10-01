@@ -30,6 +30,13 @@ export interface CreateProductDto {
   stockStatus?: StockStatus;
   isAvailable: boolean;
   isInstantAvailable?: boolean;
+  isEggless?: boolean;
+  weightOptions?: Array<{
+    weight: string;
+    serves?: string;
+    price: number;
+    compareAtPrice?: number;
+  }>;
   isActive: boolean;
   isFeatured: boolean;
   isTrending: boolean;

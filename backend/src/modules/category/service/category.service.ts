@@ -158,14 +158,18 @@ export class CategoryService {
 
   public async listAdminCategories(): Promise<CategoryResponse[]> {
     const categories = await this.categoryRepository.findAdminList();
+    const itemCounts = await this.getItemCounts();
 
-    return categories.map((category) => this.toResponse(category));
+    return categories.map((category) =>
+      this.toResponse(category, itemCounts.get(category._id.toString()) || 0),
+    );
   }
 
   public async listPublicCategoryTree(): Promise<CategoryResponse[]> {
     const categories = await this.categoryRepository.findActiveTreeCategories();
+    const itemCounts = await this.getItemCounts();
 
-    return this.buildTree(categories);
+    return this.buildTree(categories, itemCounts);
   }
 
   public async reorderCategories(
@@ -334,14 +338,37 @@ export class CategoryService {
     };
   }
 
+  private async getItemCounts(): Promise<Map<string, number>> {
+    const map = new Map<string, number>();
+    try {
+      const { ProductModel } = await import("../../product/model/product.model.js");
+      if (ProductModel.db?.readyState === 1) {
+        const counts = await ProductModel.aggregate([
+          { $match: { isDeleted: false, isActive: true } },
+          { $group: { _id: "$categoryId", count: { $sum: 1 } } },
+        ]).exec();
+        for (const c of counts) {
+          if (c._id) {
+            map.set(c._id.toString(), c.count);
+          }
+        }
+      }
+    } catch (_err) {
+      // Fallback
+    }
+    return map;
+  }
+
   private buildTree(
     categories: Array<HydratedDocument<Category>>,
+    itemCounts?: Map<string, number>,
   ): CategoryResponse[] {
     const byId = new Map<string, CategoryResponse>();
     const roots: CategoryResponse[] = [];
 
     for (const category of categories) {
-      byId.set(category._id.toString(), this.toResponse(category));
+      const count = itemCounts?.get(category._id.toString()) || 0;
+      byId.set(category._id.toString(), this.toResponse(category, count));
     }
 
     for (const category of categories) {
@@ -364,7 +391,7 @@ export class CategoryService {
     return roots;
   }
 
-  private toResponse(category: Category): CategoryResponse {
+  private toResponse(category: Category, count?: number): CategoryResponse {
     return {
       id: category._id.toString(),
       name: category.name,
@@ -380,6 +407,7 @@ export class CategoryService {
       seoTitle: category.seoTitle,
       seoDescription: category.seoDescription,
       seoKeywords: category.seoKeywords,
+      itemCount: count !== undefined ? count : 0,
       children: [],
       createdAt: category.createdAt,
       updatedAt: category.updatedAt,

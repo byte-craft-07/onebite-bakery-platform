@@ -11,6 +11,7 @@ export interface CategoryResponse {
   seoTitle: string;
   seoDescription: string;
   seoKeywords: string[];
+  itemCount?: number;
   children: CategoryResponse[];
   createdAt: Date;
   updatedAt: Date;

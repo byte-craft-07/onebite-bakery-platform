@@ -21,6 +21,9 @@ export const COLLECTION_NAMES = {
   PAYMENTS: "payments",
   REVIEWS: "reviews",
   DECORATIONS: "decorations",
+  BUSINESS_HUB: "business_hub",
+  BUSINESS_LINKS: "business_links",
+  BUSINESS_ANALYTICS: "business_analytics",
 } as const;
 
 export type CollectionName =

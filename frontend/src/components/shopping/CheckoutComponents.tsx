@@ -334,10 +334,10 @@ export const CheckoutSummary: React.FC<{
     }
   };
 
-  const effectiveDiscount = Math.round((appliedCoupon ? appliedDiscount : pricing.discountAmount) * 100) / 100;
-  const baseTotal = Math.max(0, Math.round((pricing.subtotal - effectiveDiscount + pricing.deliveryFee) * 100) / 100);
-  const upiDiscount = (paymentMethod === "MANUAL_UPI" && manualUpiDiscount > 0) ? manualUpiDiscount : 0;
-  const effectiveTotal = Math.max(0, Math.round((baseTotal - upiDiscount) * 100) / 100);
+  const effectiveDiscount = Math.round(appliedCoupon ? appliedDiscount : pricing.discountAmount);
+  const baseTotal = Math.max(0, Math.round(pricing.subtotal - effectiveDiscount + pricing.deliveryFee));
+  const upiDiscount = (paymentMethod === "MANUAL_UPI" && manualUpiDiscount > 0) ? Math.round(manualUpiDiscount) : 0;
+  const effectiveTotal = Math.max(0, Math.round(baseTotal - upiDiscount));
 
   return (
     <Card className="space-y-4 bg-white border-[#E5DEC9]">
@@ -430,7 +430,7 @@ export const CheckoutSummary: React.FC<{
             <span className="flex items-center gap-1.5">
               <span>{t("checkout.upiDiscount", "⚡ Direct UPI Discount (1.5% OFF)")}</span>
             </span>
-            <span>-₹{upiDiscount}</span>
+            <span className="font-extrabold">-₹{Math.round(upiDiscount)}</span>
           </div>
         ) : null}
       </div>
@@ -439,6 +439,23 @@ export const CheckoutSummary: React.FC<{
         <span className="text-sm font-bold text-[#3B302B]">{t("checkout.totalAmount", "Total Amount")}</span>
         <span className="text-2xl font-extrabold text-[#596B58]">₹{effectiveTotal}</span>
       </div>
+
+      {/* COD 50% Advance Breakdown */}
+      {paymentMethod === "COD" && effectiveTotal > 0 && (
+        <div className="p-3 bg-amber-50/90 rounded-xl border border-amber-200 space-y-1.5 text-xs shadow-2xs">
+          <div className="flex items-center justify-between text-amber-950 font-bold">
+            <span>{t("checkout.codAdvance50", "⚡ 50% UPI एडवांस (अभी देय):")}</span>
+            <span className="text-sm font-extrabold text-emerald-700">₹{Math.ceil(effectiveTotal * 0.5)}</span>
+          </div>
+          <div className="flex items-center justify-between text-[#7A6E65] font-medium">
+            <span>{t("checkout.codRemaining50", "💵 50% डिलीवरी पर नकद देय:")}</span>
+            <span className="font-bold text-[#3B302B]">₹{Math.max(0, effectiveTotal - Math.ceil(effectiveTotal * 0.5))}</span>
+          </div>
+          <p className="text-[10px] text-amber-800 leading-tight pt-0.5">
+            📌 COD ऑर्डर केवल 50% अग्रिम भुगतान UPI द्वारा सत्यापित होने के बाद ही मान्य होगा।
+          </p>
+        </div>
+      )}
 
       {/* Dynamic Delivery Remaining Amount & Savings Status */}
       {fulfillmentType === "HOME_DELIVERY" ? (
@@ -600,7 +617,7 @@ export const DeliveryTimingSelector: React.FC<{
             </span>
             <div>
               <h4 className="font-extrabold text-sm sm:text-base text-[#3B302B]">
-                ⚡ Ready to Deliver (Instant)
+                {t("checkout.instantReadyTitle", "⚡ Ready to Deliver (Instant)")}
               </h4>
               <p className="text-xs text-[#7A6E65]">
                 {t("checkout.instantReadySub", "Pre-made & in-stock for immediate dispatch")}
@@ -620,7 +637,10 @@ export const DeliveryTimingSelector: React.FC<{
         </div>
 
         <p className="text-[11px] text-[#7A6E65] leading-relaxed">
-          Yeh product bakery shelf me pehle se ready hai. Is order ke liye specific date ya slot choose karne ki zaroorat nahi hai—order confirm hote hi turant dispatch kar diya jayega.
+          {t(
+            "checkout.instantReadyDesc",
+            "This product is pre-made and ready on the bakery shelf. No need to select a specific date or slot—it will be dispatched immediately once confirmed."
+          )}
         </p>
       </div>
     );
@@ -636,7 +656,7 @@ export const DeliveryTimingSelector: React.FC<{
           <span>
             {hasCustomCake
               ? t("checkout.customCakeNoticeTitle", "Custom Celebration Cake Order Notice")
-              : "📅 Specific Delivery Date & Time Slot (Made to Order)"}
+              : t("checkout.specificDateTimeSlotMadeToOrder", "📅 Specific Delivery Date & Time Slot (Made to Order)")}
           </span>
         </div>
         <p className="text-[11px] leading-relaxed text-amber-900/90">
@@ -645,7 +665,10 @@ export const DeliveryTimingSelector: React.FC<{
                 "checkout.customCakeNoticeDesc",
                 "Your cart contains an artisanal Custom Celebration Cake which requires handcrafted preparation and baking time. Instant delivery is not available for custom cakes. Please pick your desired celebration Date & Time Slot below."
               )
-            : "Yeh product fresh baking & decoration ke baad deliver hota hai (Made to Order). Iske liye Instant Delivery available nahi hai. Kripya apna manpasand celebration date aur delivery time slot choose karein."}
+            : t(
+                "checkout.madeToOrderNoticeDesc",
+                "This product is delivered after fresh baking & decoration (Made to Order). Instant Delivery is not available for this item. Please choose your preferred celebration date and delivery time slot."
+              )}
         </p>
       </div>
 
@@ -688,10 +711,17 @@ export const DeliveryTimingSelector: React.FC<{
             <CustomSelect
               value={scheduledTimeSlot || TIME_SLOTS[2]}
               onChange={onTimeSlotChange}
-              options={TIME_SLOTS.map((slot) => ({
-                value: slot,
-                label: slot,
-              }))}
+              options={TIME_SLOTS.map((slot) => {
+                let label = slot;
+                if (slot.includes("Morning Slot")) label = `10:00 AM - 01:00 PM (${t("checkout.morningSlot", "Morning Slot")})`;
+                else if (slot.includes("Afternoon Slot")) label = `01:00 PM - 04:00 PM (${t("checkout.afternoonSlot", "Afternoon Slot")})`;
+                else if (slot.includes("Evening Slot")) label = `04:00 PM - 07:00 PM (${t("checkout.eveningSlot", "Evening Slot")})`;
+                else if (slot.includes("Night Celebration Slot")) label = `07:00 PM - 10:00 PM (${t("checkout.nightSlot", "Night Celebration Slot")})`;
+                return {
+                  value: slot,
+                  label,
+                };
+              })}
             />
             <p className="text-[10px] text-[#7A6E65]">
               {t("checkout.deliveryPartnerWindow", "Our delivery partner will arrive within this designated window.")}

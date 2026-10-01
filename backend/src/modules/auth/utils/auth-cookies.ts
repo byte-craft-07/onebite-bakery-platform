@@ -11,6 +11,7 @@ const createCookieOptions = (maxAge: number): CookieOptions => {
     secure: isProd,
     sameSite: isProd ? "none" : "lax",
     maxAge,
+    expires: new Date(Date.now() + maxAge),
     path: "/",
   };
 };

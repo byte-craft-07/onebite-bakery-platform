@@ -27,6 +27,7 @@ import {
   comboRouter,
   bannerRouter,
   decorationRouter,
+  businessHubRouter,
 } from "./modules/index.js";
 
 import { deliveryAgentRouter } from "./modules/delivery/routes/delivery-agent.routes.js";
@@ -64,6 +65,8 @@ apiRoutes.use(ROUTES.CUSTOM_CAKE, customCakeRouter);
 apiRoutes.use(ROUTES.COMBOS, comboRouter);
 apiRoutes.use(ROUTES.BANNER, bannerRouter);
 apiRoutes.use(ROUTES.DECORATIONS, decorationRouter);
+apiRoutes.use(ROUTES.BUSINESS_HUB, businessHubRouter);
+apiRoutes.use(ROUTES.ADMIN_BUSINESS_HUB, businessHubRouter);
 
 // Admin-only on-demand baseline seeding
 apiRoutes.post(

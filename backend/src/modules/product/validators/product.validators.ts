@@ -51,6 +51,16 @@ const booleanQuerySchema = z
     return undefined;
   });
 
+export const weightOptionSchema = z.object({
+  weight: z.string().trim().min(1),
+  serves: z.string().trim().optional(),
+  price: z.coerce.number().positive(),
+  compareAtPrice: z
+    .union([z.coerce.number().positive(), z.literal(0), z.literal(""), z.null()])
+    .optional()
+    .transform((val) => (val === 0 || val === "" || val === null ? undefined : val)),
+});
+
 const productSchemaBase = z.object({
   name: z.string().trim().min(1).max(160),
   nameHi: z.string().trim().max(200).optional(),
@@ -81,6 +91,7 @@ const productSchemaBase = z.object({
   isAvailable: z.boolean().default(true),
   isInstantAvailable: z.boolean().default(false),
   isEggless: z.boolean().default(true),
+  weightOptions: z.array(weightOptionSchema).optional(),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),
   isTrending: z.boolean().default(false),

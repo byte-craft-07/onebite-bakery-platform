@@ -13,8 +13,8 @@ const villageSchema = z.object({
   name: z.string().trim().min(2, "Village name is required."),
   district: z.string().trim().min(2, "District name is required."),
   pincode: z.string().trim().regex(/^\d{4,10}$/, "Valid 4-10 digit pincode required."),
-  deliveryCharge: z.number().min(0, "Delivery charge must be 0 or more.").optional(),
-  freeDeliveryThreshold: z.number().min(0, "Free delivery threshold must be 0 or more.").optional(),
+  deliveryCharge: z.coerce.number().min(0, "Delivery charge must be 0 or more."),
+  freeDeliveryThreshold: z.coerce.number().min(0, "Free delivery threshold must be 0 or more.").optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -66,9 +66,24 @@ export const AdminVillagesPage: React.FC = () => {
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      await villageService.createVillage(data);
+      const payload = {
+        name: data.name.trim(),
+        district: data.district.trim(),
+        pincode: data.pincode.trim(),
+        deliveryCharge: Number(data.deliveryCharge),
+        freeDeliveryThreshold: data.freeDeliveryThreshold !== undefined ? Number(data.freeDeliveryThreshold) : 799,
+        isActive: data.isActive !== false,
+      };
+      await villageService.createVillage(payload);
       setIsAddModalOpen(false);
-      villageForm.reset();
+      villageForm.reset({
+        name: "",
+        district: "",
+        pincode: "",
+        deliveryCharge: 49,
+        freeDeliveryThreshold: 799,
+        isActive: true,
+      });
       loadVillages();
     } catch (err: any) {
       setErrorMsg(err?.response?.data?.message || "Failed to create village.");
@@ -83,9 +98,9 @@ export const AdminVillagesPage: React.FC = () => {
       name: village.name,
       district: village.district,
       pincode: village.pincode,
-      deliveryCharge: village.deliveryCharge ?? 49,
-      freeDeliveryThreshold: village.freeDeliveryThreshold ?? 799,
-      isActive: village.isActive,
+      deliveryCharge: typeof village.deliveryCharge === "number" ? village.deliveryCharge : 49,
+      freeDeliveryThreshold: typeof village.freeDeliveryThreshold === "number" ? village.freeDeliveryThreshold : 799,
+      isActive: village.isActive !== false,
     });
   };
 
@@ -94,7 +109,15 @@ export const AdminVillagesPage: React.FC = () => {
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      await villageService.updateVillage(editingVillage.id, data);
+      const payload = {
+        name: data.name.trim(),
+        district: data.district.trim(),
+        pincode: data.pincode.trim(),
+        deliveryCharge: Number(data.deliveryCharge),
+        freeDeliveryThreshold: data.freeDeliveryThreshold !== undefined ? Number(data.freeDeliveryThreshold) : 799,
+        isActive: data.isActive !== false,
+      };
+      await villageService.updateVillage(editingVillage.id, payload);
       setEditingVillage(null);
       loadVillages();
     } catch (err: any) {

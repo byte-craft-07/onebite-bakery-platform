@@ -19,6 +19,14 @@ export interface CartItem {
   customization?: {
     eggless?: boolean;
     message?: string;
+    weight?: string;
+    inquiryNumber?: string;
+    flavor?: string;
+    tiers?: number;
+    shape?: string;
+    designTheme?: string;
+    estimatedPrice?: number;
+    specialInstructions?: string;
   };
 }
 
@@ -208,7 +216,18 @@ export const cartService = {
   addItem: async (payload: {
     productId: string;
     quantity: number;
-    customization?: { eggless?: boolean; message?: string };
+    customization?: {
+      eggless?: boolean;
+      message?: string;
+      weight?: string;
+      inquiryNumber?: string;
+      flavor?: string;
+      tiers?: number;
+      shape?: string;
+      designTheme?: string;
+      estimatedPrice?: number;
+      specialInstructions?: string;
+    };
     productDetails?: { name?: string; price?: number; mainImage?: string; slug?: string; isInstantAvailable?: boolean };
   }): Promise<CartResponse> => {
     try {

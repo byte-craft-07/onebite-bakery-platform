@@ -1,6 +1,13 @@
 import { apiClient } from "@/services/api.client";
 import { catalogService } from "@/services/catalog.service";
 
+export interface ProductWeightOptionPayload {
+  weight: string;
+  serves?: string;
+  price: number;
+  compareAtPrice?: number;
+}
+
 export interface CreateProductPayload {
   name: string;
   nameHi?: string;
@@ -26,6 +33,7 @@ export interface CreateProductPayload {
   images?: string[];
   imageUrls?: string[];
   stockQuantity?: number;
+  weightOptions?: ProductWeightOptionPayload[];
 }
 
 export const adminCatalogService = {
@@ -45,10 +53,11 @@ export const adminCatalogService = {
           price: p.price,
           compareAtPrice: p.compareAtPrice,
           sku: p.sku || `SKU-${p.id}`,
-          isEggless: p.isEggless ?? true,
+          isEggless: typeof p.isEggless === "boolean" ? p.isEggless : true,
           isAvailable: p.isAvailable ?? true,
           isInstantAvailable: Boolean(p.isInstantAvailable),
           stockQuantity: p.stockQuantity ?? 50,
+          weightOptions: p.weightOptions || [],
           mainImage:
             p.thumbnailUrl ||
             p.mainImage ||

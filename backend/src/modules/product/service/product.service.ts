@@ -761,6 +761,12 @@ export class ProductService {
       ...(typeof dto.isInstantAvailable === "boolean"
         ? { isInstantAvailable: dto.isInstantAvailable }
         : {}),
+      ...(typeof dto.isEggless === "boolean"
+        ? { isEggless: dto.isEggless }
+        : {}),
+      ...(Array.isArray(dto.weightOptions)
+        ? { weightOptions: dto.weightOptions }
+        : {}),
       ...(dto.availableFrom ? { availableFrom: dto.availableFrom } : {}),
       ...(dto.availableUntil ? { availableUntil: dto.availableUntil } : {}),
       ...(typeof dto.displayOrder === "number"
@@ -808,6 +814,10 @@ export class ProductService {
       stockStatus: product.stockStatus,
       isAvailable: product.isAvailable,
       isInstantAvailable: Boolean(product.isInstantAvailable),
+      isEggless: product.isEggless ?? true,
+      ...(Array.isArray(product.weightOptions) && product.weightOptions.length > 0
+        ? { weightOptions: product.weightOptions }
+        : {}),
       ...(product.availableFrom ? { availableFrom: product.availableFrom } : {}),
       ...(product.availableUntil ? { availableUntil: product.availableUntil } : {}),
       isActive: product.isActive,

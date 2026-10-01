@@ -868,7 +868,7 @@ export const AdminOrdersPage: React.FC = () => {
                     {selectedOrderForModal.paymentMethod === "MANUAL_UPI"
                       ? "Direct UPI ID / QR (1.5% Off)"
                       : selectedOrderForModal.paymentMethod === "COD"
-                      ? "Cash on Delivery (COD)"
+                      ? "Cash on Delivery (50% Advance via UPI)"
                       : "Online Razorpay"}
                   </span>
                 </div>
@@ -882,6 +882,19 @@ export const AdminOrdersPage: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {selectedOrderForModal.paymentMethod === "COD" && (
+                <div className="p-2.5 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-950 font-bold space-y-1">
+                  <div className="flex justify-between">
+                    <span>50% Advance via UPI:</span>
+                    <span className="text-emerald-700">₹{Math.ceil((selectedOrderForModal.totalAmount || 0) * 0.5)} (Staff Verification)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Remaining COD Cash to Collect:</span>
+                    <span className="text-amber-900">₹{Math.max(0, (selectedOrderForModal.totalAmount || 0) - Math.ceil((selectedOrderForModal.totalAmount || 0) * 0.5))}</span>
+                  </div>
+                </div>
+              )}
 
               {((selectedOrderForModal.manualUpiDiscount && selectedOrderForModal.manualUpiDiscount > 0) ||
                 selectedOrderForModal.paymentMethod === "MANUAL_UPI") && (

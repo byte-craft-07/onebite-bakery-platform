@@ -11,7 +11,8 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    port: 5173,
+    port: 8080,
+    strictPort: true,
     proxy: {
       "/api": {
         target: "http://localhost:5000",
@@ -65,7 +66,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
-    setupFiles: "./src/test/setup.ts",
+    setupFiles: [path.resolve(dirname, "./src/test/setup.ts").replace(/\\/g, "/")],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
 });

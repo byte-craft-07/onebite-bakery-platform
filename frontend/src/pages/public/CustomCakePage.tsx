@@ -175,6 +175,7 @@ export const CustomCakePage: React.FC = () => {
   };
 
   // Add to Cart
+  // Add to Cart & Save Inquiry to Console
   const handleAddToCart = async () => {
     setIsAddingToCart(true);
     const cakeImg =
@@ -184,13 +185,51 @@ export const CustomCakePage: React.FC = () => {
     try {
       const flavorName = selectedFlavor?.name || "Artisanal Cake";
       const customTitle = `Custom ${tiers}-Tier ${flavorName} (${shape} Shape, ${formattedWeight})`;
+
+      let inquiryNumber: string | undefined;
+      try {
+        const inqRes = await customCakeService.submitInquiry({
+          customerName: user?.name || customNameOnCake || "Customer",
+          customerPhone: user?.phone || "9999999999",
+          customerEmail: user?.email || undefined,
+          occasion: "Custom Cake Studio Order",
+          budgetRange: `₹${estimatedPrice}`,
+          queryText: specialInstructions || `Custom ${tiers}-Tier ${flavorName} (${shape}, ${formattedWeight})`,
+          referenceImageUrl: referenceImage || undefined,
+          tiers,
+          shape,
+          flavor: flavorName,
+          designTheme: selectedDesign?.name || "Standard Styling",
+          weightKg,
+          isEggless,
+          cakeMessage: customNameOnCake,
+          estimatedPrice,
+        });
+        if (inqRes?.inquiryNumber) {
+          inquiryNumber = inqRes.inquiryNumber;
+        }
+      } catch (_inqErr) {
+        // Continue to add to cart
+      }
+
       await cartService.addItem({
-        productId: `custom-${Date.now()}`,
+        productId: "custom-celebration-cake",
         quantity: 1,
         customization: {
           message: customNameOnCake,
           eggless: isEggless,
-        },
+          flavour: flavorName,
+          flavor: flavorName,
+          tiers,
+          tierCount: tiers,
+          shape,
+          designTheme: selectedDesign?.name,
+          weightKg,
+          specialInstructions,
+          referenceImageUrl: referenceImage || undefined,
+          inquiryNumber,
+          estimatedPrice,
+        } as any,
         productDetails: {
           name: customTitle,
           price: estimatedPrice,
@@ -198,7 +237,8 @@ export const CustomCakePage: React.FC = () => {
           slug: `custom-cake-${tiers}-tier-${selectedFlavor?.slug || "celebration"}`,
         },
       });
-      toast.add("Custom Cake Added! 🎂", `"${customTitle}" (₹${estimatedPrice}) added to your basket.`, {
+
+      toast.add("Custom Cake Saved & Added! 🎂", `"${customTitle}" (₹${estimatedPrice}) saved and added to your basket.`, {
         image: cakeImg,
         action: {
           label: "View Cart",

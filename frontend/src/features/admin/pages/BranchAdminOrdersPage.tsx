@@ -734,10 +734,23 @@ export const BranchAdminOrdersPage: React.FC = () => {
                   {activeOrderModal.paymentMethod === "MANUAL_UPI"
                     ? "Direct UPI ID & QR Code (1.5% Off)"
                     : activeOrderModal.paymentMethod === "COD"
-                    ? "Cash on Delivery"
+                    ? "Cash on Delivery (50% Advance via UPI)"
                     : "Online Razorpay"}
                 </span>
               </div>
+
+              {activeOrderModal.paymentMethod === "COD" && (
+                <div className="p-2.5 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-950 font-bold space-y-1">
+                  <div className="flex justify-between">
+                    <span>50% Advance via UPI:</span>
+                    <span className="text-emerald-700">₹{Math.ceil((activeOrderModal.totalAmount || 0) * 0.5)} (Staff Verified)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Remaining COD Cash to Collect:</span>
+                    <span className="text-amber-900">₹{Math.max(0, (activeOrderModal.totalAmount || 0) - Math.ceil((activeOrderModal.totalAmount || 0) * 0.5))}</span>
+                  </div>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span className="text-gray-500 font-bold">Payment Status:</span>
                 <Badge

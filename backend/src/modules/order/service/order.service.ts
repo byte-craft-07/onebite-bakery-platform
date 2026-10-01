@@ -195,24 +195,26 @@ export class OrderService {
       }
 
       const customization = cartItem.customization ?? cartItem.customCakeConfig;
+      const unitPrice = cartItem.unitPriceSnapshot ?? cartItem.unitPrice ?? product.price;
+      const itemName = cartItem.productSnapshot?.name || product.name;
+      const itemImage =
+        cartItem.productSnapshot?.thumbnailUrl ||
+        product.thumbnailUrl ||
+        (product.imageUrls && product.imageUrls[0]);
 
       orderItemSnapshots.push({
         productId: product._id,
-        productNameSnapshot: product.name,
-        productName: product.name,
-        slug: product.slug,
+        productNameSnapshot: itemName,
+        productName: itemName,
+        slug: cartItem.productSnapshot?.slug || product.slug,
         ...(categoryName ? { categoryName } : {}),
         ...(occasionName ? { occasionName } : {}),
-        productType: product.productType,
-        ...(product.thumbnailUrl
-          ? { image: product.thumbnailUrl }
-          : product.imageUrls[0]
-          ? { image: product.imageUrls[0] }
-          : {}),
-        unitPriceSnapshot: product.price,
-        unitPrice: product.price,
+        productType: cartItem.productType || product.productType,
+        ...(itemImage ? { image: itemImage } : {}),
+        unitPriceSnapshot: unitPrice,
+        unitPrice: unitPrice,
         quantity: cartItem.quantity,
-        subtotal: product.price * cartItem.quantity,
+        subtotal: unitPrice * cartItem.quantity,
         ...(customization ? { customization, customCakeConfig: customization } : {}),
         ...(cartItem.selectedVariant
           ? { selectedVariant: cartItem.selectedVariant }
@@ -222,12 +224,12 @@ export class OrderService {
     }
 
     // 4. Pricing Snapshot
-    const deliveryCharge =
+    let deliveryCharge =
       dto.deliveryMethod === "HOME_DELIVERY"
         ? cart.estimatedDeliveryCharge
         : 0;
 
-    const subtotal = cart.subtotal;
+    const subtotal = orderItemSnapshots.reduce((acc, item) => acc + item.subtotal, 0) || cart.subtotal;
     const preDiscountTotal =
       subtotal - cart.estimatedDiscount + cart.estimatedTax + deliveryCharge;
 
@@ -357,6 +359,11 @@ export class OrderService {
             };
           }
         }
+        if (villageDoc && dto.deliveryMethod === "HOME_DELIVERY") {
+          const vFee = typeof villageDoc.deliveryCharge === "number" ? villageDoc.deliveryCharge : 49;
+          const vThresh = typeof villageDoc.freeDeliveryThreshold === "number" ? villageDoc.freeDeliveryThreshold : 799;
+          deliveryCharge = subtotal >= vThresh ? 0 : vFee;
+        }
       } catch (_err) {
         // Ignore error
       }
@@ -369,6 +376,25 @@ export class OrderService {
         pincode: addressSnapshot.pincode || "210502",
       };
     }
+
+    const finalPreDiscountTotal =
+      subtotal - cart.estimatedDiscount + cart.estimatedTax + deliveryCharge;
+    const finalManualUpiDiscount =
+      dto.paymentMethod === "MANUAL_UPI"
+        ? Math.round(finalPreDiscountTotal * 0.015 * 100) / 100
+        : 0;
+    const finalGrandTotal = Math.max(0, Math.round((finalPreDiscountTotal - finalManualUpiDiscount) * 100) / 100);
+
+    const finalPricingSnapshot: OrderPricingSnapshot = {
+      subtotal,
+      tax: cart.estimatedTax,
+      deliveryCharge,
+      discount: cart.estimatedDiscount,
+      manualUpiDiscount: finalManualUpiDiscount,
+      grandTotal: finalGrandTotal,
+      homeDeliveryAvailable: cart.homeDeliveryAvailable,
+      pickupAvailable: cart.pickupAvailable,
+    };
 
     // 6. Build Immutable Order Branch Snapshot (Server-side authoritative)
     let branchId: Types.ObjectId | undefined;
@@ -442,10 +468,10 @@ export class OrderService {
       ...(addressSnapshot ? { addressSnapshot } : {}),
       ...(locationSnapshot ? { locationSnapshot } : {}),
       ...(branchSnapshot ? { branchSnapshot } : {}),
-      pricingSnapshot,
+      pricingSnapshot: finalPricingSnapshot,
       subtotal,
       deliveryCharge,
-      totalAmount: grandTotal,
+      totalAmount: finalGrandTotal,
       deliveryMethod: dto.deliveryMethod,
       paymentMethod: dto.paymentMethod ?? "UPI",
       orderStatus: "PENDING",
