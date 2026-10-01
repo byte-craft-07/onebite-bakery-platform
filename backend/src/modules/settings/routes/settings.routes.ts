@@ -61,7 +61,7 @@ const getOrCreateSettings = async (): Promise<Settings> => {
       pickupEnabled: true,
     },
     socialLinks: {},
-    upiId: "7897671632@okbizaxis",
+    upiId: "7897671632-2@ybl",
     upiQr: "",
     isDeliveryEnabled: true,
     isPickupEnabled: true,
@@ -87,7 +87,7 @@ const toSettingsResponse = (settings: Settings) => ({
   taxRatePercent: settings.taxRatePercent ?? 5,
   isTaxEnabled: settings.isTaxEnabled ?? true,
   isOrderAcceptanceActive: settings.isDeliveryEnabled || settings.isPickupEnabled,
-  upiId: settings.upiId || "7897671632@okbizaxis",
+  upiId: settings.upiId || "7897671632-2@ybl",
   upiQr: settings.upiQr || "",
   delivery: settings.delivery,
 });

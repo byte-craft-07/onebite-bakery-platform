@@ -150,7 +150,7 @@ export const CheckoutPage: React.FC = () => {
 
   const [fulfillmentType, setFulfillmentType] = useState<"HOME_DELIVERY" | "STORE_PICKUP">("HOME_DELIVERY");
   const [paymentMethod, setPaymentMethod] = useState<"UPI" | "MANUAL_UPI" | "COD">("UPI");
-  const [bakeryUpiId, setBakeryUpiId] = useState<string>("7897671632@okbizaxis");
+  const [bakeryUpiId, setBakeryUpiId] = useState<string>("7897671632-2@ybl");
   const [bakeryUpiQr, setBakeryUpiQr] = useState<string>("");
   const [isDownloadingQr, setIsDownloadingQr] = useState<boolean>(false);
   const [paymentReceiptPreview, setPaymentReceiptPreview] = useState<string | null>(null);

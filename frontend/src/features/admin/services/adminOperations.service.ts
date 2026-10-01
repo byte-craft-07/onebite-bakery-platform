@@ -562,7 +562,7 @@ export const adminOperationsService = {
       taxRatePercent: 5,
       isTaxEnabled: true,
       isOrderAcceptanceActive: true,
-      upiId: "7897671632@okbizaxis",
+      upiId: "7897671632-2@ybl",
       upiQr: "",
     };
   },

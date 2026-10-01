@@ -473,7 +473,7 @@ export const AdminSettingsPage: React.FC = () => {
     taxRatePercent: 5,
     isTaxEnabled: true,
     isOrderAcceptanceActive: true,
-    upiId: "7897671632@okbizaxis",
+    upiId: "7897671632-2@ybl",
     upiQr: "",
   });
 
@@ -542,7 +542,7 @@ export const AdminSettingsPage: React.FC = () => {
           taxRatePercent: res.taxRatePercent ?? 5,
           isTaxEnabled: res.isTaxEnabled ?? true,
           isOrderAcceptanceActive: res.isOrderAcceptanceActive ?? true,
-          upiId: res.upiId || "7897671632@okbizaxis",
+          upiId: res.upiId || "7897671632-2@ybl",
           upiQr: res.upiQr || "",
         });
       }
@@ -651,9 +651,9 @@ export const AdminSettingsPage: React.FC = () => {
 
           <div className="space-y-4">
             <Input
-              label="Bakery Official UPI ID (e.g., 7897671632@okbizaxis) *"
+              label="Bakery Official UPI ID (e.g., 7897671632-2@ybl) *"
               value={settings.upiId || ""}
-              placeholder="7897671632@okbizaxis"
+              placeholder="7897671632-2@ybl"
               onChange={(e) => setSettings({ ...settings, upiId: e.target.value })}
               required
             />
