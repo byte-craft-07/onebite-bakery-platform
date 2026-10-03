@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 import { CategoryCard } from "@/components/cards/DomainCards";
-import { Skeleton } from "@/components/ui/DisplayComponents";
+import { CategoryCardSkeleton } from "@/components/cards/SkeletonCards";
 import { catalogService, type CategoryItem } from "@/services/catalog.service";
 import { useTranslation } from "react-i18next";
 import { getLocalizedCategoryName } from "@/i18n/utils";
@@ -40,8 +40,8 @@ export const CategoriesPage: React.FC = () => {
 
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-40 sm:h-48 w-full rounded-2xl" />
+          {Array.from({ length: 8 }).map((_, i) => (
+            <CategoryCardSkeleton key={i} />
           ))}
         </div>
       ) : categories.length > 0 ? (

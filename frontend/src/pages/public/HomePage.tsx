@@ -5,6 +5,14 @@ import { useTranslation } from "react-i18next";
 
 import { CategoryCard, ComboCard, OccasionCard, ReviewCard } from "@/components/cards/DomainCards";
 import { ProductCard } from "@/components/cards/ProductCard";
+import {
+  CategoryCardSkeleton,
+  CategoryPillSkeleton,
+  ComboCardSkeleton,
+  OccasionCardSkeleton,
+  ProductCardSkeleton,
+  ReviewCardSkeleton,
+} from "@/components/cards/SkeletonCards";
 import { Button } from "@/components/ui/Button";
 import { RatingModal } from "@/components/review/RatingModal";
 import { type MockReview } from "@/data/mockData";
@@ -32,13 +40,20 @@ export const HomePage: React.FC = () => {
   const [reviews, setReviews] = useState<MockReview[]>([]);
   const [combos, setCombos] = useState<Combo[]>(() => cachedCombos || []);
   const [activeTab, setActiveTab] = useState<string>("all");
-  const [isLoading, setIsLoading] = useState<boolean>(() => !cachedCategories || cachedCategories.length === 0);
+
+  const [isLoadingCategories, setIsLoadingCategories] = useState<boolean>(() => !cachedCategories || cachedCategories.length === 0);
+  const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(true);
+  const [isLoadingOccasions, setIsLoadingOccasions] = useState<boolean>(() => !cachedOccasions || cachedOccasions.length === 0);
+  const [isLoadingReviews, setIsLoadingReviews] = useState<boolean>(true);
+  const [isLoadingCombos, setIsLoadingCombos] = useState<boolean>(() => !cachedCombos || cachedCombos.length === 0);
 
   const fetchHomeData = async (forceRefresh: boolean = false) => {
-    // Only show full loading spinner if we don't have any cached categories
-    if (!cachedCategories || cachedCategories.length === 0 || forceRefresh) {
-      setIsLoading(true);
-    }
+    if (forceRefresh || categories.length === 0) setIsLoadingCategories(true);
+    if (forceRefresh || allProducts.length === 0) setIsLoadingProducts(true);
+    if (forceRefresh || occasions.length === 0) setIsLoadingOccasions(true);
+    if (forceRefresh || reviews.length === 0) setIsLoadingReviews(true);
+    if (forceRefresh || combos.length === 0) setIsLoadingCombos(true);
+
     try {
       const [catList, prodRes, occList, revList, comboList] = await Promise.all([
         catalogService.getCategories(forceRefresh),
@@ -61,7 +76,11 @@ export const HomePage: React.FC = () => {
         setCombos([]);
       }
     } finally {
-      setIsLoading(false);
+      setIsLoadingCategories(false);
+      setIsLoadingProducts(false);
+      setIsLoadingOccasions(false);
+      setIsLoadingReviews(false);
+      setIsLoadingCombos(false);
     }
   };
 
@@ -134,7 +153,13 @@ export const HomePage: React.FC = () => {
           </Link>
         </div>
 
-        {categories.length > 0 ? (
+        {isLoadingCategories ? (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <CategoryCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : categories.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {categories.map((category) => (
               <CategoryCard
@@ -169,31 +194,41 @@ export const HomePage: React.FC = () => {
           </div>
 
           {/* Filter Pills dynamically generated from database categories */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
-            {[
-              { id: "all", label: t("home.tabAll", "🌟 All Items") },
-              ...categories.map((c) => ({
-                id: c.id,
-                label: c.name,
-              })),
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer shadow-2xs active:scale-95 shrink-0 ${
-                  activeTab === tab.id
-                    ? "bg-[#3B302B] text-white ring-2 ring-[#596B58]"
-                    : "bg-white border border-[#E5DEC9] text-[#3B302B] hover:bg-[#FFF8EC] hover:text-[#596B58]"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          {isLoadingCategories && categories.length === 0 ? (
+            <CategoryPillSkeleton count={5} />
+          ) : (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
+              {[
+                { id: "all", label: t("home.tabAll", "🌟 All Items") },
+                ...categories.map((c) => ({
+                  id: c.id,
+                  label: c.name,
+                })),
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer shadow-2xs active:scale-95 shrink-0 ${
+                    activeTab === tab.id
+                      ? "bg-[#3B302B] text-white ring-2 ring-[#596B58]"
+                      : "bg-white border border-[#E5DEC9] text-[#3B302B] hover:bg-[#FFF8EC] hover:text-[#596B58]"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {filteredProducts.length > 0 ? (
+        {isLoadingProducts ? (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {filteredProducts.slice(0, 8).map((p) => (
               <ProductCard key={p.id} product={p} />
@@ -205,7 +240,11 @@ export const HomePage: React.FC = () => {
           </div>
         )}
 
-        {allProducts.length > 0 && (
+        {isLoadingProducts ? (
+          <div className="flex justify-center pt-2">
+            <div className="h-11 w-48 rounded-xl bg-[#E5DEC9]/50 animate-pulse" />
+          </div>
+        ) : allProducts.length > 0 ? (
           <div className="text-center pt-2">
             <Link to="/products">
               <Button variant="outline" size="lg" className="w-full sm:w-auto border-[#596B58] text-[#596B58] hover:bg-[#FFF8EC]">
@@ -214,11 +253,11 @@ export const HomePage: React.FC = () => {
               </Button>
             </Link>
           </div>
-        )}
+        ) : null}
       </section>
 
       {/* Party Decoration Accessories Dedicated Section */}
-      {decorationProducts.length > 0 && (
+      {(isLoadingProducts || decorationProducts.length > 0) && (
         <section className="space-y-4 sm:space-y-8 rounded-3xl bg-gradient-to-r from-amber-50/70 via-orange-50/50 to-amber-50/70 border border-[#E5DEC9] p-4 sm:p-10">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
             <div>
@@ -242,16 +281,24 @@ export const HomePage: React.FC = () => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-            {decorationProducts.slice(0, 4).map((item) => (
-              <ProductCard key={item.id} product={item} />
-            ))}
-          </div>
+          {isLoadingProducts ? (
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+              {decorationProducts.slice(0, 4).map((item) => (
+                <ProductCard key={item.id} product={item} />
+              ))}
+            </div>
+          )}
         </section>
       )}
 
       {/* Celebration Occasions */}
-      {occasions.length > 0 && (
+      {(isLoadingOccasions || occasions.length > 0) && (
         <section className="space-y-4 sm:space-y-8">
           <div className="flex items-end justify-between gap-2">
             <div>
@@ -264,20 +311,28 @@ export const HomePage: React.FC = () => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-            {occasions.map((occasion) => (
-              <OccasionCard
-                key={occasion.id}
-                occasion={{
-                  id: occasion.id,
-                  name: occasion.name,
-                  slug: occasion.slug,
-                  image: occasion.image || "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=600&q=80",
-                  tagline: occasion.tagline || "Artisanal celebration cakes.",
-                }}
-              />
-            ))}
-          </div>
+          {isLoadingOccasions ? (
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <OccasionCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+              {occasions.map((occasion) => (
+                <OccasionCard
+                  key={occasion.id}
+                  occasion={{
+                    id: occasion.id,
+                    name: occasion.name,
+                    slug: occasion.slug,
+                    image: occasion.image || "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?auto=format&fit=crop&w=600&q=80",
+                    tagline: occasion.tagline || "Artisanal celebration cakes.",
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -294,7 +349,12 @@ export const HomePage: React.FC = () => {
           </Link>
         </div>
 
-        {combos.length > 0 ? (
+        {isLoadingCombos ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+            <ComboCardSkeleton />
+            <ComboCardSkeleton />
+          </div>
+        ) : combos.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
             {combos.map((combo) => (
               <ComboCard key={combo.id} combo={combo} />
@@ -384,7 +444,9 @@ export const HomePage: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="space-y-1">
-            {avgRating ? (
+            {isLoadingReviews ? (
+              <div className="h-6 w-36 rounded-full bg-[#E5DEC9]/60 animate-pulse" />
+            ) : avgRating ? (
               <div className="flex items-center gap-2">
                 <div className="flex items-center text-amber-500">
                   <Star className="h-5 w-5 fill-current" />
@@ -415,7 +477,16 @@ export const HomePage: React.FC = () => {
           </Button>
         </div>
 
-        {reviews.length > 0 ? (
+        {isLoadingReviews ? (
+          <div className="relative w-full overflow-hidden py-4 -my-4">
+            <div className="gap-6 flex items-center py-2 overflow-x-hidden">
+              <ReviewCardSkeleton />
+              <ReviewCardSkeleton />
+              <ReviewCardSkeleton />
+              <ReviewCardSkeleton />
+            </div>
+          </div>
+        ) : reviews.length > 0 ? (
           <div className="relative w-full overflow-hidden py-4 -my-4 mask-linear-gradient">
             <div className="animate-marquee-auto-move gap-6 flex items-center py-2">
               {[...reviews, ...(reviews.length < 5 ? reviews : []), ...(reviews.length < 3 ? reviews : [])].map((review, idx) => (

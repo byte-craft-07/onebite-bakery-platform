@@ -3,7 +3,8 @@ import { useParams, useLocation, Link } from "react-router-dom";
 import { ArrowLeft, Search } from "lucide-react";
 
 import { ProductCard } from "@/components/cards/ProductCard";
-import { EmptyState, Skeleton } from "@/components/ui/DisplayComponents";
+import { ProductCardSkeleton } from "@/components/cards/SkeletonCards";
+import { EmptyState } from "@/components/ui/DisplayComponents";
 import {
   catalogService,
   type CategoryItem,
@@ -181,7 +182,7 @@ export const ProductsListingPage: React.FC = () => {
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-64 sm:h-72 w-full rounded-2xl" />
+              <ProductCardSkeleton key={i} />
             ))}
           </div>
         ) : products.length > 0 ? (

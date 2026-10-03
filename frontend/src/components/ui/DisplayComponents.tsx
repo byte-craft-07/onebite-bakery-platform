@@ -50,15 +50,18 @@ export const Badge: React.FC<{
   );
 };
 
-export const Skeleton: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, ...props }) => {
+export const Skeleton: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, children, ...props }) => {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-md bg-[#E5DEC9]/60",
+        "relative overflow-hidden animate-pulse rounded-md bg-[#E5DEC9]/60",
         className,
       )}
       {...props}
-    />
+    >
+      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-bakery-shimmer pointer-events-none" />
+      {children}
+    </div>
   );
 };
 

@@ -4,6 +4,7 @@ import { ArrowLeft, Cake, Gift, Heart, PartyPopper, Sparkles, Star } from "lucid
 
 import { OccasionCard } from "@/components/cards/DomainCards";
 import { ProductCard } from "@/components/cards/ProductCard";
+import { ProductCardSkeleton } from "@/components/cards/SkeletonCards";
 import { Badge, EmptyState, Skeleton } from "@/components/ui/DisplayComponents";
 import { catalogService, type OccasionItem, type ProductItem } from "@/services/catalog.service";
 import { useAuth } from "@/contexts/auth.context";
@@ -174,7 +175,7 @@ export const OccasionsPage: React.FC = () => {
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-64 sm:h-80 w-full rounded-2xl sm:rounded-3xl" />
+            <ProductCardSkeleton key={i} />
           ))}
         </div>
       ) : products.length > 0 ? (
