@@ -7,6 +7,7 @@ import { CategoryCardSkeleton } from "@/components/cards/SkeletonCards";
 import { catalogService, type CategoryItem } from "@/services/catalog.service";
 import { useTranslation } from "react-i18next";
 import { getLocalizedCategoryName } from "@/i18n/utils";
+import { SEOHead, buildCollectionSchema } from "@/components/seo";
 
 export const CategoriesPage: React.FC = () => {
   const { t } = useTranslation();
@@ -21,13 +22,39 @@ export const CategoriesPage: React.FC = () => {
       .finally(() => setIsLoading(false));
   }, []);
 
+  const collectionSchema = buildCollectionSchema(
+    "Bakery Categories",
+    "Explore our complete range of baked goods: Artisanal Cakes, Pastries & Tarts, Sourdough Breads, and Celebration Hampers.",
+    categories.map((c) => ({
+      name: c.name,
+      url: `/categories/${c.slug}`,
+      image: c.image,
+    }))
+  );
+
   return (
     <div className="space-y-6 pb-16">
-      {/* Top Back Link */}
-      <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors">
-        <ArrowLeft className="h-4 w-4" />
-        <span>{t("products.backToHome", "Back to Home")}</span>
-      </Link>
+      <SEOHead
+        title="Bakery Categories | Cakes, Pastries & Breads"
+        description="Browse handcrafted bakery categories at OneBite Bakery. Fresh artisanal cakes, french pastries, sourdough whole wheat breads, and celebration hampers."
+        canonicalPath="/categories"
+        breadcrumbs={[{ name: "Categories", url: "/categories" }]}
+        structuredData={collectionSchema}
+      />
+
+      {/* Top Back Link & Breadcrumbs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors">
+          <ArrowLeft className="h-4 w-4" />
+          <span>{t("products.backToHome", "Back to Home")}</span>
+        </Link>
+
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+          <Link to="/" className="hover:text-[#596B58] transition-colors">Home</Link>
+          <span className="text-gray-300">/</span>
+          <span className="text-[#3B302B] font-bold" aria-current="page">Categories</span>
+        </nav>
+      </div>
 
       <div className="rounded-3xl bg-[#FFF8EC] border border-[#E5DEC9] p-6 sm:p-10 text-center space-y-2 sm:space-y-3">
         <h1 className="text-2xl sm:text-4xl font-extrabold text-[#3B302B]">

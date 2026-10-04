@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/auth.context";
 import { cartService } from "@/services/cart.service";
 import { decorationService, type Decoration } from "@/services/decoration.service";
 import { getOptimizedImageUrl } from "@/utils/cdn.utils";
+import { SEOHead } from "@/components/seo";
 
 export const DecorationShopPage: React.FC = () => {
   const { user } = useAuth();
@@ -79,15 +80,30 @@ export const DecorationShopPage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-16">
-      {/* Top Nav & Admin Access */}
-      <div className="flex items-center justify-between gap-4">
-        <Link
-          to="/products"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Products</span>
-        </Link>
+      <SEOHead
+        title="Celebration Party Decoration Shop | Candles, Balloons &amp; Toppers"
+        description="Complete your celebration with food-grade metallic candles, custom acrylic cake toppers, pastel balloons, and confetti party poppers from OneBite Bakery. Fast delivery in Hamirpur."
+        canonicalPath="/decorations"
+        breadcrumbs={[{ name: "Decorations", url: "/decorations" }]}
+      />
+
+      {/* Top Nav & Breadcrumbs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-4">
+          <Link
+            to="/products"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Products</span>
+          </Link>
+
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+            <Link to="/" className="hover:text-[#596B58] transition-colors">Home</Link>
+            <span className="text-gray-300">/</span>
+            <span className="text-[#3B302B] font-bold" aria-current="page">Decorations</span>
+          </nav>
+        </div>
 
         {isAdmin && (
           <Link

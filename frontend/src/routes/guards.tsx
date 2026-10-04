@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom
 
 import { useAuth } from "@/contexts/auth.context";
 import { FullScreenLoader } from "@/components/common/BakeryLoader";
+import { SEOHead } from "@/components/seo";
 
 export const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -13,7 +14,14 @@ export const ProtectedRoute: React.FC = () => {
   }
 
   const redirectPath = encodeURIComponent(location.pathname + location.search);
-  return isAuthenticated ? <Outlet /> : <Navigate to={`/auth/login?redirect=${redirectPath}`} replace />;
+  return isAuthenticated ? (
+    <>
+      <SEOHead title="Customer Account" noindex={true} nofollow={true} />
+      <Outlet />
+    </>
+  ) : (
+    <Navigate to={`/auth/login?redirect=${redirectPath}`} replace />
+  );
 };
 
 export const GuestRoute: React.FC = () => {
@@ -40,7 +48,12 @@ export const GuestRoute: React.FC = () => {
     return <Navigate to={redirect} replace />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <SEOHead title="Authentication" noindex={true} nofollow={true} />
+      <Outlet />
+    </>
+  );
 };
 
 export const AdminRoute: React.FC = () => {
@@ -54,5 +67,12 @@ export const AdminRoute: React.FC = () => {
     return <Navigate to="/auth/login" replace />;
   }
 
-  return role === "admin" || role === "branch_admin" ? <Outlet /> : <Navigate to="/unauthorized" replace />;
+  return role === "admin" || role === "branch_admin" ? (
+    <>
+      <SEOHead title="Admin Operations" noindex={true} nofollow={true} />
+      <Outlet />
+    </>
+  ) : (
+    <Navigate to="/unauthorized" replace />
+  );
 };

@@ -7,6 +7,7 @@ import { cartService } from "@/services/cart.service";
 import { comboService, type Combo } from "@/services/combo.service";
 import { toast } from "@/contexts/toast.context";
 import { useAuth } from "@/contexts/auth.context";
+import { SEOHead } from "@/components/seo";
 
 export const CombosPage: React.FC = () => {
   const { currentLocation } = useAuth();
@@ -65,14 +66,29 @@ export const CombosPage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-16">
-      {/* Top Back Link */}
-      <Link
-        to="/products"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        <span>Back to Products</span>
-      </Link>
+      <SEOHead
+        title="Celebration Combos &amp; Gift Hampers"
+        description="Save more with curated celebration combos and gift hampers from OneBite Bakery. Bundles of artisan cakes, french macarons, tarts, and balloons. Doorstep delivery in Hamirpur."
+        canonicalPath="/combos"
+        breadcrumbs={[{ name: "Combos & Hampers", url: "/combos" }]}
+      />
+
+      {/* Top Back Link & Breadcrumbs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <Link
+          to="/products"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to Products</span>
+        </Link>
+
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+          <Link to="/" className="hover:text-[#596B58] transition-colors">Home</Link>
+          <span className="text-gray-300">/</span>
+          <span className="text-[#3B302B] font-bold" aria-current="page">Combos</span>
+        </nav>
+      </div>
 
       {/* Header */}
       <div className="rounded-3xl bg-[#FFF8EC] border border-[#E5DEC9] p-8 sm:p-10 text-center space-y-3 shadow-xs">

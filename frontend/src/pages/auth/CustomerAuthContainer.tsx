@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/auth.context";
 import { authService } from "@/services/auth.service";
 import { googleAuthService } from "@/services/googleAuth.service";
 import { useTranslation } from "react-i18next";
+import { SEOHead } from "@/components/seo";
 
 export const CustomerAuthContainer: React.FC = () => {
   const { t } = useTranslation();
@@ -173,6 +174,7 @@ export const CustomerAuthContainer: React.FC = () => {
 
   return (
     <div className="w-full bg-[#1e1e1e] border border-[#2e2e2e] rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-white shadow-2xl relative">
+      <SEOHead title="Customer Sign In" noindex={true} nofollow={true} />
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>

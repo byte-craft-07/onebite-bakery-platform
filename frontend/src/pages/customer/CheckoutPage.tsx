@@ -43,6 +43,7 @@ import {
 import { OrderPlacedCelebrationModal } from "@/components/shopping/OrderPlacedCelebrationModal";
 import { useAuth } from "@/contexts/auth.context";
 import { toast } from "@/contexts/toast.context";
+import { SEOHead } from "@/components/seo";
 import { Button } from "@/components/ui/Button";
 import { Card, Modal, Skeleton } from "@/components/ui/DisplayComponents";
 import { CustomSelect, Input } from "@/components/ui/FormControls";
@@ -1181,6 +1182,7 @@ export const CheckoutPage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-28 sm:pb-16 max-w-5xl mx-auto">
+      <SEOHead title="Checkout" noindex={true} nofollow={true} />
       {/* Top Bar: Return to Cart & Direct Checkout badge */}
       <div className="flex items-center justify-between">
         <Link

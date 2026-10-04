@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, ShieldCheck, ShoppingCart } from "lucide-react";
 import { Card } from "@/components/ui/DisplayComponents";
 import { RazorpayCheckoutButton } from "@/components/payment/RazorpayCheckoutButton";
+import { SEOHead } from "@/components/seo";
 
 export const RazorpayDemoPage: React.FC = () => {
   const [amountRupees, setAmountRupees] = useState(100);
@@ -15,6 +16,7 @@ export const RazorpayDemoPage: React.FC = () => {
 
   return (
     <div className="py-12 max-w-2xl mx-auto px-4 space-y-6">
+      <SEOHead title="Payment Demo" noindex={true} nofollow={true} />
       <Link
         to="/"
         className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58]"

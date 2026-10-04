@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Award, Cake, Clock, Gift, PartyPopper, ShieldCheck, Sparkles, Star, Tag, Zap } from "lucide-react";
+import { ArrowRight, Award, Cake, ChevronDown, Clock, Gift, HelpCircle, PartyPopper, ShieldCheck, Sparkles, Star, Tag, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
+import { SEOHead, buildLocalBusinessSchema, buildFAQSchema } from "@/components/seo";
 
 import { CategoryCard, ComboCard, OccasionCard, ReviewCard } from "@/components/cards/DomainCards";
 import { ProductCard } from "@/components/cards/ProductCard";
@@ -25,9 +27,33 @@ import { ContactUsFloatingButton } from "@/components/common/ContactUsFloatingBu
 import { HeroBannerSlider } from "@/components/home/HeroBannerSlider";
 import { clientCache } from "@/utils/clientCache";
 
+const HOME_FAQS = [
+  {
+    question: "Do you offer eggless cakes?",
+    answer: "Yes, 100% of our cakes, pastries, and breads can be prepared eggless. We utilize dedicated eggless baking stations and separate equipment to guarantee absolute dietary integrity.",
+  },
+  {
+    question: "Can I order a custom cake for birthdays or weddings?",
+    answer: "Absolutely! You can design multi-tier celebration cakes through our interactive Custom Cake Studio, choose your preferred sponge flavor, cream filling, and message, or upload your own custom photo design.",
+  },
+  {
+    question: "Do you provide local doorstep delivery in Hamirpur?",
+    answer: "Yes, OneBite Bakery offers doorstep delivery across Hamirpur, Terha, Kurara, Sumerpur, and neighboring villages. Free in-store pickup is also available at our Terha bakery location.",
+  },
+  {
+    question: "How early should I place an order for custom cakes?",
+    answer: "We recommend placing custom designer cake orders 24 to 48 hours in advance so our artisan pastry chefs have ample time for handcrafting. Standard celebration cakes are available for same-day delivery.",
+  },
+  {
+    question: "What payment methods are accepted?",
+    answer: "We accept all major payment methods including UPI (Google Pay, PhonePe, Paytm), Debit and Credit Cards, Net Banking via Razorpay, as well as Cash on Delivery / Pay on Pickup.",
+  },
+];
+
 export const HomePage: React.FC = () => {
   const { t } = useTranslation();
   const { currentLocation } = useAuth();
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   // Instant render from cache if available (0ms loading)
   const cachedCategories = clientCache.get<CategoryItem[]>("catalog_categories");
@@ -132,6 +158,13 @@ export const HomePage: React.FC = () => {
 
   return (
     <div className="space-y-8 sm:space-y-14 md:space-y-16 pb-16">
+      <SEOHead
+        title="OneBite Bakery | Cakes, Pastries & Custom Cakes"
+        description="Order fresh handcrafted cakes, birthday cakes, custom cakes, pastries, combos, and party decoration items online from OneBite Bakery. Fast local delivery in Hamirpur, UP."
+        canonicalPath="/"
+        structuredData={[buildLocalBusinessSchema(), buildFAQSchema(HOME_FAQS)]}
+      />
+
       {/* Mobile Top Category & Location Bar (Matching Reference Layout) */}
       <div className="block lg:hidden">
         <MobileHeroQuickBar />
@@ -139,6 +172,20 @@ export const HomePage: React.FC = () => {
 
       {/* Auto-Changing Responsive Hero Banner Posters */}
       <HeroBannerSlider autoPlayInterval={4500} />
+
+      {/* Main Brand Heading Section */}
+      <section className="text-center max-w-3xl mx-auto px-4 pt-1 sm:pt-2 space-y-1.5 sm:space-y-2">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold bg-[#596B58]/10 text-[#596B58] border border-[#596B58]/20 uppercase tracking-widest">
+          <Sparkles className="h-3 w-3" />
+          <span>Fresh Baked Daily • 100% Eggless Available</span>
+        </span>
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-[#3B302B] tracking-tight">
+          OneBite Bakery — Fresh Cakes, Pastries &amp; Custom Cakes
+        </h1>
+        <p className="text-xs sm:text-sm text-[#7A6E65] leading-relaxed">
+          Handcrafted celebration cakes, artisanal pastries, fresh sourdough breads, and party supplies baked with pure butter and Belgian dark chocolate. Local doorstep delivery in Hamirpur.
+        </p>
+      </section>
 
       {/* Featured Categories Section */}
       <section className="space-y-4 sm:space-y-8">
@@ -516,6 +563,44 @@ export const HomePage: React.FC = () => {
             </Button>
           </div>
         )}
+      </section>
+
+      {/* Frequently Asked Questions (FAQ) Section */}
+      <section className="space-y-6 max-w-4xl mx-auto px-2 sm:px-0">
+        <div className="text-center space-y-1">
+          <span className="text-xs font-bold text-[#596B58] uppercase tracking-wider">Help &amp; Answers</span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">Frequently Asked Questions</h2>
+          <p className="text-xs sm:text-sm text-[#7A6E65]">Everything you need to know about our bakery orders, custom cakes, and delivery.</p>
+        </div>
+
+        <div className="space-y-3">
+          {HOME_FAQS.map((faq, index) => {
+            const isOpen = openFaqIndex === index;
+            return (
+              <div
+                key={faq.question}
+                className="rounded-2xl border border-[#E5DEC9] bg-white overflow-hidden shadow-xs transition-all"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                  className="w-full flex items-center justify-between p-4 sm:p-5 text-left text-xs sm:text-sm font-bold text-[#3B302B] hover:text-[#596B58] transition-colors cursor-pointer"
+                  aria-expanded={isOpen}
+                >
+                  <span>{faq.question}</span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-[#7A6E65] shrink-0 ml-2 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="px-4 pb-4 sm:px-5 sm:pb-5 text-xs sm:text-sm text-[#7A6E65] leading-relaxed border-t border-[#E5DEC9]/40 pt-3">
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </section>
 
       {/* Rating & Review Submission Modal */}

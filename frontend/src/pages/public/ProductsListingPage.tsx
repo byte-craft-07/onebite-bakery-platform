@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/contexts/auth.context";
 import { useTranslation } from "react-i18next";
 import { getLocalizedCategoryName } from "@/i18n/utils";
+import { SEOHead, buildCollectionSchema } from "@/components/seo";
 
 export const ProductsListingPage: React.FC = () => {
   const { t } = useTranslation();
@@ -78,28 +79,104 @@ export const ProductsListingPage: React.FC = () => {
     };
   }, [searchQuery, selectedCategory, currentPage, currentLocation, slug, instantOnly]);
 
+  const currentCategory = categories.find((c) => c.slug === slug || c.id === slug);
+  const currentCategoryName = currentCategory ? getLocalizedCategoryName(currentCategory) : slug ? slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "";
+  const currentOccasionName = isOccasionPath && slug ? slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "";
+
+  let pageTitle = "Artisanal Cakes, Pastries & Breads Catalog";
+  let pageDescription = "Explore our complete selection of freshly baked handcrafted cakes, velvety pastries, sourdough breads, cookies, and party decoration hampers at OneBite Bakery.";
+  let canonicalPath = "/products";
+  let breadcrumbsList = [{ name: "Products", url: "/products" }];
+
+  if (isCategoryPath && slug) {
+    pageTitle = `${currentCategoryName} | Fresh Bakery Delights`;
+    pageDescription = currentCategory?.description || `Explore our freshly baked ${currentCategoryName.toLowerCase()} collection at OneBite Bakery. Prepared daily with pure ingredients. Local delivery in Hamirpur.`;
+    canonicalPath = `/categories/${slug}`;
+    breadcrumbsList = [
+      { name: "Categories", url: "/categories" },
+      { name: currentCategoryName, url: `/categories/${slug}` },
+    ];
+  } else if (isOccasionPath && slug) {
+    pageTitle = `${currentOccasionName} Celebration Cakes`;
+    pageDescription = `Celebrate your special ${currentOccasionName.toLowerCase()} with custom designer cakes, luxury hampers, and gourmet party treats from OneBite Bakery.`;
+    canonicalPath = `/occasions/${slug}`;
+    breadcrumbsList = [
+      { name: "Occasions", url: "/occasions" },
+      { name: currentOccasionName, url: `/occasions/${slug}` },
+    ];
+  }
+
   const titleText = isCategoryPath && slug
-    ? t("products.categoryPrefix", { name: slug.replace(/-/g, " ").toUpperCase(), defaultValue: `Category: ${slug.replace(/-/g, " ").toUpperCase()}` })
+    ? t("products.categoryPrefix", { name: currentCategoryName, defaultValue: currentCategoryName })
     : isOccasionPath && slug
-    ? t("products.occasionPrefix", { name: slug.replace(/-/g, " ").toUpperCase(), defaultValue: `Occasion: ${slug.replace(/-/g, " ").toUpperCase()}` })
+    ? t("products.occasionPrefix", { name: currentOccasionName, defaultValue: `${currentOccasionName} Cakes` })
     : t("products.catalogTitle", "Our Bakery Catalog");
+
+  const collectionSchema = buildCollectionSchema(
+    pageTitle,
+    pageDescription,
+    products.map((p) => ({
+      name: p.name,
+      url: `/products/${p.slug || p.id}`,
+      image: p.mainImage,
+      price: p.price,
+    }))
+  );
 
   return (
     <div className="space-y-6 pb-16">
-      {/* Top Back Link */}
-      <Link
-        to={isCategoryPath ? "/categories" : isOccasionPath ? "/occasions" : "/"}
-        className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        <span>
-          {isCategoryPath
-            ? t("products.backToCategories", "Back to Categories")
-            : isOccasionPath
-            ? t("products.backToOccasions", "Back to Occasions")
-            : t("products.backToHome", "Back to Home")}
-        </span>
-      </Link>
+      <SEOHead
+        title={pageTitle}
+        description={pageDescription}
+        canonicalPath={canonicalPath}
+        breadcrumbs={breadcrumbsList}
+        structuredData={collectionSchema}
+      />
+
+      {/* Top Back Link & Semantic Breadcrumbs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <Link
+          to={isCategoryPath ? "/categories" : isOccasionPath ? "/occasions" : "/"}
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>
+            {isCategoryPath
+              ? t("products.backToCategories", "Back to Categories")
+              : isOccasionPath
+              ? t("products.backToOccasions", "Back to Occasions")
+              : t("products.backToHome", "Back to Home")}
+          </span>
+        </Link>
+
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 overflow-x-auto whitespace-nowrap">
+          <Link to="/" className="hover:text-[#596B58] transition-colors">Home</Link>
+          <span className="text-gray-300">/</span>
+          {isCategoryPath ? (
+            <>
+              <Link to="/categories" className="hover:text-[#596B58] transition-colors">Categories</Link>
+              {slug && (
+                <>
+                  <span className="text-gray-300">/</span>
+                  <span className="text-[#3B302B] font-bold" aria-current="page">{currentCategoryName}</span>
+                </>
+              )}
+            </>
+          ) : isOccasionPath ? (
+            <>
+              <Link to="/occasions" className="hover:text-[#596B58] transition-colors">Occasions</Link>
+              {slug && (
+                <>
+                  <span className="text-gray-300">/</span>
+                  <span className="text-[#3B302B] font-bold" aria-current="page">{currentOccasionName}</span>
+                </>
+              )}
+            </>
+          ) : (
+            <span className="text-[#3B302B] font-bold" aria-current="page">Products</span>
+          )}
+        </nav>
+      </div>
 
       {/* Header Banner */}
       <div className="rounded-3xl bg-[#FFF8EC] border border-[#E5DEC9] p-4 sm:p-10 text-center space-y-1.5 sm:space-y-3">

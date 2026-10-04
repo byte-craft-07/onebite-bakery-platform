@@ -284,7 +284,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
           <img
             key={currentImageIndex}
             src={getOptimizedImageUrl(imageList[currentImageIndex] || imageList[0], { width: 380, quality: 75 })}
-            alt={`${product.name} - Angle ${currentImageIndex + 1}`}
+            alt={`${displayName} - Fresh Handcrafted Cake from OneBite Bakery (Photo ${currentImageIndex + 1})`}
             onError={(e) => {
               if (e.currentTarget.dataset.failed !== "true") {
                 e.currentTarget.dataset.failed = "true";

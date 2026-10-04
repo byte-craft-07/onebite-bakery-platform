@@ -9,6 +9,7 @@ import { orderService, type OrderDetails } from "@/services/order.service";
 import { razorpayService } from "@/services/razorpay.service";
 import { useTranslation } from "react-i18next";
 import { OrderReviewForm } from "./OrdersPages";
+import { SEOHead } from "@/components/seo";
 
 const getPaymentPageError = (error: unknown): string => {
   if (
@@ -112,6 +113,7 @@ export const PaymentPage: React.FC = () => {
 
   return (
     <div className="py-16 max-w-xl mx-auto space-y-6">
+      <SEOHead title="Complete Order Payment" noindex={true} nofollow={true} />
       <Card className="text-center space-y-6 bg-white shadow-xl">
         <Smartphone className="h-16 w-16 text-[#596B58] mx-auto" />
         <div className="space-y-2">
@@ -155,6 +157,7 @@ export const OrderSuccessPage: React.FC = () => {
 
   return (
     <div className="py-12 max-w-2xl mx-auto space-y-8">
+      <SEOHead title="Payment Successful" noindex={true} nofollow={true} />
       <div className="text-center space-y-4 bg-white border border-[#E5DEC9] rounded-3xl p-8 shadow-lg">
         <CheckCircle className="h-16 w-16 text-[#27AE60] mx-auto animate-in zoom-in" />
         <div className="space-y-2">
@@ -192,6 +195,7 @@ export const OrderFailurePage: React.FC = () => {
 
   return (
     <div className="py-10 sm:py-16 max-w-xl mx-auto text-center space-y-6 bg-white border border-red-100 rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-lg">
+      <SEOHead title="Payment Failed" noindex={true} nofollow={true} />
       <AlertTriangle className="h-14 w-14 sm:h-16 sm:w-16 text-red-500 mx-auto" />
       <div className="space-y-2">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">

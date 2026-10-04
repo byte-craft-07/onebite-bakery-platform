@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { SEOHead } from "@/components/seo";
 import {
   ArrowLeft,
   Cake,
@@ -514,14 +515,29 @@ export const CustomCakePage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-28 lg:pb-20 max-w-6xl mx-auto px-3 sm:px-4">
-      {/* Top Back Link */}
-      <Link
-        to="/products"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        <span>Back to Products Catalog</span>
-      </Link>
+      <SEOHead
+        title="Custom Cake Studio | Design Your Dream Cake"
+        description="Design personalized celebration designer cakes with OneBite Bakery. Choose cake tiers, premium sponge flavors, gourmet cream fillings, photo toppers, and theme styling. Local delivery in Hamirpur."
+        canonicalPath="/custom-cake"
+        breadcrumbs={[{ name: "Custom Cake Studio", url: "/custom-cake" }]}
+      />
+
+      {/* Top Back Link & Breadcrumbs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <Link
+          to="/products"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to Products Catalog</span>
+        </Link>
+
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+          <Link to="/" className="hover:text-[#596B58] transition-colors">Home</Link>
+          <span className="text-gray-300">/</span>
+          <span className="text-[#3B302B] font-bold" aria-current="page">Custom Cake Studio</span>
+        </nav>
+      </div>
 
       {/* Hero Banner with Dual Mode Switcher */}
       <div className="rounded-3xl bg-gradient-to-r from-[#FFF8EC] via-[#FFF8EC] to-[#FFF8EC] border border-[#E5DEC9] p-5 sm:p-7 text-center space-y-4 shadow-xs">

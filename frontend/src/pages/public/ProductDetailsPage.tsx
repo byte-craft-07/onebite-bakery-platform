@@ -30,6 +30,7 @@ import { ShareButton } from "@/components/sharing";
 import { getOptimizedImageUrl } from "@/utils/cdn.utils";
 import { useTranslation } from "react-i18next";
 import { getLocalizedProductName, getLocalizedProductDescription } from "@/i18n/utils";
+import { SEOHead, buildProductSchema } from "@/components/seo";
 
 const FALLBACK_PRODUCT_IMAGE =
   "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=85";
@@ -156,43 +157,7 @@ export const ProductDetailsPage: React.FC = () => {
 
   const activeImageUrl = detailImages[selectedImageIndex] || detailImages[0] || FALLBACK_PRODUCT_IMAGE;
 
-  // Dynamic Open Graph & Social Preview Metadata
-  useEffect(() => {
-    if (!product || typeof document === "undefined") return;
-    const originalTitle = document.title;
-    document.title = `${product.name} | Onebite Bakery`;
 
-    const setMeta = (property: string, content: string) => {
-      let element = document.querySelector(`meta[property="${property}"], meta[name="${property}"]`);
-      if (!element) {
-        element = document.createElement("meta");
-        element.setAttribute("property", property);
-        document.head.appendChild(element);
-      }
-      element.setAttribute("content", content);
-    };
-
-    setMeta("og:title", `${product.name} | Onebite Bakery`);
-    setMeta(
-      "og:description",
-      product.description || `Order freshly baked ${product.name} online from Onebite Bakery.`,
-    );
-    setMeta("og:image", activeImageUrl || FALLBACK_PRODUCT_IMAGE);
-    if (typeof window !== "undefined") {
-      setMeta("og:url", window.location.href);
-    }
-    setMeta("twitter:card", "summary_large_image");
-    setMeta("twitter:title", `${product.name} | Onebite Bakery`);
-    setMeta(
-      "twitter:description",
-      product.description || `Order freshly baked ${product.name} online from Onebite Bakery.`,
-    );
-    setMeta("twitter:image", activeImageUrl || FALLBACK_PRODUCT_IMAGE);
-
-    return () => {
-      document.title = originalTitle;
-    };
-  }, [product, activeImageUrl]);
 
   // 4. Dynamic Weight Options & Weight-based Pricing
   const availableWeightOptions = useMemo(() => {
@@ -398,6 +363,12 @@ export const ProductDetailsPage: React.FC = () => {
   if (!product) {
     return (
       <div className="text-center py-16 space-y-4 max-w-lg mx-auto bg-white p-8 rounded-3xl border border-[#E5DEC9] shadow-sm">
+        <SEOHead
+          title="Product Not Available"
+          description="Sorry, this product is currently unavailable or may have been removed. Explore our other fresh artisanal creations at OneBite Bakery."
+          noindex={true}
+          nofollow={true}
+        />
         <div className="text-4xl">🍰</div>
         <h2 className="text-2xl font-black text-[#3B302B]">Product Not Available</h2>
         <p className="text-sm text-[#7A6E65]">
@@ -410,10 +381,54 @@ export const ProductDetailsPage: React.FC = () => {
     );
   }
 
+  const localizedTitle = getLocalizedProductName(product) || product.name;
+  const categoryName = product.categoryId?.name || "Artisanal Bakery";
+  const categorySlug = product.categoryId?.slug || "";
+  const productBreadcrumbs = [
+    {
+      name: categoryName,
+      url: categorySlug ? `/categories/${categorySlug}` : "/products",
+    },
+    {
+      name: product.name,
+      url: `/products/${product.slug || product.id}`,
+    },
+  ];
+
+  const productSchema = buildProductSchema({
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    description: product.description,
+    price: activePrice,
+    compareAtPrice: product.compareAtPrice,
+    mainImage: activeImageUrl,
+    images: detailImages,
+    isAvailable: product.isAvailable,
+    stockQuantity: product.stockQuantity,
+    rating: liveRatingData.rating,
+    reviewCount: liveRatingData.reviewCount,
+    sku: product.sku,
+  });
+
   return (
     <div className="space-y-8 sm:space-y-14 pb-20 max-w-6xl mx-auto">
-      {/* Top Breadcrumb / Return Link */}
-      <div className="flex items-center justify-between">
+      <SEOHead
+        title={localizedTitle}
+        description={
+          product.description ||
+          `Order fresh ${product.name} online from OneBite Bakery. Handcrafted with 100% pure butter and Belgian dark chocolate. Doorstep delivery in Hamirpur.`
+        }
+        canonicalPath={`/products/${product.slug || product.id}`}
+        ogType="product"
+        ogImage={activeImageUrl}
+        ogImageAlt={`${localizedTitle} - Handcrafted Cake from OneBite Bakery`}
+        breadcrumbs={productBreadcrumbs}
+        structuredData={productSchema}
+      />
+
+      {/* Top Breadcrumb & Return Link */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <Link
           to="/products"
           className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#7A6E65] hover:text-[#596B58] transition-colors"
@@ -422,9 +437,21 @@ export const ProductDetailsPage: React.FC = () => {
           <span>{t("products.allProducts", "Back to All Bakery Items")}</span>
         </Link>
 
-        <span className="text-xs font-semibold text-gray-400">
-          Home &gt; {product.categoryId?.name || "Bakery"} &gt; <strong className="text-gray-700">{getLocalizedProductName(product) || product.name}</strong>
-        </span>
+        {/* Semantic Visible Breadcrumbs */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 overflow-x-auto whitespace-nowrap">
+          <Link to="/" className="hover:text-[#596B58] transition-colors">Home</Link>
+          <span className="text-gray-300">/</span>
+          <Link
+            to={categorySlug ? `/categories/${categorySlug}` : "/products"}
+            className="hover:text-[#596B58] transition-colors"
+          >
+            {categoryName}
+          </Link>
+          <span className="text-gray-300">/</span>
+          <span className="text-[#3B302B] font-bold truncate max-w-[200px]" aria-current="page">
+            {localizedTitle}
+          </span>
+        </nav>
       </div>
 
       {/* Main Product Showcase Grid */}
@@ -442,7 +469,7 @@ export const ProductDetailsPage: React.FC = () => {
               <img
                 key={idx}
                 src={getOptimizedImageUrl(imgSrc, { width: 750, quality: 80 })}
-                alt={`${product.name} - View ${idx + 1}`}
+                alt={`${localizedTitle} - Handcrafted Cake from OneBite Bakery (Photo ${idx + 1})`}
                 className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out group-hover:scale-105 select-none ${
                   idx === selectedImageIndex ? "opacity-100 z-1" : "opacity-0 z-0 pointer-events-none"
                 }`}

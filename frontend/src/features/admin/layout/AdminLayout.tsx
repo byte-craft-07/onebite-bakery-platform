@@ -9,6 +9,7 @@ import { NewOrderNotificationModal } from "../components/NewOrderNotificationMod
 import { AdminErrorBoundary } from "../components/AdminErrorBoundary";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+import { SEOHead } from "@/components/seo";
 
 export const AdminLayout: React.FC = () => {
   const { user } = useAuth();
@@ -63,6 +64,7 @@ export const AdminLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FFF8EC] text-[#3B302B] flex admin-portal">
+      <SEOHead title="Admin Operations" noindex={true} nofollow={true} />
       {/* Sidebar */}
       <Sidebar isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} />
 

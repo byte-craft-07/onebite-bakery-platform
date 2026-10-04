@@ -9,6 +9,7 @@ import { Badge, EmptyState, Skeleton } from "@/components/ui/DisplayComponents";
 import { catalogService, type OccasionItem, type ProductItem } from "@/services/catalog.service";
 import { useAuth } from "@/contexts/auth.context";
 import { useTranslation } from "react-i18next";
+import { SEOHead } from "@/components/seo";
 
 interface OccasionTab {
   id: string;
@@ -109,14 +110,29 @@ export const OccasionsPage: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-20">
-      {/* Top Back Link */}
-      <Link
-        to="/"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        <span>{t("products.backToHome", "Back to Home")}</span>
-      </Link>
+      <SEOHead
+        title="Cakes for Every Occasion | Birthdays, Weddings &amp; Anniversaries"
+        description="Find handcrafted cakes for every milestone: birthdays, anniversaries, weddings, festivals, and baby showers from OneBite Bakery. Doorstep delivery in Hamirpur."
+        canonicalPath="/occasions"
+        breadcrumbs={[{ name: "Occasions", url: "/occasions" }]}
+      />
+
+      {/* Top Back Link & Breadcrumbs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>{t("products.backToHome", "Back to Home")}</span>
+        </Link>
+
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+          <Link to="/" className="hover:text-[#596B58] transition-colors">Home</Link>
+          <span className="text-gray-300">/</span>
+          <span className="text-[#3B302B] font-bold" aria-current="page">Occasions</span>
+        </nav>
+      </div>
 
       {/* Main Header Banner */}
       <div className={`rounded-3xl border border-[#E5DEC9] bg-gradient-to-r ${currentTabInfo.bannerGradient} p-6 sm:p-10 text-center space-y-3 shadow-sm transition-all duration-300`}>

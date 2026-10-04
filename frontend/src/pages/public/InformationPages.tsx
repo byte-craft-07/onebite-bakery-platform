@@ -1,14 +1,30 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Award, Cake, Heart, ShieldCheck } from "lucide-react";
+import { SEOHead, buildLocalBusinessSchema } from "@/components/seo";
 
 export const AboutPage: React.FC = () => {
   return (
-    <div className="space-y-16 pb-16">
+    <div className="space-y-12 pb-16">
+      <SEOHead
+        title="About Our Bakery &amp; Craft"
+        description="Learn about OneBite Bakery: artisanal French patisserie craftsmanship, dedicated eggless kitchen, 100% pure butter recipes, and passion for celebrations in Hamirpur, UP."
+        canonicalPath="/about"
+        breadcrumbs={[{ name: "About Us", url: "/about" }]}
+      />
+
+      {/* Breadcrumb Navigation */}
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+        <Link to="/" className="hover:text-[#596B58] transition-colors">Home</Link>
+        <span className="text-gray-300">/</span>
+        <span className="text-[#3B302B] font-bold" aria-current="page">About Us</span>
+      </nav>
+
       <div className="rounded-3xl bg-[#FFF8EC] border border-[#E5DEC9] p-12 text-center space-y-4">
-        <span className="text-xs font-bold text-[#596B58] uppercase tracking-wider">Our Story & Craft</span>
-        <h1 className="text-4xl font-extrabold text-[#3B302B]">Handcrafted with Passion & Precision</h1>
+        <span className="text-xs font-bold text-[#596B58] uppercase tracking-wider">Our Story &amp; Craft</span>
+        <h1 className="text-4xl font-extrabold text-[#3B302B]">Handcrafted with Passion &amp; Precision</h1>
         <p className="text-sm text-[#7A6E65] max-w-2xl mx-auto leading-relaxed">
-          Founded in 2021, Onebite Bakery started with a simple vision: to bring authentic French pâtisserie techniques and artisanal sourdough baking to everyday celebrations.
+          Founded in 2021, OneBite Bakery started with a simple vision: to bring authentic French pâtisserie techniques and artisanal sourdough baking to everyday celebrations.
         </p>
       </div>
 
@@ -36,6 +52,20 @@ export const AboutPage: React.FC = () => {
 export const ContactPage: React.FC = () => {
   return (
     <div className="space-y-12 pb-16">
+      <SEOHead
+        title="Contact Us &amp; Store Pickup"
+        description="Get in touch with OneBite Bakery in Terha, Hamirpur. Store pickup timings, phone +91 7897671632, email, and inquiry form for custom celebration cake orders."
+        canonicalPath="/contact"
+        breadcrumbs={[{ name: "Contact Us", url: "/contact" }]}
+        structuredData={buildLocalBusinessSchema()}
+      />
+
+      {/* Breadcrumb Navigation */}
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+        <Link to="/" className="hover:text-[#596B58] transition-colors">Home</Link>
+        <span className="text-gray-300">/</span>
+        <span className="text-[#3B302B] font-bold" aria-current="page">Contact Us</span>
+      </nav>
       <div className="rounded-3xl bg-[#FFF8EC] border border-[#E5DEC9] p-10 text-center space-y-3">
         <h1 className="text-4xl font-extrabold text-[#3B302B]">Get in Touch</h1>
         <p className="text-sm text-[#7A6E65] max-w-xl mx-auto">

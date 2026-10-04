@@ -18,6 +18,7 @@ import { Badge, Card, Skeleton } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
 import { adminCouponsService, type AdminCoupon } from "@/features/admin/services/adminCoupons.service";
 import { cartService } from "@/services/cart.service";
+import { SEOHead } from "@/components/seo";
 
 const DEFAULT_OFFERS: AdminCoupon[] = [
   {
@@ -131,25 +132,41 @@ export const OffersPage: React.FC = () => {
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-16">
       {/* Header Banner */}
+      <SEOHead
+        title="Bakery Offers, Discounts &amp; Coupon Codes"
+        description="Discover today's active coupon codes, promotional discounts, and combo deals on fresh cakes and pastries at OneBite Bakery. Save on your next celebration."
+        canonicalPath="/offers"
+        breadcrumbs={[{ name: "Offers & Coupons", url: "/offers" }]}
+      />
+
       <div className="relative rounded-3xl bg-gradient-to-r from-[#3B302B] via-[#4A3324] to-[#3B302B] text-white p-6 sm:p-10 shadow-xl overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 opacity-10 pointer-events-none flex items-center pr-10">
           <Ticket className="h-64 w-64 text-white" />
         </div>
 
         <div className="relative z-10 space-y-3 max-w-2xl">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-200 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Return to Home</span>
-          </Link>
+          <div className="flex items-center justify-between gap-2">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-200 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Return to Home</span>
+            </Link>
+
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-amber-200/80">
+              <Link to="/" className="hover:text-white transition-colors">Home</Link>
+              <span className="opacity-50">/</span>
+              <span className="text-white font-bold" aria-current="page">Offers</span>
+            </nav>
+          </div>
+
           <div className="flex items-center gap-2 text-amber-400 font-extrabold text-xs uppercase tracking-wider">
             <Sparkles className="h-4 w-4" />
-            <span>Exclusive Deals & Promo Discounts</span>
+            <span>Exclusive Deals &amp; Promo Discounts</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-            Onebite Bakery Offers & Coupons
+            OneBite Bakery Offers &amp; Coupons
           </h1>
           <p className="text-xs sm:text-sm text-[#E5DEC9]/90">
             Enjoy artisanal cakes, fresh pastries, and celebration party packs with instant discounts.

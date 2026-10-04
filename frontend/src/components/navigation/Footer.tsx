@@ -47,6 +47,9 @@ export const Footer: React.FC = () => {
           <ul className="space-y-2 text-xs text-[#FFF8EC]/80">
             <li><Link to="/products" className="hover:text-[#D8BE91] transition-colors">{t("navigation.products", "Our Catalog")}</Link></li>
             <li><Link to="/categories" className="hover:text-[#D8BE91] transition-colors">{t("navigation.categories", "Browse Categories")}</Link></li>
+            <li><Link to="/custom-cake" className="hover:text-[#D8BE91] transition-colors">Custom Cake Studio</Link></li>
+            <li><Link to="/combos" className="hover:text-[#D8BE91] transition-colors">Combos &amp; Hampers</Link></li>
+            <li><Link to="/decorations" className="hover:text-[#D8BE91] transition-colors">Party Decorations</Link></li>
             <li><Link to="/occasions" className="hover:text-[#D8BE91] transition-colors">{t("navigation.occasions", "Special Occasions")}</Link></li>
             <li><Link to="/offers" className="hover:text-[#D8BE91] text-[#D8BE91] font-bold transition-colors">{t("navigation.offers", "Offers & Coupons")}</Link></li>
             <li>
@@ -76,15 +79,35 @@ export const Footer: React.FC = () => {
           </ul>
         </div>
 
-        {/* Popular Items */}
+        {/* Popular Items - Internal Links */}
         <div className="space-y-3">
           <h4 className="text-sm font-bold text-[#D8BE91] uppercase tracking-wider">{t("products.bestseller", "Top Favorites")}</h4>
           <ul className="space-y-2 text-xs text-[#FFF8EC]/80">
-            <li>Belgian Chocolate Truffle</li>
-            <li>Classic Red Velvet Cake</li>
-            <li>Eggless Blueberry Cheesecake</li>
-            <li>Almond Butter Croissants</li>
-            <li>Custom Birthday Tier Cakes</li>
+            <li>
+              <Link to="/products/belgian-dark-chocolate-truffle-cake" className="hover:text-[#D8BE91] transition-colors">
+                Belgian Dark Chocolate Cake
+              </Link>
+            </li>
+            <li>
+              <Link to="/products/classic-red-velvet-cream-cheese-cake" className="hover:text-[#D8BE91] transition-colors">
+                Classic Red Velvet Cake
+              </Link>
+            </li>
+            <li>
+              <Link to="/products/fresh-blueberry-cheesecake-tart" className="hover:text-[#D8BE91] transition-colors">
+                Fresh Blueberry Cheesecake Tart
+              </Link>
+            </li>
+            <li>
+              <Link to="/products/almond-croissant-butter-brioche" className="hover:text-[#D8BE91] transition-colors">
+                Almond Butter Croissants
+              </Link>
+            </li>
+            <li>
+              <Link to="/custom-cake" className="hover:text-[#D8BE91] transition-colors">
+                Custom Birthday Tier Cakes
+              </Link>
+            </li>
           </ul>
         </div>
 

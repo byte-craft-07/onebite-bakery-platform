@@ -10,6 +10,7 @@ import { cartService, type CartResponse } from "@/services/cart.service";
 import { useAuth } from "@/contexts/auth.context";
 import { toast } from "@/contexts/toast.context";
 import { getLocalizedProductName } from "@/i18n/utils";
+import { SEOHead } from "@/components/seo";
 
 export const CartPage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -92,6 +93,7 @@ export const CartPage: React.FC = () => {
   if (!cart || cart.items.length === 0) {
     return (
       <div className="py-16 max-w-2xl mx-auto text-center space-y-4">
+        <SEOHead title="Your Shopping Cart" noindex={true} nofollow={true} />
         <EmptyState
           title={t("cart.emptyTitle", "Your Shopping Cart is Empty")}
           description={t("cart.emptySubtitle", "Explore our artisanal cakes, pastries, and freshly baked breads.")}
@@ -110,6 +112,7 @@ export const CartPage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-16 max-w-5xl mx-auto">
+      <SEOHead title="Your Shopping Cart" noindex={true} nofollow={true} />
       {/* Top Back Link */}
       <Link to="/products" className="inline-flex items-center gap-2 text-sm font-semibold text-[#7A6E65] hover:text-[#596B58] transition-colors">
         <ArrowLeft className="h-4 w-4" />

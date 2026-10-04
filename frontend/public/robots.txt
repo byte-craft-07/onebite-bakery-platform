@@ -1,0 +1,46 @@
+# robots.txt for OneBite Bakery
+# Production: https://onebite-bakery-platform.vercel.app
+
+User-agent: *
+Allow: /
+Allow: /products
+Allow: /products/*
+Allow: /categories
+Allow: /categories/*
+Allow: /occasions
+Allow: /occasions/*
+Allow: /custom-cake
+Allow: /combos
+Allow: /decorations
+Allow: /offers
+Allow: /about
+Allow: /contact
+Allow: /business
+Allow: /onebite
+Allow: /welcome
+
+# Allow search crawlers to access public assets & scripts
+Allow: /assets/
+Allow: /icons/
+Allow: /logo.svg
+Allow: /logo.png
+Allow: /favicon.svg
+
+# Disallow private user accounts, cart, checkout, payments, and admin portal
+Disallow: /cart
+Disallow: /checkout
+Disallow: /payment/
+Disallow: /order/
+Disallow: /customer/
+Disallow: /auth/
+Disallow: /login
+Disallow: /admin/
+Disallow: /agent/
+Disallow: /payment-demo
+Disallow: /razorpay-test
+Disallow: /unauthorized
+Disallow: /session-expired
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://onebite-bakery-platform.vercel.app/sitemap.xml

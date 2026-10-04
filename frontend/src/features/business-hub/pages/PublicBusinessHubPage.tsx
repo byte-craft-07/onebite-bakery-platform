@@ -5,6 +5,7 @@ import {
   businessHubService,
   type PublicHubData,
 } from "@/services/businessHub.service";
+import { SEOHead, buildLocalBusinessSchema } from "@/components/seo";
 import { THEME_CONFIGS } from "../theme/themeClasses";
 import { BusinessHubHeader } from "../components/BusinessHubHeader";
 import { PrimaryActionButtons } from "../components/PrimaryActionButtons";
@@ -31,25 +32,6 @@ export const PublicBusinessHubPage: React.FC = () => {
 
       // Track page view event once loaded
       businessHubService.trackEvent("page_view");
-
-      // Dynamic SEO document title and metadata
-      if (hubData.hub.seo?.title) {
-        document.title = hubData.hub.seo.title;
-      } else {
-        document.title = `${hubData.hub.businessName} | Digital Business Hub`;
-      }
-
-      // Update meta description
-      let metaDesc = document.querySelector('meta[name="description"]');
-      if (!metaDesc) {
-        metaDesc = document.createElement("meta");
-        metaDesc.setAttribute("name", "description");
-        document.head.appendChild(metaDesc);
-      }
-      metaDesc.setAttribute(
-        "content",
-        hubData.hub.seo?.description || hubData.hub.shortDescription || hubData.hub.tagline,
-      );
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load business profile.");
     } finally {
@@ -98,6 +80,7 @@ export const PublicBusinessHubPage: React.FC = () => {
   if (error || !data) {
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-4">
+        <SEOHead title="Business Hub | OneBite Bakery" noindex={true} nofollow={true} />
         <div className="max-w-md w-full p-8 bg-white rounded-3xl shadow-md border border-[#EFE8DF] text-center space-y-4">
           <div className="w-16 h-16 mx-auto rounded-full bg-amber-50 flex items-center justify-center text-amber-800 text-2xl font-bold">
             🍰
@@ -137,6 +120,17 @@ export const PublicBusinessHubPage: React.FC = () => {
     <div
       className={`min-h-screen ${currentTheme.containerBg} flex flex-col justify-between py-6 sm:py-10 px-4 transition-colors duration-300 font-sans`}
     >
+      <SEOHead
+        title={hub.seo?.title || `${hub.businessName} | Digital Business Hub`}
+        description={
+          hub.seo?.description ||
+          hub.shortDescription ||
+          hub.tagline ||
+          "Official digital business profile, direct orders, location, and social links for OneBite Bakery."
+        }
+        canonicalUrl="/business"
+        structuredData={buildLocalBusinessSchema()}
+      />
       {/* Centered Business Hub Profile Card */}
       <main className="w-full max-w-lg mx-auto space-y-6">
         {/* Brand Header & Open/Closed Status */}
