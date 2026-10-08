@@ -35,7 +35,6 @@ const CartPage = lazyRetry(() => import("@/pages/customer/CartPage").then((m) =>
 const RazorpayDemoPage = lazyRetry(() => import("@/pages/public/RazorpayDemoPage").then((m) => ({ default: m.RazorpayDemoPage })));
 const NotFoundPage = lazyRetry(() => import("@/pages/public/NotFoundPage").then((m) => ({ default: m.NotFoundPage })));
 const PublicBusinessHubPage = lazyRetry(() => import("@/features/business-hub").then((m) => ({ default: m.PublicBusinessHubPage })));
-const AdminBusinessHubPage = lazyRetry(() => import("@/features/business-hub").then((m) => ({ default: m.AdminBusinessHubPage })));
 
 // Customer Protected Pages (Lazy Loaded)
 const CustomerDashboardPage = lazyRetry(() => import("@/pages/customer/CustomerDashboardPage").then((m) => ({ default: m.CustomerDashboardPage })));
@@ -206,7 +205,8 @@ export const AppRoutes: React.FC = () => {
               <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="logs" element={<AdminLogsPage />} />
               <Route path="security" element={<AdminSecurityPage />} />
-              <Route path="business-hub" element={<AdminBusinessHubPage />} />
+              <Route path="business-hub" element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
             </Route>
           </Route>
 

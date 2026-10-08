@@ -7,6 +7,7 @@ import { SEOHead, buildLocalBusinessSchema, buildFAQSchema } from "@/components/
 
 import { CategoryCard, ComboCard, OccasionCard, ReviewCard } from "@/components/cards/DomainCards";
 import { ProductCard } from "@/components/cards/ProductCard";
+import { ViewMoreCard } from "@/components/cards/ViewMoreCard";
 import {
   CategoryCardSkeleton,
   CategoryPillSkeleton,
@@ -20,12 +21,17 @@ import { RatingModal } from "@/components/review/RatingModal";
 import { type MockReview } from "@/data/mockData";
 import { catalogService, type CategoryItem, type OccasionItem, type ProductItem } from "@/services/catalog.service";
 import { comboService, type Combo } from "@/services/combo.service";
+import { decorationService } from "@/services/decoration.service";
 import { useAuth } from "@/contexts/auth.context";
 import { reviewService } from "@/services/review.service";
 import { MobileHeroQuickBar } from "@/components/navigation/MobileHeroQuickBar";
 import { ContactUsFloatingButton } from "@/components/common/ContactUsFloatingButton";
 import { HeroBannerSlider } from "@/components/home/HeroBannerSlider";
 import { clientCache } from "@/utils/clientCache";
+import {
+  organizeProductsRowWise,
+  convertDecorationToProductItem,
+} from "@/utils/productGridUtils";
 
 const HOME_FAQS = [
   {
@@ -59,9 +65,11 @@ export const HomePage: React.FC = () => {
   const cachedCategories = clientCache.get<CategoryItem[]>("catalog_categories");
   const cachedOccasions = clientCache.get<OccasionItem[]>("catalog_occasions");
   const cachedCombos = clientCache.get<Combo[]>("combos_list");
+  const cachedDecorations = clientCache.get<ProductItem[]>("decorations_list");
 
   const [categories, setCategories] = useState<CategoryItem[]>(() => cachedCategories || []);
   const [allProducts, setAllProducts] = useState<ProductItem[]>([]);
+  const [decorations, setDecorations] = useState<ProductItem[]>(() => cachedDecorations || []);
   const [occasions, setOccasions] = useState<OccasionItem[]>(() => cachedOccasions || []);
   const [reviews, setReviews] = useState<MockReview[]>([]);
   const [combos, setCombos] = useState<Combo[]>(() => cachedCombos || []);
@@ -81,22 +89,55 @@ export const HomePage: React.FC = () => {
     if (forceRefresh || combos.length === 0) setIsLoadingCombos(true);
 
     try {
-      const [catList, prodRes, occList, revList, comboList] = await Promise.all([
+      const [catList, prodRes, occList, revList, comboList, decorList] = await Promise.all([
         catalogService.getCategories(forceRefresh),
-        catalogService.searchProducts({ limit: 20 }, forceRefresh),
+        catalogService.searchProducts({ limit: 40 }, forceRefresh),
         catalogService.getOccasions(forceRefresh),
         reviewService.getReviews(),
         comboService.getCombos(forceRefresh).catch(() => []),
+        decorationService.getDecorations().catch(() => []),
       ]);
-      setCategories(catList || []);
+      const mappedDecors = (decorList || []).map((d) =>
+        convertDecorationToProductItem(d, catList || []),
+      );
+      setDecorations(mappedDecors);
+
+      // Dynamically ensure category itemCount includes matching decorations
+      const updatedCats = (catList || []).map((cat) => {
+        const catNameLower = (cat.name || "").toLowerCase().trim();
+        const catSlugLower = (cat.slug || "").toLowerCase().trim();
+        const matchingDecoCount = mappedDecors.filter((d) => {
+          const dCatId = d.categoryId?.id;
+          const dNameLower = (d.categoryId?.name || "").toLowerCase().trim();
+          const dSlugLower = (d.categoryId?.slug || "").toLowerCase().trim();
+          return (
+            dCatId === cat.id ||
+            dSlugLower === catSlugLower ||
+            dNameLower === catNameLower
+          );
+        }).length;
+
+        const currentCount = cat.itemCount ?? 0;
+        return {
+          ...cat,
+          itemCount: Math.max(currentCount, matchingDecoCount),
+        };
+      });
+      setCategories(updatedCats);
       setAllProducts(prodRes?.products || []);
       setOccasions(occList || []);
       setReviews(revList || []);
       setCombos(comboList || []);
+      if (mappedDecors.length > 0) {
+        clientCache.set("decorations_list", mappedDecors);
+      } else {
+        clientCache.invalidate("decorations_list");
+      }
     } catch (_err) {
       if (!cachedCategories || cachedCategories.length === 0) {
         setCategories([]);
         setAllProducts([]);
+        setDecorations([]);
         setOccasions([]);
         setReviews([]);
         setCombos([]);
@@ -118,11 +159,16 @@ export const HomePage: React.FC = () => {
     const handleReviewSubmitted = () => {
       fetchHomeData(true);
     };
+    const handleCatalogUpdated = () => {
+      fetchHomeData(true);
+    };
     window.addEventListener("onebitebakery_review_submitted", handleReviewSubmitted);
     window.addEventListener("onebitebakery_location_changed", handleLocationChange);
+    window.addEventListener("onebitebakery_catalog_updated", handleCatalogUpdated);
     return () => {
       window.removeEventListener("onebitebakery_review_submitted", handleReviewSubmitted);
       window.removeEventListener("onebitebakery_location_changed", handleLocationChange);
+      window.removeEventListener("onebitebakery_catalog_updated", handleCatalogUpdated);
     };
   }, [currentLocation]);
 
@@ -133,28 +179,57 @@ export const HomePage: React.FC = () => {
       ? (reviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0) / reviews.length).toFixed(1)
       : null;
 
-  // Filtered Products dynamically based on database categories
-  const filteredProducts = allProducts.filter((p) => {
-    if (activeTab === "all") return true;
-    const catId = p.categoryId?.id || (p.categoryId as any)?._id;
-    if (catId && catId === activeTab) return true;
-    if (p.categoryId?.slug && p.categoryId.slug === activeTab) return true;
-    const selectedCat = categories.find((c) => c.id === activeTab || c.slug === activeTab);
-    if (selectedCat) {
-      if (p.categoryId?.name && p.categoryId.name.toLowerCase() === selectedCat.name.toLowerCase()) return true;
-      if (p.name.toLowerCase().includes(selectedCat.name.toLowerCase())) return true;
-    }
-    return false;
-  });
+  // Row-wise organized products layout (Row 1&2: Bakery, Row 3: Decoration, Row 4+: Mixed)
+  const rowWiseLayout = React.useMemo(() => {
+    return organizeProductsRowWise(allProducts, {
+      bakerySlots: 8,
+      decorationSlots: 4,
+      additionalDecorations: decorations,
+    });
+  }, [allProducts, decorations]);
 
-  const decorationProducts = allProducts.filter((p) =>
-    p.name.toLowerCase().includes("candle") ||
-    p.name.toLowerCase().includes("balloon") ||
-    p.name.toLowerCase().includes("topper") ||
-    p.name.toLowerCase().includes("popper") ||
-    p.name.toLowerCase().includes("decor") ||
-    (p.categoryId?.name || "").toLowerCase().includes("decor")
-  );
+  // Combined product catalog ensuring decorations are available when filtering by category
+  const combinedCatalog = React.useMemo(() => {
+    const list = [...allProducts];
+    const seen = new Set(list.map((p) => p.id));
+    for (const d of decorations) {
+      if (!seen.has(d.id)) {
+        list.push(d);
+        seen.add(d.id);
+      }
+    }
+    return list;
+  }, [allProducts, decorations]);
+
+  // Filtered Products dynamically based on database categories
+  const filteredProducts = activeTab === "all"
+    ? rowWiseLayout.orderedProducts
+    : combinedCatalog.filter((p) => {
+        const catId = p.categoryId?.id || (p.categoryId as any)?._id;
+        if (catId && catId === activeTab) return true;
+        if (p.categoryId?.slug && p.categoryId.slug === activeTab) return true;
+        const selectedCat = categories.find((c) => c.id === activeTab || c.slug === activeTab);
+        if (selectedCat) {
+          const selectedNameLower = selectedCat.name.toLowerCase().trim();
+          const selectedSlugLower = selectedCat.slug.toLowerCase().trim();
+          const pCatName = (p.categoryId?.name || "").toLowerCase().trim();
+          const pCatSlug = (p.categoryId?.slug || "").toLowerCase().trim();
+          if (pCatName && (pCatName === selectedNameLower || pCatName.includes(selectedNameLower) || selectedNameLower.includes(pCatName))) return true;
+          if (pCatSlug && (pCatSlug === selectedSlugLower || pCatSlug === activeTab)) return true;
+          if (p.name.toLowerCase().includes(selectedNameLower)) return true;
+          if (
+            (selectedNameLower.includes("decor") || selectedSlugLower.includes("decor")) &&
+            (p.productType === "DECORATION" || (p as any).category?.toLowerCase?.().includes("decor"))
+          ) {
+            return true;
+          }
+        }
+        return false;
+      });
+
+  const decorationProducts = rowWiseLayout.allDecorationProducts.length > 0
+    ? rowWiseLayout.allDecorationProducts
+    : decorations;
 
   return (
     <div className="space-y-8 sm:space-y-14 md:space-y-16 pb-16">
@@ -276,11 +351,113 @@ export const HomePage: React.FC = () => {
             ))}
           </div>
         ) : filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-            {filteredProducts.slice(0, 8).map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          activeTab === "all" ? (
+            <div className="space-y-8 sm:space-y-10">
+              {/* Row 1 & 2: Bakery Products (Cakes, Pastries, Breads, Cookies) */}
+              {rowWiseLayout.bakeryRowProducts.length > 0 && (
+                <div className="space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-[#FFF8EC] text-[#3B302B] border border-[#E5DEC9] shadow-2xs">
+                        <Cake className="h-3.5 w-3.5 text-[#596B58]" />
+                        <span>🍰 {t("home.rowBakeryTitle", "Bakery Specials (Cakes & Pastries)")}</span>
+                      </span>
+                      <span className="hidden sm:inline text-xs text-[#7A6E65] font-medium">
+                        {t("home.rowBakerySubtitle", "Rows 1 & 2 • Handcrafted fresh bakes")}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                    {(rowWiseLayout.hasMoreBakery ? rowWiseLayout.bakeryDisplayProducts : rowWiseLayout.bakeryRowProducts).map((p) => (
+                      <ProductCard key={p.id} product={p} />
+                    ))}
+                    {rowWiseLayout.hasMoreBakery && (
+                      <ViewMoreCard
+                        title="Explore All Cakes & Pastries"
+                        subtitle={`${rowWiseLayout.totalBakeryCount}+ artisanal cakes, pastries & fresh bakes`}
+                        link="/categories/cakes"
+                        count={rowWiseLayout.totalBakeryCount}
+                        badgeText="🍰 अभी और भी बेकरी प्रोडक्ट्स हैं"
+                        buttonText={`Explore All ${rowWiseLayout.totalBakeryCount}+ Cakes`}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Row 3: Decoration Items (Party Candles, Balloons, Toppers, Poppers) */}
+              {rowWiseLayout.decorationRowProducts.length > 0 && (
+                <div className="space-y-3.5 pt-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs">
+                        <PartyPopper className="h-3.5 w-3.5 text-amber-600" />
+                        <span>🎉 {t("home.rowDecorationTitle", "Party & Celebration Decorations")}</span>
+                      </span>
+                      <span className="hidden sm:inline text-xs text-[#7A6E65] font-medium">
+                        {t("home.rowDecorationSubtitle", "Row 3 • Candles, balloons & toppers")}
+                      </span>
+                    </div>
+                    <Link to="/decorations" className="text-xs font-bold text-[#596B58] hover:underline flex items-center gap-1">
+                      <span>{t("home.openPartyShop", "Open Party Shop")}</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                    {(rowWiseLayout.hasMoreDecorations ? rowWiseLayout.decorationDisplayProducts : rowWiseLayout.decorationRowProducts).map((p) => (
+                      <ProductCard key={p.id} product={p} />
+                    ))}
+                    {rowWiseLayout.hasMoreDecorations && (
+                      <ViewMoreCard
+                        title="Explore Party Decorations"
+                        subtitle="Metallic candles, balloon arches, toppers & poppers"
+                        link="/decorations"
+                        count={rowWiseLayout.totalDecorationCount}
+                        badgeText="🎉 अभी और भी डेकोरेशन सामान है"
+                        buttonText={`Explore All ${rowWiseLayout.totalDecorationCount}+ Decors`}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Row 4+: Mixed Remaining Products (All products mixed once typed rows finish) */}
+              {rowWiseLayout.mixedDisplayProducts.length > 0 && (
+                <div className="space-y-3.5 pt-2">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-[#596B58]/10 text-[#596B58] border border-[#596B58]/20 shadow-2xs">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span>✨ {t("home.rowMixedTitle", "All Delights (Mixed Collection)")}</span>
+                    </span>
+                    <span className="hidden sm:inline text-xs text-[#7A6E65] font-medium">
+                      {t("home.rowMixedSubtitle", "Row 4+ • Complete celebration collection")}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                    {(rowWiseLayout.hasMoreMixed ? rowWiseLayout.mixedDisplayProducts : rowWiseLayout.mixedRemainingProducts).map((p) => (
+                      <ProductCard key={p.id} product={p} />
+                    ))}
+                    {rowWiseLayout.hasMoreMixed && (
+                      <ViewMoreCard
+                        title="Explore All Products"
+                        subtitle="Browse handcrafted cakes, savory bakes & party items"
+                        link="/products"
+                        count={rowWiseLayout.totalProductsCount}
+                        badgeText="✨ अभी और भी प्रोडक्ट्स हैं"
+                        buttonText={`Explore All ${rowWiseLayout.totalProductsCount}+ Products`}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+              {filteredProducts.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          )
         ) : (
           <div className="bg-white rounded-2xl border border-[#E5DEC9] p-8 text-center text-xs sm:text-sm text-[#7A6E65]">
             {t("home.noProducts", "No products available in this section.")}

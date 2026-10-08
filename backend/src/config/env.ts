@@ -37,7 +37,7 @@ const envSchema = z.object({
   CLIENT_URL: z.string().url().optional(),
   ADMIN_URL: z.string().url().optional(),
   CORS_ORIGINS: z.string().optional(),
-  JSON_BODY_LIMIT: z.string().default("1mb"),
+  JSON_BODY_LIMIT: z.string().default("20mb"),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(500),
   LOG_LEVEL: z.string().default("info"),

@@ -158,7 +158,7 @@ export class CategoryService {
 
   public async listAdminCategories(): Promise<CategoryResponse[]> {
     const categories = await this.categoryRepository.findAdminList();
-    const itemCounts = await this.getItemCounts();
+    const itemCounts = await this.getItemCounts(categories);
 
     return categories.map((category) =>
       this.toResponse(category, itemCounts.get(category._id.toString()) || 0),
@@ -167,7 +167,7 @@ export class CategoryService {
 
   public async listPublicCategoryTree(): Promise<CategoryResponse[]> {
     const categories = await this.categoryRepository.findActiveTreeCategories();
-    const itemCounts = await this.getItemCounts();
+    const itemCounts = await this.getItemCounts(categories);
 
     return this.buildTree(categories, itemCounts);
   }
@@ -338,7 +338,9 @@ export class CategoryService {
     };
   }
 
-  private async getItemCounts(): Promise<Map<string, number>> {
+  private async getItemCounts(
+    categories?: Array<HydratedDocument<Category>>,
+  ): Promise<Map<string, number>> {
     const map = new Map<string, number>();
     try {
       const { ProductModel } = await import("../../product/model/product.model.js");
@@ -356,6 +358,45 @@ export class CategoryService {
     } catch (_err) {
       // Fallback
     }
+
+    try {
+      const { DecorationModel } = await import("../../decoration/model/decoration.model.js");
+      if (DecorationModel.db?.readyState === 1) {
+        const decoCounts = await DecorationModel.aggregate([
+          { $match: { isActive: true } },
+          { $group: { _id: "$category", count: { $sum: 1 } } },
+        ]).exec();
+
+        const catList =
+          categories && categories.length > 0
+            ? categories
+            : await this.categoryRepository.findActiveTreeCategories();
+
+        for (const cat of catList) {
+          const catIdStr = cat._id.toString();
+          const catNameLower = (cat.name || "").trim().toLowerCase();
+          const catSlugLower = (cat.slug || "").trim().toLowerCase();
+
+          let extraCount = 0;
+          for (const d of decoCounts) {
+            const decoCat = (d._id || "").toString().trim().toLowerCase();
+            if (
+              decoCat === catIdStr ||
+              decoCat === catNameLower ||
+              decoCat === catSlugLower
+            ) {
+              extraCount += d.count;
+            }
+          }
+          if (extraCount > 0) {
+            map.set(catIdStr, (map.get(catIdStr) || 0) + extraCount);
+          }
+        }
+      }
+    } catch (_err) {
+      // Fallback
+    }
+
     return map;
   }
 

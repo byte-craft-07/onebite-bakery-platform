@@ -44,6 +44,15 @@ export class DecorationService {
     }));
   }
 
+  async getDecorationCategories(): Promise<string[]> {
+    try {
+      const res = await apiClient.get<{ success: boolean; data: string[] }>("/decorations/categories");
+      return (res.data?.data || []).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
   async getDecorationById(id: string): Promise<Decoration> {
     const res = await apiClient.get<{ success: boolean; data: any }>(`/decorations/${id}`);
     const d = res.data.data;

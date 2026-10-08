@@ -81,7 +81,7 @@ export const CategoriesPage: React.FC = () => {
                 name: category.name,
                 slug: category.slug,
                 image: category.image || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
-                itemCount: category.itemCount || 12,
+                itemCount: category.itemCount !== undefined ? category.itemCount : 0,
               }}
             />
           ))}

@@ -23,6 +23,13 @@ decorationRouter.get(
   asyncHandler((req, res) => decorationController.getAllDecorationsAdmin(req, res)),
 );
 
+// Public: Get all distinct decoration categories
+decorationRouter.get(
+  "/categories",
+  cacheResponse({ ttlSeconds: 300, tags: ["decorations"] }),
+  asyncHandler((req, res) => decorationController.getCategories(req, res)),
+);
+
 // Public: Get single decoration
 decorationRouter.get(
   "/:id",
@@ -34,7 +41,7 @@ decorationRouter.get(
 decorationRouter.post(
   "/",
   ...adminOnly,
-  invalidateCache(["decorations"]),
+  invalidateCache(["decorations", "categories", "products"]),
   asyncHandler((req, res) => decorationController.createDecoration(req, res)),
 );
 
@@ -42,7 +49,7 @@ decorationRouter.post(
 decorationRouter.put(
   "/:id",
   ...adminOnly,
-  invalidateCache(["decorations"]),
+  invalidateCache(["decorations", "categories", "products"]),
   asyncHandler((req, res) => decorationController.updateDecoration(req, res)),
 );
 
@@ -50,7 +57,7 @@ decorationRouter.put(
 decorationRouter.patch(
   "/:id/toggle",
   ...adminOnly,
-  invalidateCache(["decorations"]),
+  invalidateCache(["decorations", "categories", "products"]),
   asyncHandler((req, res) => decorationController.toggleDecorationStatus(req, res)),
 );
 
@@ -58,7 +65,7 @@ decorationRouter.patch(
 decorationRouter.patch(
   "/:id/stock",
   ...adminOnly,
-  invalidateCache(["decorations"]),
+  invalidateCache(["decorations", "categories", "products"]),
   asyncHandler((req, res) => decorationController.toggleDecorationStock(req, res)),
 );
 
@@ -66,6 +73,6 @@ decorationRouter.patch(
 decorationRouter.delete(
   "/:id",
   ...adminOnly,
-  invalidateCache(["decorations"]),
+  invalidateCache(["decorations", "categories", "products"]),
   asyncHandler((req, res) => decorationController.deleteDecoration(req, res)),
 );

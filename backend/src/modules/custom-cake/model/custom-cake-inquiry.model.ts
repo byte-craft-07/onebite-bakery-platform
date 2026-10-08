@@ -3,6 +3,8 @@ import { model, Schema, type Types } from "mongoose";
 import { COLLECTION_NAMES } from "../../../db/constants/collection-names.js";
 import { baseSchemaOptions } from "../../../db/schema-options.js";
 import type { TimestampedDocument } from "../../../db/types/base-document.types.js";
+import "../../user/model/user.model.js";
+import "../../product/model/product.model.js";
 
 export type CustomCakeInquiryStatus =
   | "PENDING"
@@ -53,7 +55,7 @@ const customCakeInquirySchema = new Schema<CustomCakeInquiry>(
     },
     userId: {
       type: Schema.Types.ObjectId,
-      ref: COLLECTION_NAMES.USERS,
+      ref: "User",
       default: undefined,
     },
     customerName: {
@@ -145,7 +147,7 @@ const customCakeInquirySchema = new Schema<CustomCakeInquiry>(
     adminRecommendation: {
       recommendedProductId: {
         type: Schema.Types.ObjectId,
-        ref: COLLECTION_NAMES.PRODUCTS,
+        ref: "Product",
         default: undefined,
       },
       recommendedCakeTitle: {

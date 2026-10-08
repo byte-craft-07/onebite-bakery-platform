@@ -66,6 +66,7 @@ const whatsappSmsStatusSchema = z.object({
 notificationRouter.post(
   "/email/order-confirmation",
   requireAuth,
+  requireRoles(["admin"]),
   validateRequest({ body: orderConfirmationEmailSchema }),
   asyncHandler(async (req, res) => {
     const { orderNumber, recipientEmail, totalAmount } =
@@ -104,6 +105,7 @@ notificationRouter.post(
 notificationRouter.post(
   "/email/welcome",
   requireAuth,
+  requireRoles(["admin"]),
   validateRequest({ body: welcomeEmailSchema }),
   asyncHandler(async (req, res) => {
     const { customerName, recipientEmail } =
@@ -136,6 +138,7 @@ notificationRouter.post(
 notificationRouter.post(
   "/whatsapp-sms/status",
   requireAuth,
+  requireRoles(["admin"]),
   validateRequest({ body: whatsappSmsStatusSchema }),
   asyncHandler(async (req, res) => {
     const { phone, orderNumber, status } =

@@ -98,6 +98,10 @@ export class DecorationService {
     return decorationRepository.findById(id);
   }
 
+  async getCategories(): Promise<string[]> {
+    return decorationRepository.findDistinctCategories();
+  }
+
   async createDecoration(input: CreateDecorationInput): Promise<Decoration> {
     const slug = input.slug?.trim() || `${this.generateSlug(input.name)}-${Date.now().toString(36)}`;
     return decorationRepository.create({

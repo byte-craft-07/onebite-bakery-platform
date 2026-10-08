@@ -30,13 +30,15 @@ import {
   type Decoration,
   type CreateDecorationPayload,
 } from "@/services/decoration.service";
+import { adminCatalogService } from "../services/adminCatalog.service";
 import { toast } from "@/contexts/toast.context";
+import { clientCache } from "@/utils/clientCache";
 
-const CATEGORY_OPTIONS = [
+const DEFAULT_FALLBACK_CATEGORIES = [
+  "Party Accessories",
   "Candles & Toppers",
   "Party Balloons",
   "Cake Toppers",
-  "Party Accessories",
   "Sparklers & Lights",
   "Birthday Sashes & Caps",
   "Festive Ribbons & Banners",
@@ -59,7 +61,7 @@ export const AdminDecorationsPage: React.FC = () => {
 
   // Form Fields
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("Candles & Toppers");
+  const [category, setCategory] = useState("");
   const [customCategory, setCustomCategory] = useState("");
   const [price, setPrice] = useState<number>(149);
   const [originalPrice, setOriginalPrice] = useState<number>(199);
@@ -69,6 +71,43 @@ export const AdminDecorationsPage: React.FC = () => {
   const [inStock, setInStock] = useState<boolean>(true);
   const [isActive, setIsActive] = useState<boolean>(true);
   const [displayOrder, setDisplayOrder] = useState<number>(1);
+  const [dbCategories, setDbCategories] = useState<string[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+
+  const fetchCategories = async () => {
+    setIsLoadingCategories(true);
+    try {
+      const [catalogCats, decoCats] = await Promise.allSettled([
+        adminCatalogService.getCategories(),
+        decorationService.getDecorationCategories(),
+      ]);
+
+      const extractedNames: string[] = [];
+
+      if (catalogCats.status === "fulfilled" && Array.isArray(catalogCats.value)) {
+        catalogCats.value.forEach((c: any) => {
+          const catName = typeof c === "string" ? c : c?.name || c?.title;
+          if (catName && typeof catName === "string" && catName.trim()) {
+            extractedNames.push(catName.trim());
+          }
+        });
+      }
+
+      if (decoCats.status === "fulfilled" && Array.isArray(decoCats.value)) {
+        decoCats.value.forEach((name) => {
+          if (name && typeof name === "string" && name.trim()) {
+            extractedNames.push(name.trim());
+          }
+        });
+      }
+
+      setDbCategories(extractedNames);
+    } catch (_err) {
+      // Keep existing categories if any
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  };
 
   const fetchDecorations = async () => {
     setIsLoading(true);
@@ -85,7 +124,40 @@ export const AdminDecorationsPage: React.FC = () => {
 
   useEffect(() => {
     fetchDecorations();
+    fetchCategories();
   }, []);
+
+  // Dynamic Category Options combined from real MongoDB database categories + items
+  const categoryOptions = useMemo(() => {
+    const set = new Set<string>();
+
+    // 1. Categories fetched from real database Category collection & decorations collection
+    dbCategories.forEach((cat) => {
+      if (cat && cat.trim()) set.add(cat.trim());
+    });
+
+    // 2. Any categories already present on loaded decorations from DB
+    decorations.forEach((d) => {
+      if (d.category && d.category.trim()) set.add(d.category.trim());
+    });
+
+    // 3. Fallback defaults only if database is completely empty
+    if (set.size === 0) {
+      DEFAULT_FALLBACK_CATEGORIES.forEach((c) => set.add(c));
+    }
+
+    return Array.from(set);
+  }, [dbCategories, decorations]);
+
+  // Set initial category default when categoryOptions load
+  useEffect(() => {
+    if (!category && categoryOptions.length > 0) {
+      const preferred =
+        categoryOptions.find((c) => /decor/i.test(c)) ||
+        categoryOptions[0];
+      setCategory(preferred);
+    }
+  }, [category, categoryOptions]);
 
   // Filtered List
   const filteredDecorations = useMemo(() => {
@@ -120,7 +192,11 @@ export const AdminDecorationsPage: React.FC = () => {
   const handleOpenCreate = () => {
     setEditingItem(null);
     setName("");
-    setCategory("Candles & Toppers");
+    const defaultCat =
+      categoryOptions.find((c) => /decor/i.test(c)) ||
+      categoryOptions[0] ||
+      "Party Accessories";
+    setCategory(defaultCat);
     setCustomCategory("");
     setPrice(149);
     setOriginalPrice(199);
@@ -137,12 +213,13 @@ export const AdminDecorationsPage: React.FC = () => {
   const handleOpenEdit = (item: Decoration) => {
     setEditingItem(item);
     setName(item.name || "");
-    if (CATEGORY_OPTIONS.includes(item.category)) {
-      setCategory(item.category);
+    const itemCat = (item.category || "").trim();
+    if (categoryOptions.includes(itemCat) || itemCat) {
+      setCategory(itemCat);
       setCustomCategory("");
     } else {
       setCategory("CUSTOM");
-      setCustomCategory(item.category);
+      setCustomCategory(item.category || "");
     }
     setPrice(item.price || 0);
     setOriginalPrice(item.originalPrice || 0);
@@ -207,6 +284,14 @@ export const AdminDecorationsPage: React.FC = () => {
         setDecorations((prev) => [created, ...prev]);
         toast.success("Created Successfully! 🎈", `"${created.name}" saved to database.`);
       }
+      if (resolvedCategory) {
+        setDbCategories((prev) => Array.from(new Set([...prev, resolvedCategory])));
+      }
+      clientCache.invalidate("decorations");
+      clientCache.invalidate("decorations_list");
+      clientCache.invalidate("catalog_categories");
+      clientCache.clear();
+      window.dispatchEvent(new Event("onebitebakery_catalog_updated"));
       setIsModalOpen(false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to save decoration item.";
@@ -221,6 +306,11 @@ export const AdminDecorationsPage: React.FC = () => {
     try {
       const updated = await decorationService.adminToggleStatus(item.id);
       setDecorations((prev) => prev.map((d) => (d.id === item.id ? updated : d)));
+      clientCache.invalidate("decorations");
+      clientCache.invalidate("decorations_list");
+      clientCache.invalidate("catalog_categories");
+      clientCache.clear();
+      window.dispatchEvent(new Event("onebitebakery_catalog_updated"));
       toast.info(
         "Status Changed",
         `"${item.name}" is now ${updated.isActive ? "Active (Visible)" : "Inactive (Hidden)"}.`
@@ -234,6 +324,11 @@ export const AdminDecorationsPage: React.FC = () => {
     try {
       const updated = await decorationService.adminToggleStock(item.id);
       setDecorations((prev) => prev.map((d) => (d.id === item.id ? updated : d)));
+      clientCache.invalidate("decorations");
+      clientCache.invalidate("decorations_list");
+      clientCache.invalidate("catalog_categories");
+      clientCache.clear();
+      window.dispatchEvent(new Event("onebitebakery_catalog_updated"));
       toast.info(
         "Stock Updated",
         `"${item.name}" is now marked as ${updated.inStock ? "In Stock" : "Out of Stock"}.`
@@ -251,6 +346,11 @@ export const AdminDecorationsPage: React.FC = () => {
       await decorationService.adminDeleteDecoration(deleteConfirmItem.id);
       // Immediately remove from state - permanently deleted from real MongoDB!
       setDecorations((prev) => prev.filter((d) => d.id !== deleteConfirmItem.id));
+      clientCache.invalidate("decorations");
+      clientCache.invalidate("decorations_list");
+      clientCache.invalidate("catalog_categories");
+      clientCache.clear();
+      window.dispatchEvent(new Event("onebitebakery_catalog_updated"));
       toast.success("Deleted Permanently", `"${deleteConfirmItem.name}" was deleted from database.`);
       setDeleteConfirmItem(null);
     } catch (_err) {
@@ -334,7 +434,7 @@ export const AdminDecorationsPage: React.FC = () => {
             className="px-3 py-2 text-xs rounded-xl border border-[#E5DEC9] bg-white text-[#3B302B] font-semibold focus:outline-hidden focus:ring-2 focus:ring-[#596B58]"
           >
             <option value="ALL">All Categories</option>
-            {CATEGORY_OPTIONS.map((c) => (
+            {categoryOptions.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
@@ -564,13 +664,25 @@ export const AdminDecorationsPage: React.FC = () => {
             {/* Category */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-[#3B302B] mb-1">Category *</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-[#3B302B]">
+                    Category *
+                  </label>
+                  {isLoadingCategories && (
+                    <span className="text-[10px] text-gray-400 animate-pulse">Loading DB categories...</span>
+                  )}
+                </div>
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  onChange={(e) => {
+                    setCategory(e.target.value);
+                    if (e.target.value !== "CUSTOM") {
+                      setCustomCategory("");
+                    }
+                  }}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5DEC9] bg-white text-[#3B302B] font-semibold focus:outline-hidden focus:ring-2 focus:ring-[#596B58]"
                 >
-                  {CATEGORY_OPTIONS.map((opt) => (
+                  {categoryOptions.map((opt) => (
                     <option key={opt} value={opt}>
                       {opt}
                     </option>

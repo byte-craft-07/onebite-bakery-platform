@@ -238,6 +238,7 @@ export const cartService = {
         productId: payload.productId,
         quantity: payload.quantity,
         customization: payload.customization,
+        productDetails: payload.productDetails,
       });
       if (response.data?.data?.cart) {
         const normalized = normalizeCartResponse(response.data.data.cart);
@@ -247,11 +248,16 @@ export const cartService = {
     } catch (err: any) {
       const status = err?.response?.status;
       const errorMsg = (err?.response?.data?.message || err?.message || "").toLowerCase();
-      // If product is out of stock or unavailable, rethrow so UI displays "Out of Stock"
       if (status === 422 || errorMsg.includes("unavailable") || errorMsg.includes("stock") || errorMsg.includes("out of")) {
         throw new Error(err?.response?.data?.message || "Product is currently out of stock.");
       }
-      // Otherwise fallback to local storage
+      if (err?.response?.data?.message) {
+        throw new Error(err.response.data.message);
+      }
+      if (err?.response) {
+        throw new Error("Failed to add item to cart. Please try again.");
+      }
+      // Only fallback to local storage if totally offline (no HTTP response)
     }
 
     const currentCart = getLocalCart();

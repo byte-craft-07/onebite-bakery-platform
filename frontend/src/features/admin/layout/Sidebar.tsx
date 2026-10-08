@@ -9,7 +9,6 @@ import {
   FileSpreadsheet,
   FileText,
   Gift,
-  Globe,
   Home,
   Image as ImageIcon,
   Layers,
@@ -34,7 +33,6 @@ import { useAuth } from "@/contexts/auth.context";
 
 const centralAdminNavSections = [
   { id: "dashboard", labelKey: "admin.nav.dashboard", defaultLabel: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
-  { id: "business-hub", labelKey: "admin.nav.businessHub", defaultLabel: "Digital Business Hub", path: "/admin/business-hub", icon: Globe },
   { id: "main-branch-orders", labelKey: "admin.nav.mainBranchOrders", defaultLabel: "Main Branch Orders", path: "/admin/main-branch-orders", icon: ShoppingBag },
   { id: "orders", labelKey: "admin.nav.globalOrders", defaultLabel: "Global Orders", path: "/admin/orders", icon: ShoppingBag },
   { id: "admins", labelKey: "admin.nav.admins", defaultLabel: "Admin Team & Access", path: "/admin/team", icon: UserCheck },

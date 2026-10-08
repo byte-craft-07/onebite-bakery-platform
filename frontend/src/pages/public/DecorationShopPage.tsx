@@ -16,6 +16,7 @@ import { toast } from "@/contexts/toast.context";
 import { useAuth } from "@/contexts/auth.context";
 import { cartService } from "@/services/cart.service";
 import { decorationService, type Decoration } from "@/services/decoration.service";
+import { catalogService } from "@/services/catalog.service";
 import { getOptimizedImageUrl } from "@/utils/cdn.utils";
 import { SEOHead } from "@/components/seo";
 
@@ -24,9 +25,37 @@ export const DecorationShopPage: React.FC = () => {
   const isAdmin = user?.role === "admin" || user?.role === "branch_admin";
 
   const [decorations, setDecorations] = useState<Decoration[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [addedIds, setAddedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const [decoCats, catalogCats] = await Promise.allSettled([
+          decorationService.getDecorationCategories(),
+          catalogService.getCategories(),
+        ]);
+        const set = new Set<string>();
+        if (decoCats.status === "fulfilled" && Array.isArray(decoCats.value)) {
+          decoCats.value.forEach((c) => c && set.add(c.trim()));
+        }
+        if (catalogCats.status === "fulfilled" && Array.isArray(catalogCats.value)) {
+          catalogCats.value.forEach((c: any) => {
+            const name = typeof c === "string" ? c : c?.name;
+            if (name) set.add(name.trim());
+          });
+        }
+        if (set.size > 0) {
+          setAvailableCategories(Array.from(set));
+        }
+      } catch {
+        // ignore
+      }
+    };
+    void loadCategories();
+  }, []);
 
   const fetchDecorations = async (category: string = "ALL") => {
     setIsLoading(true);
@@ -47,11 +76,12 @@ export const DecorationShopPage: React.FC = () => {
 
   const categories = React.useMemo(() => {
     const list = new Set<string>();
+    availableCategories.forEach((c) => list.add(c));
     decorations.forEach((d) => {
       if (d.category) list.add(d.category);
     });
     return ["ALL", ...Array.from(list)];
-  }, [decorations]);
+  }, [availableCategories, decorations]);
 
   const handleAddToCart = async (item: Decoration) => {
     try {

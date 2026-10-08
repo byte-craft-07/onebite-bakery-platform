@@ -212,7 +212,16 @@ export class ProductService {
     context: RequestContext,
   ): Promise<ProductResponse> {
     const productId = toObjectId(id);
-    await this.getExistingProduct(productId);
+    const existing = await this.getExistingProduct(productId);
+    if (existing.slug === "custom-celebration-cake" || existing.productType === "CUSTOM_CAKE") {
+      throw new AppError(
+        "System product 'Custom Celebration Cake' cannot be deleted.",
+        HTTP_STATUS.BAD_REQUEST,
+        [],
+        true,
+        APP_ERROR_CODES.VALIDATION_ERROR,
+      );
+    }
 
     const deleted = await this.productRepository.softDelete(
       { _id: productId, isDeleted: false },
@@ -296,6 +305,8 @@ export class ProductService {
         );
       }
       categoryOverride = category._id;
+    } else if (filterOverrides.categoryId) {
+      categoryOverride = filterOverrides.categoryId as Types.ObjectId;
     }
 
     if (query.occasion) {
@@ -429,9 +440,67 @@ export class ProductService {
         return response;
       });
 
+    // Include matching decorations if filtering by category or searching
+    if (categoryOverride || (query as Record<string, unknown>).q || (query as Record<string, unknown>).search) {
+      try {
+        const { DecorationModel } = await import("../../decoration/model/decoration.model.js");
+        if (DecorationModel.db?.readyState === 1) {
+          let decoFilter: any = { isActive: true };
+
+          if (categoryOverride) {
+            const targetCat = query.category
+              ? await this.productRepository.findCategoryBySlugOrId(query.category)
+              : await this.productRepository.findCategoryBySlugOrId(categoryOverride.toString());
+            if (targetCat) {
+              const catName = targetCat.name.trim();
+              const catSlug = targetCat.slug.trim();
+              const catIdStr = targetCat._id.toString();
+
+              decoFilter.$or = [
+                { category: { $regex: new RegExp(`^${catName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") } },
+                { category: catSlug },
+                { category: catIdStr },
+              ];
+            }
+          }
+
+          const searchParam = (query as Record<string, unknown>).q || (query as Record<string, unknown>).search;
+          if (searchParam && typeof searchParam === "string" && searchParam.trim()) {
+            const qClean = searchParam.trim();
+            const searchConditions = [
+              { name: { $regex: qClean, $options: "i" } },
+              { description: { $regex: qClean, $options: "i" } },
+              { category: { $regex: qClean, $options: "i" } },
+            ];
+            if (decoFilter.$or) {
+              decoFilter = {
+                isActive: true,
+                $and: [{ $or: decoFilter.$or }, { $or: searchConditions }],
+              };
+            } else {
+              decoFilter.$or = searchConditions;
+            }
+          }
+
+          const matchingDecos = await DecorationModel.find(decoFilter).lean().exec();
+          for (const deco of matchingDecos) {
+            const decoResponse = this.convertDecorationToProductResponse(deco);
+            if (!products.some((p) => p.id === decoResponse.id || p.slug === decoResponse.slug)) {
+              products.push(decoResponse);
+            }
+          }
+        }
+      } catch (_err) {
+        // Fallback
+      }
+    }
+
     return {
       products,
-      pagination: result.pagination,
+      pagination: {
+        ...result.pagination,
+        total: Math.max(result.pagination.total, products.length),
+      },
     };
   }
 
@@ -522,6 +591,30 @@ export class ProductService {
     const product = await this.productRepository.findActiveBySlug(slug);
 
     if (!product) {
+      try {
+        const { DecorationModel } = await import("../../decoration/model/decoration.model.js");
+        if (DecorationModel.db?.readyState === 1) {
+          const isObjectId = /^[a-f\d]{24}$/i.test(slug);
+          const deco = await DecorationModel.findOne(
+            isObjectId
+              ? { $or: [{ slug }, { _id: slug }], isActive: true }
+              : {
+                  $or: [
+                    { slug: slug.toLowerCase() },
+                    { slug: { $regex: new RegExp(`^${slug.toLowerCase()}`, "i") } },
+                    { name: { $regex: new RegExp(`^${slug.replace(/-/g, " ")}$`, "i") } },
+                  ],
+                  isActive: true,
+                },
+          ).lean().exec();
+
+          if (deco) {
+            return this.convertDecorationToProductResponse(deco);
+          }
+        }
+      } catch (_e) {
+        // Fallback
+      }
       throw this.createNotFoundError();
     }
 
@@ -833,6 +926,52 @@ export class ProductService {
       seoKeywords: product.seoKeywords,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
+    };
+  }
+
+  public convertDecorationToProductResponse(
+    deco: any,
+    targetCategory?: { _id: Types.ObjectId; name: string; slug: string } | null,
+  ): ProductResponse {
+    const decoId = deco._id ? deco._id.toString() : "";
+    const mainImg =
+      deco.image ||
+      (Array.isArray(deco.images) && deco.images.length > 0 ? deco.images[0] : "") ||
+      "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80";
+    const allImgs =
+      Array.isArray(deco.images) && deco.images.length > 0 ? deco.images : [mainImg];
+
+    return {
+      id: decoId,
+      name: deco.name,
+      slug: deco.slug || `decor-${decoId}`,
+      shortDescription: deco.description || "",
+      description: deco.description || "",
+      categoryId: targetCategory ? targetCategory._id.toString() : (deco.category || ""),
+      occasionIds: [],
+      productType: "NORMAL",
+      price: Number(deco.price) || 0,
+      compareAtPrice: deco.originalPrice ? Number(deco.originalPrice) : undefined,
+      imageUrls: allImgs,
+      thumbnailUrl: mainImg,
+      stockStatus: deco.inStock !== false ? "IN_STOCK" : "OUT_OF_STOCK",
+      stockQuantity: deco.inStock !== false ? 99 : 0,
+      isAvailable: deco.inStock !== false && deco.isActive !== false,
+      isInstantAvailable: true,
+      isEggless: true,
+      isActive: deco.isActive !== false,
+      isFeatured: false,
+      isTrending: false,
+      isRecommended: true,
+      isSeasonal: false,
+      deliveryEligible: true,
+      pickupEligible: true,
+      displayOrder: deco.displayOrder || 0,
+      seoTitle: deco.name,
+      seoDescription: deco.description || "",
+      seoKeywords: ["decoration", "party", deco.name],
+      createdAt: deco.createdAt || new Date(),
+      updatedAt: deco.updatedAt || new Date(),
     };
   }
 

@@ -22,9 +22,14 @@ class ClientCache {
     const memEntry = this.memCache.get(key) as CacheEntry<T> | undefined;
     if (memEntry) {
       if (memEntry.expiry > now) {
-        return memEntry.data;
+        if (Array.isArray(memEntry.data) && memEntry.data.length === 0) {
+          this.memCache.delete(key);
+        } else {
+          return memEntry.data;
+        }
+      } else {
+        this.memCache.delete(key);
       }
-      this.memCache.delete(key);
     }
 
     // 2. Try sessionStorage fallback
@@ -34,11 +39,16 @@ class ClientCache {
         if (item) {
           const parsed = JSON.parse(item) as CacheEntry<T>;
           if (parsed && parsed.expiry > now) {
-            // Restore into memory cache for faster subsequent reads
-            this.memCache.set(key, parsed);
-            return parsed.data;
+            if (Array.isArray(parsed.data) && parsed.data.length === 0) {
+              sessionStorage.removeItem(`app_cache_${key}`);
+            } else {
+              // Restore into memory cache for faster subsequent reads
+              this.memCache.set(key, parsed);
+              return parsed.data;
+            }
+          } else {
+            sessionStorage.removeItem(`app_cache_${key}`);
           }
-          sessionStorage.removeItem(`app_cache_${key}`);
         }
       }
     } catch {
@@ -55,6 +65,12 @@ class ClientCache {
    * @param ttlMs Time-to-live in milliseconds (default: 5 minutes)
    */
   set<T>(key: string, data: T, ttlMs: number = 5 * 60 * 1000): void {
+    // Never cache empty arrays (prevents persistent empty state lockouts)
+    if (Array.isArray(data) && data.length === 0) {
+      this.invalidate(key);
+      return;
+    }
+
     const expiry = Date.now() + ttlMs;
     const entry: CacheEntry<T> = { data, expiry };
 
@@ -119,6 +135,13 @@ class ClientCache {
   }
 
   /**
+   * Clear all cached entries in memory and sessionStorage.
+   */
+  clear(): void {
+    this.invalidate();
+  }
+
+  /**
    * Helper that checks cache first. If found, returns it immediately.
    * Otherwise runs fetcher, saves result to cache, and returns it.
    */
@@ -131,13 +154,17 @@ class ClientCache {
     if (!forceRefresh) {
       const cached = this.get<T>(key);
       if (cached !== null && cached !== undefined) {
-        return cached;
+        if (!Array.isArray(cached) || cached.length > 0) {
+          return cached;
+        }
       }
     }
 
     const freshData = await fetcher();
     if (freshData !== null && freshData !== undefined) {
-      this.set(key, freshData, ttlMs);
+      if (!Array.isArray(freshData) || freshData.length > 0) {
+        this.set(key, freshData, ttlMs);
+      }
     }
     return freshData;
   }

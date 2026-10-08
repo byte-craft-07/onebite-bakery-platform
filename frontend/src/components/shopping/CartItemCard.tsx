@@ -32,6 +32,40 @@ export const CartItemCard: React.FC<{
               {productName}
             </Link>
             <p className="text-[11px] sm:text-xs text-[#7A6E65]">₹{item.unitPrice} {t("common.each", "each")}</p>
+            {item.customization && (
+              <div className="flex flex-wrap gap-1 pt-1 text-[10px]">
+                {Boolean(item.customization.tiers || (item.customization as any)?.tierCount) && (
+                  <span className="bg-[#596B58]/10 text-[#596B58] font-bold px-1.5 py-0.5 rounded">
+                    {item.customization.tiers || (item.customization as any)?.tierCount} Tier{Number(item.customization.tiers || (item.customization as any)?.tierCount) > 1 ? "s" : ""}
+                  </span>
+                )}
+                {Boolean(item.customization.shape) && (
+                  <span className="bg-amber-100 text-amber-800 font-medium px-1.5 py-0.5 rounded">
+                    {item.customization.shape}
+                  </span>
+                )}
+                {Boolean(item.customization.flavor || (item.customization as any)?.flavour) && (
+                  <span className="bg-stone-100 text-stone-700 font-medium px-1.5 py-0.5 rounded max-w-[140px] truncate">
+                    {item.customization.flavor || (item.customization as any)?.flavour}
+                  </span>
+                )}
+                {Boolean(item.customization.weight || (item.customization as any)?.weightKg) && (
+                  <span className="bg-sky-50 text-sky-700 font-medium px-1.5 py-0.5 rounded">
+                    {item.customization.weight || `${(item.customization as any)?.weightKg} kg`}
+                  </span>
+                )}
+                {Boolean(item.customization.message || (item.customization as any)?.messageOnCake) && (
+                  <span className="bg-pink-50 text-pink-700 italic px-1.5 py-0.5 rounded max-w-[150px] truncate">
+                    "{item.customization.message || (item.customization as any)?.messageOnCake}"
+                  </span>
+                )}
+                {(item.customization.eggless !== undefined || (item.customization as any)?.isEggless !== undefined) && (
+                  <span className={`px-1.5 py-0.5 rounded font-semibold ${(item.customization.eggless ?? (item.customization as any)?.isEggless) ? "bg-emerald-50 text-emerald-700" : "bg-orange-50 text-orange-700"}`}>
+                    {(item.customization.eggless ?? (item.customization as any)?.isEggless) ? "Eggless" : "Regular"}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

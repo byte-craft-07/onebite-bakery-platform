@@ -1,4 +1,4 @@
-import type { HydratedDocument } from "mongoose";
+import { Types, type HydratedDocument } from "mongoose";
 
 import { toObjectId } from "../../../db/utils/object-id.js";
 import type { CustomCakeRepository } from "../repository/custom-cake.repository.js";
@@ -224,6 +224,16 @@ export class CustomCakeService {
   constructor(private readonly repo: CustomCakeRepository) {}
 
   public async getOptions(type?: CustomCakeOptionType, onlyActive = true): Promise<CustomCakeOption[]> {
+    try {
+      const count = await this.repo.countOptions();
+      if (count === 0) {
+        for (const opt of DEFAULT_OPTIONS) {
+          await this.repo.createOption(opt);
+        }
+      }
+    } catch (_seedErr) {
+      // Ignore seeding errors
+    }
     return this.repo.findAllOptions(type, onlyActive);
   }
 
@@ -248,9 +258,25 @@ export class CustomCakeService {
   // Inquiries
   public async createInquiry(data: Partial<CustomCakeInquiry>): Promise<HydratedDocument<CustomCakeInquiry>> {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const inquiryNumber = `CC-${new Date().getFullYear()}-${randomSuffix}`;
+    const timeSuffix = Date.now().toString(36).toUpperCase().slice(-3);
+    const inquiryNumber = `CC-${new Date().getFullYear()}-${randomSuffix}${timeSuffix}`;
     data.inquiryNumber = inquiryNumber;
     data.status = "PENDING";
+
+    // Sanitize userId if invalid ObjectId
+    if (data.userId && !Types.ObjectId.isValid(String(data.userId))) {
+      delete data.userId;
+    }
+
+    // Sanitize eventDate if invalid
+    if (data.eventDate) {
+      const parsedDate = new Date(data.eventDate);
+      if (isNaN(parsedDate.getTime())) {
+        delete data.eventDate;
+      } else {
+        data.eventDate = parsedDate;
+      }
+    }
 
     return this.repo.createInquiry(data);
   }

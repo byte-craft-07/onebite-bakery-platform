@@ -78,8 +78,8 @@ export class CustomCakeRepository {
     userId?: string;
   } = {}): Promise<HydratedDocument<CustomCakeInquiry>[]> {
     const query: FilterQuery<CustomCakeInquiry> = {};
-    if (filters.status) query.status = filters.status;
-    if (filters.userId) query.userId = filters.userId;
+    if (filters.status && (filters.status as string) !== "ALL") query.status = filters.status;
+    if (filters.userId && mongoose.Types.ObjectId.isValid(filters.userId)) query.userId = filters.userId;
     if (filters.search && filters.search.trim()) {
       const regex = new RegExp(escapeRegex(filters.search.trim()), "i");
       query.$or = [
@@ -94,7 +94,7 @@ export class CustomCakeRepository {
 
     return CustomCakeInquiryModel.find(query)
       .populate("userId", "name email phone")
-      .populate("adminRecommendation.recommendedProductId", "name slug price thumbnailUrl mainImage")
+      .populate("adminRecommendation.recommendedProductId", "name slug price thumbnailUrl imageUrls")
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -102,21 +102,21 @@ export class CustomCakeRepository {
   public async findInquiryById(id: string): Promise<HydratedDocument<CustomCakeInquiry> | null> {
     return CustomCakeInquiryModel.findById(id)
       .populate("userId", "name email phone")
-      .populate("adminRecommendation.recommendedProductId", "name slug price thumbnailUrl mainImage")
+      .populate("adminRecommendation.recommendedProductId", "name slug price thumbnailUrl imageUrls")
       .exec();
   }
 
   public async findInquiryByNumber(inquiryNumber: string): Promise<HydratedDocument<CustomCakeInquiry> | null> {
     return CustomCakeInquiryModel.findOne({ inquiryNumber: inquiryNumber.toUpperCase() })
       .populate("userId", "name email phone")
-      .populate("adminRecommendation.recommendedProductId", "name slug price thumbnailUrl mainImage")
+      .populate("adminRecommendation.recommendedProductId", "name slug price thumbnailUrl imageUrls")
       .exec();
   }
 
   public async updateInquiry(id: string, data: Partial<CustomCakeInquiry>): Promise<HydratedDocument<CustomCakeInquiry> | null> {
     return CustomCakeInquiryModel.findByIdAndUpdate(id, { $set: data }, { new: true })
       .populate("userId", "name email phone")
-      .populate("adminRecommendation.recommendedProductId", "name slug price thumbnailUrl mainImage")
+      .populate("adminRecommendation.recommendedProductId", "name slug price thumbnailUrl imageUrls")
       .exec();
   }
 

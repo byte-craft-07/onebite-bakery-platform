@@ -65,6 +65,21 @@ export class DecorationController {
     }
   }
 
+  async getCategories(_req: Request, res: Response): Promise<void> {
+    try {
+      const categories = await decorationService.getCategories();
+      res.status(200).json({
+        success: true,
+        data: categories,
+      });
+    } catch (err: unknown) {
+      res.status(500).json({
+        success: false,
+        message: err instanceof Error ? err.message : "Failed to fetch decoration categories.",
+      });
+    }
+  }
+
   async createDecoration(req: Request, res: Response): Promise<void> {
     try {
       const {

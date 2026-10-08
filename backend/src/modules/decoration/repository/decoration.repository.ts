@@ -64,6 +64,13 @@ export class DecorationRepository {
     return DecorationModel.findByIdAndUpdate(id, { $set: data }, { new: true }).exec();
   }
 
+  public async findDistinctCategories(): Promise<string[]> {
+    const categories = await DecorationModel.distinct("category").exec();
+    return categories
+      .filter((c): c is string => typeof c === "string" && c.trim().length > 0)
+      .map((c) => c.trim());
+  }
+
   public async delete(id: string): Promise<boolean> {
     const result = await DecorationModel.findByIdAndDelete(id).exec();
     return result !== null;

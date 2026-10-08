@@ -1,5 +1,6 @@
 import { apiClient } from "@/services/api.client";
 import { catalogService } from "@/services/catalog.service";
+import { clientCache } from "@/utils/clientCache";
 
 export interface ProductWeightOptionPayload {
   weight: string;
@@ -80,6 +81,7 @@ export const adminCatalogService = {
       success: boolean;
       data: { product: any };
     }>("/products", payload);
+    clientCache.invalidate();
     return response.data.data.product;
   },
 
@@ -88,6 +90,7 @@ export const adminCatalogService = {
       success: boolean;
       data: { product: any };
     }>(`/products/${id}`, payload);
+    clientCache.invalidate();
     return response.data.data.product;
   },
 
@@ -96,6 +99,7 @@ export const adminCatalogService = {
       success: boolean;
       data: { inventory: any };
     }>(`/products/${id}/inventory`, { stockQuantity });
+    clientCache.invalidate();
     return response.data.data.inventory;
   },
 
@@ -104,6 +108,7 @@ export const adminCatalogService = {
       success: boolean;
       data: { inventory: any };
     }>(`/products/${id}/availability`, { isAvailable });
+    clientCache.invalidate();
     return response.data.data.inventory;
   },
 
@@ -112,11 +117,13 @@ export const adminCatalogService = {
       success: boolean;
       data: { inventory: any };
     }>(`/products/${id}/pricing`, { price });
+    clientCache.invalidate();
     return response.data.data.inventory;
   },
 
   deleteProduct: async (id: string) => {
     const response = await apiClient.delete<{ success: boolean }>(`/products/${id}`);
+    clientCache.invalidate();
     return response.data;
   },
 

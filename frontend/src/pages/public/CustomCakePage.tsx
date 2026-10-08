@@ -108,25 +108,17 @@ export const CustomCakePage: React.FC = () => {
           customCakeService.getOptions("FLAVOR"),
           customCakeService.getOptions("DESIGN"),
         ]);
-        const validFlvs = Array.isArray(flvs) ? flvs : [];
-        const validDsgs = Array.isArray(dsgs) ? dsgs : [];
+        const validFlvs = Array.isArray(flvs) && flvs.length > 0 ? flvs : FALLBACK_FLAVORS;
+        const validDsgs = Array.isArray(dsgs) && dsgs.length > 0 ? dsgs : FALLBACK_DESIGNS;
         setFlavors(validFlvs);
         setDesigns(validDsgs);
-        if (validFlvs.length > 0) {
-          setSelectedFlavor(validFlvs[0] || null);
-        } else {
-          setSelectedFlavor(null);
-        }
-        if (validDsgs.length > 0) {
-          setSelectedDesign(validDsgs[0] || null);
-        } else {
-          setSelectedDesign(null);
-        }
+        setSelectedFlavor(validFlvs[0] || null);
+        setSelectedDesign(validDsgs[0] || null);
       } catch (_e) {
-        setFlavors([]);
-        setDesigns([]);
-        setSelectedFlavor(null);
-        setSelectedDesign(null);
+        setFlavors(FALLBACK_FLAVORS);
+        setDesigns(FALLBACK_DESIGNS);
+        setSelectedFlavor(FALLBACK_FLAVORS[0] || null);
+        setSelectedDesign(FALLBACK_DESIGNS[0] || null);
       } finally {
         setIsLoadingOptions(false);
       }
@@ -166,16 +158,44 @@ export const CustomCakePage: React.FC = () => {
     setLoadingState(true);
     const reader = new FileReader();
     reader.onload = (event) => {
-      if (event.target?.result) {
-        setImageState(event.target.result as string);
+      const src = event.target?.result as string;
+      if (!src) {
+        setLoadingState(false);
+        return;
       }
-      setLoadingState(false);
+      const img = new Image();
+      img.onload = () => {
+        const maxWidth = 1200;
+        const maxHeight = 1200;
+        let { width, height } = img;
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL("image/jpeg", 0.82);
+          setImageState(compressed);
+        } else {
+          setImageState(src);
+        }
+        setLoadingState(false);
+      };
+      img.onerror = () => {
+        setImageState(src);
+        setLoadingState(false);
+      };
+      img.src = src;
     };
     reader.onerror = () => setLoadingState(false);
     reader.readAsDataURL(file);
   };
 
-  // Add to Cart
   // Add to Cart & Save Inquiry to Console
   const handleAddToCart = async () => {
     setIsAddingToCart(true);
@@ -209,8 +229,8 @@ export const CustomCakePage: React.FC = () => {
         if (inqRes?.inquiryNumber) {
           inquiryNumber = inqRes.inquiryNumber;
         }
-      } catch (_inqErr) {
-        // Continue to add to cart
+      } catch (inqErr) {
+        console.warn("Custom cake studio inquiry warning:", inqErr);
       }
 
       await cartService.addItem({
@@ -239,21 +259,13 @@ export const CustomCakePage: React.FC = () => {
         },
       });
 
-      toast.add("Custom Cake Saved & Added! 🎂", `"${customTitle}" (₹${estimatedPrice}) saved and added to your basket.`, {
-        image: cakeImg,
-        action: {
-          label: "View Cart",
-          onClick: () => navigate("/cart"),
-        },
-      });
+      toast.success("Custom Cake Saved & Added! 🎂", `"${customTitle}" (₹${estimatedPrice}) basket me add ho gaya hai.`);
       setTimeout(() => {
         navigate("/cart");
-      }, 700);
-    } catch (_err) {
-      toast.add("Custom Cake Added", "Your custom cake has been added to cart.", { image: cakeImg });
-      setTimeout(() => {
-        navigate("/cart");
-      }, 700);
+      }, 600);
+    } catch (err: any) {
+      console.error("Custom cake add to cart failed:", err);
+      toast.error("Cart me add nahi ho paya", err?.message || "Kripya dobara koshish karein.");
     } finally {
       setIsAddingToCart(false);
     }
@@ -275,9 +287,9 @@ export const CustomCakePage: React.FC = () => {
         customerEmail: inqEmail,
         occasion: inqOccasion,
         budgetRange: inqBudget,
-        eventDate: inqEventDate || undefined,
+        eventDate: inqEventDate ? inqEventDate : undefined,
         queryText: inqQuery,
-        referenceImageUrl: inqReferenceImage,
+        referenceImageUrl: inqReferenceImage || undefined,
         tiers,
         shape,
         flavor: selectedFlavor?.name || "Chef Choice",
@@ -296,14 +308,8 @@ export const CustomCakePage: React.FC = () => {
       });
       toast.success("Bespoke Request Sent! 🎨", `Ticket #${res.inquiryNumber} created for master baker review.`);
     } catch (err: any) {
-      const fallbackTicket = `CC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-      setInquirySuccessTicket({
-        inquiryNumber: fallbackTicket,
-        customerName: inqName,
-        phone: inqPhone,
-        queryText: inqQuery,
-      });
-      toast.success("Inquiry Submitted", `Ticket #${fallbackTicket} created.`);
+      console.error("Submit inquiry failed:", err);
+      toast.error("Custom cake request create nahi ho payi", err?.message || "Kripya details check karke dobara koshish karein.");
     } finally {
       setIsSubmittingInquiry(false);
     }

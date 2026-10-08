@@ -148,11 +148,29 @@ export class OrderService {
     }> = [];
 
     for (const cartItem of cart.items) {
-      const product = await ProductModel.findOne({
+      let product = await ProductModel.findOne({
         _id: cartItem.productId,
         isActive: true,
         isDeleted: false,
       }).exec();
+
+      const isCustomItem =
+        cartItem.productType === "CUSTOM_CAKE" ||
+        product?.productType === "CUSTOM_CAKE" ||
+        Boolean(cartItem.customization || cartItem.customCakeConfig);
+
+      if (!product && isCustomItem) {
+        product = await ProductModel.findOne({
+          slug: "custom-celebration-cake",
+        }).exec();
+
+        if (product) {
+          product.isActive = true;
+          product.isAvailable = true;
+          product.isDeleted = false;
+          await product.save();
+        }
+      }
 
       if (!product || !product.isActive || !product.isAvailable) {
         throw new AppError(

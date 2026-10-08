@@ -64,6 +64,8 @@ export class ProductRepository extends BaseRepository<Product> {
 
     if (query.productType) {
       filter.productType = query.productType;
+    } else {
+      filter.productType = { $ne: "CUSTOM_CAKE" };
     }
 
     if (query.isAvailable !== undefined) {
@@ -137,7 +139,7 @@ export class ProductRepository extends BaseRepository<Product> {
   }
 
   public async findPublicList(): Promise<Array<HydratedDocument<Product>>> {
-    return ProductModel.find({ isActive: true, isDeleted: false })
+    return ProductModel.find({ isActive: true, isDeleted: false, productType: { $ne: "CUSTOM_CAKE" } })
       .sort({ displayOrder: 1, name: 1 })
       .exec();
   }

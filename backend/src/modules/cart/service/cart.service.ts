@@ -102,7 +102,7 @@ export class CartService {
       productObjId = toObjectId(dto.productId);
       product = await ProductModel.findOne({
         _id: productObjId,
-        isDeleted: false,
+        isDeleted: { $ne: true },
       }).exec();
     } else {
       productObjId = new Types.ObjectId();
@@ -111,32 +111,51 @@ export class CartService {
     if (!product && isCustomCakeItem) {
       let customCakeProduct = await ProductModel.findOne({
         slug: "custom-celebration-cake",
-        isDeleted: false,
       }).exec();
 
       if (!customCakeProduct) {
-        const { CategoryModel } = await import("../../category/model/category.model.js");
-        const firstCat = await CategoryModel.findOne({ isDeleted: false }).exec();
-        customCakeProduct = await ProductModel.create({
-          name: dto.productDetails?.name || "Custom Celebration Cake",
-          nameHi: "कस्टमाइज़्ड सेलिब्रेशन केक",
-          slug: "custom-celebration-cake",
-          description: "Handcrafted custom tier celebration cake tailored to your specific flavor, design, and size.",
-          categoryId: firstCat?._id || new Types.ObjectId(),
-          productType: "CUSTOM_CAKE",
-          price: dto.productDetails?.price || 649,
-          isEggless: true,
-          isAvailable: true,
-          isActive: true,
-          stockStatus: "IN_STOCK",
-          trackInventory: false,
-          allowBackorder: true,
-          imageUrls: [dto.productDetails?.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80"],
-          thumbnailUrl: dto.productDetails?.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
-        });
+        try {
+          const { CategoryModel } = await import("../../category/model/category.model.js");
+          const firstCat = await CategoryModel.findOne({ isDeleted: { $ne: true } }).exec();
+          customCakeProduct = await ProductModel.create({
+            name: dto.productDetails?.name || "Custom Celebration Cake",
+            nameHi: "कस्टमाइज़्ड सेलिब्रेशन केक",
+            slug: "custom-celebration-cake",
+            description: "Handcrafted custom tier celebration cake tailored to your specific flavor, design, and size.",
+            categoryId: firstCat?._id || new Types.ObjectId(),
+            productType: "CUSTOM_CAKE",
+            price: dto.productDetails?.price || 649,
+            isEggless: true,
+            isAvailable: true,
+            isActive: true,
+            stockStatus: "IN_STOCK",
+            trackInventory: false,
+            allowBackorder: true,
+            imageUrls: [dto.productDetails?.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80"],
+            thumbnailUrl: dto.productDetails?.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
+            seoTitle: "Custom Celebration Cake | OneBite Bakery",
+            seoDescription: "Order freshly baked custom tiered celebration cakes with bespoke flavors and themes.",
+            seoKeywords: ["custom cake", "celebration cake", "designer cake"],
+          });
+        } catch (_createErr) {
+          customCakeProduct = await ProductModel.findOne({
+            slug: "custom-celebration-cake",
+          }).exec();
+        }
       }
-      product = customCakeProduct;
-      productObjId = customCakeProduct._id;
+
+      if (customCakeProduct) {
+        if (!customCakeProduct.isActive || !customCakeProduct.isAvailable || customCakeProduct.isDeleted) {
+          customCakeProduct.isActive = true;
+          customCakeProduct.isAvailable = true;
+          customCakeProduct.isDeleted = false;
+          customCakeProduct.deletedAt = undefined as any;
+          customCakeProduct.deletedBy = undefined as any;
+          await customCakeProduct.save();
+        }
+        product = customCakeProduct;
+        productObjId = customCakeProduct._id;
+      }
     }
 
     let isDecoration = false;
@@ -180,7 +199,7 @@ export class CartService {
       );
     }
 
-    if (customerId && !isDecoration) {
+    if (customerId && !isDecoration && !isCustomCakeItem) {
       try {
         const { UserModel } = await import("../../user/model/user.model.js");
         if (UserModel.db?.readyState === 1) {
@@ -519,8 +538,6 @@ export class CartService {
     const productIds = cart.items.map((item) => item.productId);
     const products = await ProductModel.find({
       _id: { $in: productIds },
-      isActive: true,
-      isDeleted: false,
     }).exec();
 
     const productMap = new Map<string, any>();
@@ -560,8 +577,47 @@ export class CartService {
     const validItems: CartItem[] = [];
 
     for (const item of cart.items) {
-      const product = productMap.get(item.productId.toString());
-      if (!product || !product.isActive || !product.isAvailable) {
+      let product = productMap.get(item.productId.toString());
+
+      const isCustomItem =
+        item.productType === "CUSTOM_CAKE" ||
+        product?.productType === "CUSTOM_CAKE" ||
+        product?.slug === "custom-celebration-cake" ||
+        Boolean(
+          item.customization?.tierCount ||
+          (item.customization as any)?.tiers ||
+          item.customCakeConfig?.tierCount ||
+          (item.customCakeConfig as any)?.tiers ||
+          (item.customization as any)?.estimatedPrice ||
+          (item.customCakeConfig as any)?.estimatedPrice
+        );
+
+      if (isCustomItem) {
+        if (!product) {
+          product = {
+            _id: item.productId,
+            name: item.productSnapshot?.name || "Custom Celebration Cake",
+            slug: item.productSnapshot?.slug || "custom-celebration-cake",
+            price: item.unitPriceSnapshot || (item.customization as any)?.estimatedPrice || 649,
+            thumbnailUrl: item.productSnapshot?.thumbnailUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
+            imageUrls: [item.productSnapshot?.thumbnailUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80"],
+            productType: "CUSTOM_CAKE",
+            stockStatus: "IN_STOCK",
+            isActive: true,
+            isAvailable: true,
+            trackInventory: false,
+            allowBackorder: true,
+          };
+        } else {
+          product.isActive = true;
+          product.isAvailable = true;
+          if (product.isDeleted) {
+            product.isDeleted = false;
+          }
+        }
+      }
+
+      if (!product || !product.isActive || !product.isAvailable || (!isCustomItem && product.isDeleted)) {
         continue; // Automatically remove inactive or unavailable product
       }
 
@@ -570,7 +626,7 @@ export class CartService {
         continue;
       }
 
-      if (product.trackInventory && !product.allowBackorder) {
+      if (!isCustomItem && product.trackInventory && !product.allowBackorder) {
         if (product.stockQuantity <= 0) {
           continue; // Out of stock
         }
@@ -579,16 +635,24 @@ export class CartService {
         }
       }
 
+      const resolvedUnitPrice = isCustomItem
+        ? (item.unitPriceSnapshot ||
+           (item.customization as any)?.estimatedPrice ||
+           (item.customCakeConfig as any)?.estimatedPrice ||
+           item.unitPrice ||
+           product.price)
+        : (item.unitPriceSnapshot || product.price);
+
       item.quantity = quantity;
-      item.unitPriceSnapshot = product.price;
-      item.unitPrice = product.price;
-      item.totalPrice = product.price * quantity;
-      item.productType = product.productType;
+      item.unitPriceSnapshot = resolvedUnitPrice;
+      item.unitPrice = resolvedUnitPrice;
+      item.totalPrice = resolvedUnitPrice * quantity;
+      item.productType = isCustomItem ? "CUSTOM_CAKE" : product.productType;
       item.productSnapshot = {
-        name: product.name,
-        slug: product.slug,
-        thumbnailUrl: product.thumbnailUrl,
-        productType: product.productType,
+        name: isCustomItem && item.productSnapshot?.name ? item.productSnapshot.name : product.name,
+        slug: isCustomItem && item.productSnapshot?.slug ? item.productSnapshot.slug : product.slug,
+        thumbnailUrl: isCustomItem && item.productSnapshot?.thumbnailUrl ? item.productSnapshot.thumbnailUrl : product.thumbnailUrl,
+        productType: isCustomItem ? "CUSTOM_CAKE" : product.productType,
         isInstantAvailable: Boolean(product.isInstantAvailable),
       };
 
