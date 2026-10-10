@@ -7,6 +7,7 @@ export interface CategoryResponse {
   icon?: string;
   displayOrder: number;
   isActive: boolean;
+  isComingSoon?: boolean;
   parentCategory?: string;
   seoTitle: string;
   seoDescription: string;

@@ -156,6 +156,10 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
 
   const ratingValue = liveRatingData.rating;
   const reviewCountValue = liveRatingData.reviewCount;
+  const isComingSoonItem = Boolean(
+    product.isComingSoon ||
+    (product.categoryId as any)?.isComingSoon
+  );
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -184,6 +188,11 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
     e.stopPropagation();
 
     if (isAdding || isOrderingNow) return;
+
+    if (isComingSoonItem) {
+      toast.info("Coming Soon", `"${product.name}" जल्द ही उपलब्ध होने वाला है!`);
+      return;
+    }
 
     if (
       product.isAvailable === false ||
@@ -234,6 +243,11 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
     e.stopPropagation();
 
     if (isAdding || isOrderingNow) return;
+
+    if (isComingSoonItem) {
+      toast.info("Coming Soon", `"${product.name}" जल्द ही उपलब्ध होने वाला है!`);
+      return;
+    }
 
     if (
       product.isAvailable === false ||
@@ -305,8 +319,12 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
           </div>
         </div>
 
-        {/* Top-Right Ready vs Made to Order Badge */}
-        {product.isInstantAvailable ? (
+        {/* Top-Right Ready vs Made to Order vs Coming Soon Badge */}
+        {isComingSoonItem ? (
+          <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5 bg-amber-500 text-white font-extrabold text-[10px] sm:text-[11px] px-2.5 py-1 rounded-full shadow-md backdrop-blur-xs tracking-normal border border-amber-300/40 animate-pulse">
+            <span>🚀 Coming Soon</span>
+          </div>
+        ) : product.isInstantAvailable ? (
           <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5 bg-amber-500 text-white font-bold text-[10px] sm:text-[11px] px-2.5 py-1 rounded-full shadow-md backdrop-blur-xs tracking-normal border border-amber-300/40">
             <Zap className="h-3.5 w-3.5 fill-current shrink-0 text-white" />
             <span className="tracking-wide">Available in Stock (अभी ऑर्डर करें)</span>
@@ -439,53 +457,65 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
           </Link>
         </div>
 
-        {/* Action Buttons: Add (Secondary) & Order (Primary) */}
-        <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-[#E5DEC9]">
-          {/* Secondary "Add" Button */}
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            disabled={isAdding || isOrderingNow}
-            aria-label={t("common.addToCart", "Add to cart")}
-            className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer select-none min-h-[34px] sm:min-h-[38px] ${
-              isOutOfStock
-                ? "bg-red-50 text-red-600 border border-red-200 cursor-not-allowed"
-                : isAdded
-                ? "bg-[#596B58] text-[#FFF8EC] border border-[#596B58] shadow-xs"
-                : "bg-transparent border border-[#596B58] text-[#596B58] hover:bg-[#A8B89A] hover:text-[#3B302B] hover:border-[#A8B89A] active:scale-95 shadow-2xs"
-            }`}
-          >
-            {isOutOfStock ? (
-              <span>{t("common.outOfStock", "Out of Stock")}</span>
-            ) : isAdded ? (
-              <>
-                <Check className="h-3.5 w-3.5" />
-                <span>{t("common.added", "Added")}</span>
-              </>
-            ) : (
-              <>
-                <ShoppingBag className="h-3.5 w-3.5 shrink-0 stroke-[2.2]" />
-                <span>{isAdding ? "..." : t("common.add", "Add")}</span>
-              </>
-            )}
-          </button>
+        {/* Action Buttons: Coming Soon Banner OR Add & Order */}
+        {isComingSoonItem ? (
+          <div className="pt-2 border-t border-[#E5DEC9]">
+            <button
+              type="button"
+              onClick={() => toast.info("Coming Soon", `"${displayName}" जल्द ही उपलब्ध होने वाला है!`)}
+              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-black bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 transition-colors shadow-2xs select-none cursor-pointer min-h-[34px] sm:min-h-[38px]"
+            >
+              <span>🚀 Coming Soon (जल्द आ रहा है)</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-[#E5DEC9]">
+            {/* Secondary "Add" Button */}
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={isAdding || isOrderingNow}
+              aria-label={t("common.addToCart", "Add to cart")}
+              className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer select-none min-h-[34px] sm:min-h-[38px] ${
+                isOutOfStock
+                  ? "bg-red-50 text-red-600 border border-red-200 cursor-not-allowed"
+                  : isAdded
+                  ? "bg-[#596B58] text-[#FFF8EC] border border-[#596B58] shadow-xs"
+                  : "bg-transparent border border-[#596B58] text-[#596B58] hover:bg-[#A8B89A] hover:text-[#3B302B] hover:border-[#A8B89A] active:scale-95 shadow-2xs"
+              }`}
+            >
+              {isOutOfStock ? (
+                <span>{t("common.outOfStock", "Out of Stock")}</span>
+              ) : isAdded ? (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  <span>{t("common.added", "Added")}</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="h-3.5 w-3.5 shrink-0 stroke-[2.2]" />
+                  <span>{isAdding ? "..." : t("common.add", "Add")}</span>
+                </>
+              )}
+            </button>
 
-          {/* Primary "Order" Button */}
-          <button
-            type="button"
-            onClick={handleOrderNow}
-            disabled={isAdding || isOrderingNow}
-            aria-label={t("common.orderNow", "Order now")}
-            className={`flex items-center justify-center gap-1 py-2 px-2.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer select-none min-h-[34px] sm:min-h-[38px] ${
-              isOutOfStock
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
-                : "bg-[#596B58] text-[#FFF8EC] hover:bg-[#495948] active:scale-95 shadow-xs"
-            }`}
-          >
-            <Zap className="h-3.5 w-3.5 fill-[#D8BE91] text-[#D8BE91] shrink-0" />
-            <span>{isOrderingNow ? "..." : t("common.order", "Order")}</span>
-          </button>
-        </div>
+            {/* Primary "Order" Button */}
+            <button
+              type="button"
+              onClick={handleOrderNow}
+              disabled={isAdding || isOrderingNow}
+              aria-label={t("common.orderNow", "Order now")}
+              className={`flex items-center justify-center gap-1 py-2 px-2.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer select-none min-h-[34px] sm:min-h-[38px] ${
+                isOutOfStock
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                  : "bg-[#596B58] text-[#FFF8EC] hover:bg-[#495948] active:scale-95 shadow-xs"
+              }`}
+            >
+              <Zap className="h-3.5 w-3.5 fill-[#D8BE91] text-[#D8BE91] shrink-0" />
+              <span>{isOrderingNow ? "..." : t("common.order", "Order")}</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

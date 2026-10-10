@@ -29,6 +29,7 @@ export interface CreateProductDto {
   allowBackorder: boolean;
   stockStatus?: StockStatus;
   isAvailable: boolean;
+  isComingSoon?: boolean;
   isInstantAvailable?: boolean;
   isEggless?: boolean;
   weightOptions?: Array<{
@@ -71,6 +72,7 @@ export interface UpdateInventoryDto {
 
 export interface UpdateAvailabilityDto {
   isAvailable: boolean;
+  isComingSoon?: boolean;
   deliveryEligible: boolean;
   pickupEligible: boolean;
   availableFrom?: Date;

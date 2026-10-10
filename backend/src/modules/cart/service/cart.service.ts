@@ -199,6 +199,36 @@ export class CartService {
       );
     }
 
+    if (product.isComingSoon) {
+      throw new AppError(
+        "This product is coming soon and cannot be ordered yet (यह प्रोडक्ट जल्द आ रहा है, अभी आर्डर नहीं किया जा सकता).",
+        HTTP_STATUS.UNPROCESSABLE_ENTITY,
+        [],
+        true,
+        APP_ERROR_CODES.CART_PRODUCT_UNAVAILABLE,
+      );
+    }
+
+    if (product.categoryId) {
+      try {
+        const { CategoryModel } = await import("../../category/model/category.model.js");
+        if (CategoryModel.db?.readyState === 1) {
+          const parentCategory = await CategoryModel.findById(product.categoryId).select("isComingSoon").exec();
+          if (parentCategory?.isComingSoon) {
+            throw new AppError(
+              "This category is coming soon and cannot be ordered yet (इस केटेगरी के आइटम्स जल्द आ रहे हैं, अभी आर्डर नहीं किया जा सकता).",
+              HTTP_STATUS.UNPROCESSABLE_ENTITY,
+              [],
+              true,
+              APP_ERROR_CODES.CART_PRODUCT_UNAVAILABLE,
+            );
+          }
+        }
+      } catch (catErr: any) {
+        if (catErr instanceof AppError) throw catErr;
+      }
+    }
+
     if (customerId && !isDecoration && !isCustomCakeItem) {
       try {
         const { UserModel } = await import("../../user/model/user.model.js");

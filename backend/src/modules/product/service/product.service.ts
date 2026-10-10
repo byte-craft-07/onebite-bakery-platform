@@ -101,6 +101,7 @@ export class ProductService {
       allowBackorder,
       stockStatus,
       isAvailable: dto.isAvailable ?? true,
+      isComingSoon: dto.isComingSoon ?? false,
       availableFrom: dto.availableFrom,
       availableUntil: dto.availableUntil,
       createdBy: context.userId ? toObjectId(context.userId) : undefined,
@@ -851,6 +852,9 @@ export class ProductService {
       ...(typeof dto.isAvailable === "boolean"
         ? { isAvailable: dto.isAvailable }
         : {}),
+      ...(typeof dto.isComingSoon === "boolean"
+        ? { isComingSoon: dto.isComingSoon }
+        : {}),
       ...(typeof dto.isInstantAvailable === "boolean"
         ? { isInstantAvailable: dto.isInstantAvailable }
         : {}),
@@ -906,6 +910,7 @@ export class ProductService {
       thumbnailUrl: product.thumbnailUrl,
       stockStatus: product.stockStatus,
       isAvailable: product.isAvailable,
+      isComingSoon: Boolean(product.isComingSoon),
       isInstantAvailable: Boolean(product.isInstantAvailable),
       isEggless: product.isEggless ?? true,
       ...(Array.isArray(product.weightOptions) && product.weightOptions.length > 0

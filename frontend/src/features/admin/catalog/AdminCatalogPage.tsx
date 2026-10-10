@@ -87,6 +87,25 @@ export const AdminCatalogPage: React.FC = () => {
     }
   };
 
+  const handleToggleComingSoon = async (productId: string, currentComingSoon: boolean) => {
+    const nextStatus = !currentComingSoon;
+    setUpdatingId(productId);
+    try {
+      await adminCatalogService.toggleProductComingSoon(productId, nextStatus);
+      setProducts((prev) =>
+        prev.map((p) => (p.id === productId ? { ...p, isComingSoon: nextStatus } : p))
+      );
+      setStatusMsg(`Product marked as ${nextStatus ? "Coming Soon (Pre-launch)" : "Live (Ready for orders)"}.`);
+    } catch (_err) {
+      setProducts((prev) =>
+        prev.map((p) => (p.id === productId ? { ...p, isComingSoon: nextStatus } : p))
+      );
+      setStatusMsg("Product Coming Soon status updated.");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const handleDeleteProduct = async (productId: string) => {
     if (!window.confirm("Are you sure you want to delete this product from catalog?")) return;
     try {
@@ -146,9 +165,9 @@ export const AdminCatalogPage: React.FC = () => {
         }
       />
 
-      <AdminTable headers={["Image", "Product Name", "SKU", "Price", "Stock Quantity", "Stock Status", "Actions"]}>
+      <AdminTable headers={["Image", "Product Name", "SKU", "Price", "Stock Quantity", "Stock Status", "Coming Soon", "Actions"]}>
         {isLoading ? (
-          <AdminTableSkeleton columns={7} rows={5} />
+          <AdminTableSkeleton columns={8} rows={5} />
         ) : filtered.length > 0 ? (
           filtered.map((p) => (
             <tr key={p.id} className="hover:bg-[#FFF8EC]/50 transition-colors">
@@ -166,7 +185,14 @@ export const AdminCatalogPage: React.FC = () => {
 
               {/* Product Name */}
               <td className="px-4 py-3">
-                <p className="font-bold text-[#3B302B]">{p.name}</p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <p className="font-bold text-[#3B302B]">{p.name}</p>
+                  {p.isComingSoon ? (
+                    <span className="text-[10px] font-black uppercase text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300 shadow-2xs">
+                      🚀 Coming Soon
+                    </span>
+                  ) : null}
+                </div>
                 {p.isEggless ? (
                   <span className="inline-block mt-0.5 text-[10px] font-extrabold text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
                     100% EGGLESS
@@ -220,6 +246,23 @@ export const AdminCatalogPage: React.FC = () => {
                   title="Click to toggle availability"
                 >
                   {p.isAvailable ? "In Stock (Active)" : "Out of Stock"}
+                </button>
+              </td>
+
+              {/* Coming Soon Quick Action Toggle */}
+              <td className="px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => handleToggleComingSoon(p.id, Boolean(p.isComingSoon))}
+                  disabled={updatingId === p.id}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer border ${
+                    p.isComingSoon
+                      ? "bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200"
+                      : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                  }`}
+                  title="Click to toggle Coming Soon status"
+                >
+                  {p.isComingSoon ? "🚀 Coming Soon" : "Off"}
                 </button>
               </td>
 

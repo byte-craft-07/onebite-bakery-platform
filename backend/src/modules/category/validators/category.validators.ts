@@ -40,6 +40,7 @@ export const createCategorySchema = z.object({
   icon: z.string().trim().min(1).max(120).optional(),
   displayOrder: z.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
+  isComingSoon: z.boolean().default(false),
   parentCategory: parentCategorySchema,
   seoTitle: z.string().trim().min(1).max(70).optional(),
   seoDescription: z.string().trim().min(1).max(160).optional(),

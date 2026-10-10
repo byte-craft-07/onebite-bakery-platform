@@ -89,6 +89,7 @@ const productSchemaBase = z.object({
   allowBackorder: z.boolean().default(false),
   stockStatus: z.enum(STOCK_STATUSES).optional(),
   isAvailable: z.boolean().default(true),
+  isComingSoon: z.boolean().default(false),
   isInstantAvailable: z.boolean().default(false),
   isEggless: z.boolean().default(true),
   weightOptions: z.array(weightOptionSchema).optional(),
@@ -170,6 +171,7 @@ export const updateInventorySchema = z.object({
 export const updateAvailabilitySchema = z
   .object({
     isAvailable: z.boolean(),
+    isComingSoon: z.boolean().optional(),
     deliveryEligible: z.boolean(),
     pickupEligible: z.boolean(),
     availableFrom: z.coerce.date().optional(),

@@ -103,6 +103,7 @@ export class InventoryService {
     const update: UpdateQuery<Product> = {
       $set: {
         isAvailable: dto.isAvailable,
+        ...(typeof dto.isComingSoon === "boolean" ? { isComingSoon: dto.isComingSoon } : {}),
         deliveryEligible: dto.deliveryEligible,
         pickupEligible: dto.pickupEligible,
         updatedBy: context.userId ? toObjectId(context.userId) : undefined,

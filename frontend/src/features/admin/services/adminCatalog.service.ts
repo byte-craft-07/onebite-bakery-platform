@@ -24,6 +24,7 @@ export interface CreateProductPayload {
   sku: string;
   isEggless?: boolean;
   isAvailable?: boolean;
+  isComingSoon?: boolean;
   isInstantAvailable?: boolean;
   isFeatured?: boolean;
   isBestseller?: boolean;
@@ -56,6 +57,7 @@ export const adminCatalogService = {
           sku: p.sku || `SKU-${p.id}`,
           isEggless: typeof p.isEggless === "boolean" ? p.isEggless : true,
           isAvailable: p.isAvailable ?? true,
+          isComingSoon: Boolean(p.isComingSoon),
           isInstantAvailable: Boolean(p.isInstantAvailable),
           stockQuantity: p.stockQuantity ?? 50,
           weightOptions: p.weightOptions || [],
@@ -112,6 +114,15 @@ export const adminCatalogService = {
     return response.data.data.inventory;
   },
 
+  toggleProductComingSoon: async (id: string, isComingSoon: boolean) => {
+    const response = await apiClient.patch<{
+      success: boolean;
+      data: { product: any };
+    }>(`/products/${id}`, { isComingSoon });
+    clientCache.invalidate();
+    return response.data.data.product;
+  },
+
   updatePricing: async (id: string, price: number) => {
     const response = await apiClient.patch<{
       success: boolean;
@@ -142,24 +153,36 @@ export const adminCatalogService = {
     return catalogService.getCategories();
   },
 
-  createCategory: async (payload: { name: string; nameHi?: string; slug: string; description?: string; descriptionHi?: string; image?: string }) => {
+  createCategory: async (payload: { name: string; nameHi?: string; slug: string; description?: string; descriptionHi?: string; image?: string; isComingSoon?: boolean }) => {
     const response = await apiClient.post<{
       success: boolean;
       data: { category: any };
     }>("/categories", payload);
+    clientCache.invalidate();
     return response.data.data.category;
   },
 
-  updateCategory: async (id: string, payload: Partial<{ name: string; nameHi?: string; slug: string; description: string; descriptionHi?: string; isActive: boolean; image?: string }>) => {
+  updateCategory: async (id: string, payload: Partial<{ name: string; nameHi?: string; slug: string; description: string; descriptionHi?: string; isActive: boolean; isComingSoon: boolean; image?: string }>) => {
     const response = await apiClient.patch<{
       success: boolean;
       data: { category: any };
     }>(`/categories/${id}`, payload);
+    clientCache.invalidate();
+    return response.data.data.category;
+  },
+
+  toggleCategoryComingSoon: async (id: string, isComingSoon: boolean) => {
+    const response = await apiClient.patch<{
+      success: boolean;
+      data: { category: any };
+    }>(`/categories/${id}`, { isComingSoon });
+    clientCache.invalidate();
     return response.data.data.category;
   },
 
   deleteCategory: async (id: string) => {
     const response = await apiClient.delete<{ success: boolean }>(`/categories/${id}`);
+    clientCache.invalidate();
     return response.data;
   },
 

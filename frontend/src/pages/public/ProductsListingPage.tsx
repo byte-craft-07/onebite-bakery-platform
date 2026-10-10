@@ -335,17 +335,54 @@ export const ProductsListingPage: React.FC = () => {
                 setSelectedCategory(selectedCategory === cat.slug ? undefined : cat.slug);
                 setCurrentPage(1);
               }}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+              className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 flex items-center gap-1 ${
                 selectedCategory === cat.slug
                   ? "bg-[#3B302B] text-white ring-2 ring-[#596B58]"
                   : "bg-white border border-[#E5DEC9] text-[#3B302B] hover:bg-[#FFF8EC] hover:text-[#596B58]"
               }`}
             >
-              {getLocalizedCategoryName(cat)}
+              {cat.isComingSoon && <span className="text-[10px]">🚀</span>}
+              <span>{getLocalizedCategoryName(cat)}</span>
             </button>
           ))}
         </div>
       </div>
+
+      {/* Coming Soon Category Notice Banner */}
+      {(() => {
+        const activeCategory = categories.find(
+          (c) =>
+            c.slug === selectedCategory ||
+            c.id === selectedCategory ||
+            (slug && isCategoryPath && (c.slug === slug || c.id === slug))
+        );
+        if (!activeCategory?.isComingSoon) return null;
+        return (
+          <div className="rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-2 border-dashed border-amber-300 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs text-xl">
+                🚀
+              </div>
+              <div>
+                <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
+                  <span className="font-extrabold text-sm sm:text-base text-amber-950">
+                    {getLocalizedCategoryName(activeCategory)} — Coming Soon / जल्द आ रहा है!
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-200 text-amber-900 border border-amber-300">
+                    Launching Soon
+                  </span>
+                </div>
+                <p className="text-xs text-amber-800 mt-0.5">
+                  {activeCategory.description || "हम इस कैटेगरी के लिए स्वादिष्ट और ताज़ा रेसिपीज तैयार कर रहे हैं। बहुत जल्द ऑर्डर्स शुरू होंगे!"}
+                </p>
+              </div>
+            </div>
+            <div className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-xl bg-white border border-amber-200 text-amber-800 shadow-2xs">
+              🔔 Pre-orders opening soon
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Product Grid (Clean Full Width) */}
       <div className="space-y-6">

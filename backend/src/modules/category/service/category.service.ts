@@ -331,6 +331,7 @@ export class CategoryService {
         ? { displayOrder: dto.displayOrder }
         : {}),
       ...(typeof dto.isActive === "boolean" ? { isActive: dto.isActive } : {}),
+      ...(typeof dto.isComingSoon === "boolean" ? { isComingSoon: dto.isComingSoon } : {}),
       ...(dto.seoTitle ? { seoTitle: dto.seoTitle } : {}),
       ...(dto.seoDescription ? { seoDescription: dto.seoDescription } : {}),
       ...(keywords ? { seoKeywords: keywords } : {}),
@@ -442,6 +443,7 @@ export class CategoryService {
       ...(category.icon ? { icon: category.icon } : {}),
       displayOrder: category.displayOrder,
       isActive: category.isActive,
+      isComingSoon: Boolean(category.isComingSoon),
       ...(category.parentCategory
         ? { parentCategory: category.parentCategory.toString() }
         : {}),

@@ -20,6 +20,7 @@ export interface Category extends TimestampedDocument, SoftDeletableDocument {
   icon?: string;
   displayOrder: number;
   isActive: boolean;
+  isComingSoon?: boolean;
   parentCategory?: Types.ObjectId;
   seoTitle: string;
   seoDescription: string;
@@ -85,6 +86,10 @@ const categorySchema = new Schema<Category>(
       type: Boolean,
       required: true,
       default: true,
+    },
+    isComingSoon: {
+      type: Boolean,
+      default: false,
     },
     parentCategory: {
       type: Schema.Types.ObjectId,

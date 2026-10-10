@@ -26,6 +26,7 @@ export interface ProductResponse {
   };
   locationBranchName?: string;
   isAvailable: boolean;
+  isComingSoon?: boolean;
   isInstantAvailable?: boolean;
   isEggless?: boolean;
   weightOptions?: Array<{

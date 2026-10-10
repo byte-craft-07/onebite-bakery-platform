@@ -43,6 +43,8 @@ export const AdminCategoryPage: React.FC = () => {
   const [description, setDescription] = useState("");
   const [descriptionHi, setDescriptionHi] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [isComingSoon, setIsComingSoon] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -68,6 +70,7 @@ export const AdminCategoryPage: React.FC = () => {
     setDescription("");
     setDescriptionHi("");
     setImageUrl("");
+    setIsComingSoon(false);
     setErrorMsg(null);
     setIsModalOpen(true);
   };
@@ -81,8 +84,24 @@ export const AdminCategoryPage: React.FC = () => {
     setDescription(cat.description || "");
     setDescriptionHi(cat.descriptionHi || "");
     setImageUrl(cat.image || cat.bannerImage || "");
+    setIsComingSoon(Boolean(cat.isComingSoon));
     setErrorMsg(null);
     setIsModalOpen(true);
+  };
+
+  const handleToggleCategoryComingSoon = async (catId: string, currentStatus: boolean) => {
+    const nextStatus = !currentStatus;
+    setTogglingId(catId);
+    try {
+      await adminCatalogService.toggleCategoryComingSoon(catId, nextStatus);
+      setCategories((prev) =>
+        prev.map((c) => (c.id === catId ? { ...c, isComingSoon: nextStatus } : c))
+      );
+    } catch (err: any) {
+      alert("Failed to toggle Coming Soon status: " + (err?.message || "Unknown error"));
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   const handleNameChange = (val: string) => {
@@ -112,6 +131,7 @@ export const AdminCategoryPage: React.FC = () => {
       slug: formattedSlug || cleanSlug(name),
       description: description.trim() || `${name.trim()} category from Onebite Bakery.`,
       descriptionHi: descriptionHi.trim() || undefined,
+      isComingSoon,
       image: imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80",
     };
 
@@ -148,7 +168,7 @@ export const AdminCategoryPage: React.FC = () => {
     <div className="space-y-6">
       <AdminPageHeader
         title="Category Management"
-        description="Organize bakery products into customer browsing categories."
+        description="Organize bakery products into customer browsing categories. Set items or categories as Coming Soon."
         actions={
           <Button onClick={handleOpenCreate} className="bg-[#596B58] hover:bg-[#495948] text-white">
             + Add Category
@@ -166,14 +186,35 @@ export const AdminCategoryPage: React.FC = () => {
         }
       />
 
-      <AdminTable headers={["Category Name", "URL Slug", "Description", "Status", "Actions"]}>
+      <AdminTable headers={["Category Name", "URL Slug", "Description", "Status & Launch", "Actions"]}>
         {filtered.map((cat) => (
           <tr key={cat.id} className="hover:bg-[#FFF8EC]/50 transition-colors">
-            <td className="px-4 py-3 font-bold text-[#3B302B]">{cat.name}</td>
+            <td className="px-4 py-3 font-bold text-[#3B302B]">
+              <div className="flex items-center gap-2">
+                <span>{cat.name}</span>
+                {cat.isComingSoon ? (
+                  <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-2xs">
+                    Coming Soon
+                  </span>
+                ) : null}
+              </div>
+            </td>
             <td className="px-4 py-3 font-mono text-xs text-[#596B58]">{cat.slug}</td>
             <td className="px-4 py-3 text-xs text-[#7A6E65]">{cat.description || "N/A"}</td>
             <td className="px-4 py-3">
-              <Badge variant="success">ACTIVE</Badge>
+              <button
+                type="button"
+                onClick={() => handleToggleCategoryComingSoon(cat.id, Boolean(cat.isComingSoon))}
+                disabled={togglingId === cat.id}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer border ${
+                  cat.isComingSoon
+                    ? "bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200"
+                    : "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
+                }`}
+                title="Click to toggle Coming Soon status"
+              >
+                {cat.isComingSoon ? "🚀 Coming Soon (Pre-launch)" : "✅ Live (Active)"}
+              </button>
             </td>
             <td className="px-4 py-3">
               <div className="flex items-center gap-2">
@@ -217,6 +258,24 @@ export const AdminCategoryPage: React.FC = () => {
             <textarea rows={2} value={descriptionHi} onChange={(e) => setDescriptionHi(e.target.value)} className="w-full p-3 rounded-lg border border-[#E5DEC9] text-xs outline-none focus:border-[#596B58]" />
           </div>
           <MediaUploader value={imageUrl} onChange={setImageUrl} entityType="CATEGORY" />
+
+          <label className="flex items-start gap-2.5 text-xs font-medium cursor-pointer p-3 rounded-xl bg-amber-50/80 border border-amber-200/90 text-amber-950 hover:bg-amber-100/70 transition-colors select-none">
+            <input
+              type="checkbox"
+              checked={isComingSoon}
+              onChange={(e) => setIsComingSoon(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-amber-400 text-[#596B58] focus:ring-[#596B58] cursor-pointer"
+            />
+            <div className="flex flex-col gap-0.5">
+              <span className="font-extrabold text-xs text-[#3B302B] flex items-center gap-1.5">
+                🚀 Mark as Coming Soon (जल्द आ रहा है)
+              </span>
+              <span className="text-[11px] text-gray-600 font-normal">
+                Check this if this category (e.g. Pizza) is not yet ready for ordering. Customers will see a Coming Soon badge on the category card and catalog.
+              </span>
+            </div>
+          </label>
+
           <Button type="submit" className="w-full" isLoading={isSubmitting}>
             <span>{editingCat ? "Save Changes" : "Create Category"}</span>
           </Button>

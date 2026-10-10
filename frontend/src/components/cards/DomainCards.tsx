@@ -35,11 +35,21 @@ export const CategoryCard: React.FC<{ category: MockCategory }> = ({ category })
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
+      {category.isComingSoon ? (
+        <div className="absolute top-2.5 right-2.5 z-10 bg-amber-500/95 text-white font-extrabold text-[10px] sm:text-xs px-2.5 py-1 rounded-full shadow-md backdrop-blur-xs flex items-center gap-1 border border-amber-300/40">
+          <span>🚀 Coming Soon</span>
+        </div>
+      ) : null}
+
       <div className="relative z-10 text-white space-y-0.5 sm:space-y-1">
         <h3 className="text-sm sm:text-lg font-bold group-hover:text-[#D8BE91] transition-colors line-clamp-1">
           {categoryName}
         </h3>
-        <p className="text-[10px] sm:text-xs text-white/80">{category.itemCount} {t("common.items", "Items")}</p>
+        <p className="text-[10px] sm:text-xs text-white/80">
+          {category.isComingSoon
+            ? "जल्द आ रहा है (Coming Soon)"
+            : `${category.itemCount} ${t("common.items", "Items")}`}
+        </p>
       </div>
     </Link>
   );

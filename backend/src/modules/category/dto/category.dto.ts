@@ -8,6 +8,7 @@ export interface CreateCategoryDto {
   icon?: string;
   displayOrder: number;
   isActive: boolean;
+  isComingSoon?: boolean;
   parentCategory?: string | null;
   seoTitle: string;
   seoDescription: string;

@@ -11,6 +11,7 @@ export interface MockProduct {
   category: string;
   isEggless: boolean;
   isBestseller?: boolean;
+  isComingSoon?: boolean;
   description: string;
 }
 
@@ -20,6 +21,7 @@ export interface MockCategory {
   slug: string;
   image: string;
   itemCount: number;
+  isComingSoon?: boolean;
 }
 
 export interface MockOccasion {
@@ -88,6 +90,14 @@ export const MOCK_CATEGORIES: MockCategory[] = [
     slug: "cookies-biscuits",
     image: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=600&q=80",
     itemCount: 15,
+  },
+  {
+    id: "cat-pizza",
+    name: "Pizza & Savories",
+    slug: "pizza",
+    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80",
+    itemCount: 6,
+    isComingSoon: true,
   },
 ];
 
@@ -303,6 +313,40 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     category: "Fresh Breads",
     isEggless: true,
     description: "Naturally fermented 36-hour sourdough with crispy crust and soft airy crumb.",
+  },
+  {
+    id: "prod-pizza-1",
+    name: "Farmhouse Fresh Veggie Pizza",
+    slug: "farmhouse-fresh-veggie-pizza",
+    price: 349,
+    compareAtPrice: 429,
+    rating: 4.8,
+    reviewCount: 32,
+    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80",
+    ],
+    category: "Pizza & Savories",
+    isEggless: true,
+    isComingSoon: true,
+    description: "Crispy hand-stretched crust topped with bell peppers, sweet corn, mushrooms, olives and 100% mozzarella cheese.",
+  },
+  {
+    id: "prod-pizza-2",
+    name: "Classic Margherita Cheese Burst Pizza",
+    slug: "classic-margherita-cheese-burst-pizza",
+    price: 299,
+    compareAtPrice: 359,
+    rating: 4.9,
+    reviewCount: 45,
+    image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=600&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=600&q=80",
+    ],
+    category: "Pizza & Savories",
+    isEggless: true,
+    isComingSoon: true,
+    description: "Authentic Italian herb marinara sauce, loaded gooey mozzarella, fresh basil and extra virgin olive oil.",
   },
 ];
 

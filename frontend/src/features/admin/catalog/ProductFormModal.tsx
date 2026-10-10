@@ -41,6 +41,7 @@ const productSchema = z
     stockQuantity: z.coerce.number().min(0).optional(),
     isEggless: z.boolean().optional(),
     isAvailable: z.boolean().optional(),
+    isComingSoon: z.boolean().optional(),
     isInstantAvailable: z.boolean().optional(),
     weightOptions: z.array(weightOptionSchema).optional(),
   })
@@ -130,6 +131,7 @@ export const ProductFormModal: React.FC<{
           stockQuantity: initialData.stockQuantity ?? 50,
           isEggless: typeof initialData.isEggless === "boolean" ? initialData.isEggless : true,
           isAvailable: typeof initialData.isAvailable === "boolean" ? initialData.isAvailable : true,
+          isComingSoon: initialData.isComingSoon ?? false,
           isInstantAvailable: initialData.isInstantAvailable ?? false,
         });
 
@@ -179,6 +181,7 @@ export const ProductFormModal: React.FC<{
           stockQuantity: 50,
           isEggless: true,
           isAvailable: true,
+          isComingSoon: false,
           isInstantAvailable: false,
         });
         setWeightRows([
@@ -275,6 +278,7 @@ export const ProductFormModal: React.FC<{
         stockQuantity: Number(data.stockQuantity ?? 50),
         isEggless: typeof data.isEggless === "boolean" ? data.isEggless : true,
         isAvailable: typeof data.isAvailable === "boolean" ? data.isAvailable : true,
+        isComingSoon: Boolean(data.isComingSoon),
         isInstantAvailable: Boolean(data.isInstantAvailable),
         mainImage: finalImages[0],
         thumbnailUrl: finalImages[0],
@@ -622,6 +626,22 @@ export const ProductFormModal: React.FC<{
                     className="h-4 w-4 rounded border-[#E5DEC9] text-[#596B58] focus:ring-[#596B58] cursor-pointer"
                   />
                   <span>Available for Sale</span>
+                </label>
+              )}
+            />
+
+            <Controller
+              control={form.control}
+              name="isComingSoon"
+              render={({ field }) => (
+                <label className="flex items-center gap-2 text-xs font-bold cursor-pointer text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-300 select-none hover:bg-amber-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(field.value)}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                    className="h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                  />
+                  <span>🚀 Coming Soon (जल्द आ रहा है)</span>
                 </label>
               )}
             />

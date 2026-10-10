@@ -257,6 +257,11 @@ export const ProductDetailsPage: React.FC = () => {
   const handleAddToCart = async () => {
     if (!product || isAddingToCart || isOrderingNow) return;
 
+    if (product.isComingSoon || (product.categoryId as any)?.isComingSoon) {
+      toast.info("Coming Soon", `"${product.name}" जल्द ही उपलब्ध होने वाला है!`);
+      return;
+    }
+
     if (product.isAvailable === false || (product.stockQuantity !== undefined && product.stockQuantity <= 0)) {
       setIsOutOfStockNotice(true);
       toast.error("Out of Stock", `"${product.name}" is currently unavailable in this location.`);
@@ -298,6 +303,11 @@ export const ProductDetailsPage: React.FC = () => {
 
   const handleOrderNow = async () => {
     if (!product || isAddingToCart || isOrderingNow) return;
+
+    if (product.isComingSoon || (product.categoryId as any)?.isComingSoon) {
+      toast.info("Coming Soon", `"${product.name}" जल्द ही उपलब्ध होने वाला है!`);
+      return;
+    }
 
     if (product.isAvailable === false || (product.stockQuantity !== undefined && product.stockQuantity <= 0)) {
       setIsOutOfStockNotice(true);
@@ -394,6 +404,11 @@ export const ProductDetailsPage: React.FC = () => {
       url: `/products/${product.slug || product.id}`,
     },
   ];
+
+  const isComingSoonItem = Boolean(
+    product.isComingSoon ||
+    (product.categoryId as any)?.isComingSoon
+  );
 
   const productSchema = buildProductSchema({
     id: product.id,
@@ -618,7 +633,11 @@ export const ProductDetailsPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="primary">{product.productType || "ARTISANAL"}</Badge>
               <Badge variant="success">100% Freshly Baked</Badge>
-              {product.isInstantAvailable ? (
+              {isComingSoonItem ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-500 text-white shadow-xs tracking-wide animate-pulse">
+                  <span>🚀 Coming Soon (जल्द आ रहा है)</span>
+                </span>
+              ) : product.isInstantAvailable ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500 text-white shadow-xs tracking-wide">
                   <Zap className="h-3.5 w-3.5 fill-current" />
                   <span>Available in Stock (अभी ऑर्डर करें)</span>
@@ -746,60 +765,81 @@ export const ProductDetailsPage: React.FC = () => {
           </div>
 
           {/* Quantity Controls & Purchase Buttons */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center gap-3">
-              {/* Stepper */}
-              <div className="flex items-center border border-[#E5DEC9] rounded-2xl bg-white h-12 shrink-0 shadow-2xs">
+          {isComingSoonItem ? (
+            <div className="space-y-3 pt-2">
+              <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-300 text-amber-950 space-y-1.5 shadow-2xs">
+                <div className="flex items-center gap-2 font-black text-sm text-amber-900">
+                  <span>🚀 Launching Soon / जल्द उपलब्ध होगा</span>
+                </div>
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  यह प्रोडक्ट अभी प्री-लॉन्च (Coming Soon) स्टेज में है। हमारे मास्टर शेफ इसे जल्द ही आपके लिए लाइव करेंगे। तब तक आप हमारे अन्य स्वादिष्ट बेकरी प्रोडक्ट्स एक्सप्लोर कर सकते हैं।
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => toast.info("Coming Soon", `"${product.name}" जल्द ही उपलब्ध होने वाला है!`)}
+                className="w-full h-13 bg-amber-100/90 border border-amber-300 text-amber-900 font-black text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2 shadow-sm cursor-pointer hover:bg-amber-200 transition-colors"
+              >
+                <span>🚀 Coming Soon (लॉन्च की तैयारी जारी है)</span>
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center gap-3">
+                {/* Stepper */}
+                <div className="flex items-center border border-[#E5DEC9] rounded-2xl bg-white h-12 shrink-0 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="px-4 h-full text-gray-600 font-bold hover:bg-[#FFF8EC] rounded-l-2xl text-lg flex items-center justify-center cursor-pointer"
+                  >
+                    -
+                  </button>
+                  <span className="px-4 text-sm font-black text-center">{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="px-4 h-full text-gray-600 font-bold hover:bg-[#FFF8EC] rounded-r-2xl text-lg flex items-center justify-center cursor-pointer"
+                  >
+                    +
+                  </button>
+                </div>
+
+                {/* Add to Cart Button (White Chocolate Style) */}
                 <button
-                  type="button"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-4 h-full text-gray-600 font-bold hover:bg-[#FFF8EC] rounded-l-2xl text-lg flex items-center justify-center cursor-pointer"
+                  disabled={isAddingToCart || isOrderingNow}
+                  onClick={handleAddToCart}
+                  className={`flex-1 h-12 bg-gradient-to-b from-[#FFF8EC] to-[#FFF8EC] border border-[#E5DEC9] text-[#3B302B] hover:from-white hover:to-[#F8ECE0] hover:border-[#D4BFAC] hover:shadow-[0_4px_14px_rgba(61,35,20,0.18)] font-black text-xs sm:text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-2xs cursor-pointer active:scale-98 ${
+                    isOutOfStockNotice ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
                 >
-                  -
-                </button>
-                <span className="px-4 text-sm font-black text-center">{quantity}</span>
-                <button
-                  type="button"
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="px-4 h-full text-gray-600 font-bold hover:bg-[#FFF8EC] rounded-r-2xl text-lg flex items-center justify-center cursor-pointer"
-                >
-                  +
+                  <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 text-[#3B302B]" />
+                  <span>{isAddingToCart ? t("cart.adding", "Adding...") : t("products.addToCart", "Add to Cart")}</span>
                 </button>
               </div>
 
-              {/* Add to Cart Button (White Chocolate Style) */}
+              {/* Direct Order Now Button (Dark Chocolate & Gold Style) */}
               <button
                 disabled={isAddingToCart || isOrderingNow}
-                onClick={handleAddToCart}
-                className={`flex-1 h-12 bg-gradient-to-b from-[#FFF8EC] to-[#FFF8EC] border border-[#E5DEC9] text-[#3B302B] hover:from-white hover:to-[#F8ECE0] hover:border-[#D4BFAC] hover:shadow-[0_4px_14px_rgba(61,35,20,0.18)] font-black text-xs sm:text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-2xs cursor-pointer active:scale-98 ${
-                  isOutOfStockNotice ? "opacity-50 cursor-not-allowed" : ""
+                onClick={handleOrderNow}
+                className={`w-full h-12 font-black text-xs sm:text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer active:scale-98 ${
+                  isOutOfStockNotice
+                    ? "bg-red-600 text-white animate-pulse"
+                    : "bg-gradient-to-b from-[#3B302B] via-[#3B302B] to-[#3B302B] border border-[#596B58] text-[#D8BE91] hover:from-[#3B302B] hover:to-[#3B302B] hover:text-[#FFF8EC] hover:shadow-[0_8px_20px_rgba(0,0,0,0.45)]"
                 }`}
               >
-                <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 text-[#3B302B]" />
-                <span>{isAddingToCart ? t("cart.adding", "Adding...") : t("products.addToCart", "Add to Cart")}</span>
+                <Zap className="h-4 w-4 sm:h-5 sm:w-5 fill-[#D8BE91] text-[#D8BE91]" />
+                <span>
+                  {isOutOfStockNotice
+                    ? t("products.outOfStock", "Out of Stock")
+                    : isOrderingNow
+                    ? t("checkout.placingOrder", "Preparing Order...")
+                    : t("products.buyNow", "Order Now (Instant Checkout)")}
+                </span>
               </button>
             </div>
-
-            {/* Direct Order Now Button (Dark Chocolate & Gold Style) */}
-            <button
-              disabled={isAddingToCart || isOrderingNow}
-              onClick={handleOrderNow}
-              className={`w-full h-12 font-black text-xs sm:text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer active:scale-98 ${
-                isOutOfStockNotice
-                  ? "bg-red-600 text-white animate-pulse"
-                  : "bg-gradient-to-b from-[#3B302B] via-[#3B302B] to-[#3B302B] border border-[#596B58] text-[#D8BE91] hover:from-[#3B302B] hover:to-[#3B302B] hover:text-[#FFF8EC] hover:shadow-[0_8px_20px_rgba(0,0,0,0.45)]"
-              }`}
-            >
-              <Zap className="h-4 w-4 sm:h-5 sm:w-5 fill-[#D8BE91] text-[#D8BE91]" />
-              <span>
-                {isOutOfStockNotice
-                  ? t("products.outOfStock", "Out of Stock")
-                  : isOrderingNow
-                  ? t("checkout.placingOrder", "Preparing Order...")
-                  : t("products.buyNow", "Order Now (Instant Checkout)")}
-              </span>
-            </button>
-          </div>
+          )}
 
 
           {/* Product Highlights & Quality Assurance */}

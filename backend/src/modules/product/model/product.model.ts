@@ -60,6 +60,7 @@ export interface Product extends TimestampedDocument, SoftDeletableDocument {
   availableFrom?: Date;
   availableUntil?: Date;
   isActive: boolean;
+  isComingSoon?: boolean;
   isFeatured: boolean;
   isTrending: boolean;
   isRecommended: boolean;
@@ -269,6 +270,11 @@ const productSchema = new Schema<Product>(
       type: Boolean,
       required: true,
       default: true,
+    },
+    isComingSoon: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
     isFeatured: {
       type: Boolean,

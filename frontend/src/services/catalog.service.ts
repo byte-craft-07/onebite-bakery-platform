@@ -18,6 +18,7 @@ export interface ProductItem {
   sku: string;
   isEggless: boolean;
   isAvailable: boolean;
+  isComingSoon?: boolean;
   isInstantAvailable?: boolean;
   isFeatured?: boolean;
   isBestseller?: boolean;
@@ -44,6 +45,7 @@ export interface CategoryItem {
   description?: string;
   descriptionHi?: string;
   image?: string;
+  isComingSoon?: boolean;
   itemCount?: number;
 }
 
@@ -136,6 +138,7 @@ export const catalogService = {
                 reviewCount: p.reviewCount ?? 62,
                 isEggless: p.isEggless ?? true,
                 isBestseller: p.isBestseller ?? p.isFeatured ?? true,
+                isComingSoon: Boolean(p.isComingSoon),
                 compareAtPrice: p.compareAtPrice ?? (p.price ? Math.round(p.price * 1.12) : undefined),
                 mainImage: mainImg,
                 images: allImgs,
