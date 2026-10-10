@@ -161,7 +161,7 @@ export const AdminCategoryPage: React.FC = () => {
   };
 
   const filtered = categories.filter((c) =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+    (c?.name || "").toLowerCase().includes((searchQuery || "").trim().toLowerCase())
   );
 
   return (
@@ -388,7 +388,7 @@ export const AdminOccasionPage: React.FC = () => {
   };
 
   const filtered = occasions.filter((o) =>
-    o.name.toLowerCase().includes(searchQuery.toLowerCase())
+    (o?.name || "").toLowerCase().includes((searchQuery || "").trim().toLowerCase())
   );
 
   return (

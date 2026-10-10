@@ -84,6 +84,10 @@ export const DecorationShopPage: React.FC = () => {
   }, [availableCategories, decorations]);
 
   const handleAddToCart = async (item: Decoration) => {
+    if (item.isComingSoon) {
+      toast.info("Coming Soon 🚀", `"${item.name}" जल्द आ रहा है, यह अभी ऑर्डर के लिए उपलब्ध नहीं है।`);
+      return;
+    }
     try {
       await cartService.addItem({
         productId: item.id,
@@ -245,10 +249,15 @@ export const DecorationShopPage: React.FC = () => {
                     loading="lazy"
                     decoding="async"
                   />
-                  <div className="absolute top-2 sm:top-3 left-2 sm:left-3">
+                  <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex items-center gap-1.5 flex-wrap">
                     <Badge variant="primary" className="text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5">
                       {item.category}
                     </Badge>
+                    {item.isComingSoon && (
+                      <span className="bg-amber-500/95 text-white font-extrabold text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full shadow-md border border-amber-300/40 flex items-center gap-1 backdrop-blur-xs">
+                        <span>🚀 Coming Soon</span>
+                      </span>
+                    )}
                   </div>
                   <button
                     aria-label="Add to favorites"
@@ -264,9 +273,16 @@ export const DecorationShopPage: React.FC = () => {
                       <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-current" />
                       <span>{item.rating || 4.8}</span>
                     </div>
-                    <h3 className="text-xs sm:text-base font-bold text-[#3B302B] line-clamp-1 leading-snug">
-                      {item.name}
-                    </h3>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h3 className="text-xs sm:text-base font-bold text-[#3B302B] line-clamp-1 leading-snug">
+                        {item.name}
+                      </h3>
+                      {item.isComingSoon && (
+                        <span className="inline-block px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-300">
+                          जल्द आ रहा है
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[11px] sm:text-xs text-[#7A6E65] line-clamp-1 sm:line-clamp-2 mt-0.5 sm:mt-1">
                       {item.description}
                     </p>
@@ -284,32 +300,43 @@ export const DecorationShopPage: React.FC = () => {
                       )}
                     </div>
 
-                    <button
-                      type="button"
-                      disabled={isOutStock}
-                      onClick={() => handleAddToCart(item)}
-                      className={`flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
-                        isOutStock
-                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                          : isAdded
-                          ? "bg-green-600 text-white"
-                          : "bg-[#596B58] text-white hover:bg-[#495948] active:scale-95"
-                      }`}
-                    >
-                      {isOutStock ? (
-                        <span>Out of Stock</span>
-                      ) : isAdded ? (
-                        <>
-                          <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                          <span className="hidden sm:inline">Added</span>
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingBag className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                          <span>Add</span>
-                        </>
-                      )}
-                    </button>
+                    {item.isComingSoon ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-300 cursor-not-allowed shadow-2xs"
+                        title="This item is launching soon (जल्द आ रहा है)"
+                      >
+                        <span>🚀 Coming Soon</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={isOutStock}
+                        onClick={() => handleAddToCart(item)}
+                        className={`flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
+                          isOutStock
+                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                            : isAdded
+                            ? "bg-green-600 text-white"
+                            : "bg-[#596B58] text-white hover:bg-[#495948] active:scale-95"
+                        }`}
+                      >
+                        {isOutStock ? (
+                          <span>Out of Stock</span>
+                        ) : isAdded ? (
+                          <>
+                            <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                            <span className="hidden sm:inline">Added</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingBag className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                            <span>Add</span>
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

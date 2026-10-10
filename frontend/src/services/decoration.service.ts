@@ -14,6 +14,7 @@ export interface Decoration {
   description: string;
   inStock: boolean;
   isActive: boolean;
+  isComingSoon?: boolean;
   displayOrder?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -31,6 +32,7 @@ export interface CreateDecorationPayload {
   description: string;
   inStock?: boolean;
   isActive?: boolean;
+  isComingSoon?: boolean;
   displayOrder?: number;
 }
 
@@ -99,6 +101,15 @@ export class DecorationService {
 
   async adminToggleStock(id: string): Promise<Decoration> {
     const res = await apiClient.patch<{ success: boolean; data: any }>(`/decorations/${id}/stock`);
+    const d = res.data.data;
+    return {
+      ...d,
+      id: d._id || d.id,
+    };
+  }
+
+  async adminToggleComingSoon(id: string): Promise<Decoration> {
+    const res = await apiClient.patch<{ success: boolean; data: any }>(`/decorations/${id}/coming-soon`);
     const d = res.data.data;
     return {
       ...d,

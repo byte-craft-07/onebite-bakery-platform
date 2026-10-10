@@ -70,6 +70,7 @@ export const AdminDecorationsPage: React.FC = () => {
   const [description, setDescription] = useState("");
   const [inStock, setInStock] = useState<boolean>(true);
   const [isActive, setIsActive] = useState<boolean>(true);
+  const [isComingSoon, setIsComingSoon] = useState<boolean>(false);
   const [displayOrder, setDisplayOrder] = useState<number>(1);
   const [dbCategories, setDbCategories] = useState<string[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
@@ -162,22 +163,26 @@ export const AdminDecorationsPage: React.FC = () => {
   // Filtered List
   const filteredDecorations = useMemo(() => {
     return decorations.filter((item) => {
+      if (!item) return false;
+      const q = (searchQuery || "").trim().toLowerCase();
+      const cat = (item.category || "").toLowerCase();
       const matchesSearch =
-        searchQuery === "" ||
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchQuery.toLowerCase());
+        q === "" ||
+        (item.name || "").toLowerCase().includes(q) ||
+        (item.description || "").toLowerCase().includes(q) ||
+        cat.includes(q);
 
       const matchesCategory =
         categoryFilter === "ALL" ||
-        item.category.toLowerCase() === categoryFilter.toLowerCase();
+        cat === (categoryFilter || "").toLowerCase();
 
       const matchesStatus =
         statusFilter === "ALL" ||
         (statusFilter === "ACTIVE" && item.isActive) ||
         (statusFilter === "INACTIVE" && !item.isActive) ||
         (statusFilter === "IN_STOCK" && item.inStock) ||
-        (statusFilter === "OUT_OF_STOCK" && !item.inStock);
+        (statusFilter === "OUT_OF_STOCK" && !item.inStock) ||
+        (statusFilter === "COMING_SOON" && Boolean(item.isComingSoon));
 
       return matchesSearch && matchesCategory && matchesStatus;
     });
@@ -187,6 +192,7 @@ export const AdminDecorationsPage: React.FC = () => {
   const totalCount = decorations.length;
   const activeCount = decorations.filter((d) => d.isActive).length;
   const inStockCount = decorations.filter((d) => d.inStock).length;
+  const comingSoonCount = decorations.filter((d) => d.isComingSoon).length;
   const uniqueCategories = Array.from(new Set(decorations.map((d) => d.category))).length;
 
   const handleOpenCreate = () => {
@@ -205,6 +211,7 @@ export const AdminDecorationsPage: React.FC = () => {
     setDescription("");
     setInStock(true);
     setIsActive(true);
+    setIsComingSoon(false);
     setDisplayOrder(decorations.length + 1);
     setFormError(null);
     setIsModalOpen(true);
@@ -228,6 +235,7 @@ export const AdminDecorationsPage: React.FC = () => {
     setDescription(item.description || "");
     setInStock(item.inStock ?? true);
     setIsActive(item.isActive ?? true);
+    setIsComingSoon(Boolean(item.isComingSoon));
     setDisplayOrder(item.displayOrder || 0);
     setFormError(null);
     setIsModalOpen(true);
@@ -270,6 +278,7 @@ export const AdminDecorationsPage: React.FC = () => {
       description: description.trim(),
       inStock: Boolean(inStock),
       isActive: Boolean(isActive),
+      isComingSoon: Boolean(isComingSoon),
       displayOrder: Number(displayOrder) || 0,
     };
 
@@ -338,6 +347,24 @@ export const AdminDecorationsPage: React.FC = () => {
     }
   };
 
+  const handleToggleComingSoon = async (item: Decoration) => {
+    try {
+      const updated = await decorationService.adminToggleComingSoon(item.id);
+      setDecorations((prev) => prev.map((d) => (d.id === item.id ? updated : d)));
+      clientCache.invalidate("decorations");
+      clientCache.invalidate("decorations_list");
+      clientCache.invalidate("catalog_categories");
+      clientCache.clear();
+      window.dispatchEvent(new Event("onebitebakery_catalog_updated"));
+      toast.info(
+        "Coming Soon Updated",
+        `"${item.name}" is now marked as ${updated.isComingSoon ? "Coming Soon (जल्द आ रहा है)" : "Live (Available)"}.`
+      );
+    } catch (_err) {
+      toast.error("Error", "Could not toggle Coming Soon status.");
+    }
+  };
+
   const handleDeletePermanent = async () => {
     if (!deleteConfirmItem) return;
 
@@ -390,7 +417,7 @@ export const AdminDecorationsPage: React.FC = () => {
       />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <AdminStatCard
           title="Total Decorations"
           value={totalCount}
@@ -405,6 +432,11 @@ export const AdminDecorationsPage: React.FC = () => {
           title="In Stock Ready"
           value={inStockCount}
           icon={<Package className="h-5 w-5" />}
+        />
+        <AdminStatCard
+          title="Coming Soon Items"
+          value={comingSoonCount}
+          icon={<span className="text-base">🚀</span>}
         />
         <AdminStatCard
           title="Categories"
@@ -452,6 +484,7 @@ export const AdminDecorationsPage: React.FC = () => {
             <option value="INACTIVE">Inactive (Hidden)</option>
             <option value="IN_STOCK">In Stock</option>
             <option value="OUT_OF_STOCK">Out of Stock</option>
+            <option value="COMING_SOON">🚀 Coming Soon</option>
           </select>
 
           {(searchQuery || categoryFilter !== "ALL" || statusFilter !== "ALL") && (
@@ -476,7 +509,7 @@ export const AdminDecorationsPage: React.FC = () => {
           <div className="overflow-x-auto p-4">
             <table className="w-full text-left text-xs md:text-sm">
               <tbody>
-                <AdminTableSkeleton columns={7} rows={5} />
+                <AdminTableSkeleton columns={8} rows={5} />
               </tbody>
             </table>
           </div>
@@ -508,6 +541,7 @@ export const AdminDecorationsPage: React.FC = () => {
                   <th className="py-3 px-4">Rating</th>
                   <th className="py-3 px-4">Stock</th>
                   <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Coming Soon</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -533,7 +567,14 @@ export const AdminDecorationsPage: React.FC = () => {
                             className="h-12 w-12 rounded-xl object-cover border border-[#E5DEC9] shrink-0"
                           />
                           <div className="min-w-0 max-w-xs md:max-w-md">
-                            <h4 className="font-bold text-[#3B302B] truncate">{item.name}</h4>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h4 className="font-bold text-[#3B302B] truncate">{item.name}</h4>
+                              {item.isComingSoon && (
+                                <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-300">
+                                  🚀 Coming Soon
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[11px] text-[#7A6E65] line-clamp-1">{item.description}</p>
                           </div>
                         </div>
@@ -602,6 +643,22 @@ export const AdminDecorationsPage: React.FC = () => {
                         >
                           {item.isActive ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
                           <span>{item.isActive ? "Active" : "Hidden"}</span>
+                        </button>
+                      </td>
+
+                      {/* Coming Soon Toggle */}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleComingSoon(item)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-colors ${
+                            item.isComingSoon
+                              ? "bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300"
+                              : "bg-gray-100 text-gray-500 hover:bg-gray-200 border border-transparent"
+                          }`}
+                          title="Click to toggle Coming Soon status"
+                        >
+                          <span>{item.isComingSoon ? "🚀 Coming Soon" : "Available"}</span>
                         </button>
                       </td>
 
@@ -767,7 +824,7 @@ export const AdminDecorationsPage: React.FC = () => {
             </div>
 
             {/* Toggles */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-[#E5DEC9]">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-[#E5DEC9]">
               <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-[#3B302B]">
                 <input
                   type="checkbox"
@@ -786,6 +843,19 @@ export const AdminDecorationsPage: React.FC = () => {
                   className="rounded text-[#596B58] focus:ring-[#596B58] h-4 w-4"
                 />
                 <span>Active on Storefront</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-[#3B302B]">
+                <input
+                  type="checkbox"
+                  checked={isComingSoon}
+                  onChange={(e) => setIsComingSoon(e.target.checked)}
+                  className="rounded text-amber-600 focus:ring-amber-500 h-4 w-4"
+                />
+                <span className="flex items-center gap-1">
+                  <span>🚀 Coming Soon</span>
+                  <span className="text-[10px] text-amber-700 font-normal">(जल्द आ रहा है)</span>
+                </span>
               </label>
 
               <div>

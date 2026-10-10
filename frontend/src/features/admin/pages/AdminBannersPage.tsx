@@ -369,7 +369,8 @@ export const AdminBannersPage: React.FC = () => {
   };
 
   const filteredBanners = banners.filter((b) => {
-    const matchesSearch = b.title.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!b) return false;
+    const matchesSearch = (b.title || "").toLowerCase().includes((searchQuery || "").trim().toLowerCase());
     if (!matchesSearch) return false;
     if (filterStatus === "active") return b.isActive;
     if (filterStatus === "inactive") return !b.isActive;

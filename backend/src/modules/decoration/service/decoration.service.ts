@@ -68,6 +68,7 @@ export interface CreateDecorationInput {
   description: string;
   inStock?: boolean;
   isActive?: boolean;
+  isComingSoon?: boolean;
   displayOrder?: number;
 }
 
@@ -110,6 +111,7 @@ export class DecorationService {
       rating: input.rating !== undefined ? Number(input.rating) : 4.8,
       inStock: input.inStock !== undefined ? Boolean(input.inStock) : true,
       isActive: input.isActive !== undefined ? Boolean(input.isActive) : true,
+      isComingSoon: input.isComingSoon !== undefined ? Boolean(input.isComingSoon) : false,
       displayOrder: input.displayOrder !== undefined ? Number(input.displayOrder) : 0,
     });
   }
@@ -132,6 +134,12 @@ export class DecorationService {
     const current = await decorationRepository.findById(id);
     if (!current) return null;
     return decorationRepository.update(id, { inStock: !current.inStock });
+  }
+
+  async toggleDecorationComingSoon(id: string): Promise<Decoration | null> {
+    const current = await decorationRepository.findById(id);
+    if (!current) return null;
+    return decorationRepository.update(id, { isComingSoon: !current.isComingSoon });
   }
 
   async deleteDecoration(id: string): Promise<boolean> {

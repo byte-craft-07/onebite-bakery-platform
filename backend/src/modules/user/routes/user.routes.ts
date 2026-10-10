@@ -57,11 +57,11 @@ const toUserResponse = (
   const contactPhone = address?.phone || user.phone;
   return {
     id: user._id.toString(),
-    name: user.name,
+    name: user.name || "Customer",
     phone: contactPhone,
     email: user.email,
-    role: user.role,
-    status: user.status,
+    role: user.role || "customer",
+    status: user.status || "active",
     ...(user.profileImage ? { profileImage: user.profileImage } : {}),
     ...(user.currentLocation
       ? {

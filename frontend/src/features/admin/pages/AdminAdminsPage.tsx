@@ -163,9 +163,10 @@ export const AdminAdminsPage: React.FC = () => {
   };
 
   const filteredAdmins = admins.filter((a) => {
-    const q = searchQuery.toLowerCase();
+    if (!a) return false;
+    const q = (searchQuery || "").trim().toLowerCase();
     const matchesSearch =
-      a.name.toLowerCase().includes(q) ||
+      (a.name || "").toLowerCase().includes(q) ||
       (a.email && a.email.toLowerCase().includes(q)) ||
       (a.phone && a.phone.includes(q));
 

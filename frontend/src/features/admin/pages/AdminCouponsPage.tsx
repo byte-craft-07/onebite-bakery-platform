@@ -124,9 +124,11 @@ export const AdminCouponsPage: React.FC = () => {
   };
 
   const filtered = coupons.filter((c) => {
+    if (!c) return false;
+    const q = (searchQuery || "").trim().toLowerCase();
     const matchesSearch =
-      c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.description && c.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      (c.code || "").toLowerCase().includes(q) ||
+      (c.description && c.description.toLowerCase().includes(q));
 
     if (filterType === "ACTIVE") return matchesSearch && c.isActive;
     if (filterType === "INACTIVE") return matchesSearch && !c.isActive;

@@ -17,6 +17,7 @@ export interface Decoration extends TimestampedDocument {
   description: string;
   inStock: boolean;
   isActive: boolean;
+  isComingSoon?: boolean;
   displayOrder: number;
 }
 
@@ -78,6 +79,10 @@ const decorationSchema = new Schema<Decoration>(
       type: Boolean,
       required: true,
       default: true,
+    },
+    isComingSoon: {
+      type: Boolean,
+      default: false,
     },
     displayOrder: {
       type: Number,

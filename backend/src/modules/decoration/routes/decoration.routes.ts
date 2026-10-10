@@ -69,6 +69,14 @@ decorationRouter.patch(
   asyncHandler((req, res) => decorationController.toggleDecorationStock(req, res)),
 );
 
+// Admin: Toggle coming soon status
+decorationRouter.patch(
+  "/:id/coming-soon",
+  ...adminOnly,
+  invalidateCache(["decorations", "categories", "products"]),
+  asyncHandler((req, res) => decorationController.toggleDecorationComingSoon(req, res)),
+);
+
 // Admin: Delete decoration permanently
 decorationRouter.delete(
   "/:id",

@@ -55,26 +55,34 @@ export const AdminCustomersPage: React.FC = () => {
   }, []);
 
   const filtered = customers.filter((c) => {
-    const contactPhone = c.address?.phone || c.phone || "";
+    if (!c) return false;
+    const q = (searchQuery || "").trim().toLowerCase();
+    const name = (c.name || "").toLowerCase();
+    const contactPhone = (c.address?.phone || c.phone || "").toLowerCase();
+    const email = (c.email || "").toLowerCase();
+    const village = (c.address?.village || "").toLowerCase();
+    const locationVillage = (c.currentLocation?.villageName || "").toLowerCase();
+
     return (
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contactPhone.includes(searchQuery) ||
-      (c.email && c.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (c.address?.village && c.address.village.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (c.currentLocation?.villageName && c.currentLocation.villageName.toLowerCase().includes(searchQuery.toLowerCase()))
+      name.includes(q) ||
+      contactPhone.includes(q) ||
+      email.includes(q) ||
+      village.includes(q) ||
+      locationVillage.includes(q)
     );
   });
 
   const handleToggleStatus = async (usr: AdminCustomerSummary) => {
+    const currentStatus = usr.status || "active";
     try {
-      const updated = await adminOperationsService.toggleCustomerStatus(usr.id, usr.status);
+      const updated = await adminOperationsService.toggleCustomerStatus(usr.id, currentStatus);
       setCustomers((prev) =>
         prev.map((c) => (c.id === usr.id ? { ...c, status: updated.status } : c))
       );
     } catch (_err) {
       setCustomers((prev) =>
         prev.map((c) =>
-          c.id === usr.id ? { ...c, status: c.status === "active" ? "blocked" : "active" } : c
+          c.id === usr.id ? { ...c, status: currentStatus === "active" ? "blocked" : "active" } : c
         )
       );
     }
@@ -98,6 +106,9 @@ export const AdminCustomersPage: React.FC = () => {
         ) : filtered.length > 0 ? (
           filtered.map((usr) => {
             const rawPhone = usr.address?.phone || usr.phone;
+            const customerName = usr.name || "Customer";
+            const customerRole = usr.role || "customer";
+            const customerStatus = usr.status || "active";
             const formattedPhone = rawPhone
               ? (rawPhone.startsWith("+91") ? rawPhone : `+91 ${rawPhone.replace(/\D/g, "").slice(-10)}`)
               : null;
@@ -113,7 +124,7 @@ export const AdminCustomersPage: React.FC = () => {
 
             return (
               <tr key={usr.id} className="hover:bg-[#FFF8EC]/50 transition-colors">
-                <td className="px-4 py-3 font-bold text-[#3B302B]">{usr.name}</td>
+                <td className="px-4 py-3 font-bold text-[#3B302B]">{customerName}</td>
                 <td className="px-4 py-3 font-mono text-xs">
                   {formattedPhone ? (
                     <span className="text-[#3B302B] font-semibold">{formattedPhone}</span>
@@ -124,11 +135,11 @@ export const AdminCustomersPage: React.FC = () => {
                 <td className="px-4 py-3">
                   {validWaPhone ? (
                     <a
-                      href={`https://wa.me/${validWaPhone}?text=${encodeURIComponent(`Hello ${usr.name}, greetings from Onebite Bakery!`)}`}
+                      href={`https://wa.me/${validWaPhone}?text=${encodeURIComponent(`Hello ${customerName}, greetings from Onebite Bakery!`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold text-xs transition-all hover:shadow-xs group cursor-pointer"
-                      title={`Chat with ${usr.name} on WhatsApp (+${validWaPhone})`}
+                      title={`Chat with ${customerName} on WhatsApp (+${validWaPhone})`}
                     >
                       <svg className="w-3.5 h-3.5 fill-[#25D366] shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                         <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
@@ -151,35 +162,35 @@ export const AdminCustomersPage: React.FC = () => {
                   <span>{usr.email || "N/A"}</span>
                   {usr.address?.village ? <span className="block text-[11px] text-[#596B58] font-medium">📍 {usr.address.village}, {usr.address.district || ""}</span> : null}
                 </td>
-              <td className="px-4 py-3">
-                <Badge variant={usr.role === "admin" ? "primary" : "neutral"}>
-                  {usr.role.toUpperCase()}
-                </Badge>
-              </td>
-              <td className="px-4 py-3">
-                <Badge variant={usr.status === "active" ? "success" : "danger"}>
-                  {usr.status.toUpperCase()}
-                </Badge>
-              </td>
-              <td className="px-4 py-3">
-                {usr.role !== "admin" ? (
-                  <button
-                    onClick={() => handleToggleStatus(usr)}
-                    className={`text-xs font-bold px-3 py-1 rounded-lg border transition-colors cursor-pointer ${
-                      usr.status === "active"
-                        ? "border-red-300 text-red-600 hover:bg-red-50"
-                        : "border-green-300 text-green-700 hover:bg-green-50"
-                    }`}
-                  >
-                    {usr.status === "active" ? "Block Account" : "Unblock Account"}
-                  </button>
-                ) : (
-                  <span className="text-xs text-gray-400 font-medium">Protected Admin</span>
-                )}
-              </td>
-            </tr>
-          );
-        })
+                <td className="px-4 py-3">
+                  <Badge variant={customerRole === "admin" ? "primary" : "neutral"}>
+                    {customerRole.toUpperCase()}
+                  </Badge>
+                </td>
+                <td className="px-4 py-3">
+                  <Badge variant={customerStatus === "active" ? "success" : "danger"}>
+                    {customerStatus.toUpperCase()}
+                  </Badge>
+                </td>
+                <td className="px-4 py-3">
+                  {customerRole !== "admin" ? (
+                    <button
+                      onClick={() => handleToggleStatus(usr)}
+                      className={`text-xs font-bold px-3 py-1 rounded-lg border transition-colors cursor-pointer ${
+                        customerStatus === "active"
+                          ? "border-red-300 text-red-600 hover:bg-red-50"
+                          : "border-green-300 text-green-700 hover:bg-green-50"
+                      }`}
+                    >
+                      {customerStatus === "active" ? "Block Account" : "Unblock Account"}
+                    </button>
+                  ) : (
+                    <span className="text-xs text-gray-400 font-medium">Protected Admin</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })
         ) : (
           <tr>
             <td colSpan={7} className="text-center py-8 text-xs text-[#7A6E65]">
@@ -205,11 +216,13 @@ export const AdminPaymentsPage: React.FC = () => {
     });
   }, []);
 
-  const filtered = payments.filter(
-    (p) =>
-      p.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.paymentId.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filtered = payments.filter((p) => {
+    if (!p) return false;
+    const q = (searchQuery || "").trim().toLowerCase();
+    const orderNum = (p.orderNumber || "").toLowerCase();
+    const payId = (p.paymentId || "").toLowerCase();
+    return orderNum.includes(q) || payId.includes(q);
+  });
 
   return (
     <div className="space-y-6">

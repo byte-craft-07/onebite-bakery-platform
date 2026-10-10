@@ -279,10 +279,12 @@ export const AdminBranchManagementPage: React.FC = () => {
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("ALL");
 
   const filteredBranches = branches.filter((b) => {
+    if (!b) return false;
+    const q = (searchQuery || "").trim().toLowerCase();
     const matchesSearch =
-      b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.address.city.toLowerCase().includes(searchQuery.toLowerCase());
+      (b.name || "").toLowerCase().includes(q) ||
+      (b.code || "").toLowerCase().includes(q) ||
+      (b.address?.city || "").toLowerCase().includes(q);
 
     const matchesType =
       selectedTypeFilter === "ALL" || b.type === selectedTypeFilter;

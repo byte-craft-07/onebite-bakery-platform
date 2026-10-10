@@ -178,6 +178,7 @@ export class CartService {
               stockStatus: dec.inStock ? "IN_STOCK" : "OUT_OF_STOCK",
               isActive: dec.isActive,
               isAvailable: dec.inStock,
+              isComingSoon: Boolean((dec as any).isComingSoon),
               trackInventory: false,
               allowBackorder: true,
             };

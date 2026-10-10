@@ -115,7 +115,7 @@ export const BranchAdminProductsPage: React.FC = () => {
   };
 
   const filteredProducts = products.filter((p) =>
-    p.productName.toLowerCase().includes(searchQuery.toLowerCase()),
+    (p?.productName || "").toLowerCase().includes((searchQuery || "").trim().toLowerCase()),
   );
 
   if (isLoading) {

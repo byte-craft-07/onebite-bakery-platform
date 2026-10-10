@@ -127,11 +127,14 @@ export const AdminCatalogPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const filtered = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filtered = products.filter((p) => {
+    if (!p) return false;
+    const q = (searchQuery || "").trim().toLowerCase();
+    return (
+      (p.name || "").toLowerCase().includes(q) ||
+      (p.sku && p.sku.toLowerCase().includes(q))
+    );
+  });
 
   return (
     <div className="space-y-6">

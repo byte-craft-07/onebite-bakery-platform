@@ -185,9 +185,11 @@ export const AdminCombosPage: React.FC = () => {
 
   // Filtered list
   const filteredCombos = combos.filter((combo) => {
+    if (!combo) return false;
+    const q = (searchQuery || "").trim().toLowerCase();
     const matchesSearch =
-      combo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (combo.items && combo.items.some((i) => i.toLowerCase().includes(searchQuery.toLowerCase())));
+      (combo.title || "").toLowerCase().includes(q) ||
+      (combo.items && combo.items.some((i) => (i || "").toLowerCase().includes(q)));
 
     if (!matchesSearch) return false;
     if (statusFilter === "ACTIVE") return combo.isActive;

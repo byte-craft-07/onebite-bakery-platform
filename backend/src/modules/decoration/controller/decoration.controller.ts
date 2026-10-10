@@ -94,6 +94,7 @@ export class DecorationController {
         description,
         inStock,
         isActive,
+        isComingSoon,
         displayOrder,
       } = req.body;
 
@@ -117,6 +118,7 @@ export class DecorationController {
         description,
         inStock: inStock !== undefined ? Boolean(inStock) : true,
         isActive: isActive !== undefined ? Boolean(isActive) : true,
+        isComingSoon: isComingSoon !== undefined ? Boolean(isComingSoon) : false,
         displayOrder: displayOrder !== undefined ? Number(displayOrder) : 0,
       });
 
@@ -201,6 +203,30 @@ export class DecorationController {
       res.status(500).json({
         success: false,
         message: err instanceof Error ? err.message : "Failed to toggle decoration stock status.",
+      });
+    }
+  }
+
+  async toggleDecorationComingSoon(req: Request, res: Response): Promise<void> {
+    try {
+      const id = req.params.id as string;
+      const decoration = await decorationService.toggleDecorationComingSoon(id);
+      if (!decoration) {
+        res.status(404).json({
+          success: false,
+          message: "Decoration item not found.",
+        });
+        return;
+      }
+      res.status(200).json({
+        success: true,
+        message: `Decoration is now ${decoration.isComingSoon ? "Marked as Coming Soon" : "Live and Available"}.`,
+        data: decoration,
+      });
+    } catch (err: unknown) {
+      res.status(500).json({
+        success: false,
+        message: err instanceof Error ? err.message : "Failed to toggle decoration coming soon status.",
       });
     }
   }

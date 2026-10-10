@@ -100,6 +100,7 @@ export function convertDecorationToProductItem(
     sku: `DEC-${d.slug || d.id}`,
     isEggless: true,
     isAvailable: d.inStock !== false,
+    isComingSoon: Boolean(d.isComingSoon),
     categoryId: matchedCat
       ? {
           id: matchedCat.id,

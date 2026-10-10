@@ -24,11 +24,13 @@ export const AdminSecurityPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredLogs = auditLogs.filter((log) => {
+    if (!log) return false;
     const matchesModule = selectedModule === "ALL" || log.targetModule === selectedModule;
+    const q = (searchQuery || "").trim().toLowerCase();
     const matchesQuery =
-      log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.adminName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.details.toLowerCase().includes(searchQuery.toLowerCase());
+      (log.action || "").toLowerCase().includes(q) ||
+      (log.adminName || "").toLowerCase().includes(q) ||
+      (log.details || "").toLowerCase().includes(q);
     return matchesModule && matchesQuery;
   });
 

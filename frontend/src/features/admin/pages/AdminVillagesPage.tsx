@@ -148,12 +148,15 @@ export const AdminVillagesPage: React.FC = () => {
     }
   };
 
-  const filteredVillages = villages.filter(
-    (v) =>
-      v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.district.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.pincode.includes(searchQuery),
-  );
+  const filteredVillages = villages.filter((v) => {
+    if (!v) return false;
+    const q = (searchQuery || "").trim().toLowerCase();
+    return (
+      (v.name || "").toLowerCase().includes(q) ||
+      (v.district || "").toLowerCase().includes(q) ||
+      (v.pincode && v.pincode.includes(q))
+    );
+  });
 
   return (
     <div className="space-y-6 pb-12">
