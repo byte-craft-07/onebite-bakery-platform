@@ -13,8 +13,10 @@ export interface DirectOrderItem {
   customization?: {
     message?: string;
     eggless?: boolean;
+    weight?: string;
   };
   itemTotal: number;
+  isInstantAvailable?: boolean;
 }
 
 export interface CheckoutPreviewResponse {

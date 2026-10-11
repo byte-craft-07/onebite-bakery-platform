@@ -10,7 +10,7 @@ import {
   Zap,
 } from "lucide-react";
 
-import { ProductCard } from "@/components/product/ProductCard";
+import { ProductCard } from "@/components/cards/ProductCard";
 import { toast } from "@/contexts/toast.context";
 import { useAuth } from "@/contexts/auth.context";
 import { decorationService, type Decoration } from "@/services/decoration.service";
