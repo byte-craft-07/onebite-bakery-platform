@@ -64,6 +64,38 @@ export const AdminMainBranchOrdersPage: React.FC = () => {
   const [isClearAllModalOpen, setIsClearAllModalOpen] = useState(false);
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
   const [viewReceiptImage, setViewReceiptImage] = useState<string | null>(null);
+  const [minOrderLimit, setMinOrderLimit] = useState<number>(300);
+  const [isSavingLimit, setIsSavingLimit] = useState(false);
+  const [limitSavedMsg, setLimitSavedMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    adminOperationsService
+      .getSettings()
+      .then((res) => {
+        if (res && typeof res.minOrderValue === "number") {
+          setMinOrderLimit(res.minOrderValue);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSaveMinOrderLimit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingLimit(true);
+    setLimitSavedMsg(null);
+    try {
+      const current = await adminOperationsService.getSettings();
+      const updated = await adminOperationsService.updateSettings({
+        ...current,
+        minOrderValue: Math.max(0, Number(minOrderLimit)),
+      });
+      setMinOrderLimit(updated.minOrderValue);
+      setLimitSavedMsg(`Saved! Limit: ₹${updated.minOrderValue}`);
+      setTimeout(() => setLimitSavedMsg(null), 3500);
+    } finally {
+      setIsSavingLimit(false);
+    }
+  };
 
   const handleApprovePayment = async (orderId: string) => {
     try {
@@ -275,6 +307,48 @@ export const AdminMainBranchOrdersPage: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Admin Online Order Price Lower Limit Bar */}
+      <form
+        onSubmit={handleSaveMinOrderLimit}
+        className="bg-white p-3.5 rounded-2xl border border-[#E5DEC9] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+      >
+        <div className="flex items-start sm:items-center gap-2.5 text-xs text-[#3B302B]">
+          <div className="p-2 rounded-xl bg-[#FFF8EC] border border-[#E5DEC9] text-[#596B58] shrink-0">
+            <Truck className="h-4 w-4" />
+          </div>
+          <div>
+            <p className="font-extrabold text-[#3B302B]">
+              Online Order Price Lower Limit (Min Order Amount): <span className="text-[#596B58]">₹{minOrderLimit}</span>
+            </p>
+            <p className="text-[11px] text-[#7A6E65]">
+              Orders below ₹{minOrderLimit} are not eligible for online delivery and are directed to Store Pickup.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {limitSavedMsg ? (
+            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+              {limitSavedMsg}
+            </span>
+          ) : null}
+          <div className="flex items-center gap-1.5 bg-[#FFF8EC] border border-[#E5DEC9] rounded-xl px-2.5 py-1.5">
+            <span className="text-xs font-bold text-[#7A6E65]">₹</span>
+            <input
+              type="number"
+              min={0}
+              value={minOrderLimit}
+              onChange={(e) => setMinOrderLimit(Number(e.target.value))}
+              className="w-20 px-2 py-0.5 rounded bg-white border border-[#E5DEC9] text-xs font-extrabold text-[#3B302B] outline-none focus:border-[#596B58]"
+              required
+            />
+          </div>
+          <Button type="submit" size="sm" isLoading={isSavingLimit}>
+            Set Limit
+          </Button>
+        </div>
+      </form>
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">

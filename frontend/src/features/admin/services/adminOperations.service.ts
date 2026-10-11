@@ -540,23 +540,12 @@ export const adminOperationsService = {
   },
 
   getSettings: async (): Promise<StoreSettingsPayload> => {
-    try {
-      const response = await apiClient.get<{
-        success: boolean;
-        data: { settings: StoreSettingsPayload };
-      }>("/settings");
-      if (response.data?.data?.settings) {
-        return response.data.data.settings;
-      }
-    } catch (_err) {
-      // Fallback
-    }
-    return {
+    const defaultSettings: StoreSettingsPayload = {
       storeName: "Onebite Bakery",
       phone: "+91 7897671632",
       email: "ajaykterha@gmail.com",
       gstin: "07AAAAA0000A1Z5",
-      minOrderValue: 299,
+      minOrderValue: 300,
       freeDeliveryThreshold: 799,
       standardDeliveryCharge: 49,
       taxRatePercent: 5,
@@ -565,15 +554,77 @@ export const adminOperationsService = {
       upiId: "7897671632-2@ybl",
       upiQr: "",
     };
+    const localStored = getStored<StoreSettingsPayload | null>("onebitebakery_local_settings", null);
+
+    try {
+      const response = await apiClient.get<{
+        success: boolean;
+        data: { settings: StoreSettingsPayload & { minOrderAmount?: number } };
+      }>("/settings");
+      if (response.data?.data?.settings) {
+        const remote = response.data.data.settings;
+        const merged: StoreSettingsPayload = {
+          ...defaultSettings,
+          ...remote,
+          minOrderValue:
+            remote.minOrderValue ??
+            remote.minOrderAmount ??
+            localStored?.minOrderValue ??
+            300,
+        };
+        setStored("onebitebakery_local_settings", merged);
+        return merged;
+      }
+    } catch (_err) {
+      // Fallback to locally stored settings or defaults
+    }
+    return localStored ? { ...defaultSettings, ...localStored } : defaultSettings;
   },
 
   updateSettings: async (settings: StoreSettingsPayload) => {
-    adminOperationsService.logAuditAction("UPDATE_STORE_SETTINGS", `Min order ₹${settings.minOrderValue}, Free threshold ₹${settings.freeDeliveryThreshold}`);
-    const response = await apiClient.put<{
-      success: boolean;
-      data: { settings: StoreSettingsPayload };
-    }>("/settings", settings);
-    return response.data.data.settings;
+    const normalizedSettings: StoreSettingsPayload = {
+      ...settings,
+      minOrderValue: Math.max(0, Number(settings.minOrderValue ?? 300)),
+      freeDeliveryThreshold: Math.max(0, Number(settings.freeDeliveryThreshold ?? 799)),
+      standardDeliveryCharge: Math.max(0, Number(settings.standardDeliveryCharge ?? 49)),
+    };
+    setStored("onebitebakery_local_settings", normalizedSettings);
+    adminOperationsService.logAuditAction(
+      "UPDATE_STORE_SETTINGS",
+      `Min online order ₹${normalizedSettings.minOrderValue}, Free threshold ₹${normalizedSettings.freeDeliveryThreshold}`,
+    );
+
+    try {
+      const response = await apiClient.put<{
+        success: boolean;
+        data: { settings: StoreSettingsPayload & { minOrderAmount?: number } };
+      }>("/settings", {
+        ...normalizedSettings,
+        minOrderAmount: normalizedSettings.minOrderValue,
+      });
+      if (response.data?.data?.settings) {
+        const updated: StoreSettingsPayload = {
+          ...normalizedSettings,
+          ...response.data.data.settings,
+          minOrderValue:
+            response.data.data.settings.minOrderValue ??
+            response.data.data.settings.minOrderAmount ??
+            normalizedSettings.minOrderValue,
+        };
+        setStored("onebitebakery_local_settings", updated);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("onebitebakery_settings_updated", { detail: updated }));
+        }
+        return updated;
+      }
+    } catch (_err) {
+      // Return locally persisted settings if backend is unreachable
+    }
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("onebitebakery_settings_updated", { detail: normalizedSettings }));
+    }
+    return normalizedSettings;
   },
 
   getPlatformHealth: async (): Promise<PlatformHealthResponse> => {

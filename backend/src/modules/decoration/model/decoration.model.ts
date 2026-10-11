@@ -4,20 +4,35 @@ import { COLLECTION_NAMES } from "../../../db/constants/collection-names.js";
 import { baseSchemaOptions } from "../../../db/schema-options.js";
 import type { TimestampedDocument } from "../../../db/types/base-document.types.js";
 
+export interface DecorationWeightOption {
+  weight: string;
+  serves?: string;
+  price: number;
+  compareAtPrice?: number;
+}
+
 export interface Decoration extends TimestampedDocument {
   _id: Types.ObjectId;
   name: string;
+  nameHi?: string;
   slug: string;
   category: string;
   price: number;
   originalPrice: number;
+  sku?: string;
+  unit?: string;
+  stockQuantity?: number;
   rating: number;
   image: string;
   images?: string[];
   description: string;
+  descriptionHi?: string;
   inStock: boolean;
   isActive: boolean;
   isComingSoon?: boolean;
+  isInstantAvailable?: boolean;
+  isEggless?: boolean;
+  weightOptions?: DecorationWeightOption[];
   displayOrder: number;
 }
 
@@ -27,6 +42,11 @@ const decorationSchema = new Schema<Decoration>(
       type: String,
       required: true,
       trim: true,
+    },
+    nameHi: {
+      type: String,
+      trim: true,
+      default: undefined,
     },
     slug: {
       type: String,
@@ -50,6 +70,21 @@ const decorationSchema = new Schema<Decoration>(
       required: true,
       min: 0,
     },
+    sku: {
+      type: String,
+      trim: true,
+      default: undefined,
+    },
+    unit: {
+      type: String,
+      trim: true,
+      default: undefined,
+    },
+    stockQuantity: {
+      type: Number,
+      min: 0,
+      default: 50,
+    },
     rating: {
       type: Number,
       min: 1,
@@ -70,6 +105,11 @@ const decorationSchema = new Schema<Decoration>(
       required: true,
       trim: true,
     },
+    descriptionHi: {
+      type: String,
+      trim: true,
+      default: undefined,
+    },
     inStock: {
       type: Boolean,
       required: true,
@@ -83,6 +123,25 @@ const decorationSchema = new Schema<Decoration>(
     isComingSoon: {
       type: Boolean,
       default: false,
+    },
+    isInstantAvailable: {
+      type: Boolean,
+      default: true,
+    },
+    isEggless: {
+      type: Boolean,
+      default: true,
+    },
+    weightOptions: {
+      type: [
+        {
+          weight: { type: String, required: true },
+          serves: { type: String },
+          price: { type: Number, required: true },
+          compareAtPrice: { type: Number },
+        },
+      ],
+      default: undefined,
     },
     displayOrder: {
       type: Number,

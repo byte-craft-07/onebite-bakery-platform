@@ -45,7 +45,21 @@ export const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, currentLocation, logout } = useAuth();
-  const { isStandalone, promptInstall, setShowInstallModal } = usePWA();
+  const { isStandalone, isInstalled, promptInstall, setShowInstallModal } = usePWA();
+  const [installingApp, setInstallingApp] = useState(false);
+
+  const handleInstallClick = async () => {
+    setInstallingApp(true);
+    try {
+      const installed = await promptInstall();
+      setIsMobileMenuOpen(false);
+      if (!installed) {
+        setShowInstallModal(true);
+      }
+    } finally {
+      setInstallingApp(false);
+    }
+  };
 
   const syncCartCount = async () => {
     try {
@@ -212,15 +226,16 @@ export const Navbar: React.FC = () => {
               <Heart className="h-4.5 w-4.5 xl:h-5 xl:w-5" />
             </Link>
 
-            {!isStandalone && (
+            {!isStandalone && !isInstalled && (
               <button
                 type="button"
-                onClick={promptInstall}
+                onClick={handleInstallClick}
+                disabled={installingApp}
                 className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl bg-[#596B58]/10 hover:bg-[#596B58]/20 text-[#596B58] text-xs font-bold transition-all border border-[#596B58]/20 cursor-pointer shadow-2xs whitespace-nowrap"
                 title="Install Onebite Bakery App"
               >
                 <Download className="h-4 w-4 text-[#596B58]" />
-                <span className="hidden xl:inline">{t("common.installApp", "Install App")}</span>
+                <span className="hidden xl:inline">{installingApp ? "Installing..." : t("common.installApp", "Install App")}</span>
                 <span className="xl:hidden">{t("common.app", "App")}</span>
               </button>
             )}
@@ -482,21 +497,16 @@ export const Navbar: React.FC = () => {
                     </Link>
                   )}
 
-                  {!isStandalone && (
+                  {!isStandalone && !isInstalled && (
                     <button
                       type="button"
-                      onClick={async () => {
-                        setIsMobileMenuOpen(false);
-                        const installed = await promptInstall();
-                        if (!installed) {
-                          setShowInstallModal(true);
-                        }
-                      }}
+                      onClick={handleInstallClick}
+                      disabled={installingApp}
                       className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-[#FFF8EC] border border-[#D8BE91] text-[#596B58] font-bold hover:bg-[#A8B89A]/20 transition-colors text-left text-xs cursor-pointer"
                     >
                       <Download className="h-4 w-4 text-[#596B58] shrink-0" />
                       <div className="flex-1">
-                        <div>Install App</div>
+                        <div>{installingApp ? "Installing..." : "Install App"}</div>
                         <div className="text-[10px] text-[#7A6E65] font-normal">Add to Home Screen for fast ordering</div>
                       </div>
                     </button>

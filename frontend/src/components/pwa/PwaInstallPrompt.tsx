@@ -10,6 +10,7 @@ export const PwaInstallPrompt: React.FC = () => {
     isInstallBannerDismissed,
     dismissInstallBanner,
     promptInstall,
+    showInstallModal,
     setShowInstallModal,
   } = usePWA();
 
@@ -28,7 +29,7 @@ export const PwaInstallPrompt: React.FC = () => {
     }
   }, [isInstallable, isStandalone, isInstalled, isInstallBannerDismissed]);
 
-  if (!visible) {
+  if (!visible || showInstallModal) {
     return null;
   }
 

@@ -21,13 +21,14 @@ import { usePWA } from "@/hooks/usePWA";
 
 export const CustomerSettingsPage: React.FC = () => {
   const { user } = useAuth();
-  const { isStandalone, isInstallable, promptInstall, setShowInstallModal, setShowPushModal } = usePWA();
+  const { isStandalone, isInstalled, promptInstall, setShowInstallModal, setShowPushModal } = usePWA();
 
   const [smsNotifs, setSmsNotifs] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [whatsappNotifs, setWhatsappNotifs] = useState(true);
   const [celebrationAlerts, setCelebrationAlerts] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [installingApp, setInstallingApp] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
   const handleSavePreferences = (e: React.FormEvent) => {
@@ -185,34 +186,41 @@ export const CustomerSettingsPage: React.FC = () => {
               </Button>
             </div>
 
-            {!isStandalone && (
+            {!isStandalone && !isInstalled && (
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#FFF8EC] border border-[#E5DEC9]">
                 <div className="space-y-0.5">
                   <span className="text-xs font-extrabold text-[#3B302B] flex items-center gap-1.5">
                     <Download className="h-3.5 w-3.5 text-[#596B58]" />
-                    <span>Install Onebite Bakery App</span>
+                    <span>Install Onebite Bakery</span>
                   </span>
                   <span className="text-[11px] text-[#7A6E65] block">
-                    Install as a standalone app or download the native installer file for Android / PC.
+                    Add to home screen for faster ordering, instant order tracking &amp; offline menu access.
                   </span>
                 </div>
                 <Button
                   type="button"
                   size="sm"
+                  disabled={installingApp}
                   onClick={async () => {
-                    const installed = await promptInstall();
-                    if (!installed) {
-                      setShowInstallModal(true);
+                    setInstallingApp(true);
+                    try {
+                      const installed = await promptInstall();
+                      if (!installed) {
+                        setShowInstallModal(true);
+                      }
+                    } finally {
+                      setInstallingApp(false);
                     }
                   }}
-                  className="shrink-0 bg-[#596B58] text-white text-xs font-bold"
+                  className="shrink-0 bg-[#596B58] text-white text-xs font-bold flex items-center gap-1.5"
                 >
-                  Install App
+                  <Download className="h-3.5 w-3.5" />
+                  <span>{installingApp ? "Installing..." : "Install App"}</span>
                 </Button>
               </div>
             )}
 
-            {isStandalone && (
+            {(isStandalone || isInstalled) && (
               <div className="flex items-center gap-2 p-3 rounded-xl bg-green-50 border border-green-200 text-green-800 text-xs font-semibold">
                 <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                 <span>Running as installed Progressive Web App on this device.</span>

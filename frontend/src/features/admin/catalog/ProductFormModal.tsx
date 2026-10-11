@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { CustomSelect, Input } from "@/components/ui/FormControls";
 import { MediaUploader } from "./MediaUploader";
 import { adminCatalogService, type CreateProductPayload } from "../services/adminCatalog.service";
+import { getProductDefaultOptions } from "@/utils/productGridUtils";
 
 const cleanSlug = (text: string): string => {
   return text
@@ -145,13 +146,14 @@ export const ProductFormModal: React.FC<{
             }))
           );
         } else {
-          const baseP = Number(initialData.price) || 499;
-          const baseC = initialData.compareAtPrice ? Number(initialData.compareAtPrice) : Math.round(baseP * 1.2);
-          setWeightRows([
-            { weight: "500g", serves: "4-6 slices", price: baseP, compareAtPrice: baseC },
-            { weight: "1kg", serves: "10-12 slices", price: Math.round(baseP * 1.8), compareAtPrice: Math.round(baseC * 1.8) },
-            { weight: "2kg", serves: "18-22 slices", price: Math.round(baseP * 3.4), compareAtPrice: Math.round(baseC * 3.4) },
-          ]);
+          setWeightRows(
+            getProductDefaultOptions(initialData).map((w) => ({
+              weight: w.weight,
+              serves: w.serves || "",
+              price: Number(w.price),
+              compareAtPrice: w.compareAtPrice ? Number(w.compareAtPrice) : undefined,
+            }))
+          );
         }
 
         const imgs: string[] = [];
@@ -494,20 +496,22 @@ export const ProductFormModal: React.FC<{
               if (url) handleAddImage(url);
             }}
             entityType="PRODUCT"
+            multiple={true}
+            label="Add Product Photo(s)"
           />
         </div>
 
-        {/* Weight Options & Multi-Tier Pricing for Cake / Product */}
+        {/* Weight / Pack / Pcs Options & Multi-Tier Pricing for Cake / Product */}
         <div className="space-y-3 p-3.5 rounded-2xl bg-[#FFF8EC] border border-[#E5DEC9]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Scale className="h-4 w-4 text-[#596B58]" />
               <div>
                 <label className="block text-xs font-bold text-[#3B302B]">
-                  Weight Options & Pricing (वजन व कीमत विकल्प)
+                  Weight / Pack / Pcs Options & Pricing (वजन / पैक / पीस व कीमत विकल्प)
                 </label>
                 <p className="text-[11px] text-[#7A6E65]">
-                  Set specific prices for 500g, 1kg, 2kg, etc. Customers can select weight with dynamic price update.
+                  Set weight (500g, 1kg), pack (1 Pack, Pack of 2), or piece count (1 Pc, 6 Pcs, 50 Pcs) shown with the price.
                 </p>
               </div>
             </div>
@@ -519,15 +523,15 @@ export const ProductFormModal: React.FC<{
               className="text-xs h-7 gap-1 border-[#596B58] text-[#596B58]"
             >
               <Plus className="h-3 w-3" />
-              <span>Add Tier</span>
+              <span>Add Option</span>
             </Button>
           </div>
 
           {weightRows.length > 0 ? (
             <div className="space-y-2 pt-1">
               <div className="grid grid-cols-12 gap-2 text-[10px] font-extrabold text-[#7A6E65] uppercase px-1">
-                <div className="col-span-3">Weight (वजन)</div>
-                <div className="col-span-3">Serves (लोग)</div>
+                <div className="col-span-3">Weight / Pack / Pcs</div>
+                <div className="col-span-3">Serves / Info</div>
                 <div className="col-span-3">Price (₹ कीमत)</div>
                 <div className="col-span-2">MRP (₹)</div>
                 <div className="col-span-1 text-center">Del</div>
@@ -542,7 +546,7 @@ export const ProductFormModal: React.FC<{
                     <input
                       type="text"
                       value={row.weight}
-                      placeholder="e.g. 500g"
+                      placeholder="e.g. 500g, 1 Pack, 6 Pcs"
                       onChange={(e) => handleUpdateWeightRow(idx, "weight", e.target.value)}
                       className="w-full p-1.5 text-xs rounded border border-[#E5DEC9] font-bold text-[#3B302B] outline-none focus:border-[#596B58]"
                     />

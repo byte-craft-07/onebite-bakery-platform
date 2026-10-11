@@ -267,7 +267,26 @@ export class ProductService {
   }
 
   public async getProduct(id: string): Promise<ProductResponse> {
-    return this.toResponse(await this.getExistingProduct(toObjectId(id)));
+    try {
+      const existing = await this.getExistingProduct(toObjectId(id));
+      return this.toResponse(existing);
+    } catch (err) {
+      try {
+        const { DecorationModel } = await import("../../decoration/model/decoration.model.js");
+        if (DecorationModel.db?.readyState === 1) {
+          const isObjectId = /^[a-f\d]{24}$/i.test(id);
+          const deco = await DecorationModel.findOne(
+            isObjectId ? { $or: [{ _id: id }, { slug: id }] } : { slug: id.toLowerCase() }
+          ).lean().exec();
+          if (deco) {
+            return this.convertDecorationToProductResponse(deco);
+          }
+        }
+      } catch (_decoErr) {
+        // Ignore fallback error
+      }
+      throw err;
+    }
   }
 
   public async listAdminProducts(): Promise<ProductResponse[]> {
@@ -470,6 +489,7 @@ export class ProductService {
             const qClean = searchParam.trim();
             const searchConditions = [
               { name: { $regex: qClean, $options: "i" } },
+              { nameHi: { $regex: qClean, $options: "i" } },
               { description: { $regex: qClean, $options: "i" } },
               { category: { $regex: qClean, $options: "i" } },
             ];
@@ -943,27 +963,65 @@ export class ProductService {
       deco.image ||
       (Array.isArray(deco.images) && deco.images.length > 0 ? deco.images[0] : "") ||
       "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80";
-    const allImgs =
-      Array.isArray(deco.images) && deco.images.length > 0 ? deco.images : [mainImg];
+
+    const rawImages = Array.isArray(deco.images) ? deco.images.filter(Boolean) : [];
+    const allImgs = Array.from(new Set([mainImg, ...rawImages].filter(Boolean)));
+
+    const resolvedUnit = (() => {
+      if (deco.unit && typeof deco.unit === "string" && deco.unit.trim()) {
+        return deco.unit.trim();
+      }
+      const n = (deco.name || "").toLowerCase();
+      const parenMatch = (deco.name || "").match(/\(\s*(\d+\s*(?:pcs?|pieces?|packs?|sets?|kg|gm|g|ml|l)|pack\s*of\s*\d+|set\s*of\s*\d+)\s*\)/i);
+      if (parenMatch?.[1]) return parenMatch[1].trim();
+      if (n.includes("50 pcs") || n.includes("balloon")) return "50 Pcs";
+      if (n.includes("set")) return "1 Set";
+      if (n.includes("pack")) return "1 Pack";
+      return "1 Pc";
+    })();
+
+    const weightOptions =
+      Array.isArray(deco.weightOptions) && deco.weightOptions.length > 0
+        ? deco.weightOptions
+        : [
+            {
+              weight: resolvedUnit,
+              serves: deco.category || "Party Accessory",
+              price: Number(deco.price) || 0,
+              compareAtPrice: deco.originalPrice ? Number(deco.originalPrice) : undefined,
+            },
+          ];
+
+    const resolvedStockQty =
+      typeof deco.stockQuantity === "number"
+        ? deco.stockQuantity
+        : deco.inStock !== false
+        ? 99
+        : 0;
 
     return {
       id: decoId,
       name: deco.name,
+      ...(deco.nameHi ? { nameHi: deco.nameHi } : {}),
       slug: deco.slug || `decor-${decoId}`,
+      ...(deco.sku ? { sku: deco.sku } : {}),
       shortDescription: deco.description || "",
       description: deco.description || "",
+      ...(deco.descriptionHi ? { descriptionHi: deco.descriptionHi } : {}),
       categoryId: targetCategory ? targetCategory._id.toString() : (deco.category || ""),
       occasionIds: [],
-      productType: "NORMAL",
+      productType: "DECORATION",
       price: Number(deco.price) || 0,
       compareAtPrice: deco.originalPrice ? Number(deco.originalPrice) : undefined,
+      weightOptions,
       imageUrls: allImgs,
       thumbnailUrl: mainImg,
-      stockStatus: deco.inStock !== false ? "IN_STOCK" : "OUT_OF_STOCK",
-      stockQuantity: deco.inStock !== false ? 99 : 0,
-      isAvailable: deco.inStock !== false && deco.isActive !== false,
-      isInstantAvailable: true,
-      isEggless: true,
+      stockStatus: deco.inStock !== false && resolvedStockQty > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
+      stockQuantity: resolvedStockQty,
+      isAvailable: deco.inStock !== false && deco.isActive !== false && resolvedStockQty > 0,
+      isComingSoon: Boolean(deco.isComingSoon),
+      isInstantAvailable: deco.isInstantAvailable !== false,
+      isEggless: deco.isEggless !== false,
       isActive: deco.isActive !== false,
       isFeatured: false,
       isTrending: false,

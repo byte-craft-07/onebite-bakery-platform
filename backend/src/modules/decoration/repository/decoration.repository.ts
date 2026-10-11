@@ -1,4 +1,4 @@
-import type { HydratedDocument, FilterQuery } from "mongoose";
+import { Types, type HydratedDocument, type FilterQuery } from "mongoose";
 import { DecorationModel, type Decoration } from "../model/decoration.model.js";
 
 export class DecorationRepository {
@@ -44,6 +44,8 @@ export class DecorationRepository {
       const q = params.search.trim();
       filter.$or = [
         { name: { $regex: q, $options: "i" } },
+        { nameHi: { $regex: q, $options: "i" } },
+        { sku: { $regex: q, $options: "i" } },
         { description: { $regex: q, $options: "i" } },
         { category: { $regex: q, $options: "i" } },
       ];
@@ -53,14 +55,29 @@ export class DecorationRepository {
   }
 
   public async findById(id: string): Promise<HydratedDocument<Decoration> | null> {
-    return DecorationModel.findById(id).exec();
+    if (Types.ObjectId.isValid(id)) {
+      const byId = await DecorationModel.findById(id).exec();
+      if (byId) return byId;
+    }
+    return this.findBySlug(id);
   }
 
   public async findBySlug(slug: string): Promise<HydratedDocument<Decoration> | null> {
-    return DecorationModel.findOne({ slug: slug.toLowerCase() }).exec();
+    const clean = slug.trim().toLowerCase();
+    return DecorationModel.findOne({
+      $or: [
+        { slug: clean },
+        { slug: { $regex: new RegExp(`^${clean.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") } },
+      ],
+    }).exec();
   }
 
   public async update(id: string, data: Partial<Decoration>): Promise<HydratedDocument<Decoration> | null> {
+    if (!Types.ObjectId.isValid(id)) {
+      const existing = await this.findBySlug(id);
+      if (!existing) return null;
+      return DecorationModel.findByIdAndUpdate(existing._id, { $set: data }, { new: true }).exec();
+    }
     return DecorationModel.findByIdAndUpdate(id, { $set: data }, { new: true }).exec();
   }
 
@@ -72,6 +89,12 @@ export class DecorationRepository {
   }
 
   public async delete(id: string): Promise<boolean> {
+    if (!Types.ObjectId.isValid(id)) {
+      const existing = await this.findBySlug(id);
+      if (!existing) return false;
+      const res = await DecorationModel.findByIdAndDelete(existing._id).exec();
+      return res !== null;
+    }
     const result = await DecorationModel.findByIdAndDelete(id).exec();
     return result !== null;
   }

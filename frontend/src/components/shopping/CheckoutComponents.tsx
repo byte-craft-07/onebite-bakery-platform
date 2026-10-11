@@ -104,7 +104,9 @@ export const DeliverySelector: React.FC<{
   subtotal = 0,
 }) => {
   const { t } = useTranslation();
-  const isBelowMin = !homeDeliveryEligible && subtotal > 0 && subtotal < minimumHomeDeliveryAmount;
+  const isBelowMin =
+    (!homeDeliveryEligible || (minimumHomeDeliveryAmount > 0 && subtotal < minimumHomeDeliveryAmount)) &&
+    subtotal > 0;
   const remaining = Math.max(0, minimumHomeDeliveryAmount - subtotal);
 
   return (
@@ -115,16 +117,22 @@ export const DeliverySelector: React.FC<{
           onClick={() => onChange("HOME_DELIVERY")}
           className={`p-4 rounded-2xl border text-left flex flex-col gap-1.5 sm:gap-2 transition-all cursor-pointer relative ${
             fulfillmentType === "HOME_DELIVERY"
-              ? "border-[#596B58] bg-[#FFF8EC] text-[#596B58] shadow-xs ring-2 ring-[#596B58]/30"
+              ? isBelowMin
+                ? "border-red-400 bg-red-50/40 text-red-900 shadow-xs ring-2 ring-red-400/30"
+                : "border-[#596B58] bg-[#FFF8EC] text-[#596B58] shadow-xs ring-2 ring-[#596B58]/30"
               : "border-[#E5DEC9] bg-white text-[#3B302B] hover:border-[#596B58]/60"
           }`}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Truck className="h-5 w-5" />
               <span className="font-bold text-sm">{t("checkout.homeDelivery", "Home Delivery")}</span>
             </div>
             {isBelowMin ? (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-100 text-red-800 border border-red-300">
+                {t("checkout.notEligibleBadge", { amount: minimumHomeDeliveryAmount, defaultValue: `पात्र नहीं / Not Eligible (Min ₹${minimumHomeDeliveryAmount})` })}
+              </span>
+            ) : minimumHomeDeliveryAmount > 0 ? (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
                 {t("checkout.minOrderRequired", { amount: minimumHomeDeliveryAmount, defaultValue: `Min ₹${minimumHomeDeliveryAmount}` })}
               </span>
@@ -160,26 +168,53 @@ export const DeliverySelector: React.FC<{
       </div>
 
       {fulfillmentType === "HOME_DELIVERY" && isBelowMin ? (
-        <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-          <div className="space-y-0.5">
-            <p className="font-bold text-amber-950 flex items-center gap-1.5">
-              <span>⚠️ {t("checkout.minOrderWarning", { amount: minimumHomeDeliveryAmount, defaultValue: `Minimum Order for Home Delivery: ₹${minimumHomeDeliveryAmount}` })}</span>
+        <div className="p-4 bg-red-50 border-2 border-red-300 rounded-2xl text-xs text-red-950 space-y-2.5 shadow-xs">
+          <div className="space-y-1.5">
+            <p className="font-extrabold text-red-900 text-xs sm:text-sm flex items-start gap-1.5">
+              <span>🚫</span>
+              <span>
+                You are not eligible for online order because you are not full fill requirement (Minimum Online Order Limit: ₹{minimumHomeDeliveryAmount})
+              </span>
             </p>
-            <p className="text-[11px] text-amber-800">
-              {t("checkout.minOrderDescription", {
+            <p className="font-bold text-red-900 text-xs flex items-start gap-1.5">
+              <span>🚫</span>
+              <span>
+                आप ऑनलाइन ऑर्डर के लिए पात्र नहीं हैं क्योंकि आप न्यूनतम आवश्यकता पूरी नहीं कर रहे हैं (न्यूनतम ऑनलाइन ऑर्डर सीमा: ₹{minimumHomeDeliveryAmount})।
+              </span>
+            </p>
+            <p className="text-[11px] text-red-800 leading-relaxed">
+              {t("checkout.notEligibleHindiMsg", {
+                amount: minimumHomeDeliveryAmount,
                 subtotal,
                 remaining,
-                defaultValue: `Your cart subtotal is ₹${subtotal}. Add ₹${remaining} more to qualify for Home Delivery, or switch to Store Pickup to order right now!`,
+                defaultValue: `आपका ऑर्डर ऑनलाइन ऑर्डर की न्यूनतम मूल्य सीमा (₹${minimumHomeDeliveryAmount}) को पार नहीं कर रहा है (अभी: ₹${subtotal}, ₹${remaining} और चाहिए)। कृपया स्टोर से पिकअप कर लो (Store Pickup) या कार्ट में ₹${remaining} के आइटम और जोड़ें!`,
               })}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => onChange("STORE_PICKUP")}
-            className="px-3.5 py-1.5 bg-[#596B58] hover:bg-[#495948] text-white rounded-lg text-xs font-bold shrink-0 transition-colors cursor-pointer"
-          >
-            {t("checkout.switchToStorePickup", "Switch to Store Pickup")}
-          </button>
+          <div className="flex flex-wrap items-center gap-2.5 pt-1">
+            <button
+              type="button"
+              onClick={() => onChange("STORE_PICKUP")}
+              className="px-4 py-2 bg-[#596B58] hover:bg-[#495948] text-white rounded-xl text-xs font-bold shrink-0 transition-colors cursor-pointer shadow-xs"
+            >
+              {t("checkout.storePickupActionBtn", "🏪 स्टोर से पिकअप कर लो (Store se Pickup kar lo)")}
+            </button>
+            <a
+              href="/products"
+              className="px-3.5 py-2 bg-white hover:bg-red-100/50 text-red-900 border border-red-300 rounded-xl text-xs font-bold shrink-0 transition-colors"
+            >
+              ➕ ₹{remaining} और जोड़ें (Add ₹{remaining} More)
+            </a>
+          </div>
+        </div>
+      ) : null}
+
+      {fulfillmentType === "STORE_PICKUP" && isBelowMin ? (
+        <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-[11px] text-amber-950 flex items-start gap-2">
+          <span className="shrink-0">🏪</span>
+          <span>
+            <strong>Store Pickup Active:</strong> Since your order (₹{subtotal}) is below the online order minimum limit of ₹{minimumHomeDeliveryAmount} (<em>you are not eligible for online order because you are not full fill requirement</em>), you can pick up your order directly from our bakery store with ₹0 delivery charge!
+          </span>
         </div>
       ) : null}
     </div>
@@ -471,38 +506,38 @@ export const CheckoutSummary: React.FC<{
 
             if (isBelowMin) {
               return (
-                <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl space-y-2 text-xs text-amber-950 shadow-2xs">
+                <div className="p-3.5 bg-red-50 border border-red-300 rounded-xl space-y-2 text-xs text-red-950 shadow-2xs">
                   <div className="flex items-center justify-between font-bold">
-                    <span className="flex items-center gap-1.5 text-amber-900">
-                      <Truck className="h-4 w-4 text-amber-700 shrink-0" />
-                      <span>{t("checkout.minOrderWarning", { amount: minDelivery, defaultValue: "Home Delivery Min Order" })}</span>
+                    <span className="flex items-center gap-1.5 text-red-900">
+                      <Truck className="h-4 w-4 text-red-700 shrink-0" />
+                      <span>ऑनलाइन ऑर्डर सीमा / Limit: ₹{minDelivery}</span>
                     </span>
-                    <span className="text-amber-800 font-extrabold">₹{pricing.subtotal} / ₹{minDelivery}</span>
+                    <span className="text-red-800 font-extrabold">₹{pricing.subtotal} / ₹{minDelivery}</span>
                   </div>
-                  <div className="w-full bg-amber-200/80 h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-red-200/80 h-2 rounded-full overflow-hidden">
                     <div
-                      className="bg-amber-600 h-full rounded-full transition-all duration-300"
+                      className="bg-red-600 h-full rounded-full transition-all duration-300"
                       style={{ width: `${Math.min(100, Math.round((pricing.subtotal / minDelivery) * 100))}%` }}
                     />
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5">
-                    <p className="text-[11px] text-amber-900">
-                      {t("checkout.minOrderDescription", {
-                        subtotal: pricing.subtotal,
-                        remaining: remainingForMin,
-                        defaultValue: `Add ₹${remainingForMin} more for Home Delivery`,
-                      })}
-                    </p>
-                    {onSwitchToPickup ? (
-                      <button
-                        type="button"
-                        onClick={onSwitchToPickup}
-                        className="text-[10px] font-bold text-[#596B58] underline hover:text-[#495948] shrink-0 text-left cursor-pointer"
-                      >
-                        {t("checkout.switchToStorePickup", "Switch to Store Pickup")}
-                      </button>
-                    ) : null}
-                  </div>
+                  <p className="text-[11px] font-bold text-red-900 leading-snug">
+                    🚫 You are not eligible for online order because you are not full fill requirement.
+                  </p>
+                  <p className="text-[11px] font-bold text-red-900 leading-snug">
+                    🚫 आप ऑनलाइन ऑर्डर के लिए पात्र नहीं हैं क्योंकि आप न्यूनतम आवश्यकता पूरी नहीं कर रहे हैं।
+                  </p>
+                  <p className="text-[11px] text-red-800">
+                    ऑनलाइन ऑर्डर के लिए <strong>₹{remainingForMin}</strong> और जोड़ें या <strong>स्टोर से पिकअप (Store Pickup)</strong> कर लो!
+                  </p>
+                  {onSwitchToPickup ? (
+                    <button
+                      type="button"
+                      onClick={onSwitchToPickup}
+                      className="w-full py-2 px-3 bg-[#596B58] hover:bg-[#495948] text-white rounded-lg text-[11px] font-bold text-center transition-colors cursor-pointer"
+                    >
+                      {t("checkout.storePickupActionBtn", "🏪 स्टोर से पिकअप कर लो (Store se Pickup kar lo)")}
+                    </button>
+                  ) : null}
                 </div>
               );
             }

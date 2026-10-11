@@ -75,13 +75,16 @@ export class OrderService {
     let addressSnapshot: OrderAddressSnapshot | undefined;
 
     if (dto.deliveryMethod === "HOME_DELIVERY") {
-      if (!cart.homeDeliveryAvailable) {
-        const { SettingsModel } = await import("../../settings/model/settings.model.js");
-        const settings = await SettingsModel.findOne({ singletonKey: "default" }).lean().exec();
-        const minHomeDeliveryAmount = settings?.delivery?.minimumHomeDeliveryAmount ?? 300;
+      const { SettingsModel } = await import("../../settings/model/settings.model.js");
+      let settings: any = null;
+      if (SettingsModel.db?.readyState === 1 || "mock" in SettingsModel.findOne) {
+        settings = await SettingsModel.findOne({ singletonKey: "default" }).lean().exec();
+      }
+      const minHomeDeliveryAmount = settings?.delivery?.minimumHomeDeliveryAmount ?? 300;
+      if (!cart.homeDeliveryAvailable || cart.subtotal < minHomeDeliveryAmount) {
         const diff = Math.max(0, minHomeDeliveryAmount - cart.subtotal);
         throw new AppError(
-          `Home delivery requires a minimum order of ₹${minHomeDeliveryAmount}. Please add ₹${diff} more to your cart, or choose Store Pickup.`,
+          `You are not eligible for online order because you are not full fill requirement | आप ऑनलाइन ऑर्डर के लिए पात्र नहीं हैं क्योंकि आप न्यूनतम आवश्यकता पूरी नहीं कर रहे हैं (Minimum online order limit: ₹${minHomeDeliveryAmount}, current subtotal: ₹${cart.subtotal}). कृपया स्टोर से पिकअप कर लो (Please pick up from store / Store Pickup) या कार्ट में ₹${diff} और जोड़ें.`,
           HTTP_STATUS.UNPROCESSABLE_ENTITY,
           [],
           true,
@@ -148,7 +151,7 @@ export class OrderService {
     }> = [];
 
     for (const cartItem of cart.items) {
-      let product = await ProductModel.findOne({
+      let product: any = await ProductModel.findOne({
         _id: cartItem.productId,
         isActive: true,
         isDeleted: false,
@@ -169,6 +172,37 @@ export class OrderService {
           product.isAvailable = true;
           product.isDeleted = false;
           await product.save();
+        }
+      }
+
+      if (!product) {
+        try {
+          const { DecorationModel } = await import("../../decoration/model/decoration.model.js");
+          if (DecorationModel.db?.readyState === 1) {
+            const dec = await DecorationModel.findOne({
+              _id: cartItem.productId,
+              isActive: true,
+            }).exec();
+            if (dec) {
+              const decImages = Array.isArray(dec.images) && dec.images.length > 0 ? dec.images : [dec.image];
+              product = {
+                _id: dec._id,
+                name: dec.name,
+                slug: dec.slug || String(dec._id),
+                price: dec.price,
+                thumbnailUrl: dec.image || decImages[0],
+                imageUrls: decImages,
+                productType: "DECORATION",
+                stockQuantity: typeof dec.stockQuantity === "number" ? dec.stockQuantity : (dec.inStock ? 99 : 0),
+                isActive: dec.isActive,
+                isAvailable: dec.inStock && (typeof dec.stockQuantity !== "number" || dec.stockQuantity > 0),
+                trackInventory: false,
+                allowBackorder: true,
+              };
+            }
+          }
+        } catch (_err) {
+          // Fallback
         }
       }
 

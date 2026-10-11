@@ -43,6 +43,7 @@ import {
 import { OrderPlacedCelebrationModal } from "@/components/shopping/OrderPlacedCelebrationModal";
 import { useAuth } from "@/contexts/auth.context";
 import { toast } from "@/contexts/toast.context";
+import { getProductUnitLabel } from "@/utils/productGridUtils";
 import { SEOHead } from "@/components/seo";
 import { Button } from "@/components/ui/Button";
 import { Card, Modal, Skeleton } from "@/components/ui/DisplayComponents";
@@ -150,7 +151,16 @@ export const CheckoutPage: React.FC = () => {
     }
   });
 
-  const [fulfillmentType, setFulfillmentType] = useState<"HOME_DELIVERY" | "STORE_PICKUP">("HOME_DELIVERY");
+  const [fulfillmentType, setFulfillmentType] = useState<"HOME_DELIVERY" | "STORE_PICKUP">(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const mode = params.get("fulfillment") || params.get("mode");
+      if (mode === "STORE_PICKUP") return "STORE_PICKUP";
+    } catch {
+      // Ignore
+    }
+    return "HOME_DELIVERY";
+  });
   const [paymentMethod, setPaymentMethod] = useState<"UPI" | "MANUAL_UPI" | "COD">("UPI");
   const [bakeryUpiId, setBakeryUpiId] = useState<string>("7897671632-2@ybl");
   const bakeryUpiPhone = "7897671632";
@@ -369,17 +379,29 @@ export const CheckoutPage: React.FC = () => {
   }, [fulfillmentType, selectedAddressId]);
 
   useEffect(() => {
-    adminOperationsService
-      .getSettings()
-      .then((res) => {
-        if (res?.upiId) {
-          setBakeryUpiId(res.upiId);
-        }
-        if (res?.upiQr) {
-          setBakeryUpiQr(res.upiQr);
-        }
-      })
-      .catch(() => {});
+    const loadStoreSettings = () => {
+      adminOperationsService
+        .getSettings()
+        .then((res) => {
+          if (res?.upiId) {
+            setBakeryUpiId(res.upiId);
+          }
+          if (res?.upiQr) {
+            setBakeryUpiQr(res.upiQr);
+          }
+        })
+        .catch(() => {});
+    };
+    loadStoreSettings();
+
+    const handleSettingsUpdated = () => {
+      loadStoreSettings();
+      fetchAddressesAndPreview();
+    };
+    window.addEventListener("onebitebakery_settings_updated", handleSettingsUpdated);
+    return () => {
+      window.removeEventListener("onebitebakery_settings_updated", handleSettingsUpdated);
+    };
   }, []);
 
   useEffect(() => {
@@ -670,9 +692,9 @@ export const CheckoutPage: React.FC = () => {
         const min = checkoutPreview.deliveryThreshold.minDeliveryAmount;
         const subtotal = checkoutPreview?.pricing?.subtotal || 0;
         const remaining = Math.max(0, min - subtotal);
-        const msg = `Home Delivery ke liye minimum order ₹${min} hona zaroori hai. Cart me ₹${remaining} aur jodein ya Store Pickup chunein.`;
+        const msg = `You are not eligible for online order because you are not full fill requirement | आप ऑनलाइन ऑर्डर के लिए पात्र नहीं हैं क्योंकि आप न्यूनतम आवश्यकता पूरी नहीं कर रहे हैं (न्यूनतम ऑनलाइन ऑर्डर सीमा: ₹${min}, वर्तमान ऑर्डर: ₹${subtotal})। कृपया स्टोर से पिकअप कर लो (Store Pickup) या कार्ट में ₹${remaining} और जोड़ें!`;
         setErrorMsg(msg);
-        toast.error("Minimum Order Not Met", msg);
+        toast.error("ऑनलाइन ऑर्डर के लिए पात्र नहीं / Not Eligible", msg);
         return false;
       }
 
@@ -764,9 +786,9 @@ export const CheckoutPage: React.FC = () => {
       const min = checkoutPreview.deliveryThreshold.minDeliveryAmount;
       const subtotal = checkoutPreview.pricing?.subtotal || 0;
       const remaining = Math.max(0, min - subtotal);
-      const msg = `Home Delivery ke liye minimum order ₹${min} hona zaroori hai. Cart me ₹${remaining} aur jodein ya Store Pickup chunein.`;
+      const msg = `You are not eligible for online order because you are not full fill requirement | आप ऑनलाइन ऑर्डर के लिए पात्र नहीं हैं क्योंकि आप न्यूनतम आवश्यकता पूरी नहीं कर रहे हैं (न्यूनतम ऑनलाइन ऑर्डर सीमा: ₹${min}, वर्तमान ऑर्डर: ₹${subtotal})। कृपया स्टोर से पिकअप कर लो (Store Pickup) या कार्ट में ₹${remaining} और जोड़ें!`;
       setErrorMsg(msg);
-      toast.error("Minimum Order Not Met", msg);
+      toast.error("ऑनलाइन ऑर्डर के लिए पात्र नहीं / Not Eligible", msg);
       return;
     }
 
@@ -1227,8 +1249,15 @@ export const CheckoutPage: React.FC = () => {
                 <Zap className="h-4 w-4 text-[#596B58] fill-current shrink-0" />
                 <span>{directItem.name}</span>
               </div>
-              <p className="text-xs text-[#596B58] font-bold">
-                ₹{directItem.price} &bull; Qty: {directItem.quantity} {directItem.customization?.message ? `(${directItem.customization.message})` : ""}
+              <p className="text-xs text-[#596B58] font-bold flex items-center gap-1.5 flex-wrap">
+                <span>₹{directItem.price}</span>
+                <span className="text-[10px] font-bold text-[#596B58] bg-[#596B58]/10 border border-[#596B58]/25 px-1.5 py-0.5 rounded leading-none">
+                  {directItem.customization?.weight || getProductUnitLabel(directItem)}
+                </span>
+                <span>&bull; Qty: {directItem.quantity}</span>
+                {directItem.customization?.message && !directItem.customization.message.startsWith("Portion:") ? (
+                  <span>({directItem.customization.message})</span>
+                ) : null}
               </p>
               <p className="text-[11px] text-amber-800">
                 {t(
@@ -1508,15 +1537,25 @@ export const CheckoutPage: React.FC = () => {
                 )}
 
                 {/* Step 1 Actions */}
-                <div className="pt-2 flex items-center justify-end gap-3">
+                <div className="pt-2 flex flex-wrap items-center justify-end gap-3">
                   {isBelowMin ? (
-                    <Button
-                      onClick={handleNextStep}
-                      className="w-full sm:w-auto px-6 h-12 shadow-md bg-amber-600 hover:bg-amber-700"
-                    >
-                      <span>{t("checkout.addMoreForHomeDelivery", { amount: remainingForMin, defaultValue: `Add ₹${remainingForMin} More for Home Delivery` })}</span>
-                      <ArrowRight className="h-4 w-4 ml-1.5" />
-                    </Button>
+                    <>
+                      <Button
+                        type="button"
+                        onClick={() => setFulfillmentType("STORE_PICKUP")}
+                        className="w-full sm:w-auto px-5 h-12 shadow-md bg-[#596B58] hover:bg-[#495948]"
+                      >
+                        <span>🏪 Store se Pickup kar lo (Store Pickup)</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => navigate("/products")}
+                        className="w-full sm:w-auto px-5 h-12 shadow-md bg-amber-600 hover:bg-amber-700"
+                      >
+                        <span>{t("checkout.addMoreForHomeDelivery", { amount: remainingForMin, defaultValue: `Add ₹${remainingForMin} More for Online Order` })}</span>
+                        <ArrowRight className="h-4 w-4 ml-1.5" />
+                      </Button>
+                    </>
                   ) : (
                     <Button
                       onClick={handleNextStep}
@@ -2526,7 +2565,13 @@ export const CheckoutPage: React.FC = () => {
                             />
                             <div className="min-w-0">
                               <p className="font-bold truncate text-[#3B302B]">{directItem.name}</p>
-                              <p className="text-[10px] text-[#7A6E65]">{t("checkout.qty", "Qty:")} {directItem.quantity}</p>
+                              <p className="text-[10px] text-[#7A6E65] flex items-center gap-1 flex-wrap">
+                                <span>₹{directItem.price}</span>
+                                <span className="font-bold text-[#596B58] bg-[#596B58]/10 px-1 py-0.2 rounded">
+                                  {directItem.customization?.weight || getProductUnitLabel(directItem)}
+                                </span>
+                                <span>• {t("checkout.qty", "Qty:")} {directItem.quantity}</span>
+                              </p>
                             </div>
                           </div>
                           <span className="font-extrabold text-[#3B302B]">₹{directItem.itemTotal}</span>
@@ -2544,7 +2589,13 @@ export const CheckoutPage: React.FC = () => {
                               )}
                               <div className="min-w-0">
                                 <p className="font-bold truncate text-[#3B302B]">{item.name}</p>
-                                <p className="text-[10px] text-[#7A6E65]">{t("checkout.qty", "Qty:")} {item.quantity}</p>
+                                <p className="text-[10px] text-[#7A6E65] flex items-center gap-1 flex-wrap">
+                                  <span>₹{Math.round(item.itemTotal / (item.quantity || 1))}</span>
+                                  <span className="font-bold text-[#596B58] bg-[#596B58]/10 px-1 py-0.2 rounded">
+                                    {getProductUnitLabel(item)}
+                                  </span>
+                                  <span>• {t("checkout.qty", "Qty:")} {item.quantity}</span>
+                                </p>
                               </div>
                             </div>
                             <span className="font-extrabold text-[#3B302B]">₹{item.itemTotal}</span>
@@ -2588,12 +2639,22 @@ export const CheckoutPage: React.FC = () => {
                   </Button>
 
                   {isBelowMin ? (
-                    <Button
-                      onClick={handlePlaceOrder}
-                      className="w-full sm:w-auto px-6 h-12 shadow-md bg-amber-600 hover:bg-amber-700"
-                    >
-                      <span>{t("checkout.addMoreForHomeDelivery", { amount: remainingForMin, defaultValue: `Add ₹${remainingForMin} More for Home Delivery` })}</span>
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                      <Button
+                        type="button"
+                        onClick={() => setFulfillmentType("STORE_PICKUP")}
+                        className="w-full sm:w-auto px-5 h-12 shadow-md bg-[#596B58] hover:bg-[#495948]"
+                      >
+                        <span>{t("checkout.storePickupActionBtn", "🏪 स्टोर से पिकअप कर लो (Store se Pickup kar lo)")}</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => navigate("/products")}
+                        className="w-full sm:w-auto px-5 h-12 shadow-md bg-amber-600 hover:bg-amber-700"
+                      >
+                        <span>{t("checkout.addMoreForHomeDelivery", { amount: remainingForMin, defaultValue: `Add ₹${remainingForMin} More` })}</span>
+                      </Button>
+                    </div>
                   ) : (
                     <Button
                       onClick={() => {
@@ -2660,13 +2721,23 @@ export const CheckoutPage: React.FC = () => {
 
             {/* Desktop Dynamic Step Action Button */}
             {currentStep === 1 && (
-              <Button
-                onClick={handleNextStep}
-                className="w-full h-12 shadow-md"
-              >
-                <span>{t("checkout.continueToDeliveryTiming", "Continue to Delivery Timing")}</span>
-                <ArrowRight className="h-4 w-4 ml-1.5" />
-              </Button>
+              isBelowMin ? (
+                <Button
+                  type="button"
+                  onClick={() => setFulfillmentType("STORE_PICKUP")}
+                  className="w-full h-12 shadow-md bg-[#596B58] hover:bg-[#495948]"
+                >
+                  <span>{t("checkout.storePickupActionBtn", "🏪 स्टोर से पिकअप कर लो (Store Pickup)")}</span>
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleNextStep}
+                  className="w-full h-12 shadow-md"
+                >
+                  <span>{t("checkout.continueToDeliveryTiming", "Continue to Delivery Timing")}</span>
+                  <ArrowRight className="h-4 w-4 ml-1.5" />
+                </Button>
+              )
             )}
 
             {currentStep === 2 && (
@@ -2683,10 +2754,11 @@ export const CheckoutPage: React.FC = () => {
               <>
                 {isBelowMin ? (
                   <Button
-                    onClick={handlePlaceOrder}
-                    className="w-full h-12 shadow-md bg-amber-600 hover:bg-amber-700"
+                    type="button"
+                    onClick={() => setFulfillmentType("STORE_PICKUP")}
+                    className="w-full h-12 shadow-md bg-[#596B58] hover:bg-[#495948]"
                   >
-                    <span>{t("checkout.addMoreForHomeDelivery", { amount: remainingForMin, defaultValue: `Add ₹${remainingForMin} More for Home Delivery` })}</span>
+                    <span>{t("checkout.storePickupActionBtn", "🏪 स्टोर से पिकअप कर लो (Store Pickup)")}</span>
                   </Button>
                 ) : (
                   <Button
@@ -2725,12 +2797,12 @@ export const CheckoutPage: React.FC = () => {
 
                 if (isBelowMin) {
                   return (
-                    <div className="p-2.5 bg-amber-50 border border-amber-300 rounded-xl text-[11px] text-amber-900 text-center font-bold">
-                      {t("checkout.minOrderWarningBanner", {
-                        amount: minDelivery,
-                        remaining: remainingForMin,
-                        defaultValue: `⚠️ Home Delivery ke liye minimum order ₹${minDelivery} hai (₹${remainingForMin} baaki hai).`,
-                      })}
+                    <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-[11px] text-red-900 text-center font-bold space-y-1">
+                      <p>🚫 You are not eligible for online order because you are not full fill requirement.</p>
+                      <p>🚫 आप ऑनलाइन ऑर्डर के लिए पात्र नहीं हैं क्योंकि आप न्यूनतम आवश्यकता पूरी नहीं कर रहे हैं।</p>
+                      <p className="text-[10px] font-semibold text-red-800">
+                        न्यूनतम ऑनलाइन ऑर्डर सीमा: ₹{minDelivery} (₹{remainingForMin} और जोड़ें या स्टोर से पिकअप कर लो)।
+                      </p>
                     </div>
                   );
                 }

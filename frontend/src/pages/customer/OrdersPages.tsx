@@ -36,6 +36,7 @@ import {
   getLocalizedOrderStatus,
   getLocalizedPaymentStatus,
 } from "@/i18n/utils";
+import { getProductUnitLabel } from "@/utils/productGridUtils";
 
 export const OrderReviewForm: React.FC<{ orderId: string; productName?: string }> = ({ orderId, productName }) => {
   const { t } = useTranslation();
@@ -264,8 +265,11 @@ export const OrdersHistoryPage: React.FC = () => {
                         <p className="font-bold text-sm text-[#3B302B]">
                           {getLocalizedProductName(item) || item.name}
                         </p>
-                        <p className="text-[11px] text-[#7A6E65]">
-                          {t("cart.quantity", "Qty")}: <strong>{item.quantity}</strong> • Unit: ₹{item.unitPrice || Math.round(item.itemTotal / (item.quantity || 1))}
+                        <p className="text-[11px] text-[#7A6E65] flex items-center gap-1.5 flex-wrap">
+                          <span>{t("cart.quantity", "Qty")}: <strong>{item.quantity}</strong> • Unit: ₹{item.unitPrice || Math.round(item.itemTotal / (item.quantity || 1))}</span>
+                          <span className="text-[10px] font-bold text-[#596B58] bg-[#596B58]/10 border border-[#596B58]/25 px-1.5 py-0.5 rounded leading-none">
+                            {getProductUnitLabel(item)}
+                          </span>
                         </p>
                       </div>
                     </div>
@@ -603,9 +607,14 @@ export const OrderDetailsPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="font-bold text-sm text-[#3B302B]">{getLocalizedProductName(item) || item.name}</p>
-                      <p className="text-[11px] text-[#7A6E65]">
-                        {t("cart.quantity", "Qty")}: <strong>{item.quantity}</strong> • Rate: ₹
-                        {item.unitPrice || Math.round(item.itemTotal / (item.quantity || 1))}
+                      <p className="text-[11px] text-[#7A6E65] flex items-center gap-1.5 flex-wrap">
+                        <span>
+                          {t("cart.quantity", "Qty")}: <strong>{item.quantity}</strong> • Rate: ₹
+                          {item.unitPrice || Math.round(item.itemTotal / (item.quantity || 1))}
+                        </span>
+                        <span className="text-[10px] font-bold text-[#596B58] bg-[#596B58]/10 border border-[#596B58]/25 px-1.5 py-0.5 rounded leading-none">
+                          {getProductUnitLabel(item)}
+                        </span>
                       </p>
                     </div>
                   </div>

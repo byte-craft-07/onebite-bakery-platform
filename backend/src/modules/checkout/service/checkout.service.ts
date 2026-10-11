@@ -112,10 +112,43 @@ export class CheckoutService {
     }
 
     for (const item of cart.items) {
-      const product = await ProductModel.findOne({
+      let product: any = await ProductModel.findOne({
         _id: item.productId,
         isDeleted: false,
       }).exec();
+
+      let isDecoration = false;
+      if (!product) {
+        try {
+          const { DecorationModel } = await import("../../decoration/model/decoration.model.js");
+          if (DecorationModel.db?.readyState === 1) {
+            const dec = await DecorationModel.findOne({
+              _id: item.productId,
+              isActive: true,
+            }).exec();
+            if (dec) {
+              isDecoration = true;
+              const decImages = Array.isArray(dec.images) && dec.images.length > 0 ? dec.images : [dec.image];
+              product = {
+                _id: dec._id,
+                name: dec.name,
+                slug: dec.slug || String(dec._id),
+                price: dec.price,
+                thumbnailUrl: dec.image || decImages[0],
+                imageUrls: decImages,
+                productType: "DECORATION",
+                stockQuantity: typeof dec.stockQuantity === "number" ? dec.stockQuantity : (dec.inStock ? 99 : 0),
+                isActive: dec.isActive,
+                isAvailable: dec.inStock && (typeof dec.stockQuantity !== "number" || dec.stockQuantity > 0),
+                trackInventory: false,
+                allowBackorder: true,
+              };
+            }
+          }
+        } catch (_err) {
+          // Fallback
+        }
+      }
 
       if (!product || !product.isActive) {
         validationErrors.push(
@@ -134,7 +167,7 @@ export class CheckoutService {
       }
 
       let isBranchAvailable = product.isAvailable;
-      if (customerBranchId) {
+      if (customerBranchId && !isDecoration) {
         try {
           const { BranchProductModel } = await import("../../branch/model/branch-product.model.js");
           const branchOverride = await BranchProductModel.findOne({
@@ -182,7 +215,7 @@ export class CheckoutService {
       .exec();
 
     const minHomeDeliveryAmount =
-      settings?.delivery?.minimumHomeDeliveryAmount ?? 0;
+      settings?.delivery?.minimumHomeDeliveryAmount ?? 300;
     const isDeliveryEnabled = settings?.isDeliveryEnabled ?? true;
     const isPickupEnabled = settings?.isPickupEnabled ?? true;
 
@@ -207,7 +240,7 @@ export class CheckoutService {
 
     if (subtotal < minHomeDeliveryAmount) {
       warnings.push(
-        `Cart subtotal (₹${subtotal}) is below the minimum threshold (₹${minHomeDeliveryAmount}) for Home Delivery. Only Store Pickup is available.`,
+        `You are not eligible for online order because you are not full fill requirement | आप ऑनलाइन ऑर्डर के लिए पात्र नहीं हैं क्योंकि आप न्यूनतम आवश्यकता पूरी नहीं कर रहे हैं (Minimum online order limit: ₹${minHomeDeliveryAmount}, current subtotal: ₹${subtotal}). कृपया स्टोर से पिकअप कर लो (Please pick up from store / Store Pickup).`,
       );
     }
 
@@ -249,48 +282,48 @@ export class CheckoutService {
       }
     }
 
-      // Resolve village specific delivery charge
-      try {
-        const { VillageModel } = await import("../../village/model/village.model.js");
-        if (VillageModel.db?.readyState === 1) {
-          let villageDoc: { deliveryCharge?: number; freeDeliveryThreshold?: number } | null = null;
+    // Resolve village specific delivery charge
+    try {
+      const { VillageModel } = await import("../../village/model/village.model.js");
+      if (VillageModel.db?.readyState === 1) {
+        let villageDoc: { deliveryCharge?: number; freeDeliveryThreshold?: number } | null = null;
 
-          if (query.villageId) {
-            villageDoc = await VillageModel.findById(toObjectId(query.villageId)).exec();
-          }
+        if (query.villageId) {
+          villageDoc = await VillageModel.findById(toObjectId(query.villageId)).exec();
+        }
 
-          if (!villageDoc && query.villageName) {
-            villageDoc = await VillageModel.findOne({ name: new RegExp(`^${query.villageName.trim()}$`, "i"), isActive: true }).exec();
-          }
+        if (!villageDoc && query.villageName) {
+          villageDoc = await VillageModel.findOne({ name: new RegExp(`^${query.villageName.trim()}$`, "i"), isActive: true }).exec();
+        }
 
-          if (!villageDoc && addressDoc) {
-            villageDoc =
-              (addressDoc.city ? await VillageModel.findOne({ name: new RegExp(`^${addressDoc.city.trim()}$`, "i"), isActive: true }).exec() : null) ||
-              (addressDoc.address ? await VillageModel.findOne({ name: new RegExp(addressDoc.address.trim(), "i"), isActive: true }).exec() : null);
-          }
+        if (!villageDoc && addressDoc) {
+          villageDoc =
+            (addressDoc.city ? await VillageModel.findOne({ name: new RegExp(`^${addressDoc.city.trim()}$`, "i"), isActive: true }).exec() : null) ||
+            (addressDoc.address ? await VillageModel.findOne({ name: new RegExp(addressDoc.address.trim(), "i"), isActive: true }).exec() : null);
+        }
 
-          if (!villageDoc && customerObjId) {
-            const { UserModel } = await import("../../user/model/user.model.js");
-            const userDoc = await UserModel.findById(customerObjId).exec();
-            if (userDoc?.currentLocation?.villageId) {
-              villageDoc = await VillageModel.findById(toObjectId(userDoc.currentLocation.villageId)).exec();
-            } else if (userDoc?.currentLocation?.villageName) {
-              villageDoc = await VillageModel.findOne({ name: new RegExp(`^${userDoc.currentLocation.villageName.trim()}$`, "i"), isActive: true }).exec();
-            }
-          }
-
-          if (villageDoc) {
-            if (villageDoc.deliveryCharge !== undefined && villageDoc.deliveryCharge !== null) {
-              villageDeliveryCharge = villageDoc.deliveryCharge;
-            }
-            if (villageDoc.freeDeliveryThreshold !== undefined && villageDoc.freeDeliveryThreshold !== null) {
-              villageFreeThreshold = villageDoc.freeDeliveryThreshold;
-            }
+        if (!villageDoc && customerObjId) {
+          const { UserModel } = await import("../../user/model/user.model.js");
+          const userDoc = await UserModel.findById(customerObjId).exec();
+          if (userDoc?.currentLocation?.villageId) {
+            villageDoc = await VillageModel.findById(toObjectId(userDoc.currentLocation.villageId)).exec();
+          } else if (userDoc?.currentLocation?.villageName) {
+            villageDoc = await VillageModel.findOne({ name: new RegExp(`^${userDoc.currentLocation.villageName.trim()}$`, "i"), isActive: true }).exec();
           }
         }
-      } catch (_err) {
-        // Fallback
+
+        if (villageDoc) {
+          if (villageDoc.deliveryCharge !== undefined && villageDoc.deliveryCharge !== null) {
+            villageDeliveryCharge = villageDoc.deliveryCharge;
+          }
+          if (villageDoc.freeDeliveryThreshold !== undefined && villageDoc.freeDeliveryThreshold !== null) {
+            villageFreeThreshold = villageDoc.freeDeliveryThreshold;
+          }
+        }
       }
+    } catch (_err) {
+      // Fallback
+    }
 
     const discountAmount = cart.estimatedDiscount ?? cart.couponDiscount ?? 0;
     const freeDeliveryThreshold = villageFreeThreshold ?? (settings?.freeDeliveryThreshold ?? 799);
@@ -302,7 +335,6 @@ export class CheckoutService {
         ? 0
         : standardDeliveryCharge;
 
-    const taxAmount = 0;
     const totalAmount = Math.max(0, Math.round((subtotal - discountAmount + deliveryFee) * 100) / 100);
 
     return {
@@ -343,7 +375,7 @@ export class CheckoutService {
     if (dto.deliveryMethod === "HOME_DELIVERY") {
       if (!summary.homeDeliveryEligible) {
         throw new AppError(
-          `Home Delivery is not available. Subtotal (₹${summary.subtotal}) is below minimum threshold of ₹${summary.minimumHomeDeliveryAmount}.`,
+          `You are not eligible for online order because you are not full fill requirement | आप ऑनलाइन ऑर्डर के लिए पात्र नहीं हैं क्योंकि आप न्यूनतम आवश्यकता पूरी नहीं कर रहे हैं. Subtotal (₹${summary.subtotal}) is below minimum online order limit of ₹${summary.minimumHomeDeliveryAmount}. कृपया स्टोर से पिकअप कर लो (Please pick up from store / Store Pickup).`,
           HTTP_STATUS.UNPROCESSABLE_ENTITY,
           [],
           true,

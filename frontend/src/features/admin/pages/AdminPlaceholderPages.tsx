@@ -480,7 +480,7 @@ export const AdminSettingsPage: React.FC = () => {
     phone: "+91 7897671632",
     email: "ajaykterha@gmail.com",
     gstin: "07AAAAA0000A1Z5",
-    minOrderValue: 299,
+    minOrderValue: 300,
     freeDeliveryThreshold: 799,
     standardDeliveryCharge: 49,
     taxRatePercent: 5,
@@ -549,7 +549,7 @@ export const AdminSettingsPage: React.FC = () => {
           phone: res.phone || "+91 7897671632",
           email: res.email || "ajaykterha@gmail.com",
           gstin: res.gstin || "07AAAAA0000A1Z5",
-          minOrderValue: res.minOrderValue ?? 299,
+          minOrderValue: res.minOrderValue ?? 300,
           freeDeliveryThreshold: res.freeDeliveryThreshold ?? 799,
           standardDeliveryCharge: res.standardDeliveryCharge ?? 49,
           taxRatePercent: res.taxRatePercent ?? 5,
@@ -569,7 +569,7 @@ export const AdminSettingsPage: React.FC = () => {
     try {
       const updated = await adminOperationsService.updateSettings(settings);
       setSettings(updated);
-      setSuccessMsg("Delivery charges, tax rates & store configuration saved successfully!");
+      setSuccessMsg("Online order lower limit, delivery charges & store configuration saved successfully!");
     } catch (_err) {
       setSuccessMsg("Settings updated successfully!");
     } finally {
@@ -581,7 +581,7 @@ export const AdminSettingsPage: React.FC = () => {
     <div className="space-y-6 max-w-4xl">
       <AdminPageHeader
         title="Delivery Fee & Tax Rate Management"
-        description="Configure dynamic delivery charges, free delivery thresholds, and GST tax calculation for customer checkouts."
+        description="Configure online order minimum price limit (lower limit), dynamic delivery charges, free delivery thresholds, and GST tax calculation for customer checkouts."
       />
 
       {successMsg ? (
@@ -593,11 +593,19 @@ export const AdminSettingsPage: React.FC = () => {
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Delivery Charges Section */}
-        <AdminCard title="🚚 Delivery Charges & Thresholds">
+        <AdminCard title="🚚 Online Order Lower Limit, Delivery Charges & Thresholds">
           <p className="text-xs text-[#7A6E65] mb-4">
-            These values directly control the <strong>Delivery Fee</strong> shown to customers at checkout.
+            Set the <strong>Online Order Price Lower Limit (Minimum Order Value)</strong> and <strong>Delivery Fee</strong> shown to customers on Cart &amp; Checkout.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input
+              label="Online Order Lower Limit / Min Order Value (₹) *"
+              type="number"
+              min={0}
+              value={settings.minOrderValue}
+              onChange={(e) => setSettings({ ...settings, minOrderValue: Number(e.target.value) })}
+              required
+            />
             <Input
               label="Standard Delivery Fee (₹) *"
               type="number"
@@ -614,18 +622,13 @@ export const AdminSettingsPage: React.FC = () => {
               onChange={(e) => setSettings({ ...settings, freeDeliveryThreshold: Number(e.target.value) })}
               required
             />
-            <Input
-              label="Minimum Order Value for Delivery (₹) *"
-              type="number"
-              min={0}
-              value={settings.minOrderValue}
-              onChange={(e) => setSettings({ ...settings, minOrderValue: Number(e.target.value) })}
-              required
-            />
           </div>
-          <div className="mt-3 p-3 bg-[#FFF8EC] border border-[#E5DEC9] rounded-xl text-xs text-[#7A6E65] space-y-1">
+          <div className="mt-3 p-3 bg-[#FFF8EC] border border-[#E5DEC9] rounded-xl text-xs text-[#7A6E65] space-y-1.5">
             <p>
-              💡 <strong>Rule:</strong> Orders below ₹{settings.freeDeliveryThreshold} will be charged <strong>₹{settings.standardDeliveryCharge}</strong>. Orders ₹{settings.freeDeliveryThreshold} or above get <strong>FREE Delivery (₹0)</strong>.
+              🚫 <strong>Online Order Lower Limit Rule:</strong> Customers whose cart subtotal is below <strong>₹{settings.minOrderValue}</strong> will be blocked from Online Order (Home Delivery) with the message: <em>&quot;You are not eligible for online order because you are not full fill requirement&quot;</em> and instructed to choose <strong>Store Pickup</strong>.
+            </p>
+            <p>
+              💡 <strong>Delivery Fee Rule:</strong> Orders between ₹{settings.minOrderValue} and ₹{settings.freeDeliveryThreshold} will be charged <strong>₹{settings.standardDeliveryCharge}</strong>. Orders ₹{settings.freeDeliveryThreshold} or above get <strong>FREE Delivery (₹0)</strong>.
             </p>
           </div>
         </AdminCard>

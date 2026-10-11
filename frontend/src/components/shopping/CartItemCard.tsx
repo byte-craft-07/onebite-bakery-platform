@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import type { CartItem } from "@/services/cart.service";
 import { getOptimizedImageUrl } from "@/utils/cdn.utils";
+import { getProductUnitLabel } from "@/utils/productGridUtils";
 import { getLocalizedProductName } from "@/i18n/utils";
 
 export const CartItemCard: React.FC<{
@@ -14,6 +15,10 @@ export const CartItemCard: React.FC<{
 }> = ({ item, onUpdateQuantity, onRemove }) => {
   const { t, i18n } = useTranslation();
   const productName = getLocalizedProductName(item.productId, i18n.language);
+  const unitLabel =
+    item.customization?.weight ||
+    ((item.customization as any)?.weightKg ? `${(item.customization as any).weightKg} kg` : "") ||
+    getProductUnitLabel({ ...item.productId, price: item.unitPrice, customization: item.customization });
   const imageUrl = getOptimizedImageUrl(
     item.productId.mainImage || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=150&q=75",
     { width: 140, height: 140, quality: 75 }
@@ -31,7 +36,15 @@ export const CartItemCard: React.FC<{
             <Link to={`/products/${item.productId.slug}`} className="text-xs sm:text-sm font-bold text-[#3B302B] hover:text-[#596B58] transition-colors line-clamp-1">
               {productName}
             </Link>
-            <p className="text-[11px] sm:text-xs text-[#7A6E65]">₹{item.unitPrice} {t("common.each", "each")}</p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="text-[11px] sm:text-xs font-bold text-[#3B302B]">₹{item.unitPrice}</p>
+              {unitLabel && (
+                <span className="text-[10px] font-bold text-[#596B58] bg-[#596B58]/10 border border-[#596B58]/25 px-1.5 py-0.5 rounded leading-none">
+                  {unitLabel}
+                </span>
+              )}
+              <span className="text-[11px] sm:text-xs text-[#7A6E65]">• {t("common.each", "each")}</span>
+            </div>
             {item.customization && (
               <div className="flex flex-wrap gap-1 pt-1 text-[10px]">
                 {Boolean(item.customization.tiers || (item.customization as any)?.tierCount) && (

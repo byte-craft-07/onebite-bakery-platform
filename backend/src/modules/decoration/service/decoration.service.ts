@@ -1,4 +1,4 @@
-import { type Decoration } from "../model/decoration.model.js";
+import { type Decoration, type DecorationWeightOption } from "../model/decoration.model.js";
 import { decorationRepository } from "../repository/decoration.repository.js";
 
 export const BASELINE_DECORATIONS: Partial<Decoration>[] = [
@@ -10,9 +10,13 @@ export const BASELINE_DECORATIONS: Partial<Decoration>[] = [
     originalPrice: 199,
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80",
+    images: ["https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80"],
     description: "Premium food-safe metallic gold candles for milestone birthday cakes.",
     inStock: true,
+    stockQuantity: 50,
     isActive: true,
+    isInstantAvailable: true,
+    isEggless: true,
     displayOrder: 1,
   },
   {
@@ -23,9 +27,13 @@ export const BASELINE_DECORATIONS: Partial<Decoration>[] = [
     originalPrice: 499,
     rating: 4.8,
     image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80",
+    images: ["https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80"],
     description: "Macaron pastel shade balloon arch kit with ribbon and glue dots.",
     inStock: true,
+    stockQuantity: 50,
     isActive: true,
+    isInstantAvailable: true,
+    isEggless: true,
     displayOrder: 2,
   },
   {
@@ -36,9 +44,13 @@ export const BASELINE_DECORATIONS: Partial<Decoration>[] = [
     originalPrice: 299,
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80",
+    images: ["https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80"],
     description: "Reusable mirrored gold acrylic topper customized for your celebration.",
     inStock: true,
+    stockQuantity: 50,
     isActive: true,
+    isInstantAvailable: true,
+    isEggless: true,
     displayOrder: 3,
   },
   {
@@ -49,26 +61,38 @@ export const BASELINE_DECORATIONS: Partial<Decoration>[] = [
     originalPrice: 249,
     rating: 4.7,
     image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
+    images: ["https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80"],
     description: "Biodegradable paper confetti cannons for cake cutting moments.",
     inStock: true,
+    stockQuantity: 50,
     isActive: true,
+    isInstantAvailable: true,
+    isEggless: true,
     displayOrder: 4,
   },
 ];
 
 export interface CreateDecorationInput {
   name: string;
+  nameHi?: string;
   slug?: string;
   category: string;
   price: number;
   originalPrice: number;
+  sku?: string;
+  unit?: string;
+  stockQuantity?: number;
   rating?: number;
   image: string;
   images?: string[];
   description: string;
+  descriptionHi?: string;
   inStock?: boolean;
   isActive?: boolean;
   isComingSoon?: boolean;
+  isInstantAvailable?: boolean;
+  isEggless?: boolean;
+  weightOptions?: DecorationWeightOption[];
   displayOrder?: number;
 }
 
@@ -80,6 +104,28 @@ export class DecorationService {
       .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-");
+  }
+
+  private normalizeImages(image?: string, images?: string[]): { mainImage: string; imageList: string[] } {
+    const list: string[] = [];
+    if (Array.isArray(images)) {
+      for (const img of images) {
+        if (typeof img === "string" && img.trim() && !list.includes(img.trim())) {
+          list.push(img.trim());
+        }
+      }
+    }
+    if (typeof image === "string" && image.trim()) {
+      if (!list.includes(image.trim())) {
+        list.unshift(image.trim());
+      }
+    }
+    const fallback = "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80";
+    const mainImage = list[0] || fallback;
+    return {
+      mainImage,
+      imageList: list.length > 0 ? list : [mainImage],
+    };
   }
 
   // Returns live active decorations from database without fallback seeding
@@ -104,24 +150,62 @@ export class DecorationService {
   }
 
   async createDecoration(input: CreateDecorationInput): Promise<Decoration> {
-    const slug = input.slug?.trim() || `${this.generateSlug(input.name)}-${Date.now().toString(36)}`;
+    const slug = input.slug?.trim()
+      ? this.generateSlug(input.slug)
+      : `${this.generateSlug(input.name)}-${Date.now().toString(36)}`;
+    const { mainImage, imageList } = this.normalizeImages(input.image, input.images);
+    const stockQuantity = input.stockQuantity !== undefined ? Math.max(0, Number(input.stockQuantity)) : 50;
+    const inStock = input.inStock !== undefined ? Boolean(input.inStock) : stockQuantity > 0;
+
     return decorationRepository.create({
       ...input,
       slug,
+      image: mainImage,
+      images: imageList,
+      sku: input.sku?.trim() || `DEC-${Date.now()}`,
+      stockQuantity,
       rating: input.rating !== undefined ? Number(input.rating) : 4.8,
-      inStock: input.inStock !== undefined ? Boolean(input.inStock) : true,
+      inStock,
       isActive: input.isActive !== undefined ? Boolean(input.isActive) : true,
       isComingSoon: input.isComingSoon !== undefined ? Boolean(input.isComingSoon) : false,
+      isInstantAvailable: input.isInstantAvailable !== undefined ? Boolean(input.isInstantAvailable) : true,
+      isEggless: input.isEggless !== undefined ? Boolean(input.isEggless) : true,
       displayOrder: input.displayOrder !== undefined ? Number(input.displayOrder) : 0,
     });
   }
 
   async updateDecoration(id: string, input: Partial<CreateDecorationInput>): Promise<Decoration | null> {
     const updateData: Partial<Decoration> = { ...input };
-    if (input.name && !input.slug) {
+    if (input.slug && input.slug.trim()) {
+      updateData.slug = this.generateSlug(input.slug);
+    } else if (input.name && !input.slug) {
       updateData.slug = `${this.generateSlug(input.name)}-${Date.now().toString(36)}`;
     }
+
+    if (input.image !== undefined || input.images !== undefined) {
+      const { mainImage, imageList } = this.normalizeImages(input.image, input.images);
+      updateData.image = mainImage;
+      updateData.images = imageList;
+    }
+
+    if (input.stockQuantity !== undefined) {
+      updateData.stockQuantity = Math.max(0, Number(input.stockQuantity));
+      if (input.inStock === undefined) {
+        updateData.inStock = updateData.stockQuantity > 0;
+      }
+    }
+
     return decorationRepository.update(id, updateData);
+  }
+
+  async updateDecorationInventory(id: string, stockQuantity: number): Promise<Decoration | null> {
+    const current = await decorationRepository.findById(id);
+    if (!current) return null;
+    const cleanStock = Math.max(0, Number(stockQuantity));
+    return decorationRepository.update(id, {
+      stockQuantity: cleanStock,
+      inStock: cleanStock > 0,
+    });
   }
 
   async toggleDecorationStatus(id: string): Promise<Decoration | null> {
@@ -133,7 +217,11 @@ export class DecorationService {
   async toggleDecorationStock(id: string): Promise<Decoration | null> {
     const current = await decorationRepository.findById(id);
     if (!current) return null;
-    return decorationRepository.update(id, { inStock: !current.inStock });
+    const nextInStock = !current.inStock;
+    return decorationRepository.update(id, {
+      inStock: nextInStock,
+      ...(nextInStock && (current.stockQuantity ?? 0) <= 0 ? { stockQuantity: 50 } : {}),
+    });
   }
 
   async toggleDecorationComingSoon(id: string): Promise<Decoration | null> {

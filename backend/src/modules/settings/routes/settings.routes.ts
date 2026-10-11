@@ -14,10 +14,11 @@ const settingPayloadSchema = z.object({
   phone: z.string().trim().min(10).max(20).optional(),
   email: z.string().trim().email().optional(),
   gstin: z.string().trim().max(32).optional(),
-  minOrderValue: z.number().min(0).optional(),
-  freeDeliveryThreshold: z.number().min(0).optional(),
-  standardDeliveryCharge: z.number().min(0).optional(),
-  taxRatePercent: z.number().min(0).max(100).optional(),
+  minOrderValue: z.coerce.number().min(0).optional(),
+  minOrderAmount: z.coerce.number().min(0).optional(),
+  freeDeliveryThreshold: z.coerce.number().min(0).optional(),
+  standardDeliveryCharge: z.coerce.number().min(0).optional(),
+  taxRatePercent: z.coerce.number().min(0).max(100).optional(),
   isTaxEnabled: z.boolean().optional(),
   isOrderAcceptanceActive: z.boolean().optional(),
   upiId: z.string().trim().optional(),
@@ -108,12 +109,16 @@ settingsRouter.get(
 settingsRouter.put(
   "/",
   requireAuth,
-  requireRoles(["admin"]),
+  requireRoles(["admin", "branch_admin"]),
   validateRequest({ body: settingPayloadSchema }),
-  invalidateCache(["settings"]),
+  invalidateCache(["settings", "checkout"]),
   asyncHandler(async (req, res) => {
     const current = await getOrCreateSettings();
     const payload = req.body as z.infer<typeof settingPayloadSchema>;
+    const nextMinOrder =
+      payload.minOrderValue ??
+      payload.minOrderAmount ??
+      current.delivery.minimumHomeDeliveryAmount;
 
     const settings = await SettingsModel.findOneAndUpdate(
       { singletonKey: "default" },
@@ -127,8 +132,7 @@ settingsRouter.put(
           isTaxEnabled: payload.isTaxEnabled ?? current.isTaxEnabled,
           isDeliveryEnabled: payload.isOrderAcceptanceActive ?? current.isDeliveryEnabled,
           isPickupEnabled: payload.isOrderAcceptanceActive ?? current.isPickupEnabled,
-          "delivery.minimumHomeDeliveryAmount":
-            payload.minOrderValue ?? current.delivery.minimumHomeDeliveryAmount,
+          "delivery.minimumHomeDeliveryAmount": nextMinOrder,
           "delivery.homeDeliveryEnabled":
             payload.isOrderAcceptanceActive ?? current.delivery.homeDeliveryEnabled,
           "delivery.pickupEnabled":

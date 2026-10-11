@@ -28,6 +28,7 @@ import { reviewService } from "@/services/review.service";
 import { RatingModal } from "@/components/review/RatingModal";
 import { ShareButton } from "@/components/sharing";
 import { getOptimizedImageUrl } from "@/utils/cdn.utils";
+import { getProductDefaultOptions, getProductUnitLabel } from "@/utils/productGridUtils";
 import { useTranslation } from "react-i18next";
 import { getLocalizedProductName, getLocalizedProductDescription } from "@/i18n/utils";
 import { SEOHead, buildProductSchema } from "@/components/seo";
@@ -73,9 +74,8 @@ export const ProductDetailsPage: React.FC = () => {
             setIsFavorite(favoritesService.isFavorite(prod.id));
             const rData = reviewService.getProductRating(prod);
             setLiveRatingData(rData);
-            if (Array.isArray(prod.weightOptions) && prod.weightOptions.length > 0) {
-              setSelectedWeight(prod.weightOptions[0].weight);
-            }
+            const defaultOpts = getProductDefaultOptions(prod);
+            setSelectedWeight(defaultOpts[0]?.weight || getProductUnitLabel(prod));
           }
         })
         .catch(() => {
@@ -159,24 +159,9 @@ export const ProductDetailsPage: React.FC = () => {
 
 
 
-  // 4. Dynamic Weight Options & Weight-based Pricing
+  // 4. Dynamic Weight / Pack / Pcs Options & Weight-based Pricing
   const availableWeightOptions = useMemo(() => {
-    if (!product) return [];
-    if (Array.isArray(product.weightOptions) && product.weightOptions.length > 0) {
-      return product.weightOptions.map((w) => ({
-        weight: w.weight,
-        serves: w.serves || undefined,
-        price: Number(w.price),
-        compareAtPrice: w.compareAtPrice ? Number(w.compareAtPrice) : Math.round(Number(w.price) * 1.18),
-      }));
-    }
-    const baseP = Number(product.price) || 499;
-    const baseC = product.compareAtPrice && product.compareAtPrice > baseP ? product.compareAtPrice : Math.round(baseP * 1.2);
-    return [
-      { weight: "500g", serves: "4-6 Servings", price: baseP, compareAtPrice: baseC },
-      { weight: "1kg", serves: "8-12 Servings", price: Math.round(baseP * 1.8), compareAtPrice: Math.round(baseC * 1.8) },
-      { weight: "2kg", serves: "16-20 Servings", price: Math.round(baseP * 3.4), compareAtPrice: Math.round(baseC * 3.4) },
-    ];
+    return getProductDefaultOptions(product);
   }, [product]);
 
   const currentWeightOption = useMemo(() => {
@@ -392,12 +377,18 @@ export const ProductDetailsPage: React.FC = () => {
   }
 
   const localizedTitle = getLocalizedProductName(product) || product.name;
-  const categoryName = product.categoryId?.name || "Artisanal Bakery";
+  const isDecorationItem = product.productType === "DECORATION";
+  const categoryName = product.categoryId?.name || (isDecorationItem ? "Party Decorations" : "Artisanal Bakery");
   const categorySlug = product.categoryId?.slug || "";
+  const categoryTargetUrl = isDecorationItem
+    ? "/decorations"
+    : categorySlug
+    ? `/categories/${categorySlug}`
+    : "/products";
   const productBreadcrumbs = [
     {
       name: categoryName,
-      url: categorySlug ? `/categories/${categorySlug}` : "/products",
+      url: categoryTargetUrl,
     },
     {
       name: product.name,
@@ -437,27 +428,33 @@ export const ProductDetailsPage: React.FC = () => {
         canonicalPath={`/products/${product.slug || product.id}`}
         ogType="product"
         ogImage={activeImageUrl}
-        ogImageAlt={`${localizedTitle} - Handcrafted Cake from OneBite Bakery`}
+        ogImageAlt={`${localizedTitle} - OneBite Bakery`}
         breadcrumbs={productBreadcrumbs}
         structuredData={productSchema}
       />
 
       {/* Top Breadcrumb & Return Link */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <Link
-          to="/products"
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#7A6E65] hover:text-[#596B58] transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>{t("products.allProducts", "Back to All Bakery Items")}</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            to={isDecorationItem ? "/decorations" : "/products"}
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#7A6E65] hover:text-[#596B58] transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>
+              {isDecorationItem
+                ? "Back to Decorations Shop"
+                : t("products.allProducts", "Back to All Bakery Items")}
+            </span>
+          </Link>
+        </div>
 
         {/* Semantic Visible Breadcrumbs */}
         <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 overflow-x-auto whitespace-nowrap">
           <Link to="/" className="hover:text-[#596B58] transition-colors">Home</Link>
           <span className="text-gray-300">/</span>
           <Link
-            to={categorySlug ? `/categories/${categorySlug}` : "/products"}
+            to={categoryTargetUrl}
             className="hover:text-[#596B58] transition-colors"
           >
             {categoryName}
@@ -715,13 +712,13 @@ export const ProductDetailsPage: React.FC = () => {
 
           {/* Price Tag with Big Highlight */}
           <div className="p-4 rounded-2xl bg-[#FFF8EC] border border-[#E5DEC9] flex items-baseline justify-between shadow-2xs">
-            <div className="flex items-baseline gap-2.5">
+            <div className="flex items-baseline gap-2.5 flex-wrap">
               <span className="text-3xl sm:text-4xl font-black text-[#111111]">₹{activePrice}</span>
               {activeComparePrice > activePrice && (
                 <span className="text-sm sm:text-base text-gray-400 line-through font-medium">₹{activeComparePrice}</span>
               )}
-              <span className="text-xs font-bold text-[#596B58] bg-[#596B58]/10 px-2 py-0.5 rounded-md">
-                {selectedWeight}
+              <span className="text-xs font-bold text-[#596B58] bg-[#596B58]/10 border border-[#596B58]/25 px-2.5 py-0.5 rounded-md">
+                {selectedWeight || getProductUnitLabel(product)}
               </span>
             </div>
             <span className="text-xs font-black text-white bg-[#DC2626] px-2.5 py-1 rounded-lg shadow-2xs">
@@ -738,10 +735,10 @@ export const ProductDetailsPage: React.FC = () => {
           <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-black uppercase tracking-wider text-[#3B302B]">
-                {t("products.weightSize", "Select Weight / Portion:")}
+                {t("products.weightSize", "Select Weight / Pack / Pcs:")}
               </label>
               <span className="text-xs font-bold text-[#596B58]">
-                {selectedWeight} • ₹{activePrice}
+                {selectedWeight || getProductUnitLabel(product)} • ₹{activePrice}
               </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">

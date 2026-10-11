@@ -232,12 +232,19 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (activePrompt) {
       try {
-        await activePrompt.prompt();
-        const choice = await activePrompt.userChoice;
-        setDeferredPrompt(null);
-        if (typeof window !== "undefined") {
+        // Clear only the consumed event reference before awaiting userChoice
+        // so that if the browser dispatches a fresh beforeinstallprompt event
+        // upon dismissal, we do not overwrite the new event.
+        setDeferredPrompt((prev) => (prev === activePrompt ? null : prev));
+        if (
+          typeof window !== "undefined" &&
+          (window as unknown as { __PWA_PROMPT__?: BeforeInstallPromptEvent }).__PWA_PROMPT__ === activePrompt
+        ) {
           (window as unknown as { __PWA_PROMPT__?: null }).__PWA_PROMPT__ = null;
         }
+
+        await activePrompt.prompt();
+        const choice = await activePrompt.userChoice;
         if (choice.outcome === "accepted") {
           setIsInstalled(true);
           return true;

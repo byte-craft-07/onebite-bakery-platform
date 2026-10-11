@@ -133,7 +133,7 @@ export const checkoutService = {
     }
 
     let storeSettings = {
-      minOrderValue: 0,
+      minOrderValue: 300,
       freeDeliveryThreshold: 799,
       standardDeliveryCharge: 49,
       taxRatePercent: 5,
@@ -145,7 +145,7 @@ export const checkoutService = {
       const fetched = await adminOperationsService.getSettings();
       if (fetched) {
         storeSettings = {
-          minOrderValue: fetched.minOrderValue ?? 0,
+          minOrderValue: fetched.minOrderValue ?? 300,
           freeDeliveryThreshold: fetched.freeDeliveryThreshold ?? 799,
           standardDeliveryCharge: fetched.standardDeliveryCharge ?? 49,
           taxRatePercent: fetched.taxRatePercent ?? 5,
@@ -174,7 +174,10 @@ export const checkoutService = {
       }
     }
 
-    const minDeliveryAmount = backendMinDelivery ?? storeSettings.minOrderValue ?? 0;
+    const minDeliveryAmount =
+      storeSettings.minOrderValue !== undefined
+        ? storeSettings.minOrderValue
+        : (backendMinDelivery ?? 300);
     const freeDeliveryThreshold = backendFreeThreshold ?? villageFreeThreshold ?? storeSettings.freeDeliveryThreshold ?? 350;
     const standardFee =
       villageDeliveryCharge !== undefined

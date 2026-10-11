@@ -4,9 +4,12 @@ import type { ComboItemDto } from "../dto/index.js";
 export interface ProductResponse {
   id: string;
   name: string;
+  nameHi?: string;
   slug: string;
+  sku?: string;
   shortDescription?: string;
   description: string;
+  descriptionHi?: string;
   categoryId: string;
   occasionIds: string[];
   productType: ProductType;

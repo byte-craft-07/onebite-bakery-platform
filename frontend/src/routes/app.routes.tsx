@@ -109,6 +109,7 @@ export const AppRoutes: React.FC = () => {
             <Route path="custom-cake2" element={<CustomCakePage />} />
             <Route path="combos" element={<CombosPage />} />
             <Route path="decorations" element={<DecorationShopPage />} />
+            <Route path="decorations/:slug" element={<ProductDetailsPage />} />
             <Route path="offers" element={<OffersPage />} />
             <Route path="about" element={<AboutPage />} />
             <Route path="contact" element={<ContactPage />} />

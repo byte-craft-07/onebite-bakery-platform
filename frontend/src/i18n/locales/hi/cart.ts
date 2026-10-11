@@ -24,4 +24,11 @@ export default {
   increaseQuantity: "मात्रा बढ़ाएं",
   decreaseQuantity: "मात्रा घटाएं",
   removeItem: "आइटम हटाएं",
+  onlineOrderLowerLimit: "ऑनलाइन ऑर्डर न्यूनतम सीमा (Lower Limit):",
+  onlineOrderMinLimit: "ऑनलाइन ऑर्डर न्यूनतम सीमा",
+  notEligibleForOnlineOrder: "🚫 आप ऑनलाइन ऑर्डर के लिए पात्र नहीं हैं क्योंकि आप न्यूनतम आवश्यकता पूरी नहीं कर रहे हैं (You are not eligible for online order because you are not full fill requirement).",
+  notEligibleHindiText: "ऑनलाइन ऑर्डर (होम डिलीवरी) के लिए न्यूनतम ऑर्डर मूल्य ₹{{min}} होना ज़रूरी है (आपका ऑर्डर: ₹{{subtotal}}, अभी ₹{{remaining}} कम है)। कृपया स्टोर से पिकअप कर लो (Store Pickup) या कार्ट में ₹{{remaining}} के आइटम और जोड़ें!",
+  storePickupBtn: "🏪 स्टोर से पिकअप कर लो (दुकान से पिकअप)",
+  addMoreForOnlineOrderBtn: "+ ऑनलाइन ऑर्डर के लिए ₹{{remaining}} और जोड़ें",
+  eligibleForOnlineOrder: "✅ ऑनलाइन ऑर्डर के लिए पात्र (न्यूनतम ₹{{min}} की शर्त पूरी है)",
 };

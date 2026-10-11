@@ -11,6 +11,7 @@ import {
 } from "../components/AdminComponents";
 import { ProductFormModal } from "./ProductFormModal";
 import { adminCatalogService } from "../services/adminCatalog.service";
+import { getProductUnitLabel } from "@/utils/productGridUtils";
 
 export const AdminCatalogPage: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -207,7 +208,14 @@ export const AdminCatalogPage: React.FC = () => {
               <td className="px-4 py-3 font-mono text-gray-500 text-xs">{p.sku || `SKU-${p.id}`}</td>
 
               {/* Price */}
-              <td className="px-4 py-3 font-extrabold text-[#3B302B]">₹{p.price}</td>
+              <td className="px-4 py-3">
+                <div className="flex items-baseline gap-1.5 flex-wrap">
+                  <span className="font-extrabold text-[#3B302B]">₹{p.price}</span>
+                  <span className="text-[10px] font-bold text-[#596B58] bg-[#596B58]/10 border border-[#596B58]/25 px-1.5 py-0.5 rounded leading-none">
+                    {getProductUnitLabel(p)}
+                  </span>
+                </div>
+              </td>
 
               {/* Stock Quantity Control */}
               <td className="px-4 py-3">

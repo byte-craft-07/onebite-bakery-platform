@@ -30,7 +30,7 @@ decorationRouter.get(
   asyncHandler((req, res) => decorationController.getCategories(req, res)),
 );
 
-// Public: Get single decoration
+// Public: Get single decoration by id or slug
 decorationRouter.get(
   "/:id",
   cacheResponse({ ttlSeconds: 300, tags: ["decorations"] }),
@@ -51,6 +51,14 @@ decorationRouter.put(
   ...adminOnly,
   invalidateCache(["decorations", "categories", "products"]),
   asyncHandler((req, res) => decorationController.updateDecoration(req, res)),
+);
+
+// Admin: Update decoration stock quantity
+decorationRouter.patch(
+  "/:id/inventory",
+  ...adminOnly,
+  invalidateCache(["decorations", "categories", "products"]),
+  asyncHandler((req, res) => decorationController.updateDecorationInventory(req, res)),
 );
 
 // Admin: Toggle active status

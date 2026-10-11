@@ -215,4 +215,8 @@ export default {
   checkoutEmptyDesc: "चेकआउट के लिए कोई उत्पाद नहीं है। ऑर्डर देने के लिए हमारे ताज़ा केक, कॉम्बो और बेकरी उत्पाद देखें!",
   exploreMenu: "बेकरी मेन्यू देखें",
   goToHome: "होम पेज पर जाएं",
+  notEligibleBadge: "पात्र नहीं (न्यूनतम ₹{{amount}})",
+  notEligibleTitle: "🚫 आप ऑनलाइन ऑर्डर के लिए पात्र नहीं हैं क्योंकि आप न्यूनतम आवश्यकता पूरी नहीं कर रहे हैं (You are not eligible for online order because you are not full fill requirement • न्यूनतम सीमा: ₹{{amount}})",
+  notEligibleHindiMsg: "आपका ऑर्डर ऑनलाइन ऑर्डर की न्यूनतम मूल्य सीमा (₹{{amount}}) को पार नहीं कर रहा है (अभी: ₹{{subtotal}}, ₹{{remaining}} और चाहिए)। कृपया स्टोर से पिकअप कर लो (दुकान से पिकअप) या कार्ट में ₹{{remaining}} के आइटम और जोड़ें!",
+  storePickupActionBtn: "🏪 स्टोर से पिकअप कर लो (दुकान से पिकअप चुनें)",
 };

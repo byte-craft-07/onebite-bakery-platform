@@ -9,7 +9,20 @@ import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
 export const Footer: React.FC = () => {
   const { t } = useTranslation();
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
-  const { isStandalone, promptInstall } = usePWA();
+  const [installingApp, setInstallingApp] = useState(false);
+  const { isStandalone, isInstalled, promptInstall, setShowInstallModal } = usePWA();
+
+  const handleInstallClick = async () => {
+    setInstallingApp(true);
+    try {
+      const installed = await promptInstall();
+      if (!installed) {
+        setShowInstallModal(true);
+      }
+    } finally {
+      setInstallingApp(false);
+    }
+  };
 
   return (
     <footer className="border-t border-[#E5DEC9] bg-[#3B302B] text-[#FFF8EC] pt-12 sm:pt-16 pb-28 lg:pb-12">
@@ -62,15 +75,16 @@ export const Footer: React.FC = () => {
                 <span>{t("reviews.writeReview", "Rate Our Bakery / Write Review")}</span>
               </button>
             </li>
-            {!isStandalone && (
+            {!isStandalone && !isInstalled && (
               <li>
                 <button
                   type="button"
-                  onClick={promptInstall}
+                  onClick={handleInstallClick}
+                  disabled={installingApp}
                   className="text-[#D8BE91] hover:text-[#FFF8EC] font-bold transition-colors flex items-center gap-1 cursor-pointer"
                 >
                   <Download className="h-3.5 w-3.5 text-[#D8BE91]" />
-                  <span>{t("common.installApp", "Install App")}</span>
+                  <span>{installingApp ? "Installing..." : t("common.installApp", "Install App")}</span>
                 </button>
               </li>
             )}

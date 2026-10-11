@@ -33,18 +33,23 @@ export const CombosPage: React.FC = () => {
 
   const handleAddCombo = async (combo: Combo) => {
     setAddingId(combo.id);
+    const comboPackLabel = combo.items?.length ? `Pack of ${combo.items.length}` : "1 Combo Pack";
     try {
       await cartService.addItem({
         productId: combo.id,
         quantity: 1,
+        customization: {
+          weight: comboPackLabel,
+          message: `Portion: ${comboPackLabel}`,
+        },
         productDetails: {
-          name: combo.title,
+          name: `${combo.title} (${comboPackLabel})`,
           price: combo.price,
           mainImage: combo.image,
           slug: combo.slug || combo.id,
         },
       });
-      toast.add("Celebration Combo Added!", `"${combo.title}" (₹${combo.price}) added to cart.`, {
+      toast.add("Celebration Combo Added!", `"${combo.title}" (${comboPackLabel} - ₹${combo.price}) added to cart.`, {
         image: combo.image,
         action: {
           label: "View Cart",
@@ -55,7 +60,7 @@ export const CombosPage: React.FC = () => {
         navigate("/cart");
       }, 900);
     } catch (_err) {
-      toast.add("Combo Added", `"${combo.title}" added to cart.`);
+      toast.add("Combo Added", `"${combo.title}" (${comboPackLabel}) added to cart.`);
       setTimeout(() => {
         navigate("/cart");
       }, 900);
@@ -180,8 +185,11 @@ export const CombosPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t border-[#E5DEC9]">
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-2 flex-wrap">
                     <span className="text-2xl font-extrabold text-[#3B302B]">₹{combo.price}</span>
+                    <span className="text-xs font-bold text-[#596B58] bg-[#596B58]/10 border border-[#596B58]/25 px-2 py-0.5 rounded-md leading-none self-center">
+                      {combo.items?.length ? `Pack of ${combo.items.length}` : "1 Combo Pack"}
+                    </span>
                     {combo.originalPrice && combo.originalPrice > combo.price && (
                       <span className="text-xs text-gray-400 line-through">₹{combo.originalPrice}</span>
                     )}

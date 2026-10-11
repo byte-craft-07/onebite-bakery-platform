@@ -84,41 +84,61 @@ export class DecorationController {
     try {
       const {
         name,
+        nameHi,
         slug,
         category,
         price,
         originalPrice,
+        sku,
+        unit,
+        stockQuantity,
         rating,
         image,
         images,
         description,
+        descriptionHi,
         inStock,
         isActive,
         isComingSoon,
+        isInstantAvailable,
+        isEggless,
+        weightOptions,
         displayOrder,
       } = req.body;
 
-      if (!name || price === undefined || originalPrice === undefined || !image || !description) {
+      const primaryImage =
+        image ||
+        (Array.isArray(images) && images.length > 0 ? images[0] : undefined);
+
+      if (!name || price === undefined || !primaryImage || !description) {
         res.status(400).json({
           success: false,
-          message: "Name, price, originalPrice, image, and description are required.",
+          message: "Name, price, image, and description are required.",
         });
         return;
       }
 
       const decoration = await decorationService.createDecoration({
         name,
+        nameHi,
         slug,
         category: category || "Party Accessories",
         price: Number(price),
-        originalPrice: Number(originalPrice),
+        originalPrice: originalPrice !== undefined ? Number(originalPrice) : Math.round(Number(price) * 1.2),
+        sku,
+        unit,
+        stockQuantity: stockQuantity !== undefined ? Number(stockQuantity) : 50,
         rating: rating !== undefined ? Number(rating) : 4.8,
-        image,
-        images,
+        image: primaryImage,
+        images: Array.isArray(images) && images.length > 0 ? images : [primaryImage],
         description,
+        descriptionHi,
         inStock: inStock !== undefined ? Boolean(inStock) : true,
         isActive: isActive !== undefined ? Boolean(isActive) : true,
         isComingSoon: isComingSoon !== undefined ? Boolean(isComingSoon) : false,
+        isInstantAvailable: isInstantAvailable !== undefined ? Boolean(isInstantAvailable) : true,
+        isEggless: isEggless !== undefined ? Boolean(isEggless) : true,
+        weightOptions: Array.isArray(weightOptions) ? weightOptions : undefined,
         displayOrder: displayOrder !== undefined ? Number(displayOrder) : 0,
       });
 
@@ -155,6 +175,31 @@ export class DecorationController {
       res.status(500).json({
         success: false,
         message: err instanceof Error ? err.message : "Failed to update decoration item.",
+      });
+    }
+  }
+
+  async updateDecorationInventory(req: Request, res: Response): Promise<void> {
+    try {
+      const id = req.params.id as string;
+      const { stockQuantity } = req.body;
+      const decoration = await decorationService.updateDecorationInventory(id, Number(stockQuantity ?? 0));
+      if (!decoration) {
+        res.status(404).json({
+          success: false,
+          message: "Decoration item not found.",
+        });
+        return;
+      }
+      res.status(200).json({
+        success: true,
+        message: `Decoration stock quantity updated to ${decoration.stockQuantity}.`,
+        data: decoration,
+      });
+    } catch (err: unknown) {
+      res.status(500).json({
+        success: false,
+        message: err instanceof Error ? err.message : "Failed to update decoration stock quantity.",
       });
     }
   }

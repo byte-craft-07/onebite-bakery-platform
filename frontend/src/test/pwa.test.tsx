@@ -138,7 +138,7 @@ describe("PWA Context and Components", () => {
     expect(screen.queryByText(/Install app on your/i)).not.toBeInTheDocument();
   });
 
-  it("opens InstallAppModal and allows adding mobile shortcut and downloading desktop shortcut", async () => {
+  it("opens InstallAppModal with the unified Install Onebite Bakery prompt and triggers install", async () => {
     const { InstallAppModal } = await import("@/components/pwa/InstallAppModal");
 
     const TestInstallerOpener: React.FC = () => {
@@ -153,25 +153,21 @@ describe("PWA Context and Components", () => {
       </PWAProvider>
     );
 
-    expect(screen.queryByText(/Add App Shortcut/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Install Onebite Bakery/i)).not.toBeInTheDocument();
 
     // Open modal
     fireEvent.click(screen.getByTestId("btn-open-install-modal"));
-    expect(screen.getByText(/Add App Shortcut/i)).toBeInTheDocument();
-    expect(screen.getByText(/Add to Phone Home Screen/i)).toBeInTheDocument();
-    expect(screen.getByText(/Download Desktop Shortcut/i)).toBeInTheDocument();
+    expect(screen.getByText(/Install Onebite Bakery/i)).toBeInTheDocument();
+    expect(screen.getByText(/Install App/i)).toBeInTheDocument();
 
-    // Trigger Desktop shortcut download
-    fireEvent.click(screen.getByText(/Download Desktop Shortcut/i));
-    expect(screen.getByText(/Shortcut Downloaded!/i)).toBeInTheDocument();
-
-    // Trigger Phone shortcut
+    // Trigger Install App button
     await act(async () => {
-      fireEvent.click(screen.getByText(/Add to Phone Home Screen/i));
+      fireEvent.click(screen.getByText(/Install App/i));
     });
 
-    // Close modal
-    fireEvent.click(screen.getByText(/Close/i));
-    expect(screen.queryByText(/Add App Shortcut/i)).not.toBeInTheDocument();
+    // Close modal via Maybe Later
+    fireEvent.click(screen.getByText(/Maybe Later/i));
+    expect(screen.queryByText(/Install Onebite Bakery/i)).not.toBeInTheDocument();
   });
 });
+

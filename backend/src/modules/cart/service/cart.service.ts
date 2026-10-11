@@ -4,7 +4,7 @@ import { toObjectId } from "../../../db/utils/object-id.js";
 import { APP_ERROR_CODES } from "../../../shared/constants/app-error-code.js";
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
 import { AppError } from "../../../shared/errors/app-error.js";
-import { ProductModel, type Product } from "../../product/index.js";
+import { ProductModel } from "../../product/index.js";
 import { SettingsModel } from "../../settings/index.js";
 import type { AddCartItemDto, UpdateCartItemDto } from "../dto/index.js";
 import {
@@ -14,7 +14,7 @@ import {
   type CustomCakeConfig,
 } from "../model/index.js";
 import type { CartRepository } from "../repository/index.js";
-import type { CartItemResponse, CartResponse } from "../types/index.js";
+import type { CartResponse } from "../types/index.js";
 import { couponService } from "../../coupon/index.js";
 
 export class CartService {
@@ -162,23 +162,31 @@ export class CartService {
     if (!product) {
       try {
         const { DecorationModel } = await import("../../decoration/model/decoration.model.js");
-        if (DecorationModel.db?.readyState === 1 && Types.ObjectId.isValid(dto.productId)) {
-          const dec = await DecorationModel.findOne({ _id: toObjectId(dto.productId), isActive: true }).exec();
+        if (DecorationModel.db?.readyState === 1) {
+          const isObjId = Types.ObjectId.isValid(dto.productId);
+          const dec = await DecorationModel.findOne(
+            isObjId
+              ? { $or: [{ _id: toObjectId(dto.productId) }, { slug: String(dto.productId).toLowerCase() }], isActive: true }
+              : { slug: String(dto.productId).toLowerCase(), isActive: true }
+          ).exec();
           if (dec) {
             isDecoration = true;
+            const decImages = Array.isArray(dec.images) && dec.images.length > 0 ? dec.images : [dec.image];
             product = {
               _id: dec._id,
               name: dec.name,
               slug: dec.slug || String(dec._id),
               price: dec.price,
               compareAtPrice: dec.originalPrice,
-              thumbnailUrl: dec.image,
-              imageUrls: [dec.image],
+              thumbnailUrl: dec.image || decImages[0],
+              imageUrls: decImages,
               productType: "DECORATION",
               stockStatus: dec.inStock ? "IN_STOCK" : "OUT_OF_STOCK",
+              stockQuantity: typeof dec.stockQuantity === "number" ? dec.stockQuantity : (dec.inStock ? 99 : 0),
               isActive: dec.isActive,
-              isAvailable: dec.inStock,
-              isComingSoon: Boolean((dec as any).isComingSoon),
+              isAvailable: dec.inStock && (typeof dec.stockQuantity !== "number" || dec.stockQuantity > 0),
+              isComingSoon: Boolean(dec.isComingSoon),
+              isInstantAvailable: dec.isInstantAvailable !== false,
               trackInventory: false,
               allowBackorder: true,
             };
@@ -266,7 +274,6 @@ export class CartService {
       }
     }
 
-
     const customization = dto.customization ?? dto.customCakeConfig;
 
     const existingIndex = cart.items.findIndex(
@@ -275,7 +282,8 @@ export class CartService {
         this.areConfigsEqual(
           item.customization ?? item.customCakeConfig,
           customization,
-        ),
+        ) &&
+        ((item.selectedVariant as any)?.weight || "") === ((dto.selectedVariant as any)?.weight || ""),
     );
 
     if (existingIndex >= 0) {
@@ -297,12 +305,6 @@ export class CartService {
           : typeof (customization as any)?.estimatedPrice === "number" && (customization as any).estimatedPrice > 0
           ? (customization as any).estimatedPrice
           : product.price;
-
-      const itemName = dto.productDetails?.name || product.name;
-      const itemImage =
-        dto.productDetails?.mainImage ||
-        product.thumbnailUrl ||
-        (product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : undefined);
 
       const newQuantity = existingItem.quantity + dto.quantity;
 
@@ -584,18 +586,21 @@ export class CartService {
           isActive: true,
         }).exec();
         for (const dec of decorations) {
+          const decImages = Array.isArray(dec.images) && dec.images.length > 0 ? dec.images : [dec.image];
           productMap.set(dec._id.toString(), {
             _id: dec._id,
             name: dec.name,
             slug: dec.slug || String(dec._id),
             price: dec.price,
             compareAtPrice: dec.originalPrice,
-            thumbnailUrl: dec.image,
-            imageUrls: [dec.image],
+            thumbnailUrl: dec.image || decImages[0],
+            imageUrls: decImages,
             productType: "DECORATION",
             stockStatus: dec.inStock ? "IN_STOCK" : "OUT_OF_STOCK",
+            stockQuantity: typeof dec.stockQuantity === "number" ? dec.stockQuantity : (dec.inStock ? 99 : 0),
             isActive: dec.isActive,
-            isAvailable: dec.inStock,
+            isAvailable: dec.inStock && (typeof dec.stockQuantity !== "number" || dec.stockQuantity > 0),
+            isInstantAvailable: dec.isInstantAvailable !== false,
             trackInventory: false,
             allowBackorder: true,
           });
@@ -680,9 +685,9 @@ export class CartService {
       item.totalPrice = resolvedUnitPrice * quantity;
       item.productType = isCustomItem ? "CUSTOM_CAKE" : product.productType;
       item.productSnapshot = {
-        name: isCustomItem && item.productSnapshot?.name ? item.productSnapshot.name : product.name,
-        slug: isCustomItem && item.productSnapshot?.slug ? item.productSnapshot.slug : product.slug,
-        thumbnailUrl: isCustomItem && item.productSnapshot?.thumbnailUrl ? item.productSnapshot.thumbnailUrl : product.thumbnailUrl,
+        name: item.productSnapshot?.name || product.name,
+        slug: item.productSnapshot?.slug || product.slug,
+        thumbnailUrl: item.productSnapshot?.thumbnailUrl || product.thumbnailUrl,
         productType: isCustomItem ? "CUSTOM_CAKE" : product.productType,
         isInstantAvailable: Boolean(product.isInstantAvailable),
       };
@@ -729,8 +734,8 @@ export class CartService {
       .exec();
 
     const minHomeDeliveryAmount =
-      settings?.delivery?.minimumHomeDeliveryAmount ?? 0;
-    const baseDeliveryCharge = settings?.deliveryCharge ?? 0;
+      settings?.delivery?.minimumHomeDeliveryAmount ?? 300;
+    const baseDeliveryCharge = settings?.deliveryCharge ?? 49;
     const isDeliveryEnabled = settings?.isDeliveryEnabled ?? true;
     const isPickupEnabled = settings?.isPickupEnabled ?? true;
 

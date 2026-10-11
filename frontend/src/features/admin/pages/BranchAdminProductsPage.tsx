@@ -17,6 +17,7 @@ import {
 } from "../services/adminBranchProduct.service";
 
 import { adminBranchService } from "../services/adminBranch.service";
+import { getProductUnitLabel } from "@/utils/productGridUtils";
 
 export const BranchAdminProductsPage: React.FC = () => {
   const { user } = useAuth();
@@ -185,7 +186,12 @@ export const BranchAdminProductsPage: React.FC = () => {
                   </td>
 
                   <td className="p-4 font-bold text-[#3B302B]">
-                    ₹{prod.globalPrice}
+                    <div className="flex items-baseline gap-1.5 flex-wrap">
+                      <span>₹{prod.globalPrice}</span>
+                      <span className="text-[10px] font-bold text-[#596B58] bg-[#596B58]/10 border border-[#596B58]/25 px-1.5 py-0.5 rounded leading-none">
+                        {getProductUnitLabel({ ...prod, name: prod.productName, price: prod.globalPrice })}
+                      </span>
+                    </div>
                   </td>
 
                   <td className="p-4">

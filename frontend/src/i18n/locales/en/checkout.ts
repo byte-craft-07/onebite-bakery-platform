@@ -215,4 +215,8 @@ export default {
   checkoutEmptyDesc: "You don't have any items ready for checkout. Browse our fresh artisanal cakes, combos, and treats to place an order!",
   exploreMenu: "Explore Bakery Menu",
   goToHome: "Go to Home Page",
+  notEligibleBadge: "Not Eligible / पात्र नहीं (Min ₹{{amount}})",
+  notEligibleTitle: "🚫 You are not eligible for online order because you are not full fill requirement (Minimum Online Order Limit: ₹{{amount}})",
+  notEligibleHindiMsg: "आप ऑनलाइन ऑर्डर के लिए पात्र नहीं हैं क्योंकि आपका ऑर्डर न्यूनतम मूल्य सीमा (₹{{amount}}) को पार नहीं कर रहा है (अभी: ₹{{subtotal}}, ₹{{remaining}} और चाहिए)। कृपया स्टोर से पिकअप कर लो (Store Pickup) या कार्ट में ₹{{remaining}} के आइटम और जोड़ें!",
+  storePickupActionBtn: "🏪 स्टोर से पिकअप कर लो (Store se Pickup kar lo)",
 };

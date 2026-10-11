@@ -8,6 +8,7 @@ import { cartService } from "@/services/cart.service";
 import { favoritesService } from "@/services/favorites.service";
 import { reviewService } from "@/services/review.service";
 import { getOptimizedImageUrl } from "@/utils/cdn.utils";
+import { getProductUnitLabel } from "@/utils/productGridUtils";
 import { useTranslation } from "react-i18next";
 import { getLocalizedProductName } from "@/i18n/utils";
 
@@ -142,6 +143,7 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
   );
 
   const displayName = getLocalizedProductName(product, i18n.language);
+  const unitLabel = getProductUnitLabel(product);
 
   // Compute compare price and discount percentage
   const effectiveComparePrice =
@@ -209,11 +211,22 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
 
     setIsAdding(true);
     try {
+      const cartItemName =
+        unitLabel && !product.name.toLowerCase().includes(unitLabel.toLowerCase())
+          ? `${product.name} (${unitLabel})`
+          : product.name;
+
       await cartService.addItem({
         productId: product.id,
         quantity: 1,
+        customization: unitLabel
+          ? {
+              weight: unitLabel,
+              message: `Portion: ${unitLabel}`,
+            }
+          : undefined,
         productDetails: {
-          name: product.name,
+          name: cartItemName,
           price: product.price,
           mainImage: activeImageUrl,
           slug: product.slug,
@@ -221,13 +234,17 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
         },
       });
       setIsAdded(true);
-      toast.add("Added to Cart!", `1x "${product.name}" (₹${product.price}) added to cart.`, {
-        image: activeImageUrl,
-        action: {
-          label: "View Cart",
-          onClick: () => navigate("/cart"),
-        },
-      });
+      toast.add(
+        "Added to Cart!",
+        `1x "${product.name}" (${unitLabel ? `${unitLabel} • ` : ""}₹${product.price}) added to cart.`,
+        {
+          image: activeImageUrl,
+          action: {
+            label: "View Cart",
+            onClick: () => navigate("/cart"),
+          },
+        }
+      );
       setTimeout(() => setIsAdded(false), 2000);
     } catch (err: any) {
       setIsOutOfStock(true);
@@ -260,13 +277,24 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
 
     setIsOrderingNow(true);
     try {
+      const directItemName =
+        unitLabel && !product.name.toLowerCase().includes(unitLabel.toLowerCase())
+          ? `${product.name} (${unitLabel})`
+          : product.name;
+
       const directItem = {
         productId: product.id,
-        name: product.name,
+        name: directItemName,
         slug: product.slug,
         price: product.price,
         quantity: 1,
         mainImage: activeImageUrl,
+        customization: unitLabel
+          ? {
+              weight: unitLabel,
+              message: `Portion: ${unitLabel}`,
+            }
+          : undefined,
         itemTotal: product.price,
         isInstantAvailable: Boolean(product.isInstantAvailable),
       };
@@ -421,6 +449,11 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
               <span className="text-sm sm:text-base md:text-lg font-extrabold text-[#3B302B]">
                 ₹{product.price}
               </span>
+              {unitLabel && (
+                <span className="text-[10px] sm:text-[11px] font-bold text-[#596B58] bg-[#596B58]/10 border border-[#596B58]/25 px-1.5 py-0.5 rounded-md leading-none self-center">
+                  {unitLabel}
+                </span>
+              )}
               <span className="text-[11px] sm:text-xs text-[#7A6E65] line-through font-normal">
                 ₹{effectiveComparePrice}
               </span>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BarChart3, Package, ShoppingBag, Users } from "lucide-react";
+import { BarChart3, CheckCircle2, Package, ShoppingBag, Truck, Users } from "lucide-react";
 
 import {
   AdminCard,
@@ -7,8 +7,13 @@ import {
   AdminStatCard,
   AdminTable,
 } from "../components/AdminComponents";
-import { adminOperationsService, type AdminOrderSummary } from "../services/adminOperations.service";
+import {
+  adminOperationsService,
+  type AdminOrderSummary,
+  type StoreSettingsPayload,
+} from "../services/adminOperations.service";
 import { adminCatalogService } from "../services/adminCatalog.service";
+import { Button } from "@/components/ui/Button";
 
 export const AdminDashboardShell: React.FC = () => {
   const [productCount, setProductCount] = useState<number>(0);
@@ -16,21 +21,30 @@ export const AdminDashboardShell: React.FC = () => {
   const [customerCount, setCustomerCount] = useState<number>(0);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [storeSettings, setStoreSettings] = useState<StoreSettingsPayload | null>(null);
+  const [minOrderLimitInput, setMinOrderLimitInput] = useState<number>(300);
+  const [isSavingLimit, setIsSavingLimit] = useState(false);
+  const [limitSavedMsg, setLimitSavedMsg] = useState<string | null>(null);
 
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      const [prodsRes, ordersList, customersList, logs] = await Promise.all([
+      const [prodsRes, ordersList, customersList, logs, settingsRes] = await Promise.all([
         adminCatalogService.getProducts().catch(() => []),
         adminOperationsService.getAllOrders().catch(() => []),
         adminOperationsService.getCustomers().catch(() => []),
         adminOperationsService.getAuditLogs().catch(() => []),
+        adminOperationsService.getSettings().catch(() => null),
       ]);
 
       setProductCount(Array.isArray(prodsRes) ? prodsRes.length : 0);
       setOrders(ordersList);
       setCustomerCount(customersList?.length || 3);
       setAuditLogs(logs.slice(0, 5));
+      if (settingsRes) {
+        setStoreSettings(settingsRes);
+        setMinOrderLimitInput(settingsRes.minOrderValue ?? 300);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -39,6 +53,25 @@ export const AdminDashboardShell: React.FC = () => {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  const handleSaveMinOrderLimit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingLimit(true);
+    setLimitSavedMsg(null);
+    try {
+      const current = storeSettings || (await adminOperationsService.getSettings());
+      const updated = await adminOperationsService.updateSettings({
+        ...current,
+        minOrderValue: Math.max(0, Number(minOrderLimitInput)),
+      });
+      setStoreSettings(updated);
+      setMinOrderLimitInput(updated.minOrderValue);
+      setLimitSavedMsg(`Online order lower limit updated to ₹${updated.minOrderValue}!`);
+      setTimeout(() => setLimitSavedMsg(null), 4000);
+    } finally {
+      setIsSavingLimit(false);
+    }
+  };
 
   const totalRevenue = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
   const recentOrders = orders.slice(0, 5);
@@ -85,6 +118,41 @@ export const AdminDashboardShell: React.FC = () => {
           to="/admin/customers"
         />
       </div>
+
+      {/* Quick Admin Control: Online Order Minimum Price Limit */}
+      <AdminCard title="🚚 Online Order Price Lower Limit (Minimum Order Value)">
+        <form onSubmit={handleSaveMinOrderLimit} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="space-y-1 flex-1">
+            <p className="text-xs text-[#7A6E65]">
+              Set the minimum order amount required for customers to place an <strong>Online Order (Home Delivery)</strong>. If a customer&apos;s order is below this limit, they will see: <em>&quot;You are not eligible for online order because you are not full fill requirement&quot;</em> and will be prompted to choose <strong>Store Pickup</strong>.
+            </p>
+            {limitSavedMsg ? (
+              <p className="text-xs font-bold text-emerald-700 flex items-center gap-1.5 pt-1">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>{limitSavedMsg}</span>
+              </p>
+            ) : null}
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2 bg-[#FFF8EC] border border-[#E5DEC9] rounded-xl px-3 py-2">
+              <Truck className="h-4 w-4 text-[#596B58]" />
+              <span className="text-xs font-bold text-[#7A6E65]">Min Limit (₹):</span>
+              <input
+                type="number"
+                min={0}
+                value={minOrderLimitInput}
+                onChange={(e) => setMinOrderLimitInput(Number(e.target.value))}
+                className="w-24 px-2 py-1 rounded-lg border border-[#E5DEC9] bg-white text-sm font-extrabold text-[#3B302B] outline-none focus:border-[#596B58]"
+                required
+              />
+            </div>
+            <Button type="submit" size="sm" isLoading={isSavingLimit}>
+              Save Limit
+            </Button>
+          </div>
+        </form>
+      </AdminCard>
 
       {/* Recent Orders & Quick Activity Feed Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
