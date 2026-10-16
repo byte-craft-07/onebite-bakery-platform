@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Building, ShoppingBag, Truck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building, ShoppingBag, Tag, Ticket, Truck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { CartItemCard } from "@/components/shopping/CartItemCard";
+import { OffersModal } from "@/components/shopping/OffersModal";
 import { Button } from "@/components/ui/Button";
 import { Card, EmptyState, Skeleton } from "@/components/ui/DisplayComponents";
 import { cartService, type CartResponse } from "@/services/cart.service";
+import { offersService, type OfferCoupon } from "@/services/offers.service";
 import { adminOperationsService } from "@/features/admin/services/adminOperations.service";
 import { useAuth } from "@/contexts/auth.context";
 import { toast } from "@/contexts/toast.context";
@@ -19,6 +21,14 @@ export const CartPage: React.FC = () => {
   const [cart, setCart] = useState<CartResponse | null>(null);
   const [minOrderLimit, setMinOrderLimit] = useState<number>(300);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOffersModalOpen, setIsOffersModalOpen] = useState(false);
+  const [availableOffers, setAvailableOffers] = useState<OfferCoupon[]>([]);
+
+  useEffect(() => {
+    offersService.getActiveOffers().then((list) => {
+      setAvailableOffers(list);
+    }).catch(() => {});
+  }, []);
 
   const fetchCart = async (showLoader = false) => {
     try {
@@ -242,6 +252,75 @@ export const CartPage: React.FC = () => {
             </div>
           )}
 
+          {/* Offers & Discounts Box */}
+          <div className="p-3.5 rounded-2xl bg-white border border-[#E5DEC9] space-y-2.5 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 font-extrabold text-xs text-[#3B302B]">
+                <Ticket className="h-4 w-4 text-[#596B58]" />
+                <span>{t("cart.bakeryOffers", "Bakery Offers & Coupons")}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOffersModalOpen(true)}
+                className="text-xs font-bold text-[#596B58] hover:text-[#3B302B] hover:underline cursor-pointer"
+              >
+                {t("cart.viewOffers", "View All")}
+              </button>
+            </div>
+
+            {cart.couponCode ? (
+              <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-semibold">
+                <span className="flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>Coupon <strong>{cart.couponCode}</strong> applied (-₹{cart.discountAmount || cart.couponDiscount || 0})</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await cartService.removeCoupon();
+                    fetchCart();
+                  }}
+                  className="text-red-500 hover:text-red-700 text-xs font-bold cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <p className="text-[11px] text-[#7A6E65]">
+                  {t("cart.applyOfferPrompt", "Save more on your order with exclusive deals:")}
+                </p>
+                {availableOffers.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {availableOffers.slice(0, 3).map((offer) => (
+                      <button
+                        key={offer.code}
+                        type="button"
+                        onClick={() => setIsOffersModalOpen(true)}
+                        className="px-2.5 py-1 rounded-lg bg-[#FFF8EC] border border-dashed border-[#596B58] hover:bg-[#596B58] hover:text-[#FFF8EC] text-[#3B302B] font-mono font-bold text-[11px] transition-colors flex items-center gap-1 cursor-pointer"
+                        title={offer.description}
+                      >
+                        <Tag className="h-2.5 w-2.5" />
+                        <span>{offer.code}</span>
+                        <span className="text-[9px] font-sans font-semibold opacity-80">
+                          ({offer.discountType === "PERCENTAGE" ? `${offer.discountValue}% OFF` : `₹${offer.discountValue} OFF`})
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsOffersModalOpen(true)}
+                    className="text-xs text-[#596B58] font-bold hover:underline cursor-pointer"
+                  >
+                    View available bakery promo codes &rarr;
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
           <p className="text-xs text-gray-400">
             {t("cart.taxesNotice", "Taxes and delivery fees calculated during checkout preview.")}
           </p>
@@ -261,6 +340,12 @@ export const CartPage: React.FC = () => {
           )}
         </Card>
       </div>
+
+      <OffersModal
+        isOpen={isOffersModalOpen}
+        onClose={() => setIsOffersModalOpen(false)}
+        onCouponApplied={() => fetchCart()}
+      />
     </div>
   );
 };

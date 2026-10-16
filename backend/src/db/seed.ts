@@ -504,6 +504,52 @@ export const seedInitialData = async (_force: boolean = false): Promise<void> =>
       await DecorationModel.insertMany(BASELINE_DECORATIONS);
       logger.info("Default Party Decorations seeded into MongoDB");
     }
+
+    // 11. Seed Baseline Promotional Coupons
+    const { CouponModel } = await import("../modules/coupon/model/coupon.model.js");
+    const baselineCoupons = [
+      {
+        code: "WELCOME100",
+        description: "Flat ₹100 Off on your first celebration bakery order above ₹499",
+        discountType: "FLAT" as const,
+        discountValue: 100,
+        minOrderAmount: 499,
+        startDate: new Date("2026-01-01T00:00:00.000Z"),
+        endDate: new Date("2026-12-31T23:59:59.000Z"),
+        isActive: true,
+        usedCount: 0,
+      },
+      {
+        code: "CAKE20",
+        description: "Get 20% instant discount on all celebration cakes & party dessert combos (Max ₹250)",
+        discountType: "PERCENTAGE" as const,
+        discountValue: 20,
+        minOrderAmount: 599,
+        maxDiscountAmount: 250,
+        startDate: new Date("2026-01-01T00:00:00.000Z"),
+        endDate: new Date("2026-12-31T23:59:59.000Z"),
+        isActive: true,
+        usedCount: 0,
+      },
+      {
+        code: "ONLINE50",
+        description: "Flat ₹50 Off on artisanal sourdough bread, croissants, and chocolate cookies",
+        discountType: "FLAT" as const,
+        discountValue: 50,
+        minOrderAmount: 299,
+        startDate: new Date("2026-01-01T00:00:00.000Z"),
+        endDate: new Date("2026-12-31T23:59:59.000Z"),
+        isActive: true,
+        usedCount: 0,
+      },
+    ];
+    for (const c of baselineCoupons) {
+      const exists = await CouponModel.findOne({ code: c.code });
+      if (!exists) {
+        await CouponModel.create(c);
+        logger.info(`Seeded promo coupon ${c.code}`);
+      }
+    }
   } catch (error) {
     logger.warn({ error }, "Skipping dev database seed due to error");
   }

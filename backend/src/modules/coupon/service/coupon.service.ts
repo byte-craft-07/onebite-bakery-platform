@@ -45,6 +45,21 @@ export class CouponService {
     return this.couponRepository.findAll();
   }
 
+  public async getActiveCoupons(): Promise<Coupon[]> {
+    const coupons = await this.couponRepository.findActive();
+    return coupons.filter((coupon) => {
+      if (!coupon.isActive) return false;
+      if (
+        coupon.usageLimit !== undefined &&
+        coupon.usageLimit !== null &&
+        coupon.usedCount >= coupon.usageLimit
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }
+
   public async getCouponById(id: string): Promise<Coupon> {
     const coupon = await this.couponRepository.findById(id);
     if (!coupon) {

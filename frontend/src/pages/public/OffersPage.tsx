@@ -16,8 +16,9 @@ import {
 
 import { Badge, Card, Skeleton } from "@/components/ui/DisplayComponents";
 import { Button } from "@/components/ui/Button";
-import { adminCouponsService, type AdminCoupon } from "@/features/admin/services/adminCoupons.service";
+import { type AdminCoupon } from "@/features/admin/services/adminCoupons.service";
 import { cartService } from "@/services/cart.service";
+import { offersService } from "@/services/offers.service";
 import { SEOHead } from "@/components/seo";
 
 const DEFAULT_OFFERS: AdminCoupon[] = [
@@ -87,11 +88,14 @@ export const OffersPage: React.FC = () => {
   const fetchOffers = async () => {
     setIsLoading(true);
     try {
-      const serverCoupons = await adminCouponsService.getCoupons();
-      const activeServerCoupons = serverCoupons.filter((c) => c.isActive);
-      setCoupons(activeServerCoupons);
+      const serverCoupons = await offersService.getActiveOffers();
+      if (serverCoupons && serverCoupons.length > 0) {
+        setCoupons(serverCoupons);
+      } else {
+        setCoupons(DEFAULT_OFFERS);
+      }
     } catch {
-      setCoupons([]);
+      setCoupons(DEFAULT_OFFERS);
     } finally {
       setIsLoading(false);
     }

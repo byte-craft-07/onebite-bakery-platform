@@ -13,6 +13,17 @@ export class CouponRepository {
     return CouponModel.find().sort({ createdAt: -1 }).exec();
   }
 
+  public async findActive(): Promise<HydratedDocument<Coupon>[]> {
+    const now = new Date();
+    return CouponModel.find({
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
   public async findById(id: string): Promise<HydratedDocument<Coupon> | null> {
     return CouponModel.findById(id).exec();
   }

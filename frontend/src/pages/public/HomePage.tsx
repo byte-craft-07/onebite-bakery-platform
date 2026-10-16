@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Award, Cake, ChevronDown, Clock, Gift, HelpCircle, PartyPopper, ShieldCheck, Sparkles, Star, Tag, Zap } from "lucide-react";
+import { ArrowRight, Award, Cake, ChevronDown, Clock, Gift, HelpCircle, PartyPopper, ShieldCheck, Sparkles, Star, Tag, Ticket, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { SEOHead, buildLocalBusinessSchema, buildFAQSchema } from "@/components/seo";
@@ -260,6 +260,31 @@ export const HomePage: React.FC = () => {
         <p className="text-xs sm:text-sm text-[#7A6E65] leading-relaxed">
           Handcrafted celebration cakes, artisanal pastries, fresh sourdough breads, and party supplies baked with pure butter and Belgian dark chocolate. Local doorstep delivery in Hamirpur.
         </p>
+      </section>
+
+      {/* Featured Offers & Coupons Banner */}
+      <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#3B302B] via-[#4A3324] to-[#3B302B] text-white p-4 sm:p-6 shadow-md border border-[#D8BE91]/30">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1 sm:space-y-1.5 max-w-xl">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold bg-[#D8BE91] text-[#3B302B]">
+              <span>🎟️ {t("home.specialOffers", "Today's Special Offers & Coupons")}</span>
+            </div>
+            <h2 className="text-lg sm:text-2xl font-extrabold text-white tracking-tight">
+              {t("home.offersPromoTitle", "Flat Discounts & Instant Savings on Fresh Bakery")}
+            </h2>
+            <p className="text-xs sm:text-sm text-[#E5DEC9]/90">
+              {t("home.offersPromoDesc", "Use promo codes like NAVRATRI20, WELCOME100 & CAKE20 during checkout to save big on your celebration!")}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link to="/offers">
+              <Button className="bg-[#D8BE91] hover:bg-[#c9ad7d] text-[#3B302B] font-extrabold shadow-md border-0 text-xs sm:text-sm py-2 sm:py-2.5 px-4 sm:px-5">
+                <Ticket className="h-4 w-4 mr-1.5" />
+                <span>{t("home.exploreOffersBtn", "View All Offers & Coupons")}</span>
+              </Button>
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* Featured Categories Section */}

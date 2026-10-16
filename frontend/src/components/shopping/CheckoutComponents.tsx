@@ -10,6 +10,7 @@ import {
   Phone,
   Sparkles,
   Tag,
+  Ticket,
   Truck,
   X,
   Zap,
@@ -19,6 +20,8 @@ import { Badge, Card } from "@/components/ui/DisplayComponents";
 import { CustomSelect } from "@/components/ui/FormControls";
 import type { Address } from "@/services/address.service";
 import { cartService } from "@/services/cart.service";
+import { offersService, type OfferCoupon } from "@/services/offers.service";
+import { OffersModal } from "@/components/shopping/OffersModal";
 import { useTranslation } from "react-i18next";
 
 export const getStoreGoogleMapsUrl = (storeQuery = "Onebite Bakery terha hamirpur Uttar Pradesh 210502") => {
@@ -318,6 +321,14 @@ export const CheckoutSummary: React.FC<{
   const [isApplying, setIsApplying] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isOffersModalOpen, setIsOffersModalOpen] = useState(false);
+  const [availableOffers, setAvailableOffers] = useState<OfferCoupon[]>([]);
+
+  React.useEffect(() => {
+    offersService.getActiveOffers().then((offers) => {
+      setAvailableOffers(offers.slice(0, 4));
+    }).catch(() => {});
+  }, []);
 
   React.useEffect(() => {
     cartService.getCart().then((c) => {
@@ -382,27 +393,82 @@ export const CheckoutSummary: React.FC<{
 
       {/* Coupon Form */}
       {!appliedCoupon ? (
-        <form onSubmit={handleApplyCoupon} className="flex gap-2 pb-3 border-b border-[#E5DEC9]">
-          <div className="relative flex-1">
-            <Tag className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder={t("checkout.promoPlaceholder", "PROMO / COUPON CODE")}
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#E5DEC9] text-xs outline-none bg-white uppercase font-bold text-[#3B302B] focus:border-[#596B58]"
-              disabled={isApplying}
-            />
+        <div className="space-y-2 pb-3 border-b border-[#E5DEC9]">
+          <form onSubmit={handleApplyCoupon} className="flex gap-2">
+            <div className="relative flex-1">
+              <Tag className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder={t("checkout.promoPlaceholder", "PROMO / COUPON CODE")}
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#E5DEC9] text-xs outline-none bg-white uppercase font-bold text-[#3B302B] focus:border-[#596B58]"
+                disabled={isApplying}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isApplying || !couponCode.trim()}
+              className="px-3.5 py-2 bg-[#596B58] text-[#FFF8EC] text-xs font-bold rounded-lg hover:bg-[#495948] transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {isApplying ? t("checkout.applyingPromo", "Applying...") : t("checkout.applyPromo", "Apply")}
+            </button>
+          </form>
+
+          {/* Quick View Offers Link & Quick Apply Badges */}
+          <div className="space-y-1.5 pt-0.5">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setIsOffersModalOpen(true)}
+                className="text-xs font-bold text-[#596B58] hover:text-[#3B302B] hover:underline flex items-center gap-1 cursor-pointer transition-colors"
+              >
+                <Ticket className="h-3.5 w-3.5" />
+                <span>{t("checkout.viewAllOffers", "🎁 View Available Offers & Coupons")}</span>
+              </button>
+              <span className="text-[10px] bg-amber-100 text-amber-900 font-extrabold px-1.5 py-0.5 rounded-md">
+                {t("checkout.offersBadge", "Save Big")}
+              </span>
+            </div>
+
+            {availableOffers.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                {availableOffers.map((offer) => (
+                  <button
+                    key={offer.code}
+                    type="button"
+                    onClick={() => {
+                      setCouponCode(offer.code);
+                    }}
+                    className="px-2 py-0.5 rounded-lg bg-[#FFF8EC] border border-dashed border-[#596B58] hover:bg-[#596B58] hover:text-[#FFF8EC] text-[#3B302B] font-mono font-bold text-[11px] transition-colors flex items-center gap-1 cursor-pointer"
+                    title={offer.description}
+                  >
+                    <Tag className="h-2.5 w-2.5" />
+                    <span>{offer.code}</span>
+                    <span className="text-[9px] font-sans font-semibold opacity-85">
+                      ({offer.discountType === "PERCENTAGE" ? `${offer.discountValue}%` : `₹${offer.discountValue}`})
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <button
-            type="submit"
-            disabled={isApplying || !couponCode.trim()}
-            className="px-3.5 py-2 bg-[#596B58] text-[#FFF8EC] text-xs font-bold rounded-lg hover:bg-[#495948] transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {isApplying ? t("checkout.applyingPromo", "Applying...") : t("checkout.applyPromo", "Apply")}
-          </button>
-        </form>
+        </div>
       ) : null}
+
+      <OffersModal
+        isOpen={isOffersModalOpen}
+        onClose={() => setIsOffersModalOpen(false)}
+        onCouponApplied={async () => {
+          setIsOffersModalOpen(false);
+          const c = await cartService.getCart();
+          if (c.couponCode) {
+            setAppliedCoupon(c.couponCode);
+            setAppliedDiscount(c.couponDiscount || c.discountAmount || 0);
+          }
+          if (onCouponChanged) onCouponChanged();
+        }}
+      />
 
       {errorMsg ? (
         <div className="p-2.5 bg-red-50 text-red-700 rounded-lg text-xs font-semibold border border-red-200">

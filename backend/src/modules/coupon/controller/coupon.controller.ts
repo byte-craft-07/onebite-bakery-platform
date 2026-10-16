@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 
 import { HTTP_STATUS } from "../../../shared/constants/http-status.js";
+import type { AuthenticatedRequest } from "../../auth/types/index.js";
 import type { CouponService } from "../service/coupon.service.js";
 
 export class CouponController {
@@ -15,8 +16,23 @@ export class CouponController {
     });
   };
 
-  public getAllCoupons = async (_req: Request, res: Response): Promise<void> => {
-    const coupons = await this.couponService.getAllCoupons();
+  public getAllCoupons = async (req: Request, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const isAdmin = authReq.user?.role === "admin";
+    // Admins see all coupons (both active and inactive) for management
+    // Public visitors & customers see only active, valid coupons
+    const coupons = isAdmin
+      ? await this.couponService.getAllCoupons()
+      : await this.couponService.getActiveCoupons();
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: { coupons },
+    });
+  };
+
+  public getActiveCoupons = async (_req: Request, res: Response): Promise<void> => {
+    const coupons = await this.couponService.getActiveCoupons();
     res.status(HTTP_STATUS.OK).json({
       success: true,
       data: { coupons },

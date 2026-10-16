@@ -1,10 +1,12 @@
 // Service Worker for Onebite Bakery Progressive Web App
 // Version: 2.0.0
 
-const CACHE_NAME = 'onebitebakery-pwa-v3';
+const CACHE_NAME = 'onebitebakery-pwa-v4';
 const STATIC_CACHE = `${CACHE_NAME}-static`;
 const RUNTIME_CACHE = `${CACHE_NAME}-runtime`;
 const OFFLINE_CACHE = `${CACHE_NAME}-offline`;
+const PRODUCT_DATA_CACHE = `${CACHE_NAME}-product-data`;
+const PRODUCT_IMAGES_CACHE = `${CACHE_NAME}-product-images`;
 
 const PRECACHE_ASSETS = [
   '/',
@@ -25,30 +27,59 @@ const PRECACHE_ASSETS = [
 
 // Sensitive endpoints that MUST NEVER be cached
 const NEVER_CACHE_PATTERNS = [
-  /\/api\/auth\//i,
-  /\/api\/admin\//i,
-  /\/api\/payment\//i,
-  /\/api\/checkout\//i,
-  /\/api\/orders\//i,
-  /\/api\/customer\//i,
-  /\/api\/notifications\//i,
-  /\/socket\.io\//i,
-  /\/api\/users\//i,
+  /\/api\/auth/i,
+  /\/api\/admin/i,
+  /\/api\/payment/i,
+  /\/api\/checkout/i,
+  /\/api\/orders/i,
+  /\/api\/cart/i,
+  /\/api\/customer/i,
+  /\/api\/notifications/i,
+  /\/socket\.io/i,
+  /\/api\/users/i,
   /\/api\/coupons\/validate/i
 ];
 
 /**
- * Check if request URL matches dynamic API or realtime endpoints that must not be cached
+ * Check if request URL matches sensitive endpoints that must not be cached
  */
 function isNeverCacheUrl(url) {
-  const pathname = url.pathname;
-  if (pathname.startsWith('/api') || pathname.includes('/api/')) {
+  if (url.pathname.startsWith('/socket.io') || url.pathname.includes('socket.io')) {
     return true;
   }
-  if (pathname.startsWith('/socket.io') || pathname.includes('socket.io')) {
+  return NEVER_CACHE_PATTERNS.some((pattern) => pattern.test(url.pathname));
+}
+
+/**
+ * Check if request is for product images (Cloudinary, Unsplash, uploads, or local image files)
+ */
+function isProductImageRequest(request, url) {
+  if (request.destination === 'image') return true;
+  const path = url.pathname.toLowerCase();
+  if (/\.(png|jpg|jpeg|webp|avif|gif|svg|ico)(\?.*)?$/i.test(path)) return true;
+  if (
+    url.hostname.includes('unsplash.com') ||
+    url.hostname.includes('cloudinary.com') ||
+    url.hostname.includes('imagekit.io')
+  ) {
     return true;
   }
-  return NEVER_CACHE_PATTERNS.some((pattern) => pattern.test(pathname));
+  if (path.includes('/uploads/')) return true;
+  return false;
+}
+
+/**
+ * Check if request is for public product and catalog read APIs
+ */
+function isPublicCatalogApi(url) {
+  const p = url.pathname;
+  return (
+    p.includes('/api/products') ||
+    p.includes('/api/categories') ||
+    p.includes('/api/occasions') ||
+    p.includes('/api/combos') ||
+    p.includes('/api/decorations')
+  );
 }
 
 // ==========================================
@@ -72,7 +103,7 @@ self.addEventListener('install', (event) => {
 // 2. ACTIVATE LIFECYCLE
 // ==========================================
 self.addEventListener('activate', (event) => {
-  const currentCaches = [STATIC_CACHE, RUNTIME_CACHE, OFFLINE_CACHE];
+  const currentCaches = [STATIC_CACHE, RUNTIME_CACHE, OFFLINE_CACHE, PRODUCT_DATA_CACHE, PRODUCT_IMAGES_CACHE];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -104,7 +135,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. Strict Network-Only for Sensitive API endpoints
+  // 3. Strict Network-Only for Sensitive API endpoints (Auth, Payment, Orders, Cart, Admin)
   if (isNeverCacheUrl(url)) {
     event.respondWith(
       fetch(request).catch(() => {
@@ -124,12 +155,60 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 4. HTML Navigation Requests (Network-First with offline fallback)
+  // 4. Product Images - Cache-First Strategy with Dedicated Image Cache Memory
+  // Serves images directly from Cache Memory (0ms) without hitting database or network repeatedly
+  if (isProductImageRequest(request, url)) {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        return fetch(request)
+          .then((networkResponse) => {
+            if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
+              const responseToCache = networkResponse.clone();
+              caches.open(PRODUCT_IMAGES_CACHE).then((cache) => {
+                cache.put(request, responseToCache);
+              });
+            }
+            return networkResponse;
+          })
+          .catch(() => {
+            return caches.match('/favicon.svg');
+          });
+      })
+    );
+    return;
+  }
+
+  // 5. Public Product & Catalog APIs - Stale-While-Revalidate Strategy
+  // Returns instant cached product data from Cache Memory while refreshing cache in background
+  if (isPublicCatalogApi(url)) {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        const fetchPromise = fetch(request)
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              const responseToCache = networkResponse.clone();
+              caches.open(PRODUCT_DATA_CACHE).then((cache) => {
+                cache.put(request, responseToCache);
+              });
+            }
+            return networkResponse;
+          })
+          .catch(() => cachedResponse);
+
+        return cachedResponse || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // 6. HTML Navigation Requests (Network-First with offline fallback)
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // If valid response from network, cache a copy in runtime cache
           if (response && response.status === 200) {
             const responseToCache = response.clone();
             caches.open(RUNTIME_CACHE).then((cache) => {
@@ -139,12 +218,10 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(async () => {
-          // Attempt to retrieve cached route first
           const cachedResponse = await caches.match(request);
           if (cachedResponse) {
             return cachedResponse;
           }
-          // Otherwise serve dedicated offline fallback page
           const offlinePage = await caches.match('/offline.html');
           return offlinePage || new Response('Offline - Onebite Bakery', {
             status: 503,
@@ -155,19 +232,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 5. Static Assets (JS, CSS, Images, Fonts, SVGs, Webmanifest)
+  // 7. Static App Assets (JS, CSS, Fonts, Icons, SVGs)
   const isStaticAsset =
     url.pathname.startsWith('/assets/') ||
     url.pathname.startsWith('/icons/') ||
-    /\.(js|css|woff|woff2|ttf|eot|png|jpg|jpeg|svg|webp|ico|webmanifest)$/i.test(url.pathname);
+    /\.(js|css|woff|woff2|ttf|eot|webmanifest)$/i.test(url.pathname);
 
   if (isStaticAsset) {
-    // Stale-While-Revalidate Strategy for Static Assets
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
         const fetchPromise = fetch(request)
           .then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+            if (networkResponse && networkResponse.status === 200) {
               const responseToCache = networkResponse.clone();
               caches.open(STATIC_CACHE).then((cache) => {
                 cache.put(request, responseToCache);
@@ -183,11 +259,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 6. Generic Network-First for other safe GET requests
+  // 8. Generic Network-First for other safe GET requests
   event.respondWith(
     fetch(request)
       .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+        if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
           caches.open(RUNTIME_CACHE).then((cache) => {
             cache.put(request, responseToCache);

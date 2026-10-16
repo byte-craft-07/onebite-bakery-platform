@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { requireAuth, requireRoles } from "../../auth/index.js";
+import { optionalAuth, requireAuth, requireRoles } from "../../auth/index.js";
 import { validateRequest } from "../../../shared/middlewares/validate-request.middleware.js";
 import { asyncHandler } from "../../../shared/utils/async-handler.js";
 import { CouponController } from "../controller/coupon.controller.js";
@@ -27,8 +27,11 @@ couponRouter.post(
   asyncHandler(couponController.validateCoupon),
 );
 
-// Admin Coupon Management
-couponRouter.get("/", ...adminOnly, asyncHandler(couponController.getAllCoupons));
+// Public / Customer direct route for active coupons
+couponRouter.get("/active", asyncHandler(couponController.getActiveCoupons));
+
+// Coupon listing: returns all coupons for admin, active valid coupons for customer & public guests
+couponRouter.get("/", optionalAuth, asyncHandler(couponController.getAllCoupons));
 
 couponRouter.get("/:id", ...adminOnly, asyncHandler(couponController.getCouponById));
 

@@ -48,6 +48,7 @@ export const createApp = (): Application => {
       immutable: true,
       setHeaders: (res) => {
         res.setHeader("Cache-Control", "public, max-age=604800, immutable");
+        res.setHeader("Access-Control-Allow-Origin", "*");
       },
     }),
   );

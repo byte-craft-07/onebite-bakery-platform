@@ -8,6 +8,7 @@ import { cartService } from "@/services/cart.service";
 import { favoritesService } from "@/services/favorites.service";
 import { reviewService } from "@/services/review.service";
 import { getOptimizedImageUrl } from "@/utils/cdn.utils";
+import { imageCache } from "@/utils/imageCache";
 import { getProductUnitLabel } from "@/utils/productGridUtils";
 import { useTranslation } from "react-i18next";
 import { getLocalizedProductName } from "@/i18n/utils";
@@ -308,7 +309,14 @@ export const ProductCard: React.FC<{ product: ProductItem }> = ({ product }) => 
   const isBestseller = product.isBestseller !== false;
 
   return (
-    <div className="group relative rounded-2xl border border-[#E5DEC9] bg-white overflow-hidden shadow-[0_2px_12px_rgba(59,48,43,0.04)] hover:shadow-[0_8px_24px_rgba(59,48,43,0.08)] transition-all duration-300 flex flex-col justify-between hover:-translate-y-1">
+    <div
+      onMouseEnter={() => {
+        if (imageList && imageList.length > 0) {
+          imageCache.cacheImages(imageList);
+        }
+      }}
+      className="group relative rounded-2xl border border-[#E5DEC9] bg-white overflow-hidden shadow-[0_2px_12px_rgba(59,48,43,0.04)] hover:shadow-[0_8px_24px_rgba(59,48,43,0.08)] transition-all duration-300 flex flex-col justify-between hover:-translate-y-1"
+    >
       {/* Product Image Section with Multi-Image Touch & Button Slider */}
       <div
         className="relative aspect-square w-full overflow-hidden bg-[#FFF8EC] touch-pan-y"

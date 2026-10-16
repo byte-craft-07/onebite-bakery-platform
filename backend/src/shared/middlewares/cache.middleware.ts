@@ -18,7 +18,7 @@ export const defaultCacheKeyGenerator = (req: Request): string => {
 };
 
 /**
- * Middleware to cache GET API responses
+ * Middleware to cache GET API responses, set HTTP cache headers, ETag, and browser cookies
  */
 export const cacheResponse = (options?: CacheMiddlewareOptions) => {
   const ttlSeconds = options?.ttlSeconds ?? 300; // default 5 mins
@@ -32,26 +32,67 @@ export const cacheResponse = (options?: CacheMiddlewareOptions) => {
     }
 
     const key = keyGen(req);
-    const cached = cacheService.get<{ statusCode: number; data: unknown }>(key);
+    const cached = cacheService.get<{ statusCode: number; data: unknown; etag?: string }>(key);
 
     if (cached) {
       res.setHeader("X-Cache", "HIT");
+      res.setHeader("Cache-Control", `public, max-age=${ttlSeconds}, stale-while-revalidate=${ttlSeconds * 2}`);
+
+      if (cached.etag) {
+        res.setHeader("ETag", cached.etag);
+        if (req.headers["if-none-match"] === cached.etag) {
+          res.status(304).end();
+          return;
+        }
+      }
+
+      // Refresh cookie expiration for client tracking
+      if (typeof res.cookie === "function") {
+        res.cookie("onebite_catalog_cache", "active", {
+          maxAge: ttlSeconds * 1000,
+          httpOnly: false,
+          sameSite: "lax",
+          path: "/",
+        });
+      }
+
       res.status(cached.statusCode).json(cached.data);
       return;
     }
 
     res.setHeader("X-Cache", "MISS");
+    res.setHeader("Cache-Control", `public, max-age=${ttlSeconds}, stale-while-revalidate=${ttlSeconds * 2}`);
 
     // Intercept res.json to cache response body
     const originalJson = res.json.bind(res);
 
     res.json = function (body: unknown): Response {
       if (res.statusCode >= 200 && res.statusCode < 300) {
+        const payloadString = JSON.stringify(body);
+        const etag = `W/"${Buffer.from(payloadString).length.toString(16)}-${Date.now().toString(16)}"`;
+        res.setHeader("ETag", etag);
+
+        if (typeof res.cookie === "function") {
+          res.cookie("onebite_catalog_cache", "active", {
+            maxAge: ttlSeconds * 1000,
+            httpOnly: false,
+            sameSite: "lax",
+            path: "/",
+          });
+          res.cookie("onebite_catalog_version", Date.now().toString(), {
+            maxAge: ttlSeconds * 1000,
+            httpOnly: false,
+            sameSite: "lax",
+            path: "/",
+          });
+        }
+
         cacheService.set(
           key,
           {
             statusCode: res.statusCode,
             data: body,
+            etag,
           },
           {
             ttlSeconds,
@@ -75,6 +116,9 @@ export const invalidateCache = (tags: string[]) => {
       // Invalidate only if response was successful (2xx)
       if (res.statusCode >= 200 && res.statusCode < 300) {
         cacheService.invalidateTags(tags);
+        if (typeof res.clearCookie === "function") {
+          res.clearCookie("onebite_catalog_cache", { path: "/" });
+        }
       }
     });
     next();

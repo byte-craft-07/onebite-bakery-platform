@@ -3,12 +3,14 @@ import { Check, Copy, Sparkles, Tag, Ticket, X, Zap } from "lucide-react";
 
 import { Modal } from "@/components/ui/DisplayComponents";
 import { toast } from "@/contexts/toast.context";
-import { adminCouponsService, type AdminCoupon } from "@/features/admin/services/adminCoupons.service";
+import { type AdminCoupon } from "@/features/admin/services/adminCoupons.service";
 import { cartService } from "@/services/cart.service";
+import { offersService } from "@/services/offers.service";
 
 interface OffersModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onCouponApplied?: (code: string) => void;
 }
 
 const DEFAULT_OFFERS: AdminCoupon[] = [
@@ -54,7 +56,7 @@ const DEFAULT_OFFERS: AdminCoupon[] = [
   },
 ];
 
-export const OffersModal: React.FC<OffersModalProps> = ({ isOpen, onClose }) => {
+export const OffersModal: React.FC<OffersModalProps> = ({ isOpen, onClose, onCouponApplied }) => {
   const [coupons, setCoupons] = useState<AdminCoupon[]>([]);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [applyingCode, setApplyingCode] = useState<string | null>(null);
@@ -62,11 +64,14 @@ export const OffersModal: React.FC<OffersModalProps> = ({ isOpen, onClose }) => 
 
   const fetchOffers = async () => {
     try {
-      const serverCoupons = await adminCouponsService.getCoupons();
-      const activeServerCoupons = serverCoupons.filter((c) => c.isActive);
-      setCoupons(activeServerCoupons);
+      const serverCoupons = await offersService.getActiveOffers();
+      if (serverCoupons && serverCoupons.length > 0) {
+        setCoupons(serverCoupons);
+      } else {
+        setCoupons(DEFAULT_OFFERS);
+      }
     } catch {
-      setCoupons([]);
+      setCoupons(DEFAULT_OFFERS);
     }
   };
 
@@ -97,6 +102,9 @@ export const OffersModal: React.FC<OffersModalProps> = ({ isOpen, onClose }) => 
       });
       toast.update("Promo Code Applied! 🎉", `Coupon "${code}" discount applied to your cart.`);
       window.dispatchEvent(new CustomEvent("onebitebakery_cart_updated"));
+      if (onCouponApplied) {
+        onCouponApplied(code);
+      }
     } catch (err: any) {
       const msg = err?.message || `Coupon "${code}" copied! Enter at checkout.`;
       setFeedbackMsg({

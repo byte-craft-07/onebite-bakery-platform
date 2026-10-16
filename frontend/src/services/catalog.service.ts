@@ -2,6 +2,7 @@ import { apiClient } from "./api.client";
 import { authService } from "./auth.service";
 import { decorationService } from "./decoration.service";
 import { clientCache } from "@/utils/clientCache";
+import { imageCache } from "@/utils/imageCache";
 import { convertDecorationToProductItem } from "@/utils/productGridUtils";
 
 export interface ProductItem {
@@ -174,6 +175,11 @@ export const catalogService = {
           if (Array.isArray(rawProducts)) {
             const branchTitle = villageName ? `${villageName} (${district || ""})` : district;
             const mappedProducts = rawProducts.map((p: any) => normalizeProductItem(p, branchTitle));
+
+            // Automatically cache product images in background Cache Storage (Cache Memory)
+            const allImages = mappedProducts.flatMap((p) => [p.mainImage, ...(p.images || [])]);
+            imageCache.cacheImages(allImages);
+
             return {
               products: mappedProducts,
               pagination: response.data?.data?.pagination || {
@@ -205,29 +211,40 @@ export const catalogService = {
     );
   },
 
-  getProductById: async (id: string): Promise<ProductItem | null> => {
-    try {
-      const response = await apiClient.get<{
-        success: boolean;
-        data: { product: any };
-      }>(`/products/id/${id}`);
-      if (response.data?.data?.product) {
-        return normalizeProductItem(response.data.data.product);
-      }
-    } catch (_err) {
-      // Fallback to decoration service below
-    }
+  getProductById: async (id: string, forceRefresh: boolean = false): Promise<ProductItem | null> => {
+    return clientCache.withCache(
+      `product_id_${id}`,
+      async () => {
+        try {
+          const response = await apiClient.get<{
+            success: boolean;
+            data: { product: any };
+          }>(`/products/id/${id}`);
+          if (response.data?.data?.product) {
+            const item = normalizeProductItem(response.data.data.product);
+            imageCache.cacheImages([item.mainImage, ...(item.images || [])]);
+            return item;
+          }
+        } catch (_err) {
+          // Fallback to decoration service below
+        }
 
-    try {
-      const deco = await decorationService.getDecorationById(id);
-      if (deco) {
-        return convertDecorationToProductItem(deco);
-      }
-    } catch (_decoErr) {
-      // Ignore
-    }
+        try {
+          const deco = await decorationService.getDecorationById(id);
+          if (deco) {
+            const item = convertDecorationToProductItem(deco);
+            imageCache.cacheImages([item.mainImage, ...(item.images || [])]);
+            return item;
+          }
+        } catch (_decoErr) {
+          // Ignore
+        }
 
-    return null;
+        return null;
+      },
+      5 * 60 * 1000,
+      forceRefresh
+    );
   },
 
   getProductBySlug: async (slug: string, forceRefresh: boolean = false): Promise<ProductItem> => {
@@ -251,7 +268,9 @@ export const catalogService = {
             },
           });
           if (response.data?.data?.product) {
-            return normalizeProductItem(response.data.data.product, branchTitle);
+            const item = normalizeProductItem(response.data.data.product, branchTitle);
+            imageCache.cacheImages([item.mainImage, ...(item.images || [])]);
+            return item;
           }
         } catch (_err) {
           // Try decoration fallback below
@@ -260,7 +279,9 @@ export const catalogService = {
         try {
           const deco = await decorationService.getDecorationById(slug);
           if (deco) {
-            return convertDecorationToProductItem(deco);
+            const item = convertDecorationToProductItem(deco);
+            imageCache.cacheImages([item.mainImage, ...(item.images || [])]);
+            return item;
           }
         } catch (_decoErr) {
           // Ignore
