@@ -87,62 +87,19 @@ export const adminCouponsService = {
 
 const LOCAL_COUPONS_KEY = "onebitebakery_mock_coupons";
 
-const INITIAL_MOCK_COUPONS: AdminCoupon[] = [
-  {
-    id: "cpn_1",
-    code: "WELCOME100",
-    description: "₹100 FLAT discount on first orders above ₹499",
-    discountType: "FLAT",
-    discountValue: 100,
-    minOrderAmount: 499,
-    startDate: "2026-01-01T00:00:00.000Z",
-    endDate: "2026-12-31T23:59:59.000Z",
-    usageLimit: 500,
-    usedCount: 42,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "cpn_2",
-    code: "SWEET20",
-    description: "20% OFF on all bakery items (Max discount ₹150)",
-    discountType: "PERCENTAGE",
-    discountValue: 20,
-    minOrderAmount: 299,
-    maxDiscountAmount: 150,
-    startDate: "2026-01-01T00:00:00.000Z",
-    endDate: "2026-12-31T23:59:59.000Z",
-    usageLimit: 1000,
-    usedCount: 128,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "cpn_3",
-    code: "FESTIVE50",
-    description: "Flat ₹50 OFF for minimum order of ₹299",
-    discountType: "FLAT",
-    discountValue: 50,
-    minOrderAmount: 299,
-    startDate: "2026-01-01T00:00:00.000Z",
-    endDate: "2026-12-31T23:59:59.000Z",
-    usedCount: 15,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-];
+const INITIAL_MOCK_COUPONS: AdminCoupon[] = [];
 
 function getLocalCoupons(): AdminCoupon[] {
   try {
     const raw = localStorage.getItem(LOCAL_COUPONS_KEY);
     if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) return parsed;
     }
   } catch (_e) {
     // Ignore
   }
-  return INITIAL_MOCK_COUPONS;
+  return [];
 }
 
 function saveLocalCoupon(coupon: AdminCoupon) {

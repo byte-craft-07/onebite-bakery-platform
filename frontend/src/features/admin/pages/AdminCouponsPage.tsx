@@ -287,7 +287,7 @@ export const AdminCouponsPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Coupon Code *"
-              placeholder="e.g. WELCOME100 or SAVE20"
+              placeholder="e.g. FESTIVE20 or SPECIAL10"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               required

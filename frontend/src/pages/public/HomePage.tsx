@@ -273,7 +273,7 @@ export const HomePage: React.FC = () => {
               {t("home.offersPromoTitle", "Flat Discounts & Instant Savings on Fresh Bakery")}
             </h2>
             <p className="text-xs sm:text-sm text-[#E5DEC9]/90">
-              {t("home.offersPromoDesc", "Use promo codes like NAVRATRI20, WELCOME100 & CAKE20 during checkout to save big on your celebration!")}
+              {t("home.offersPromoDesc", "Apply active promo coupons during checkout to save big on your celebration!")}
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">

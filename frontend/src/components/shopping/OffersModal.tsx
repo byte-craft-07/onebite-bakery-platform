@@ -13,48 +13,24 @@ interface OffersModalProps {
   onCouponApplied?: (code: string) => void;
 }
 
-const DEFAULT_OFFERS: AdminCoupon[] = [
-  {
-    id: "cpn-welcome",
-    code: "WELCOME100",
-    description: "Flat ₹100 Off on your first bakery order above ₹499",
-    discountType: "FLAT",
-    discountValue: 100,
-    minOrderAmount: 499,
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-    usedCount: 0,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "cpn-cake20",
-    code: "CAKE20",
-    description: "Get 20% instant discount on all celebration cakes & party combos",
-    discountType: "PERCENTAGE",
-    discountValue: 20,
-    minOrderAmount: 599,
-    maxDiscountAmount: 250,
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-    usedCount: 0,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "cpn-sweet50",
-    code: "ONLINE50",
-    description: "Flat ₹50 Off on artisanal pastries, tarts, and fresh sourdough breads",
-    discountType: "FLAT",
-    discountValue: 50,
-    minOrderAmount: 299,
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-    usedCount: 0,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-];
+const renderFormattedText = (text?: string) => {
+  if (!text) return null;
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return (
+            <strong key={i} className="font-extrabold text-[#3B302B]">
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+};
 
 export const OffersModal: React.FC<OffersModalProps> = ({ isOpen, onClose, onCouponApplied }) => {
   const [coupons, setCoupons] = useState<AdminCoupon[]>([]);
@@ -65,13 +41,10 @@ export const OffersModal: React.FC<OffersModalProps> = ({ isOpen, onClose, onCou
   const fetchOffers = async () => {
     try {
       const serverCoupons = await offersService.getActiveOffers();
-      if (serverCoupons && serverCoupons.length > 0) {
-        setCoupons(serverCoupons);
-      } else {
-        setCoupons(DEFAULT_OFFERS);
-      }
-    } catch {
-      setCoupons(DEFAULT_OFFERS);
+      setCoupons(serverCoupons || []);
+    } catch (err) {
+      console.error("Failed to fetch coupons from database:", err);
+      setCoupons([]);
     }
   };
 
@@ -151,40 +124,47 @@ export const OffersModal: React.FC<OffersModalProps> = ({ isOpen, onClose, onCou
 
         {/* Coupons List */}
         <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-          {coupons.map((coupon) => {
-            const isPercentage = coupon.discountType === "PERCENTAGE";
-            const discountLabel = isPercentage
-              ? `${coupon.discountValue}% OFF`
-              : `₹${coupon.discountValue} FLAT OFF`;
+          {coupons.length === 0 ? (
+            <div className="text-center py-8 px-4 text-[#7A6E65] space-y-2">
+              <Ticket className="h-8 w-8 mx-auto opacity-40 text-[#596B58]" />
+              <p className="text-xs font-bold text-[#3B302B]">No active coupons available right now.</p>
+              <p className="text-[11px] text-[#7A6E65]">Check back soon for seasonal bakery offers!</p>
+            </div>
+          ) : (
+            coupons.map((coupon) => {
+              const isPercentage = coupon.discountType === "PERCENTAGE";
+              const discountLabel = isPercentage
+                ? `${coupon.discountValue}% OFF`
+                : `₹${coupon.discountValue} FLAT OFF`;
 
-            return (
-              <div
-                key={coupon.id || coupon.code}
-                className="p-4 rounded-2xl border border-[#E5DEC9] bg-white hover:border-[#596B58]/60 transition-all space-y-3 shadow-xs relative overflow-hidden"
-              >
-                {/* Decorative Pill */}
-                <div className="absolute -right-10 top-3 rotate-45 bg-[#596B58] text-[#FFF8EC] text-[9px] font-extrabold py-0.5 px-10 shadow-xs">
-                  OFFER
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 rounded-xl bg-[#FFF8EC] border border-[#596B58]/30 text-[#596B58] shrink-0">
-                    <Tag className="h-5 w-5" />
+              return (
+                <div
+                  key={coupon.id || coupon.code}
+                  className="p-4 rounded-2xl border border-[#E5DEC9] bg-white hover:border-[#596B58]/60 transition-all space-y-3 shadow-xs relative overflow-hidden"
+                >
+                  {/* Decorative Pill */}
+                  <div className="absolute -right-10 top-3 rotate-45 bg-[#596B58] text-[#FFF8EC] text-[9px] font-extrabold py-0.5 px-10 shadow-xs">
+                    OFFER
                   </div>
-                  <div className="space-y-1 flex-1 pr-6">
-                    <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-sm text-[#3B302B]">{discountLabel}</span>
+
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-[#FFF8EC] border border-[#596B58]/30 text-[#596B58] shrink-0">
+                      <Tag className="h-5 w-5" />
                     </div>
-                    <p className="text-xs text-[#7A6E65] leading-snug">
-                      {coupon.description || `Applicable on orders above ₹${coupon.minOrderAmount || 0}`}
-                    </p>
-                    {coupon.minOrderAmount && coupon.minOrderAmount > 0 ? (
-                      <span className="inline-block text-[10px] text-[#7A6E65] font-semibold">
-                        Min. order value: ₹{coupon.minOrderAmount}
-                      </span>
-                    ) : null}
+                    <div className="space-y-1 flex-1 pr-6">
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-sm text-[#3B302B]">{discountLabel}</span>
+                      </div>
+                      <p className="text-xs text-[#7A6E65] leading-snug">
+                        {renderFormattedText(coupon.description) || `Applicable on orders above ₹${coupon.minOrderAmount || 0}`}
+                      </p>
+                      {coupon.minOrderAmount && coupon.minOrderAmount > 0 ? (
+                        <span className="inline-block text-[10px] text-[#7A6E65] font-semibold">
+                          Min. order value: ₹{coupon.minOrderAmount}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
 
                 {/* Code Box & Actions */}
                 <div className="pt-2 border-t border-dashed border-[#E5DEC9] flex items-center justify-between gap-2">
@@ -225,7 +205,7 @@ export const OffersModal: React.FC<OffersModalProps> = ({ isOpen, onClose, onCou
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
 
         <div className="pt-2 text-center text-xs text-[#7A6E65]">

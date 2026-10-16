@@ -429,6 +429,7 @@ export const cartService = {
 
         return saveLocalCart(currentCart);
       }
+      throw new Error(`Failed to validate coupon "${cleanCode}".`);
     } catch (err: any) {
       const msg =
         err.response?.data?.message ||
@@ -437,26 +438,6 @@ export const cartService = {
         `Invalid promo code "${cleanCode}".`;
       throw new Error(msg);
     }
-
-    // Local fallback calculation if API was unreachable
-    let discount = 100;
-    if (cleanCode.includes("20") || cleanCode === "SWEET20") {
-      discount = Math.min(150, Math.round(effectiveSubtotal * 0.2));
-    } else if (cleanCode === "FESTIVE50") {
-      discount = 50;
-    }
-
-    if (cleanCode === "WELCOME100" && effectiveSubtotal < 499) {
-      throw new Error("Minimum order subtotal of ₹499 required for coupon WELCOME100.");
-    }
-
-    currentCart.couponCode = cleanCode;
-    currentCart.couponDiscount = discount;
-    currentCart.discountAmount = discount;
-    if (effectiveSubtotal > 0 && currentCart.subtotal === 0) {
-      currentCart.subtotal = effectiveSubtotal;
-    }
-    return saveLocalCart(currentCart);
   },
 
   removeCoupon: async (): Promise<CartResponse> => {

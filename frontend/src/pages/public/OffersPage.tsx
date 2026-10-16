@@ -21,62 +21,24 @@ import { cartService } from "@/services/cart.service";
 import { offersService } from "@/services/offers.service";
 import { SEOHead } from "@/components/seo";
 
-const DEFAULT_OFFERS: AdminCoupon[] = [
-  {
-    id: "cpn-welcome",
-    code: "WELCOME100",
-    description: "Flat ₹100 Off on your first celebration bakery order above ₹499",
-    discountType: "FLAT",
-    discountValue: 100,
-    minOrderAmount: 499,
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-    usedCount: 0,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "cpn-cake20",
-    code: "CAKE20",
-    description: "Get 20% instant discount on all celebration cakes & party dessert combos",
-    discountType: "PERCENTAGE",
-    discountValue: 20,
-    minOrderAmount: 599,
-    maxDiscountAmount: 250,
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-    usedCount: 0,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "cpn-sweet50",
-    code: "ONLINE50",
-    description: "Flat ₹50 Off on artisanal sourdough bread, croissants, and chocolate cookies",
-    discountType: "FLAT",
-    discountValue: 50,
-    minOrderAmount: 299,
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-    usedCount: 0,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "cpn-party15",
-    code: "PARTY15",
-    description: "Save 15% on Birthday Combos, Custom Cake studio orders & Party decorations",
-    discountType: "PERCENTAGE",
-    discountValue: 15,
-    minOrderAmount: 899,
-    maxDiscountAmount: 350,
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-    usedCount: 0,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  },
-];
+const renderFormattedText = (text?: string) => {
+  if (!text) return null;
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return (
+            <strong key={i} className="font-extrabold text-[#3B302B]">
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+};
 
 export const OffersPage: React.FC = () => {
   const [coupons, setCoupons] = useState<AdminCoupon[]>([]);
@@ -89,13 +51,10 @@ export const OffersPage: React.FC = () => {
     setIsLoading(true);
     try {
       const serverCoupons = await offersService.getActiveOffers();
-      if (serverCoupons && serverCoupons.length > 0) {
-        setCoupons(serverCoupons);
-      } else {
-        setCoupons(DEFAULT_OFFERS);
-      }
-    } catch {
-      setCoupons(DEFAULT_OFFERS);
+      setCoupons(serverCoupons || []);
+    } catch (err) {
+      console.error("Failed to fetch coupons from database:", err);
+      setCoupons([]);
     } finally {
       setIsLoading(false);
     }
@@ -205,6 +164,16 @@ export const OffersPage: React.FC = () => {
             <Skeleton className="h-48 rounded-2xl" />
             <Skeleton className="h-48 rounded-2xl" />
           </div>
+        ) : coupons.length === 0 ? (
+          <Card className="p-10 text-center space-y-3 bg-[#FFF8EC] border-[#E5DEC9]">
+            <div className="mx-auto w-12 h-12 rounded-full bg-[#E5DEC9]/50 flex items-center justify-center text-[#596B58]">
+              <Ticket className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-extrabold text-[#3B302B]">No active offers currently available</h3>
+            <p className="text-xs text-[#7A6E65] max-w-md mx-auto">
+              Please check back soon for seasonal discounts, festive promo codes, and special celebration savings!
+            </p>
+          </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {coupons.map((coupon) => {
@@ -229,7 +198,9 @@ export const OffersPage: React.FC = () => {
                       </div>
                       <div className="space-y-1 pr-6">
                         <span className="text-lg font-extrabold text-[#3B302B] block">{discountLabel}</span>
-                        <p className="text-xs text-[#7A6E65] leading-relaxed">{coupon.description}</p>
+                        <p className="text-xs text-[#7A6E65] leading-relaxed">
+                          {renderFormattedText(coupon.description)}
+                        </p>
                       </div>
                     </div>
 
