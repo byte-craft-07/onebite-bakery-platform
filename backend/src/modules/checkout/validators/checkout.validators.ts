@@ -20,6 +20,7 @@ export const checkoutPreviewQuerySchema = z.object({
   addressId: objectIdSchema.optional(),
   villageId: objectIdSchema.optional(),
   villageName: z.string().optional(),
+  couponCode: z.string().optional(),
 });
 
 export const validateCheckoutSchema = z

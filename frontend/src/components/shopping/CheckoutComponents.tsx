@@ -332,12 +332,16 @@ export const CheckoutSummary: React.FC<{
 
   React.useEffect(() => {
     cartService.getCart().then((c) => {
-      if (c.couponCode) {
-        setAppliedCoupon(c.couponCode);
+      const code = c.couponCode || (pricing as any)?.couponCode;
+      if (code) {
+        setAppliedCoupon(code);
         setAppliedDiscount(c.couponDiscount || c.discountAmount || pricing.discountAmount || 0);
+      } else {
+        setAppliedCoupon(null);
+        setAppliedDiscount(pricing.discountAmount || 0);
       }
     });
-  }, [pricing.discountAmount]);
+  }, [pricing.discountAmount, (pricing as any)?.couponCode]);
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -380,7 +384,7 @@ export const CheckoutSummary: React.FC<{
     }
   };
 
-  const effectiveDiscount = Math.round(appliedCoupon ? appliedDiscount : pricing.discountAmount);
+  const effectiveDiscount = Math.round(appliedCoupon ? (appliedDiscount || pricing.discountAmount) : pricing.discountAmount);
   const baseTotal = Math.max(0, Math.round(pricing.subtotal - effectiveDiscount + pricing.deliveryFee));
   const upiDiscount = (paymentMethod === "MANUAL_UPI" && manualUpiDiscount > 0) ? Math.round(manualUpiDiscount) : 0;
   const effectiveTotal = Math.max(0, Math.round(baseTotal - upiDiscount));

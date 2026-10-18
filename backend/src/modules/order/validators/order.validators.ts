@@ -35,6 +35,7 @@ export const createOrderSchema = z
     paymentReceipt: z.string().trim().optional(),
     paymentReceiptUrl: z.string().trim().optional(),
     transactionId: z.string().trim().max(100).optional(),
+    couponCode: z.string().trim().max(50).optional(),
   })
   .refine(
     (data) =>

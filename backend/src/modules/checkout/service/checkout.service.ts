@@ -8,6 +8,7 @@ import type { CartRepository } from "../../cart/index.js";
 
 import { ProductModel } from "../../product/index.js";
 import { SettingsModel } from "../../settings/index.js";
+import { couponService } from "../../coupon/index.js";
 import type { DeliveryMethod } from "../../order/constants/index.js";
 import type {
   CheckoutPreviewQueryDto,
@@ -325,7 +326,23 @@ export class CheckoutService {
       // Fallback
     }
 
-    const discountAmount = cart.estimatedDiscount ?? cart.couponDiscount ?? 0;
+    let discountAmount = cart.estimatedDiscount ?? cart.couponDiscount ?? 0;
+    const appliedCoupon = (query.couponCode || cart.couponCode)?.trim();
+    let effectiveCouponCode = appliedCoupon;
+
+    if (appliedCoupon) {
+      try {
+        const couponRes = await couponService.validateAndCalculateDiscount(
+          appliedCoupon,
+          subtotal,
+        );
+        discountAmount = couponRes.discountAmount;
+        effectiveCouponCode = couponRes.code;
+      } catch (_cErr) {
+        effectiveCouponCode = undefined;
+      }
+    }
+
     const freeDeliveryThreshold = villageFreeThreshold ?? (settings?.freeDeliveryThreshold ?? 799);
     const standardDeliveryCharge = villageDeliveryCharge ?? (settings?.deliveryCharge ?? 49);
     const deliveryFee =
@@ -348,7 +365,9 @@ export class CheckoutService {
         taxAmount: 0,
         discountAmount,
         totalAmount,
+        ...(effectiveCouponCode ? { couponCode: effectiveCouponCode, couponDiscount: discountAmount } : {}),
       },
+      ...(effectiveCouponCode ? { couponCode: effectiveCouponCode, couponDiscount: discountAmount } : {}),
       eligibleDeliveryMethods,
       homeDeliveryEligible,
       pickupEligible,

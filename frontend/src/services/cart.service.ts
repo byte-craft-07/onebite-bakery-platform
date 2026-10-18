@@ -150,7 +150,7 @@ const normalizeCartResponse = (cart: any): CartResponse => {
 
   const subtotal = normalizedItems.reduce((sum, item) => sum + item.itemTotal, 0);
   const itemCount = normalizedItems.reduce((sum, item) => sum + item.quantity, 0);
-  const discountVal = cart.couponDiscount ?? cart.estimatedDiscount ?? 0;
+  const discountVal = cart.couponDiscount ?? cart.discountAmount ?? cart.estimatedDiscount ?? 0;
 
   return {
     id: String(cart.id || cart._id || "cart-1"),
@@ -197,6 +197,7 @@ const saveLocalCart = (cart: CartResponse, dispatchEvent = true): CartResponse =
 
 export const cartService = {
   getCart: async (): Promise<CartResponse> => {
+    const local = getLocalCart();
     try {
       const response = await apiClient.get<{
         success: boolean;
@@ -204,13 +205,18 @@ export const cartService = {
       }>("/cart");
       if (response.data?.data?.cart) {
         const normalized = normalizeCartResponse(response.data.data.cart);
+        if (!normalized.couponCode && local.couponCode) {
+          normalized.couponCode = local.couponCode;
+          normalized.couponDiscount = local.couponDiscount || local.discountAmount || 0;
+          normalized.discountAmount = normalized.couponDiscount;
+        }
         saveLocalCart(normalized, false);
         return normalized;
       }
     } catch (_err) {
       // Fallback to local cart
     }
-    return getLocalCart();
+    return local;
   },
 
   addItem: async (payload: {

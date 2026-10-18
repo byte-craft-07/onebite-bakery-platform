@@ -133,6 +133,8 @@ export const CartPage: React.FC = () => {
   const isBelowOnlineOrderLimit = minOrderLimit > 0 && cart.subtotal < minOrderLimit;
   const remainingForOnlineOrder = Math.max(0, minOrderLimit - cart.subtotal);
   const progressPercent = minOrderLimit > 0 ? Math.min(100, Math.round((cart.subtotal / minOrderLimit) * 100)) : 100;
+  const appliedDiscount = Math.round((cart.discountAmount || cart.couponDiscount || 0) * 100) / 100;
+  const estimatedPayable = Math.max(0, cart.subtotal - appliedDiscount);
 
   return (
     <div className="space-y-6 pb-16 max-w-5xl mx-auto">
@@ -172,8 +174,29 @@ export const CartPage: React.FC = () => {
           </h3>
           <div className="flex justify-between items-baseline text-sm text-[#7A6E65]">
             <span>{t("cart.itemsSubtotal", "Items Subtotal")}</span>
-            <span className="text-xl font-extrabold text-[#3B302B]">₹{cart.subtotal}</span>
+            <span className={appliedDiscount > 0 ? "text-base font-bold text-[#7A6E65] line-through" : "text-xl font-extrabold text-[#3B302B]"}>
+              ₹{cart.subtotal}
+            </span>
           </div>
+
+          {appliedDiscount > 0 && (
+            <div className="flex justify-between items-center text-sm text-emerald-700 font-bold bg-emerald-50/80 p-2.5 rounded-xl border border-emerald-200">
+              <span className="flex items-center gap-1.5">
+                <Tag className="h-4 w-4 text-emerald-600" />
+                <span>Coupon ({cart.couponCode}):</span>
+              </span>
+              <span className="text-base font-extrabold">-₹{appliedDiscount}</span>
+            </div>
+          )}
+
+          {appliedDiscount > 0 && (
+            <div className="flex justify-between items-baseline text-sm pt-2 border-t border-[#E5DEC9]">
+              <span className="font-bold text-[#3B302B]">{t("cart.payableSubtotal", "Payable Subtotal")}</span>
+              <span className="text-2xl font-extrabold text-emerald-800">
+                ₹{estimatedPayable}
+              </span>
+            </div>
+          )}
 
           {minOrderLimit > 0 && (
             <div className="flex justify-between items-center text-xs text-[#7A6E65] pt-1">

@@ -41,6 +41,8 @@ export interface OrderResponse {
   paymentReceiptUrl?: string;
   transactionId?: string;
   notes?: string;
+  couponCode?: string;
+  couponDiscount?: number;
   deliveryTimingType?: "INSTANT" | "SCHEDULED";
   deliveryTimePreference?: string;
   estimatedReadyTime?: Date;

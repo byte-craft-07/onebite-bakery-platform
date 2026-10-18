@@ -25,6 +25,7 @@ export interface CreateOrderDto {
   paymentReceiptUrl?: string;
   paymentReceipt?: string;
   transactionId?: string;
+  couponCode?: string;
 }
 
 export interface UpdatePaymentStatusDto {

@@ -82,6 +82,7 @@ export const checkoutService = {
           deliveryMethod: fulfillmentType,
           addressId,
           villageName,
+          ...(cart.couponCode ? { couponCode: cart.couponCode } : {}),
         },
       });
       const summaryData = response.data?.data?.checkout || response.data?.data;
@@ -119,7 +120,10 @@ export const checkoutService = {
         },
       ];
       subtotal = directItem.itemTotal;
-      discountAmount = 0;
+      discountAmount = Math.min(
+        subtotal,
+        Math.round((cart.discountAmount || cart.couponDiscount || backendPreview?.pricing?.discountAmount || 0) * 100) / 100
+      );
     } else {
       items = backendPreview?.items || cart.items.map((i) => ({
         productId: i.productId.id,
@@ -131,7 +135,7 @@ export const checkoutService = {
       }));
 
       subtotal = backendPreview?.pricing?.subtotal || cart.subtotal || items.reduce((sum, item) => sum + item.itemTotal, 0) || 0;
-      discountAmount = Math.round((cart.discountAmount || cart.couponDiscount || backendPreview?.pricing?.discountAmount || 0) * 100) / 100;
+      discountAmount = Math.round((backendPreview?.pricing?.discountAmount || cart.discountAmount || cart.couponDiscount || 0) * 100) / 100;
     }
 
     let storeSettings = {
@@ -246,6 +250,9 @@ export const checkoutService = {
     directItem?: DirectOrderItem | null;
   }) => {
     let originalLocalCartJson: string | null = null;
+    const localCart = await cartService.getCart();
+    const couponCodeToApply = localCart.couponCode;
+
     try {
       if (payload.directItem) {
         // Save current cart backup so cart items are NOT lost
@@ -279,6 +286,8 @@ export const checkoutService = {
           ],
           subtotal: payload.directItem.itemTotal,
           itemCount: payload.directItem.quantity,
+          couponCode: couponCodeToApply,
+          couponDiscount: localCart.couponDiscount || localCart.discountAmount || 0,
         };
         localStorage.setItem("onebitebakery_local_cart", JSON.stringify(tempCart));
 
@@ -287,11 +296,13 @@ export const checkoutService = {
             productId: payload.directItem.productId,
             quantity: payload.directItem.quantity,
           });
+          if (couponCodeToApply) {
+            await apiClient.post("/cart/coupon", { code: couponCodeToApply }).catch(() => {});
+          }
         } catch (_e) {
           // Ignore
         }
       } else {
-        const localCart = await cartService.getCart();
         if (localCart.items && localCart.items.length > 0) {
           try {
             await apiClient.delete("/cart");
@@ -306,6 +317,13 @@ export const checkoutService = {
               });
             } catch (_e) {
               // Ignore single item sync failure
+            }
+          }
+          if (couponCodeToApply) {
+            try {
+              await apiClient.post("/cart/coupon", { code: couponCodeToApply }).catch(() => {});
+            } catch (_e) {
+              // Ignore
             }
           }
         }
@@ -328,6 +346,7 @@ export const checkoutService = {
       ...(payload.scheduledTimeSlot ? { scheduledTimeSlot: payload.scheduledTimeSlot } : {}),
       ...(payload.paymentReceiptUrl ? { paymentReceiptUrl: payload.paymentReceiptUrl } : {}),
       ...(payload.transactionId ? { transactionId: payload.transactionId } : {}),
+      ...(couponCodeToApply ? { couponCode: couponCodeToApply } : {}),
     });
 
     if (response.data?.data?.order) {

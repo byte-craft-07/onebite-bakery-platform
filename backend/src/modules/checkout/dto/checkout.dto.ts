@@ -15,6 +15,7 @@ export interface CheckoutPreviewQueryDto {
   addressId?: string;
   villageId?: string;
   villageName?: string;
+  couponCode?: string;
 }
 
 export interface ValidateCheckoutDto {

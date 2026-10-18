@@ -17,6 +17,8 @@ export interface CheckoutPricingSummary {
   taxAmount: number;
   discountAmount: number;
   totalAmount: number;
+  couponCode?: string;
+  couponDiscount?: number;
 }
 
 export interface CheckoutSummaryResponse {
@@ -25,6 +27,8 @@ export interface CheckoutSummaryResponse {
   subtotal: number;
   totalItems: number;
   pricing: CheckoutPricingSummary;
+  couponCode?: string;
+  couponDiscount?: number;
   eligibleDeliveryMethods: DeliveryMethod[];
   homeDeliveryEligible: boolean;
   pickupEligible: boolean;

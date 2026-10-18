@@ -67,7 +67,19 @@ export const OffersModal: React.FC<OffersModalProps> = ({ isOpen, onClose, onCou
     setFeedbackMsg(null);
     try {
       const cart = await cartService.getCart();
-      const subtotal = cart.subtotal || 500;
+      let subtotal = cart.subtotal;
+      if (!subtotal || subtotal <= 0) {
+        try {
+          const directRaw = sessionStorage.getItem("onebitebakery_direct_order_item");
+          if (directRaw) {
+            const parsed = JSON.parse(directRaw);
+            if (parsed?.itemTotal) subtotal = parsed.itemTotal;
+          }
+        } catch {}
+      }
+      if (!subtotal || subtotal <= 0) {
+        subtotal = 500;
+      }
       await cartService.applyCoupon(code, subtotal);
       setFeedbackMsg({
         type: "success",

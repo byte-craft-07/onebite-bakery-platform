@@ -75,6 +75,8 @@ export interface OrderPricingSnapshot {
   tax: number;
   deliveryCharge: number;
   discount: number;
+  couponCode?: string;
+  couponDiscount?: number;
   manualUpiDiscount?: number;
   grandTotal: number;
   homeDeliveryAvailable: boolean;
@@ -105,6 +107,8 @@ export interface Order extends TimestampedDocument {
   paymentReceiptUrl?: string;
   transactionId?: string;
   notes?: string;
+  couponCode?: string;
+  couponDiscount?: number;
   deliveryTimingType?: "INSTANT" | "SCHEDULED";
   deliveryTimePreference?: string;
   estimatedReadyTime?: Date;
@@ -217,6 +221,8 @@ const orderPricingSnapshotSchema = new Schema<OrderPricingSnapshot>(
     tax: { type: Number, required: true, min: 0, default: 0 },
     deliveryCharge: { type: Number, required: true, min: 0, default: 0 },
     discount: { type: Number, required: true, min: 0, default: 0 },
+    couponCode: { type: String, trim: true, default: undefined },
+    couponDiscount: { type: Number, required: false, min: 0, default: 0 },
     manualUpiDiscount: { type: Number, required: false, min: 0, default: 0 },
     grandTotal: { type: Number, required: true, min: 0 },
     homeDeliveryAvailable: { type: Boolean, required: true, default: true },
@@ -335,6 +341,16 @@ const orderSchema = new Schema<Order>(
       trim: true,
       maxlength: 500,
       default: undefined,
+    },
+    couponCode: {
+      type: String,
+      trim: true,
+      default: undefined,
+    },
+    couponDiscount: {
+      type: Number,
+      min: 0,
+      default: 0,
     },
     deliveryTimingType: {
       type: String,

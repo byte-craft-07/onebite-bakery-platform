@@ -58,7 +58,27 @@ export class OrderService {
 
     // 1. Read & Validate Cart
     const cart = await this.cartService.getOrCreateCartDocument(customerId);
+
+    const couponToApply = dto.couponCode || cart.couponCode;
+    if (couponToApply) {
+      cart.couponCode = couponToApply;
+    }
+
     await this.cartService.recalculateCart(cart);
+
+    if (couponToApply && (!cart.estimatedDiscount || cart.estimatedDiscount <= 0)) {
+      try {
+        const couponRes = await couponService.validateAndCalculateDiscount(
+          couponToApply,
+          cart.subtotal,
+        );
+        cart.couponCode = couponRes.code;
+        cart.couponDiscount = couponRes.discountAmount;
+        cart.estimatedDiscount = couponRes.discountAmount;
+      } catch (_cErr) {
+        // Coupon could not be applied or requirements not met
+      }
+    }
 
     if (!cart.items || cart.items.length === 0) {
       throw new AppError(
@@ -442,6 +462,7 @@ export class OrderService {
       tax: cart.estimatedTax,
       deliveryCharge,
       discount: cart.estimatedDiscount,
+      ...(cart.couponCode ? { couponCode: cart.couponCode, couponDiscount: cart.estimatedDiscount } : {}),
       manualUpiDiscount: finalManualUpiDiscount,
       grandTotal: finalGrandTotal,
       homeDeliveryAvailable: cart.homeDeliveryAvailable,
@@ -528,6 +549,7 @@ export class OrderService {
       paymentMethod: dto.paymentMethod ?? "UPI",
       orderStatus: "PENDING",
       paymentStatus: "PENDING",
+      ...(cart.couponCode ? { couponCode: cart.couponCode, couponDiscount: cart.estimatedDiscount } : {}),
       ...(dto.paymentReceiptUrl || dto.paymentReceipt
         ? { paymentReceiptUrl: dto.paymentReceiptUrl || dto.paymentReceipt }
         : {}),
@@ -1495,6 +1517,7 @@ export class OrderService {
       ...(order.deliveryTimingType ? { deliveryTimingType: order.deliveryTimingType } : {}),
       ...(order.deliveryTimePreference ? { deliveryTimePreference: order.deliveryTimePreference } : {}),
       ...(order.notes ? { notes: order.notes } : {}),
+      ...(order.couponCode ? { couponCode: order.couponCode, couponDiscount: order.couponDiscount } : {}),
       ...(order.estimatedReadyTime
         ? { estimatedReadyTime: order.estimatedReadyTime }
         : {}),
