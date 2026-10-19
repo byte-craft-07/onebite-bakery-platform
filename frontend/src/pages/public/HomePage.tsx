@@ -35,16 +35,28 @@ import {
 
 const HOME_FAQS = [
   {
+    question: "Which is the best cake shop and bakery in Terha, Hamirpur?",
+    answer: "OneBite Bakery is the premier cake shop and bakery in Terha, Hamirpur. We specialize in fresh oven-baked celebration cakes, birthday cakes, customized photo cakes, 100% eggless pastries, and party supplies.",
+  },
+  {
+    question: "Is OneBite Bakery also known as Ajay Bakery in Terha?",
+    answer: "Yes! OneBite Bakery is also popularly known locally as Ajay Bakery in Terha. You can order fresh birthday cakes, custom celebration cakes, and delicious pastries directly online or by phone.",
+  },
+  {
+    question: "How can I order cake online in Terha?",
+    answer: "You can easily order online directly through our website (onebite-bakery-platform.vercel.app) or call/WhatsApp us at +91 7897671632. We offer seamless online payments, COD, and prompt home delivery across Terha.",
+  },
+  {
     question: "Do you offer eggless cakes?",
     answer: "Yes, 100% of our cakes, pastries, and breads can be prepared eggless. We utilize dedicated eggless baking stations and separate equipment to guarantee absolute dietary integrity.",
   },
   {
-    question: "Can I order a custom cake for birthdays or weddings?",
+    question: "Can I order a custom cake for birthdays or weddings in Terha?",
     answer: "Absolutely! You can design multi-tier celebration cakes through our interactive Custom Cake Studio, choose your preferred sponge flavor, cream filling, and message, or upload your own custom photo design.",
   },
   {
-    question: "Do you provide local doorstep delivery in Hamirpur?",
-    answer: "Yes, OneBite Bakery offers doorstep delivery across Hamirpur, Terha, Kurara, Sumerpur, and neighboring villages. Free in-store pickup is also available at our Terha bakery location.",
+    question: "Do you provide local doorstep delivery in Terha and Hamirpur?",
+    answer: "Yes, OneBite Bakery offers same-day doorstep delivery across Terha, Hamirpur, Kurara, Sumerpur, and neighboring villages. Free in-store pickup is also available at our Terha bakery location.",
   },
   {
     question: "How early should I place an order for custom cakes?",
@@ -234,9 +246,10 @@ export const HomePage: React.FC = () => {
   return (
     <div className="space-y-8 sm:space-y-14 md:space-y-16 pb-16">
       <SEOHead
-        title="OneBite Bakery | Cakes, Pastries & Custom Cakes"
-        description="Order fresh handcrafted cakes, birthday cakes, custom cakes, pastries, combos, and party decoration items online from OneBite Bakery. Fast local delivery in Hamirpur, UP."
+        title="OneBite Bakery | Best Cake Shop & Bakery in Terha, Hamirpur"
+        description="Best cake shop & bakery in Terha, Hamirpur (UP). Also popularly known as Ajay Bakery Terha. Order fresh handcrafted birthday cakes, custom designer cakes, pastries, pizza & party supplies online."
         canonicalPath="/"
+        keywords="ajay bakery, ajay bakery terha, ajay cake shop, terha bakery, cake shop in terha, bakery in terha, onebite bakery, best cake shop hamirpur, cake shop near me, online cake delivery terha, birthday cakes, custom cakes, pastry shop terha"
         structuredData={[buildLocalBusinessSchema(), buildFAQSchema(HOME_FAQS)]}
       />
 
@@ -252,13 +265,13 @@ export const HomePage: React.FC = () => {
       <section className="text-center max-w-3xl mx-auto px-4 pt-1 sm:pt-2 space-y-1.5 sm:space-y-2">
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold bg-[#596B58]/10 text-[#596B58] border border-[#596B58]/20 uppercase tracking-widest">
           <Sparkles className="h-3 w-3" />
-          <span>Fresh Baked Daily • 100% Eggless Available</span>
+          <span>Fresh Baked Daily • Best Cake Shop in Terha</span>
         </span>
         <h1 className="text-2xl sm:text-4xl font-extrabold text-[#3B302B] tracking-tight">
-          OneBite Bakery — Fresh Cakes, Pastries &amp; Custom Cakes
+          OneBite Bakery — Best Bakery &amp; Cake Shop in Terha, Hamirpur
         </h1>
         <p className="text-xs sm:text-sm text-[#7A6E65] leading-relaxed">
-          Handcrafted celebration cakes, artisanal pastries, fresh sourdough breads, and party supplies baked with pure butter and Belgian dark chocolate. Local doorstep delivery in Hamirpur.
+          Order delicious fresh birthday cakes, custom designer cakes, artisanal pastries, pizza, and party supplies online. Fast same-day doorstep delivery in Terha, Hamirpur &amp; nearby villages.
         </p>
       </section>
 
@@ -766,6 +779,73 @@ export const HomePage: React.FC = () => {
             </Button>
           </div>
         )}
+      </section>
+
+      {/* Local Bakery & Cake Shop Showcase in Terha, Hamirpur (Local SEO Block) */}
+      <section className="rounded-3xl bg-linear-to-br from-[#FFF8EC] via-[#FAF4EA] to-[#F3ECE0] border border-[#E5DEC9] p-6 sm:p-10 space-y-6">
+        <div className="text-center max-w-2xl mx-auto space-y-2">
+          <span className="inline-block text-xs font-extrabold text-[#E67E22] uppercase tracking-wider bg-[#E67E22]/10 px-3 py-1 rounded-full border border-[#E67E22]/20">
+            OneBite Bakery (Ajay Bakery) • टेरहा, हमीरपुर
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#3B302B]">
+            Your Trusted Cake Shop &amp; Bakery in Terha
+          </h2>
+          <p className="text-xs sm:text-sm text-[#7A6E65] leading-relaxed">
+            Looking for the best cake shop in Terha? OneBite Bakery (popularly known as Ajay Bakery) crafts fresh, oven-baked celebration cakes, 100% eggless birthday cakes, designer pastries, and party snacks with doorstep delivery in Terha and neighboring towns across Hamirpur.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white/90 backdrop-blur-xs p-5 rounded-2xl border border-[#E5DEC9] space-y-2.5 shadow-xs">
+            <div className="h-10 w-10 rounded-xl bg-[#596B58]/10 text-[#596B58] flex items-center justify-center text-xl">
+              🎂
+            </div>
+            <h3 className="font-bold text-sm text-[#3B302B]">Terha Cake Shop</h3>
+            <p className="text-xs text-[#7A6E65] leading-relaxed">
+              Freshly baked celebration cakes, Belgian chocolate truffle, red velvet, and personalized photo cakes baked to order.
+            </p>
+          </div>
+
+          <div className="bg-white/90 backdrop-blur-xs p-5 rounded-2xl border border-[#E5DEC9] space-y-2.5 shadow-xs">
+            <div className="h-10 w-10 rounded-xl bg-[#E67E22]/10 text-[#E67E22] flex items-center justify-center text-xl">
+              ⚡
+            </div>
+            <h3 className="font-bold text-sm text-[#3B302B]">Same-Day Fast Delivery</h3>
+            <p className="text-xs text-[#7A6E65] leading-relaxed">
+              Superfast doorstep delivery across Terha, Kurara, Sumerpur, and nearby villages for unexpected party plans.
+            </p>
+          </div>
+
+          <div className="bg-white/90 backdrop-blur-xs p-5 rounded-2xl border border-[#E5DEC9] space-y-2.5 shadow-xs">
+            <div className="h-10 w-10 rounded-xl bg-[#27AE60]/10 text-[#27AE60] flex items-center justify-center text-xl">
+              🌱
+            </div>
+            <h3 className="font-bold text-sm text-[#3B302B]">100% Pure Eggless</h3>
+            <p className="text-xs text-[#7A6E65] leading-relaxed">
+              Dedicated vegetarian preparation ensuring pure eggless cakes and pastries made with rich real cream and butter.
+            </p>
+          </div>
+
+          <div className="bg-white/90 backdrop-blur-xs p-5 rounded-2xl border border-[#E5DEC9] space-y-2.5 shadow-xs">
+            <div className="h-10 w-10 rounded-xl bg-[#D35400]/10 text-[#D35400] flex items-center justify-center text-xl">
+              🎉
+            </div>
+            <h3 className="font-bold text-sm text-[#3B302B]">Party Decor &amp; Hampers</h3>
+            <p className="text-xs text-[#7A6E65] leading-relaxed">
+              Complete your celebration with metallic candles, birthday balloons, party poppers, cake toppers &amp; snack combos.
+            </p>
+          </div>
+        </div>
+
+        {/* Local delivery areas tag strip */}
+        <div className="pt-4 border-t border-[#E5DEC9]/80 flex flex-wrap items-center justify-center gap-2 text-xs">
+          <span className="font-bold text-[#3B302B] mr-1">Doorstep Delivery Across:</span>
+          <span className="px-3 py-1 bg-white rounded-full font-semibold text-[#596B58] border border-[#E5DEC9] shadow-2xs">Terha (टेरहा)</span>
+          <span className="px-3 py-1 bg-white rounded-full font-semibold text-[#596B58] border border-[#E5DEC9] shadow-2xs">Hamirpur (हमीरपुर)</span>
+          <span className="px-3 py-1 bg-white rounded-full font-semibold text-[#596B58] border border-[#E5DEC9] shadow-2xs">Kurara (कुरारा)</span>
+          <span className="px-3 py-1 bg-white rounded-full font-semibold text-[#596B58] border border-[#E5DEC9] shadow-2xs">Sumerpur (सुमेरपुर)</span>
+          <span className="px-3 py-1 bg-white rounded-full font-semibold text-[#596B58] border border-[#E5DEC9] shadow-2xs">Ghatampur (घाटमपुर)</span>
+        </div>
       </section>
 
       {/* Frequently Asked Questions (FAQ) Section */}

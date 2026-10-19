@@ -522,9 +522,10 @@ export const CustomCakePage: React.FC = () => {
   return (
     <div className="space-y-6 pb-28 lg:pb-20 max-w-6xl mx-auto px-3 sm:px-4">
       <SEOHead
-        title="Custom Cake Studio | Design Your Dream Cake"
-        description="Design personalized celebration designer cakes with OneBite Bakery. Choose cake tiers, premium sponge flavors, gourmet cream fillings, photo toppers, and theme styling. Local delivery in Hamirpur."
+        title="Custom Cake Studio | Designer Birthday Cakes in Terha, Hamirpur"
+        description="Design personalized celebration designer cakes with OneBite Bakery. Choose custom tiers, flavors, creams, photo toppers, and custom messages. Fast local delivery in Terha & Hamirpur."
         canonicalPath="/custom-cake"
+        keywords="custom cake terha, birthday cake design terha, designer cake shop hamirpur, personalized cake, photo cake terha"
         breadcrumbs={[{ name: "Custom Cake Studio", url: "/custom-cake" }]}
       />
 

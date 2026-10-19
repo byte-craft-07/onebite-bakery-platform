@@ -35,9 +35,10 @@ export const CategoriesPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-16">
       <SEOHead
-        title="Bakery Categories | Cakes, Pastries & Breads"
-        description="Browse handcrafted bakery categories at OneBite Bakery. Fresh artisanal cakes, french pastries, sourdough whole wheat breads, and celebration hampers."
+        title="Cake Shop Categories | Cakes, Pastries & Bakery Items in Terha"
+        description="Browse handcrafted cake and bakery categories at OneBite Bakery in Terha. Fresh celebration cakes, pastries, pizzas, sourdough breads, and party decoration items."
         canonicalPath="/categories"
+        keywords="bakery categories, cake shop terha, birthday cakes, pastries terha, eggless cake menu, hamirpur bakery items"
         breadcrumbs={[{ name: "Categories", url: "/categories" }]}
         structuredData={collectionSchema}
       />

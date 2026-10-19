@@ -6,6 +6,7 @@ import { buildBreadcrumbSchema, normalizeCanonicalUrl } from "./seo.utils";
 export const SEOHead: React.FC<SEOProps> = ({
   title,
   description = SITE_CONFIG.defaultDescription,
+  keywords = SITE_CONFIG.defaultKeywords,
   canonicalPath,
   canonicalUrl,
   ogType = "website",
@@ -97,7 +98,16 @@ export const SEOHead: React.FC<SEOProps> = ({
 
     // 2. Standard Meta Tags
     setMetaTag("name", "description", description);
+    if (keywords) {
+      setMetaTag("name", "keywords", keywords);
+    }
     setMetaTag("name", "robots", robotsContent);
+
+    // Geo Local SEO tags
+    setMetaTag("name", "geo.region", "IN-UP");
+    setMetaTag("name", "geo.placename", "Terha, Hamirpur");
+    setMetaTag("name", "geo.position", "25.828694;80.248528");
+    setMetaTag("name", "ICBM", "25.828694, 80.248528");
 
     // 3. Canonical Tag
     if (!noindex) {
@@ -150,14 +160,19 @@ export const SEOHead: React.FC<SEOProps> = ({
     return () => {
       // Optional cleanup on component unmount
     };
-  }, [fullTitle, description, resolvedCanonicalUrl, robotsContent, noindex, ogType, fullOgImage, ogImageAlt, twitterCard, finalStructuredData]);
+  }, [fullTitle, description, keywords, resolvedCanonicalUrl, robotsContent, noindex, ogType, fullOgImage, ogImageAlt, twitterCard, finalStructuredData]);
 
   return (
     <>
       {/* React 19 Document Metadata Hoisting */}
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
+      {keywords && <meta name="keywords" content={keywords} />}
       <meta name="robots" content={robotsContent} />
+      <meta name="geo.region" content="IN-UP" />
+      <meta name="geo.placename" content="Terha, Hamirpur" />
+      <meta name="geo.position" content="25.828694;80.248528" />
+      <meta name="ICBM" content="25.828694, 80.248528" />
       {!noindex && <link rel="canonical" href={resolvedCanonicalUrl} />}
 
       {/* Open Graph */}

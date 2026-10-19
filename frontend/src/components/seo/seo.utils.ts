@@ -51,8 +51,9 @@ export function buildLocalBusinessSchema() {
     "@context": "https://schema.org",
     "@type": "Bakery",
     "@id": `${SITE_CONFIG.domain}/#bakery`,
-    "name": SITE_CONFIG.name,
+    "name": `${SITE_CONFIG.name} - Best Cake Shop & Bakery in Terha`,
     "legalName": SITE_CONFIG.legalName,
+    "alternateName": [...SITE_CONFIG.alternateNames],
     "url": SITE_CONFIG.domain,
     "logo": SITE_CONFIG.logoUrl,
     "image": [
@@ -63,7 +64,9 @@ export function buildLocalBusinessSchema() {
     "telephone": SITE_CONFIG.contact.telephone,
     "email": SITE_CONFIG.contact.email,
     "priceRange": SITE_CONFIG.contact.priceRange,
-    "servesCuisine": SITE_CONFIG.contact.servesCuisine,
+    "servesCuisine": [...SITE_CONFIG.contact.servesCuisine],
+    "keywords": SITE_CONFIG.defaultKeywords,
+    "areaServed": [...SITE_CONFIG.contact.areaServed],
     "address": {
       "@type": "PostalAddress",
       "streetAddress": SITE_CONFIG.contact.address.streetAddress,
@@ -100,6 +103,41 @@ export function buildLocalBusinessSchema() {
     ],
     "currenciesAccepted": "INR",
     "paymentAccepted": "Cash, Credit Card, Debit Card, UPI, Net Banking",
+    "department": [
+      {
+        "@type": "Bakery",
+        "name": "OneBite Cake Shop - Terha",
+        "description": "Fresh birthday cakes, custom designer celebration cakes, and eggless cakes in Terha, Hamirpur.",
+      },
+      {
+        "@type": "Bakery",
+        "name": "OneBite Artisanal Pastries & Breads",
+        "description": "French tarts, pastries, sourdough bread, pizza, and party items.",
+      },
+    ],
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "OneBite Bakery & Cake Shop Catalog",
+      "itemListElement": [
+        {
+          "@type": "OfferCatalog",
+          "name": "Celebration & Birthday Cakes",
+          "itemListElement": [
+            { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Birthday Cakes in Terha" } },
+            { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Custom Designer Cakes" } },
+            { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "100% Eggless Cakes" } },
+          ],
+        },
+        {
+          "@type": "OfferCatalog",
+          "name": "Bakery, Pastries & Snacks",
+          "itemListElement": [
+            { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Fresh Pastries & Cheesecakes" } },
+            { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Party Decoration & Combo Hampers" } },
+          ],
+        },
+      ],
+    },
   };
 }
 

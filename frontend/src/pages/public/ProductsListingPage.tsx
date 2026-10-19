@@ -176,22 +176,22 @@ export const ProductsListingPage: React.FC = () => {
   const currentCategoryName = currentCategory ? getLocalizedCategoryName(currentCategory) : slug ? slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "";
   const currentOccasionName = isOccasionPath && slug ? slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "";
 
-  let pageTitle = "Artisanal Cakes, Pastries & Breads Catalog";
-  let pageDescription = "Explore our complete selection of freshly baked handcrafted cakes, velvety pastries, sourdough breads, cookies, and party decoration hampers at OneBite Bakery.";
+  let pageTitle = "Cake Shop & Bakery Catalog | Cakes & Pastries in Terha";
+  let pageDescription = "Explore our complete selection of fresh celebration cakes, birthday cakes, velvety pastries, pizza, and party decoration hampers at OneBite Bakery in Terha, Hamirpur.";
   let canonicalPath = "/products";
   let breadcrumbsList = [{ name: "Products", url: "/products" }];
 
   if (isCategoryPath && slug) {
-    pageTitle = `${currentCategoryName} | Fresh Bakery Delights`;
-    pageDescription = currentCategory?.description || `Explore our freshly baked ${currentCategoryName.toLowerCase()} collection at OneBite Bakery. Prepared daily with pure ingredients. Local delivery in Hamirpur.`;
+    pageTitle = `${currentCategoryName} | Cake Shop & Bakery in Terha`;
+    pageDescription = currentCategory?.description || `Explore our freshly baked ${currentCategoryName.toLowerCase()} collection at OneBite Bakery. Fast local delivery in Terha & Hamirpur.`;
     canonicalPath = `/categories/${slug}`;
     breadcrumbsList = [
       { name: "Categories", url: "/categories" },
       { name: currentCategoryName, url: `/categories/${slug}` },
     ];
   } else if (isOccasionPath && slug) {
-    pageTitle = `${currentOccasionName} Celebration Cakes`;
-    pageDescription = `Celebrate your special ${currentOccasionName.toLowerCase()} with custom designer cakes, luxury hampers, and gourmet party treats from OneBite Bakery.`;
+    pageTitle = `${currentOccasionName} Cakes | Birthday & Celebration Cakes in Terha`;
+    pageDescription = `Celebrate your special ${currentOccasionName.toLowerCase()} with custom designer cakes, luxury hampers, and gourmet party treats from OneBite Bakery in Terha, Hamirpur.`;
     canonicalPath = `/occasions/${slug}`;
     breadcrumbsList = [
       { name: "Occasions", url: "/occasions" },

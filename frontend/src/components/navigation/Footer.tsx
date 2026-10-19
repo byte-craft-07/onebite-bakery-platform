@@ -147,7 +147,17 @@ export const Footer: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pt-12 mt-12 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#FFF8EC]/60">
+      {/* Local SEO & Towns Served Strip */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 mt-8 border-t border-white/10 text-center space-y-1.5">
+        <p className="text-xs font-bold text-[#D8BE91]">
+          OneBite Bakery (Ajay Bakery) — Best Cake Shop &amp; Bakery in Terha, Hamirpur
+        </p>
+        <p className="text-[11px] text-[#FFF8EC]/65 leading-relaxed max-w-4xl mx-auto">
+          Online Cake Delivery in Terha (टेरहा), Hamirpur (हमीरपुर), Kurara (कुरारा), Sumerpur (सुमेरपुर), Ghatampur (घाटमपुर) &amp; Neighboring Villages. Order 100% Eggless Birthday Cakes, Custom Designer Cakes, Fresh Pastries, Snack Combos &amp; Party Decorations from Ajay Bakery / OneBite Bakery.
+        </p>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 pt-6 mt-4 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#FFF8EC]/60">
         <p>&copy; {new Date().getFullYear()} Onebite Bakery &bull; {t("common.freshBakedDaily", "Freshly Baked Daily")}. {t("common.allRightsReserved", "All rights reserved.")}</p>
         <div className="flex items-center gap-3">
           <span className="text-[11px]">{t("common.selectLanguage", "Language")}:</span>

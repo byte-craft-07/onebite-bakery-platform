@@ -7,9 +7,10 @@ export const AboutPage: React.FC = () => {
   return (
     <div className="space-y-12 pb-16">
       <SEOHead
-        title="About Our Bakery &amp; Craft"
-        description="Learn about OneBite Bakery: artisanal French patisserie craftsmanship, dedicated eggless kitchen, 100% pure butter recipes, and passion for celebrations in Hamirpur, UP."
+        title="About OneBite Bakery | Best Cake Shop in Terha, Hamirpur"
+        description="Learn about OneBite Bakery in Terha, Hamirpur: artisanal French patisserie craftsmanship, dedicated eggless kitchen, 100% pure butter recipes, and custom celebration cakes."
         canonicalPath="/about"
+        keywords="about onebite bakery, bakery in terha, cake shop in terha, terha bakery story, hamirpur bakery"
         breadcrumbs={[{ name: "About Us", url: "/about" }]}
       />
 
@@ -53,9 +54,10 @@ export const ContactPage: React.FC = () => {
   return (
     <div className="space-y-12 pb-16">
       <SEOHead
-        title="Contact Us &amp; Store Pickup"
-        description="Get in touch with OneBite Bakery in Terha, Hamirpur. Store pickup timings, phone +91 7897671632, email, and inquiry form for custom celebration cake orders."
+        title="Contact OneBite Bakery | Store Location & Cake Order in Terha"
+        description="Get in touch with OneBite Bakery in Terha, Hamirpur. Order birthday cakes, store pickup, phone +91 7897671632, WhatsApp, and delivery in Terha, Hamirpur."
         canonicalPath="/contact"
+        keywords="contact terha bakery, cake shop in terha phone, order cake terha, onebite bakery location, bakery hamirpur contact"
         breadcrumbs={[{ name: "Contact Us", url: "/contact" }]}
         structuredData={buildLocalBusinessSchema()}
       />

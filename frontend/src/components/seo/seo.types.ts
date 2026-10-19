@@ -11,6 +11,7 @@ export interface FAQItem {
 export interface SEOProps {
   title?: string;
   description?: string;
+  keywords?: string;
   canonicalPath?: string;
   canonicalUrl?: string;
   ogType?: "website" | "article" | "product";
@@ -22,3 +23,4 @@ export interface SEOProps {
   breadcrumbs?: BreadcrumbItem[];
   structuredData?: Record<string, any> | Array<Record<string, any>>;
 }
+
